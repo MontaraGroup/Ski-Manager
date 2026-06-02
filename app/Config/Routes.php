@@ -163,3 +163,5 @@ service("auth")->routes($routes);
 $routes->get("/sitemap", "Legal::sitemap");
 $routes->post("/off-season/maintenance", "OffSeason::runMaintenance");
 $routes->post("/government/comply-all", "Government::complyAll");
+$routes->post("/scenic-lifts/update-price/(:num)", "ScenicLifts::updatePrice/$1");
+$routes->post("/grooming/groom-all", "Grooming::groomAll");

@@ -56,6 +56,13 @@
                 </div>
 
                 <div class="form-control mt-6">
+
+                <div class="form-control mb-4">
+                    <label class="cursor-pointer flex items-start gap-2">
+                        <input type="checkbox" name="terms" class="checkbox checkbox-primary checkbox-sm mt-0.5" required>
+                        <span class="label-text text-sm">I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" class="link link-primary">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" class="link link-primary">Privacy Policy</a></span>
+                    </label>
+                </div>
                     <button type="submit" class="btn btn-primary w-full">Create Account</button>
                 </div>
             </form>

@@ -5,15 +5,20 @@
     <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://v2.ski-manager.net/">
+    <meta property="og:url" content="https://skimanager.net/">
     <meta property="og:site_name" content="Ski Manager">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta name="twitter:description" content="Build, manage, and grow your dream ski resort. Free to play.">
     <meta name="msvalidate.01" content="17A0AC384937E88A4F602D2B7DAE237F" />
-    <link rel="canonical" href="https://v2.ski-manager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
+    <link rel="canonical" href="https://skimanager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
     <meta name="description" content="Ski Manager - Free online ski resort management game. Build slopes, hire staff, manage finances, and compete with players worldwide.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
     <link rel="preload" href="/css/style.css?v=7" as="style">
     <link rel="stylesheet" href="/css/style.css?v=7" fetchpriority="high">
@@ -30,7 +35,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Ski Manager",
-      "url": "https://v2.ski-manager.net",
+      "url": "https://skimanager.net",
       "description": "Free online ski resort management game",
       "applicationCategory": "Game",
       "operatingSystem": "Web Browser",
@@ -38,6 +43,7 @@
     }
     </script>
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -212,18 +218,18 @@
                 $__rating = resortRating(auth()->id());
             ?>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/135</span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <?= $__fin ? number_format((int)($__fin["total_income"] ?? 0) / max(1, $__gameDay) / 15) : 0 ?> visitors</span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></span>
-            <span class="text-base-content/20 hidden md:inline">|</span>
-            <span class="flex items-center gap-0.5 shrink-0"><?php for ($__i = 1; $__i <= 5; $__i++) : ?><i class="fa-solid fa-star text-xs <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/20" ?>"></i><?php endfor ?></span>
+            <span class="text-base-content/40 hidden md:inline">|</span>
+            <span class="flex items-center gap-0.5 shrink-0"><?php for ($__i = 1; $__i <= 5; $__i++) : ?><i class="fa-solid fa-star text-xs <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/40" ?>"></i><?php endfor ?></span>
         </div>
     </div>
     <?php endif ?>
@@ -332,7 +338,7 @@ document.addEventListener("click", function(e) {
             <div class="flex items-center justify-between mt-3">
                 <progress class="progress progress-primary w-32" id="tutProgress" value="0" max="10"></progress>
                 <div class="flex gap-1">
-                    <a id="tutGoBtn" href="#" class="btn btn-primary btn-xs gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
+                    <a id="tutGoBtn" href="/dashboard" class="btn btn-primary btn-xs gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
                     <button id="tutNextBtn" onclick="advanceTutorial()" class="btn btn-primary btn-xs gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
                     <button id="tutDoneBtn" onclick="advanceTutorial()" class="btn btn-success btn-xs gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
                 </div>

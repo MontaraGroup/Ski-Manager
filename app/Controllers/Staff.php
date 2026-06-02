@@ -16,6 +16,7 @@ class Staff extends BaseController
     public function index(): string
     {
         $userId = auth()->id();
+        if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
         $staff = $this->staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
 
         $roles = [
@@ -62,6 +63,7 @@ class Staff extends BaseController
     {
         $role = $this->request->getPost('role');
         $userId = auth()->id();
+        if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
 
         $salaries = [
             'ski_patrol' => 1500, 'instructor' => 2000, 'mechanic' => 1800,
@@ -95,6 +97,7 @@ class Staff extends BaseController
     public function fire(int $id)
     {
         $userId = auth()->id();
+        if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
         $member = $this->staffModel->where('id', $id)->where('user_id', $userId)->first();
 
         if (!$member) {
