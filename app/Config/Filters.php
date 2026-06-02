@@ -30,7 +30,9 @@ class Filters extends BaseFilters
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
+        'throttle'      => \App\Filters\Throttle::class,
         'cors'          => Cors::class,
+
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
@@ -106,5 +108,7 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'throttle' => ['before' => ['login*', 'register*', 'magic-link*']],
+    ];
 }

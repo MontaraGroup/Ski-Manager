@@ -1,2 +1,10 @@
 User-agent: *
-Disallow: 
+Allow: /
+Disallow: /dashboard
+Disallow: /resort
+Disallow: /map
+Disallow: /staff
+Disallow: /finances
+Disallow: /settings
+
+Sitemap: https://v2.ski-manager.net/sitemap.xml
