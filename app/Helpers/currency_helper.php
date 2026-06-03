@@ -2,25 +2,30 @@
 
 function isImperial(): bool
 {
-    return (session()->get('units') ?? 'metric') === 'imperial';
-}
-
-function currency(int $amountEur): string
-{
-    if (isImperial()) {
-        return '$' . number_format(round($amountEur * 1.08));
+    $units = session()->get('units');
+    if (!$units && function_exists('auth') && auth()->loggedIn()) {
+        $fin = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
+        $units = $fin['units'] ?? 'metric';
+        session()->set('units', $units);
+        session()->set('currency', $units === 'imperial' ? 'USD' : 'EUR');
     }
-    return number_format($amountEur) . ' €';
+    return ($units ?? 'metric') === 'imperial';
 }
 
-function currencySymbol(): string
+function currencySymbol(): string { return isImperial() ? '$' : '€'; }
+
+function currency($amount): string
 {
-    return isImperial() ? '$' : '€';
+    $formatted = number_format(abs((int) $amount));
+    $sign = (int) $amount < 0 ? '-' : '';
+    return isImperial()
+        ? $sign . '$' . $formatted
+        : $sign . $formatted . ' €';
 }
 
-function currencyConvert(int $amountEur): int
+function currencyConvert($amount): int
 {
-    return isImperial() ? round($amountEur * 1.08) : $amountEur;
+    return isImperial() ? (int) round($amount * 1.08) : (int) $amount;
 }
 
 function temp(int $celsius): string
@@ -42,42 +47,27 @@ function speed(int $kmh): string
 function distance(int $meters): string
 {
     if (isImperial()) {
-        $feet = round($meters * 3.28084);
-        if ($feet >= 5280) {
-            return round($feet / 5280, 1) . ' mi';
-        }
-        return number_format($feet) . ' ft';
+        return $meters >= 1609 ? round($meters / 1609.34, 1) . ' mi' : round($meters * 3.28084) . ' ft';
     }
-    if ($meters >= 1000) {
-        return round($meters / 1000, 1) . ' km';
-    }
-    return number_format($meters) . ' m';
+    return $meters >= 1000 ? round($meters / 1000, 1) . ' km' : $meters . ' m';
 }
 
 function snow(int $cm): string
 {
     if (isImperial()) {
-        return round($cm * 0.393701) . ' in';
+        return round($cm / 2.54) . ' in';
     }
     return $cm . ' cm';
 }
 
-function altitude(string $level): string
+function altitude(mixed $meters): string
 {
-    $labels = [
-        'low' => isImperial() ? 'Low (Below 3,280 ft)' : 'Low (Below 1,000 m)',
-        'medium' => isImperial() ? 'Medium (3,280–6,560 ft)' : 'Medium (1,000–2,000 m)',
-        'high' => isImperial() ? 'High (Above 6,560 ft)' : 'High (Above 2,000 m)',
-    ];
-    return $labels[$level] ?? 'Unknown';
+    $meters = (int) $meters;
+    if (isImperial()) {
+        return number_format(round($meters * 3.28084)) . ' ft';
+    }
+    return number_format($meters) . ' m';
 }
 
-function speedUnit(): string
-{
-    return isImperial() ? 'mph' : 'km/h';
-}
-
-function distanceUnit(): string
-{
-    return isImperial() ? 'ft' : 'm';
-}
+function speedUnit(): string { return isImperial() ? 'mph' : 'km/h'; }
+function distanceUnit(): string { return isImperial() ? 'ft' : 'm'; }

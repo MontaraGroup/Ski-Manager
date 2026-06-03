@@ -17,6 +17,7 @@ class Resort extends BaseController
             'altitude' => 'medium', 'aspect' => 'north', 'is_open' => (bool) ($finance['resort_open'] ?? 1),
         ];
 
+        $resort["is_open"] = (bool) ($finance["resort_open"] ?? 1);
         $itemModel = new PlayerItemModel();
         $staffModel = new StaffModel();
         $buildingModel = new BuildingModel();

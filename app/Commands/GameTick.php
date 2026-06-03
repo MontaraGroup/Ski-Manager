@@ -373,7 +373,10 @@ class GameTick extends BaseCommand
                 $cumulative += $weights[$i];
                 if ($roll <= $cumulative) { $condition = $c; break; }
             }
-            $temp = -8 + mt_rand(-5, 5);
+            $seasonDay = (($gameDay - 1) % 135) + 1;
+            $isDeepWinter = $seasonDay >= 30 && $seasonDay <= 80;
+            $isSummer = $seasonDay > 100;
+            if ($isSummer) { $temp = mt_rand(10, 25); } elseif ($isDeepWinter) { $temp = mt_rand(-15, -2); } else { $temp = mt_rand(-8, 5); }
             $wind = mt_rand(5, 30);
             $snowfall = in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0;
             $prev = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();

@@ -79,8 +79,17 @@
                 </div>
             <?php else : ?>
                 <div class="flex flex-col justify-center h-full">
-                    <div class="flex justify-between text-sm mb-1"><span><i class="fa-solid fa-calendar mr-1"></i>Season <?= $seasonNum ?></span><span class="text-base-content/50">Day <?= $seasonProgress ?> / <?= $seasonLength ?></span></div>
-                    <progress class="progress progress-primary w-full" value="<?= $seasonProgress ?>" max="<?= $seasonLength ?>"></progress>
+                    <div class="flex justify-between text-sm mb-2"><span><i class="fa-solid fa-calendar mr-1"></i>Season <?= $seasonNum ?></span><span class="text-base-content/50">Day <?= $seasonProgress ?> / <?= $seasonLength ?></span></div>
+                    <div class="flex gap-2 items-center">
+                        <div style="flex:100">
+                            <div class="flex justify-between text-xs text-base-content/50 mb-0.5"><span><i class="fa-solid fa-snowflake mr-1"></i>Winter</span><span><?= min($seasonProgress, 100) ?>/100</span></div>
+                            <progress class="progress progress-info w-full" value="<?= min($seasonProgress, 100) ?>" max="100"></progress>
+                        </div>
+                        <div style="flex:35">
+                            <div class="flex justify-between text-xs text-base-content/50 mb-0.5"><span><i class="fa-solid fa-sun mr-1"></i>Summer</span><span><?= max(0, $seasonProgress - 100) ?>/35</span></div>
+                            <progress class="progress progress-warning w-full" value="<?= max(0, $seasonProgress - 100) ?>" max="35"></progress>
+                        </div>
+                    </div>
                 </div>
             <?php endif ?>
         <?php endif ?>

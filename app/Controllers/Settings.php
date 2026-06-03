@@ -8,7 +8,8 @@ class Settings extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $units = session()->get('units') ?? 'metric';
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $units = $finance['units'] ?? session()->get('units') ?? 'metric';
         $resort = session()->get('resort') ?? ['name' => 'My Resort', 'location' => '', 'description' => ''];
         $tutorial = $db->table('tutorial_progress')->where('user_id', $userId)->get()->getRowArray();
         $notifCount = $db->table('notifications')->where('user_id', $userId)->countAllResults();
@@ -25,11 +26,13 @@ class Settings extends BaseController
 
     public function save()
     {
-        $units = $this->request->getPost('units');
-        if (!in_array($units, ['metric', 'imperial'])) $units = 'metric';
-        session()->set('units', $units);
-        session()->set('currency', $units === 'imperial' ? 'USD' : 'EUR');
-        return redirect()->to('/settings')->with('success', 'Units & currency updated.');
+        $userId = auth()->id();
+        $units = $this->request->getPost("units");
+        if (!in_array($units, ["metric", "imperial"])) $units = "metric";
+        db_connect()->table("player_finances")->where("user_id", $userId)->update(["units" => $units]);
+        session()->set("units", $units);
+        session()->set("currency", $units === "imperial" ? "USD" : "EUR");
+        return redirect()->to("/settings")->with("success", "Units & currency updated.");
     }
 
     public function updateResortName()

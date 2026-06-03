@@ -7,8 +7,8 @@
     $playerCount = $db->table('users')->countAllResults(false);
     $totalSlopes = $db->table('player_items')->where('item_type', 'slope')->countAllResults(false);
     $totalStaff = $db->table('staff')->where('status', 'active')->countAllResults(false);
-    $topPlayer = $db->query("SELECT u.username, pf.cash FROM player_finances pf JOIN users u ON u.id = pf.user_id ORDER BY pf.cash DESC LIMIT 1")->getRowArray();
-    $recentPlayer = $db->table('users')->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
+    $topPlayer = $db->query("SELECT u.username, pf.cash FROM player_finances pf JOIN users u ON u.id = pf.user_id WHERE u.id != 1 ORDER BY pf.cash DESC LIMIT 1")->getRowArray();
+    $recentPlayer = $db->table('users')->where('id !=', 1)->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
     $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
     $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
 ?>
@@ -43,7 +43,7 @@
                         <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg mb-3">
                             <i class="fa-solid fa-<?= $weather['temp'] <= -5 ? 'snowflake text-info' : 'cloud-sun text-warning' ?> text-2xl"></i>
                             <div>
-                                <div class="font-bold"><?= $weather['temp'] ?>°C · <?= $weather['condition_name'] ?></div>
+                                <div class="font-bold"><?= temp((int)$weather['temp']) ?> · <?= $weather['condition_name'] ?></div>
                                 <div class="text-xs text-base-content/50">Today on the mountain</div>
                             </div>
                         </div>
@@ -105,7 +105,7 @@
                 <div class="card-body text-center">
                     <div class="text-4xl mb-3">❄️</div>
                     <h3 class="font-bold mb-2">Fighting the weather</h3>
-                    <p class="text-sm text-base-content/60">Today it's <?= $weather ? $weather['temp'] . '°C and ' . strtolower($weather['condition_name']) : 'cold' ?>. Some are turning on snow machines. Others are panicking.</p>
+                    <p class="text-sm text-base-content/60">Today it's <?= $weather ? temp((int)$weather['temp']) . ' and ' . strtolower($weather['condition_name']) : 'cold' ?>. Some are turning on snow machines. Others are panicking.</p>
                 </div>
             </div>
         </div>

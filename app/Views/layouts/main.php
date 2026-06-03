@@ -410,14 +410,6 @@ document.querySelectorAll("[data-count]").forEach(function(el){
 </script>
 <script>
 document.addEventListener("keydown",function(e){
-    if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")return;
-    if(e.key==="d")window.location="/dashboard";
-    if(e.key==="r")window.location="/resort";
-    if(e.key==="m")window.location="/map";
-    if(e.key==="w")window.location="/weather";
-    if(e.key==="s")window.location="/staff";
-    if(e.key==="f")window.location="/finances";
-    if(e.key==="?"){e.preventDefault();document.getElementById("shortcutModal").showModal();}
 });
 </script>
 <dialog id="shortcutModal" class="modal modal-bottom sm:modal-middle">

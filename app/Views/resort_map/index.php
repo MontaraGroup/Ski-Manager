@@ -148,6 +148,39 @@
 
         <!-- Map -->
         <div class="flex-1">
+        <!-- Map Stats Overlay -->
+        <div style="position:absolute;top:10px;left:10px;z-index:400;pointer-events:none;">
+            <div class="card bg-base-100/90 shadow-lg" style="pointer-events:auto;backdrop-filter:blur(8px);">
+                <div class="card-body p-3">
+                    <div class="flex gap-4 text-xs">
+                        <?php
+                            $mapDb = db_connect();
+                            $mapSlopes = $mapDb->table("player_items")->where("user_id", auth()->id())->where("item_type", "slope")->countAllResults(false);
+                            $mapLifts = $mapDb->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->countAllResults(false);
+                            $mapSegments = count($segments ?? []);
+                        ?>
+                        <div class="text-center"><div class="font-bold text-info text-lg"><?= $mapSlopes ?></div><div class="text-base-content/50">Slopes</div></div>
+                        <div class="text-center"><div class="font-bold text-success text-lg"><?= $mapLifts ?></div><div class="text-base-content/50">Lifts</div></div>
+                        <div class="text-center"><div class="font-bold text-warning text-lg"><?= $mapSegments ?></div><div class="text-base-content/50">Segments</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Map Legend -->
+        <div style="position:absolute;bottom:10px;left:10px;z-index:400;pointer-events:none;">
+            <div class="card bg-base-100/90 shadow-lg" style="pointer-events:auto;backdrop-filter:blur(8px);">
+                <div class="card-body p-2">
+                    <div class="text-xs space-y-1">
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#3b82f6;border-radius:2px;display:inline-block;"></span> Lift</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#22c55e;border-radius:2px;display:inline-block;"></span> Green Run</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#3b82f6;border-radius:2px;display:inline-block;"></span> Blue Run</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#ef4444;border-radius:2px;display:inline-block;"></span> Red Run</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#1a1a2e;border-radius:2px;display:inline-block;"></span> Black Run</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#a855f7;border-radius:2px;display:inline-block;border-style:dashed;"></span> Drawing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
             <div id="mapid" class="w-full" style="background: #1a2332; height: calc(100vh - 130px);"></div>
         </div>
     </div>
