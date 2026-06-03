@@ -12,7 +12,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <?php foreach ($activeVips as $vip) : ?>
             <?php $type = $vipTypes[$vip['vip_type']] ?? null; ?>
-            <div class="card bg-base-100 shadow-sm border-l-4 <?= $vip['status'] === 'visiting' ? 'border-success' : 'border-warning' ?>">
+            <div class="card bg-base-100 shadow-sm <?= $vip['status'] === 'visiting' ? 'border-success' : 'border-warning' ?>">
                 <div class="card-body">
                     <div class="flex items-center justify-between">
                         <h3 class="card-title text-lg">

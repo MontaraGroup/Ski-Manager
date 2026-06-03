@@ -72,7 +72,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <?php foreach ($slopes as $slope) : ?>
             <?php $cond = (int) $slope['condition_pct']; ?>
-            <div class="card bg-base-100 shadow-sm <?= $cond < 30 ? 'border-l-4 border-error' : ($cond < 60 ? 'border-l-4 border-warning' : 'border-l-4 border-success') ?>">
+            <div class="card bg-base-100 shadow-sm <?= $cond < 30 ? '' : ($cond < 60 ? '' : '') ?>">
                 <div class="card-body p-3">
                     <div class="flex items-center justify-between mb-1">
                         <span class="font-semibold text-sm truncate"><?= esc($slope['name']) ?></span>

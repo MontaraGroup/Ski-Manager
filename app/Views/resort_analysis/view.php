@@ -3,7 +3,8 @@
 <div class="container mx-auto p-4 max-w-5xl">
     <div class="flex items-center gap-3 mb-6">
         <a href="/resort-analysis" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i></a>
-        <h1 class="text-2xl font-bold"><i class="fa-solid fa-clipboard-check mr-2 text-primary"></i> Resort Analysis — Day <?= $report['game_day'] ?></h1>
+        <h1 class="text-2xl font-bold"><i class="fa-solid fa-clipboard-check mr-2 text-primary"></i> Resort Analysis — Day <?= $report["game_day"] ?></h1>
+        <a href="/resort-analysis/pdf/<?= $report["id"] ?>" class="btn btn-outline btn-sm gap-1 ml-auto"><i class="fa-solid fa-file-pdf text-error"></i> Download PDF</a>
     </div>
 
     <!-- Overall Score -->

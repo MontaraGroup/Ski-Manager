@@ -183,4 +183,49 @@ class ResortAnalysis extends BaseController
             ],
         ];
     }
+    public function pdf(int $id)
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $report = $db->table("resort_reports")->where("id", $id)->where("user_id", $userId)->get()->getRowArray();
+        if (!$report) return redirect()->to("/resort-analysis")->with("error", "Report not found.");
+
+        $data = json_decode($report["report_data"], true);
+
+        $html = view("resort_analysis/pdf", ["report" => $report, "data" => $data]);
+
+        $dompdf = new \Dompdf\Dompdf(["defaultFont" => "Helvetica"]);
+        $dompdf->loadHtml($html);
+        $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
+        $dompdf->render();
+        $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
+        $dompdf->addInfo("Author", "Ski Manager - skimanager.net");
+        $dompdf->addInfo("Subject", "Resort Analysis Report");
+        $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
+        $dompdf->addInfo("Creator", "Ski Manager v2");
+        $dompdf->addInfo("Author", "Ski Manager - skimanager.net");
+        $dompdf->addInfo("Subject", "Resort Analysis Report");
+        $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
+        $dompdf->addInfo("Creator", "Ski Manager v2");
+        $dompdf->render();
+
+        $filename = "Resort_Analysis_Day_" . $report["game_day"] . ".pdf";
+        $tmpFile = WRITEPATH . "tmp_" . uniqid() . ".pdf";
+        $outFile = WRITEPATH . "tmp_" . uniqid() . "_v2.pdf";
+        file_put_contents($tmpFile, $dompdf->output());
+        exec("qpdf --force-version=2.0 --linearize --object-streams=generate --linearize --object-streams=generate " . escapeshellarg($tmpFile) . " " . escapeshellarg($outFile) . " 2>&1", $qpdfOut, $qpdfCode);
+        if ($qpdfCode === 0 && file_exists($outFile)) {
+            header("Content-Type: application/pdf");
+            header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+            readfile($outFile);
+            unlink($tmpFile);
+            unlink($outFile);
+        } else {
+            header("Content-Type: application/pdf");
+            header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+            readfile($tmpFile);
+            unlink($tmpFile);
+        }
+        exit;
+    }
 }

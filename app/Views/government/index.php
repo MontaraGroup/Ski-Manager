@@ -89,7 +89,7 @@
         <div class="space-y-2">
         <?php foreach ($tierRegs as $reg) : ?>
             <?php $cfg = $regConfig[$reg['regulation_type']] ?? []; ?>
-            <div class="card bg-base-100 shadow-sm <?= !$reg['compliant'] ? 'border-l-4 border-error' : 'border-l-4 border-success' ?>">
+            <div class="card bg-base-100 shadow-sm <?= !$reg['compliant'] ? '' : '' ?>">
                 <div class="card-body p-4">
                     <div class="flex flex-col md:flex-row md:items-center gap-3">
                         <div class="flex items-center gap-3 flex-1">

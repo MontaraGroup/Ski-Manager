@@ -52,7 +52,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <?php foreach ($scenicLifts as $lift) : ?>
             <?php $rev = (int) ($lift['scenic']['revenue_per_day'] ?? 1500); ?>
-            <div class="card bg-base-100 shadow-sm border-l-4 border-primary">
+            <div class="card bg-base-100 shadow-sm ">
                 <div class="card-body p-4">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-3">

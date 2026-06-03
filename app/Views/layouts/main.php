@@ -20,12 +20,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
-    <link rel="preload" href="/css/style.css?v=7" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=7" fetchpriority="high">
+    <link rel="preload" href="/css/style.css?v=8" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=8" fetchpriority="high">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
-    <script src="https://kit.fontawesome.com/e8108d3d5f.js" crossorigin="anonymous"></script>
+    <script async src="https://kit.fontawesome.com/e8108d3d5f.js" crossorigin="anonymous"></script>
     <script>
         var saved = localStorage.getItem('theme') || 'carboncloud';
         document.documentElement.setAttribute('data-theme', saved);
@@ -168,6 +168,18 @@
             </ul>
         </div>
         <div class="navbar-end gap-2">
+            <!-- Search -->
+            <?php if (auth()->loggedIn()) : ?>
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-search"></i></div>
+                <div tabindex="0" class="dropdown-content mt-2 z-50">
+                    <div class="card bg-base-100 shadow-xl w-72 p-3">
+                        <input type="text" id="globalSearch" placeholder="Search pages... (Ctrl+K)" class="input input-bordered input-sm w-full" autocomplete="off" />
+                        <div id="searchResults" class="mt-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+            <?php endif ?>
             <!-- Theme Switcher -->
             <label class="toggle text-base-content">
                 <input type="checkbox" id="themeToggle" value="winter" class="theme-controller" />
@@ -310,10 +322,62 @@ document.addEventListener("click", function(e) {
     }
 });
 </script>
+</script>
+<dialog id="confirmModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="text-lg font-bold" id="confirmTitle">Confirm</h3>
+        <p class="py-4 text-sm text-base-content/70" id="confirmMessage"></p>
+        <div class="modal-action">
+            <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="confirmYes">Confirm</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" onclick="closeConfirm()"></div>
+</dialog>
+<script>
+let pendingForm=null;
+function closeConfirm(){document.getElementById("confirmModal").close();pendingForm=null;}
+document.addEventListener("submit",function(e){
+    const form=e.target,msg=form.dataset.confirm;
+    if(!msg||form.dataset.confirmed)return;
+    e.preventDefault();
+    pendingForm=form;
+    document.getElementById("confirmTitle").textContent=form.dataset.confirmTitle||"Confirm";
+    document.getElementById("confirmMessage").textContent=msg;
+    document.getElementById("confirmModal").showModal();
+});
+document.getElementById("confirmYes").addEventListener("click",function(){
+    if(pendingForm){pendingForm.dataset.confirmed="1";pendingForm.submit();}
+    closeConfirm();
+});
+</script>
+<script>
+const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
+const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
+if(si){si.addEventListener("input",function(){const q=this.value.toLowerCase().trim();if(!q){sr.innerHTML="";return;}const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):"<p class=\"text-xs text-base-content/40 text-center py-2\">No results</p>";});si.addEventListener("keydown",function(e){if(e.key==="Enter"){const first=sr.querySelector("a");if(first)window.location=first.href;}});
+document.addEventListener("keydown",function(e){if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault();si.focus();si.closest(".dropdown").querySelector("[tabindex]").focus();si.focus();}});
+}
+</script>
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.5rem;height:2.5rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up"></i></button>
+<script>window.addEventListener("scroll",function(){document.getElementById("backToTop").style.display=window.scrollY>300?"flex":"none";});</script>
+<script>
+document.querySelectorAll(".alert-success,.alert-error,.alert-warning").forEach(function(el){
+    if(el.closest(".card-body"))return;
+    setTimeout(function(){el.style.transition="opacity 0.5s";el.style.opacity="0";setTimeout(function(){el.remove();},500);},4000);
+});
+</script>
+<script>
+document.querySelectorAll("form").forEach(function(f){
+    f.addEventListener("submit",function(){
+        var btn=f.querySelector("button[type=submit],button:not([type])");
+        if(btn&&!f.dataset.confirm){btn.classList.add("loading");btn.disabled=true;}
+    });
+});
+</script>
 </body>
 <!-- Tutorial Widget -->
 <?php if (auth()->loggedIn()) : ?>
-<div id="tutorialWidget" class="fixed bottom-4 right-4 z-40 hidden">
+<div id="tutorialWidget" class="hidden" style="position:fixed;bottom:1rem;right:1rem;z-index:9998;">
     <div class="card bg-base-100 shadow-xl w-80 border border-base-300">
         <div class="card-body p-4">
             <div class="flex items-center justify-between mb-2">
