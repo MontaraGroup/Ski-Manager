@@ -26,6 +26,7 @@ class OffSeason extends BaseController
 
     public function index(): string
     {
+        $locked = checkFeatureUnlock('off_season'); if ($locked) return $locked;
         $userId = auth()->id();
         $db = db_connect();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);

@@ -201,7 +201,7 @@
 
     <!-- Equipment Status -->
     <?php if (!empty($equipment)) : ?>
-    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-truck-monster mr-1 text-warning"></i> Grooming Machines</h2>
+    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-truck-monster"></i> Grooming Machines</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <?php foreach ($equipment as $eq) : ?>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">

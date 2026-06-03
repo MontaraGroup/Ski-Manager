@@ -15,6 +15,7 @@ class Government extends BaseController
 
     public function index(): string
     {
+        if (isPageHidden('government')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         $userId = auth()->id();
         $db = db_connect();
         $regConfig = $this->getRegulationTypes();

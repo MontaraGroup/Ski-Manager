@@ -15,6 +15,7 @@ class Insurance extends BaseController
 
     public function index(): string
     {
+        if (isPageHidden('insurance')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         $userId = auth()->id();
         $db = db_connect();
         $insuranceTypes = $this->getInsuranceTypes();

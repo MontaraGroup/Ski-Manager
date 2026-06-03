@@ -29,13 +29,26 @@ class GameTick extends BaseCommand
 
             $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             if (!$finance) {
-                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0]);
+                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard']);
                 $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             }
 
             $cash = (int) $finance['cash'];
             $dayIncome = 0;
             $dayExpenses = 0;
+
+            // Load difficulty config
+            $diff = $finance['difficulty'] ?? 'standard';
+            $diffConfig = [];
+            $diffRows = $db->table('difficulty_config')->where('difficulty', $diff)->get()->getResultArray();
+            foreach ($diffRows as $dr) { $diffConfig[$dr['config_key']] = $dr['config_value']; }
+            $revMult = ((int) ($diffConfig['revenue_multiplier'] ?? 100)) / 100;
+            $costMult = ((int) ($diffConfig['cost_multiplier'] ?? 100)) / 100;
+            $decayMult = ((int) ($diffConfig['decay_multiplier'] ?? 100)) / 100;
+            $moraleDec = (int) ($diffConfig['morale_decay'] ?? 2);
+            $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
+            $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
+            $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
 
             // ==============================
             // STAFF ASSIGNMENT INDEX
@@ -57,10 +70,10 @@ class GameTick extends BaseCommand
             // STAFF SALARIES + MORALE
             // ==============================
             $staffCost = array_sum(array_column($allStaff, 'salary'));
-            $dayExpenses += $staffCost;
+            $dayExpenses += (int) round($staffCost * $costMult);
 
             foreach ($allStaff as $s) {
-                $moraleChange = -2;
+                $moraleChange = -$moraleDec;
                 if (!empty($s['assigned_to'])) $moraleChange += 1;
                 $newMorale = max(0, min(100, (int) $s['morale'] + $moraleChange));
                 $db->table('staff')->where('id', $s['id'])->update(['morale' => $newMorale]);
@@ -82,9 +95,9 @@ class GameTick extends BaseCommand
                 if ($type === 'hotel') $revenue = (int) round($revenue * (1 + $countAssigned('receptionist') * 0.15));
                 if ($type === 'restaurant') $revenue = (int) round($revenue * (1 + $countAssigned('chef') * 0.10));
 
-                $dayIncome += $revenue;
-                $dayExpenses += (int) $b['upkeep_per_day'];
-                $newCondition = max(0, (int) $b['condition_pct'] - rand(0, 2));
+                $dayIncome += (int) round($revenue * $revMult);
+                $dayExpenses += (int) round($b['upkeep_per_day'] * $costMult);
+                $newCondition = max(0, (int) $b['condition_pct'] - (int) round(rand(0, 2) * $decayMult));
                 $db->table('buildings')->where('id', $b['id'])->update(['condition_pct' => $newCondition]);
                 if ($newCondition <= 0) {
                     $db->table('buildings')->where('id', $b['id'])->update(['status' => 'broken']);
@@ -96,7 +109,7 @@ class GameTick extends BaseCommand
             // ==============================
             $campaigns = $db->table('marketing_campaigns')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
             foreach ($campaigns as $c) {
-                $dayExpenses += (int) $c['daily_cost'];
+                $dayExpenses += (int) round($c['daily_cost'] * $costMult);
                 $remaining = (int) $c['days_remaining'] - 1;
                 if ($remaining <= 0) {
                     $db->table('marketing_campaigns')->where('id', $c['id'])->update(['status' => 'expired', 'days_remaining' => 0]);
@@ -110,10 +123,10 @@ class GameTick extends BaseCommand
             // ==============================
             $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
             foreach ($equipment as $e) {
-                $dayExpenses += (int) $e['fuel_cost'];
+                $dayExpenses += (int) round($e['fuel_cost'] * $costMult);
 
                 // Assigned operators reduce decay
-                $baseDecay = $e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3);
+                $baseDecay = (int) round(($e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3)) * $decayMult);
                 if ($e['equipment_type'] === 'groomer' && $countAssigned('groomer') > 0) {
                     $baseDecay = max(1, $baseDecay - 1);
                 }
@@ -169,7 +182,7 @@ class GameTick extends BaseCommand
                 if ($r['compliant']) {
                     $dayExpenses += (int) $r['compliance_cost'];
                 } else {
-                    if (rand(1, 100) <= 5) {
+                    if (rand(1, 100) <= $inspChance) {
                         $fine = (int) $r['penalty_risk'];
                         $dayExpenses += $fine;
                         log_activity($userId, 'inspection', 'Inspection fine: ' . $r['name'] . ' — ' . number_format($fine) . '€', 'fa-solid fa-gavel');
@@ -227,7 +240,7 @@ class GameTick extends BaseCommand
             $patrolBoost = $countAssigned('ski_patrol') * 2;
 
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost;
-            $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100));
+            $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult);
 
             // Summer reduction
             if (!$isWinter) $visitors = (int) round($visitors * 0.15);
@@ -360,7 +373,7 @@ class GameTick extends BaseCommand
             // VIP GUEST ARRIVALS
             // ==============================
             $resortRating = function_exists('resortRating') ? resortRating($userId) : 2;
-            $vipChance = min(50, ($resortRating * 8) + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3));
+            $vipChance = min(50, ($resortRating * 8) + $vipBonus + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3));
             if (rand(1, 100) <= $vipChance) {
                 $vipTypes = [
                     ['type' => 'celebrity', 'name' => 'Celebrity Guest', 'icon' => 'fa-solid fa-star', 'cash_min' => 5000, 'cash_max' => 20000, 'rep' => 5],
@@ -384,12 +397,12 @@ class GameTick extends BaseCommand
                 $stayDays = rand(1, 5);
                 $db->table('vip_guests')->insert([
                     'user_id' => $userId,
-                    'guest_name' => $vipFullName,
-                    'guest_type' => $vip['type'],
-                    'arrival_day' => $gameDay,
-                    'stay_days' => $stayDays,
-                    'cash_reward' => $vipCash,
-                    'reputation_reward' => $vip['rep'],
+                    'name' => $vipFullName,
+                    'vip_type' => $vip['type'],
+                    'game_day_arrived' => $gameDay,
+                    'days_remaining' => $stayDays,
+                    'reward_amount' => $vipCash,
+                    'reputation_bonus' => $vip['rep'],
                     'status' => 'visiting',
                     'created_at' => date('Y-m-d H:i:s'),
                 ]);
@@ -402,9 +415,12 @@ class GameTick extends BaseCommand
             // Process departing VIPs
             $departingVips = $db->table('vip_guests')->where('user_id', $userId)->where('status', 'visiting')->get()->getResultArray();
             foreach ($departingVips as $vg) {
-                if ($gameDay >= (int) $vg['arrival_day'] + (int) $vg['stay_days']) {
-                    $db->table('vip_guests')->where('id', $vg['id'])->update(['status' => 'departed']);
-                    log_activity($userId, 'vip_departure', $vg['guest_name'] . ' has departed. Thanks for visiting!', 'fa-solid fa-plane-departure');
+                $newDays = (int) $vg['days_remaining'] - 1;
+                if ($newDays <= 0) {
+                    $db->table('vip_guests')->where('id', $vg['id'])->update(['status' => 'departed', 'days_remaining' => 0]);
+                    log_activity($userId, 'vip_departure', $vg['name'] . ' has departed. Thanks for visiting!', 'fa-solid fa-plane-departure');
+                } else {
+                    $db->table('vip_guests')->where('id', $vg['id'])->update(['days_remaining' => $newDays]);
                 }
             }
 

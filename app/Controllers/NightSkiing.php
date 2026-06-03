@@ -16,6 +16,7 @@ class NightSkiing extends BaseController
 
     public function index(): string
     {
+        $locked = checkFeatureUnlock('night_skiing'); if ($locked) return $locked;
         $userId = auth()->id();
         $lights = $this->lightModel->where('user_id', $userId)->findAll();
 

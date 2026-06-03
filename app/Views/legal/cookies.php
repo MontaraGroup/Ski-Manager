@@ -7,7 +7,7 @@
 
     <div class="prose prose-sm max-w-none">
         <h2>1. What Are Cookies?</h2>
-        <p>Cookies are small text files stored on your device when you visit a website. They help websites remember your preferences, keep you logged in, and understand how you use the site. We also use localStorage, a similar browser storage mechanism, to store certain preferences.</p>
+        <p>Cookies are small text files stored on your device when you visit a website. They help websites remember your preferences, keep you logged in, and understand how you use the site. We also use similar technologies such as localStorage and browser storage. References to "cookies" in this policy include these similar technologies where applicable.</p>
 
         <h2>2. Your Cookie Choices</h2>
         <p>When you first visit Ski Manager, a consent banner gives you three options:</p>
@@ -16,12 +16,14 @@
             <li><strong>Analytics Only</strong> &mdash; Enables analytics cookies, blocks advertising cookies</li>
             <li><strong>Reject All</strong> &mdash; Blocks all non-essential cookies</li>
         </ul>
-        <p>You can change your preference at any time from your <a href="/settings" class="link link-primary">Settings</a> page under "Cookie Preferences." We use Google Consent Mode v2 to enforce your choice across all Google services on our site.</p>
+        <p>You can change your preference at any time through the cookie consent banner or, when logged in, from the <a href="/settings" class="link link-primary">Settings</a> page under "Cookie Preferences." We use Google Consent Mode v2 to enforce your choice across all Google services on our site.</p>
 
         <h2>3. Cookies We Use</h2>
 
+        <p>The cookies listed below are examples currently in use and may change as we update our services and third-party integrations.</p>
+
         <h3>3.1 Essential Cookies</h3>
-        <p>Required for the Service to function. These cannot be disabled.</p>
+        <p>Required for the Service to function. These cookies are necessary for the operation of the Service and do not require consent under applicable law.</p>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead><tr><th>Cookie/Storage</th><th>Purpose</th><th>Duration</th></tr></thead>
@@ -71,6 +73,8 @@
             </table>
         </div>
 
+        <p class="text-xs text-base-content/50 mt-2">These providers may process information according to their own privacy policies.</p>
+
         <h3>3.5 Security Cookies</h3>
         <p>Set by our CDN/security provider to protect against threats.</p>
         <div class="overflow-x-auto">
@@ -82,6 +86,8 @@
                 </tbody>
             </table>
         </div>
+
+        <p>Where required by law, non-essential cookies are only placed after obtaining your consent.</p>
 
         <h2>4. Google Consent Mode v2</h2>
         <p>We implement Google Consent Mode v2, which controls how Google tags behave based on your consent choice:</p>
@@ -105,7 +111,7 @@
         <p>We may update this Cookie Policy as we add or change services. Updates will be posted on this page with a revised date.</p>
 
         <h2>7. Contact</h2>
-        <p>For questions about our use of cookies, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+        <p>Privacy and cookie-related requests may be sent to <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
     </div>
 </div>
 <?= $this->endSection() ?>

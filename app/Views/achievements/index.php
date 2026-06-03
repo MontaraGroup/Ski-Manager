@@ -7,6 +7,12 @@
         <div><h1 class="text-2xl font-bold"><i class="fa-solid fa-award mr-2 text-warning"></i>Achievements</h1><p class="text-sm text-base-content/50"><?= $completed ?>/<?= $total ?> completed</p></div>
     </div>
     <?php if (session('success')) : ?><div class="alert alert-success mb-4" role="status"><span><?= session('success') ?></span></div><?php endif ?>
+    <?php $claimableCount = count(array_filter($achievements, fn($a) => $a['completed'] && !$a['claimed'])); ?>
+    <?php if ($claimableCount > 0) : ?>
+    <form action="/achievements/claim-all" method="post" class="mb-4"><?= csrf_field() ?>
+        <button class="btn btn-warning btn-sm gap-1"><i class="fa-solid fa-gift"></i> Claim All (<?= $claimableCount ?>)</button>
+    </form>
+    <?php endif ?>
     <progress class="progress progress-warning w-full mb-6" value="<?= $completed ?>" max="<?= $total ?>"></progress>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <?php foreach ($achievements as $a) : ?>
@@ -25,6 +31,9 @@
                 </div>
                 <div class="text-right shrink-0">
                     <div class="text-xs font-bold text-warning"><?= currency((int)$a['reward_amount']) ?></div>
+                    <?php if (isset($unlockMap[$a['achievement_key']])) : ?>
+                        <div class="badge badge-info badge-xs gap-1 mt-1"><i class="fa-solid fa-unlock"></i> Unlocks: <?= esc($unlockMap[$a['achievement_key']]) ?></div>
+                    <?php endif ?>
                     <?php if ($a['completed'] && !$a['claimed']) : ?>
                         <form action="/achievements/claim/<?= $a['id'] ?>" method="post"><?= csrf_field() ?><button class="btn btn-warning btn-xs mt-1">Claim</button></form>
                     <?php elseif ($a['claimed']) : ?>

@@ -31,7 +31,7 @@
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-8 h-8 rounded-lg <?= $eq['status'] === 'active' ? ($eq['equipment_type'] === 'groomer' ? 'bg-success/20' : 'bg-info/20') : 'bg-base-200' ?> flex items-center justify-center">
-                        <i class="<?= $eq['equipment_type'] === 'groomer' ? 'fa-solid fa-truck-monster' : 'fa-solid fa-snowflake' ?> <?= $eq['status'] === 'active' ? ($eq['equipment_type'] === 'groomer' ? 'text-success' : 'text-info') : 'text-base-content/30' ?>"></i>
+                        <i class="<?= $eq['equipment_type'] === 'groomer' ? 'icon-snowcat' : 'fa-solid fa-snowflake' ?> <?= $eq['status'] === 'active' ? ($eq['equipment_type'] === 'groomer' ? 'text-success' : 'text-info') : 'text-base-content/30' ?>"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-semibold truncate"><?= esc($eq['name']) ?></div>
@@ -60,7 +60,7 @@
     <?php endif ?>
 
     <!-- Shop: Groomers -->
-    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-truck-monster mr-1 text-success"></i>Snow Groomers</h2>
+    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-truck-monster"></i>Snow Groomers</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
     <?php foreach ($groomers as $key => $g) : ?>
         <form action="/equipment/buy" method="post">
@@ -71,7 +71,7 @@
                 <div class="card-body p-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-truck-monster text-xl text-success"></i>
+                            <i class="fa-solid fa-truck-monster"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-bold"><?= $g['name'] ?></div>

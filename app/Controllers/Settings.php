@@ -68,4 +68,17 @@ class Settings extends BaseController
         db_connect()->table('activity_log')->where('user_id', $userId)->delete();
         return redirect()->to('/settings')->with('success', 'Activity log cleared.');
     }
+
+    public function difficulty()
+    {
+        $userId = auth()->id();
+        $difficulty = $this->request->getPost('difficulty');
+        if (!in_array($difficulty, ['easy', 'standard', 'hard'])) {
+            return redirect()->to('/settings')->with('error', 'Invalid difficulty.');
+        }
+        $db = db_connect();
+        $db->table('player_finances')->where('user_id', $userId)->update(['difficulty' => $difficulty]);
+        log_activity($userId, 'Settings', 'Changed difficulty to ' . ucfirst($difficulty), 'fa-solid fa-gauge');
+        return redirect()->to('/settings')->with('success', 'Difficulty set to ' . ucfirst($difficulty) . '.');
+    }
 }

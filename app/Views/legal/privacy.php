@@ -9,6 +9,8 @@
         <h2>1. Introduction</h2>
         <p>Ski Manager ("we", "our", "us") operates skimanager.net (the "Service"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and online game.</p>
 
+        <p>Ski Manager is the data controller responsible for processing personal information under this Privacy Policy.</p>
+
         <h2>2. Information We Collect</h2>
         <h3>2.1 Account Information</h3>
         <p>When you create an account, we collect your username, email address, and password (stored in hashed form using industry-standard algorithms). If you sign in with Google, we receive your name, email address, and Google account identifier. We do not receive or store your Google password.</p>
@@ -42,13 +44,25 @@
             <li><strong>Google AdSense</strong> &mdash; Advertising. Google may use cookies to serve ads based on your browsing history. You can opt out of personalized ads at <a href="https://adssettings.google.com" class="link link-primary" target="_blank" rel="noopener">Google Ads Settings</a>.</li>
             <li><strong>Google Sign-In</strong> &mdash; Optional authentication. We receive basic profile information (name, email) when you choose to sign in with Google.</li>
             <li><strong>Cloudflare</strong> &mdash; CDN, DNS, security, and performance optimization. Cloudflare may process connection data per their <a href="https://www.cloudflare.com/privacypolicy/" class="link link-primary" target="_blank" rel="noopener">Privacy Policy</a>.</li>
+            </ul>
+        <p>Some third-party services, particularly Google Analytics and AdSense, may collect information directly through cookies and similar technologies in accordance with their own privacy policies.</p>
+        <ul>
             <li><strong>Sentry</strong> &mdash; Error tracking and performance monitoring. Collects technical error data to help us fix bugs.</li>
         </ul>
 
         <h2>5. Google Consent Mode</h2>
         <p>We implement Google Consent Mode v2, which adjusts how Google tags behave based on your cookie preferences. When you choose "Analytics Only," advertising cookies are blocked while analytics continue. When you choose "Reject All," all non-essential Google tracking is disabled. Google may still use cookieless modeling to estimate aggregate trends where permitted.</p>
 
-        <h2>6. Data Sharing</h2>
+        <h2>6. Legal Bases for Processing (GDPR)</h2>
+        <p>For users in the EU/EEA, we process personal data based on one or more of the following legal bases:</p>
+        <ul>
+            <li><strong>Performance of a contract</strong> — providing and maintaining the game Service</li>
+            <li><strong>Legitimate interests</strong> — security, fraud prevention, analytics, and service improvement</li>
+            <li><strong>Consent</strong> — cookies, optional features, and marketing communications</li>
+            <li><strong>Compliance with legal obligations</strong> — where required by applicable law</li>
+        </ul>
+
+        <h2>14. Data Sharing</h2>
         <p>We do not sell your personal information. We may share information only in these circumstances:</p>
         <ul>
             <li>With your explicit consent</li>
@@ -58,22 +72,15 @@
             <li>Publicly visible game data: leaderboard rankings display your username and resort statistics only</li>
         </ul>
 
-        <h2>7. Data Retention</h2>
-        <p>We retain your account and game data for as long as your account is active. If you delete your account, all associated personal data will be permanently removed within 30 days. Server logs are retained for up to 90 days. Anonymized analytics data may be retained indefinitely for statistical purposes.</p>
+        <h2>14. Data Retention</h2>
+        <p>We retain your account and game data for as long as your account is active. If you delete your account, all associated personal data will be removed within 30 days, except where retention is required by law, security needs, fraud prevention, dispute resolution, or enforcement of our legal rights. Server logs are retained for up to 90 days. Anonymized analytics data may be retained indefinitely for statistical purposes.</p>
 
-        <h2>8. Data Security</h2>
+        <h2>14. Data Security</h2>
         <p>We implement security measures including:</p>
-        <ul>
-            <li>HTTPS/TLS encryption for all connections</li>
-            <li>Bcrypt password hashing</li>
-            <li>CSRF token protection on all forms</li>
-            <li>Login rate limiting (5 failed attempts triggers a 30-minute lockout)</li>
-            <li>Secure session management</li>
-            <li>Cloudflare DDoS protection and WAF</li>
-        </ul>
+        <p>We implement industry-standard security measures including encryption for all connections (HTTPS/TLS), password hashing, cross-site request forgery protection, login rate limiting, secure session management, and CDN-level DDoS protection. We regularly review and update our security practices.</p>
         <p>However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.</p>
 
-        <h2>9. Your Rights</h2>
+        <h2>14. Your Rights</h2>
         <p>Depending on your jurisdiction, you may have the right to:</p>
         <ul>
             <li>Access the personal data we hold about you</li>
@@ -85,18 +92,18 @@
         </ul>
         <p><strong>For EU/EEA users (GDPR):</strong> You have the right to lodge a complaint with your local data protection authority.</p>
         <p><strong>For California users (CCPA):</strong> You have the right to know what personal information is collected, request deletion, and opt out of the sale of personal information. We do not sell personal information.</p>
-        <p>To exercise any rights, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a> or use the account deletion feature in <a href="/settings" class="link link-primary">Settings</a>.</p>
+        <p>To exercise any rights, submit a privacy request to <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a> or use the account deletion feature in <a href="/settings" class="link link-primary">Settings</a>.</p>
 
-        <h2>10. Children's Privacy</h2>
+        <h2>14. Children's Privacy</h2>
         <p>Ski Manager is not intended for children under 13 years of age (or 16 in the EU/EEA). We do not knowingly collect personal information from children under these ages. If you are a parent and believe your child has provided us with personal information, please contact us and we will promptly delete such data.</p>
 
-        <h2>11. International Data Transfers</h2>
-        <p>The Service is hosted in the European Union. If you access the Service from outside the EU, your information may be transferred to and processed in the EU. By using the Service, you consent to this transfer. We rely on standard contractual clauses where applicable.</p>
+        <h2>14. International Data Transfers</h2>
+        <p>The Service is hosted in the European Union. If you access the Service from outside the EU, your information may be transferred to and processed in the EU. Where required, we rely on appropriate safeguards, including Standard Contractual Clauses or other lawful transfer mechanisms.</p>
 
-        <h2>12. Changes to This Policy</h2>
+        <h2>14. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the new policy on this page and updating the "Last updated" date. Continued use of the Service after changes constitutes acceptance of the updated policy.</p>
 
-        <h2>13. Contact Us</h2>
+        <h2>14. Contact Us</h2>
         <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
     </div>
 </div>

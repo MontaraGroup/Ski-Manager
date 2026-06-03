@@ -22,6 +22,7 @@ class Resources extends BaseController
 
     public function energy(): string
     {
+        if (isPageHidden('energy')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         $userId = auth()->id();
         $db = db_connect();
         $energyConfig = $this->getResourceConfig('energy');
@@ -54,6 +55,7 @@ class Resources extends BaseController
 
     public function water(): string
     {
+        if (isPageHidden('water')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         $userId = auth()->id();
         $db = db_connect();
         $waterConfig = $this->getResourceConfig('water');

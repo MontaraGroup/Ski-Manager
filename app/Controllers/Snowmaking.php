@@ -9,6 +9,7 @@ class Snowmaking extends BaseController
 {
     public function index(): string
     {
+        $locked = checkFeatureUnlock('snowmaking'); if ($locked) return $locked;
         $userId = auth()->id();
         $db = db_connect();
 

@@ -9,6 +9,7 @@ class Grooming extends BaseController
 {
     public function index(): string
     {
+        $locked = checkFeatureUnlock('grooming'); if ($locked) return $locked;
         $userId = auth()->id();
         $staffModel = new StaffModel();
         $itemModel = new PlayerItemModel();

@@ -16,10 +16,10 @@
         <p>While we strive to make Ski Manager realistic, all game mechanics are simplified for entertainment. Real ski resort operations involve significantly more complexity, regulation, and expertise. The game should not be used as a reference for actual resort management, construction, engineering, environmental planning, or financial decision-making.</p>
 
         <h2>Brand References</h2>
-        <p>Ski Manager references real-world ski industry brands such as PistenBully, Prinoth, TechnoAlpin, and others for simulation and educational purposes. All trademarks, brand names, and logos are property of their respective owners. Ski Manager is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
+        <p>References to real-world companies, products, and brands (including PistenBully, Prinoth, TechnoAlpin, Demaclenko, SMI, and Sufag) are used solely for identification, descriptive, and simulation purposes. All trademarks, brand names, and logos are property of their respective owners. Ski Manager is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
 
         <h2>Trail Map</h2>
-        <p>The in-game trail map imagery is used under license from Mapsynergy (<a href="https://skimap.com" class="link link-primary" target="_blank" rel="noopener">skimap.com</a>). The map is a stylized artistic representation and does not depict real-time conditions, actual terrain, or any specific real-world ski resort.</p>
+        <p>Certain trail map imagery and related materials are used under license from Mapsynergy (<a href="https://skimap.com" class="link link-primary" target="_blank" rel="noopener">skimap.com</a>) and remain the property of their respective owners. The map is a stylized artistic representation and does not depict real-time conditions, actual terrain, or any specific real-world ski resort.</p>
 
         <h2>Weather and Environmental Data</h2>
         <p>All weather conditions, snowfall amounts, temperatures, and environmental data within the game are procedurally generated for gameplay purposes. They do not reflect actual weather conditions at any real location.</p>
@@ -30,12 +30,16 @@
         <h2>External Links</h2>
         <p>Ski Manager may contain links to external websites. We have no control over and are not responsible for the content, privacy practices, or availability of external sites. Visiting external links is at your own risk.</p>
 
-        <h2>No Warranties</h2>
-        <p>The game and website are provided "as is" without warranties of any kind, express or implied. We do not guarantee uninterrupted access, error-free gameplay, preservation of game data, or fitness for any particular purpose. See our <a href="/terms" class="link link-primary">Terms of Service</a> for full details.</p>
+        <h2>Leaderboards and User Content</h2>
+        <p>Leaderboards, rankings, statistics, and player-generated resort names are provided for entertainment purposes and may contain inaccuracies, outdated information, or user-generated content.</p>
 
-        <h2>Limitation of Liability</h2>
-        <p>Under no circumstances shall Ski Manager or its operators be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use the Service.</p>
+        <h2>Service Availability</h2>
+        <p>Features, gameplay mechanics, virtual economies, and content may be modified, suspended, or removed at any time without notice.</p>
 
+        <h2>Legal</h2>
+        <p>This disclaimer supplements, and does not replace, the <a href="/terms" class="link link-primary">Terms of Service</a>. Additional warranty disclaimers and limitations of liability are contained in the Terms of Service.</p>
+
+        
         <h2>Contact</h2>
         <p>Questions about this disclaimer? Contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
     </div>

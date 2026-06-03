@@ -8,6 +8,7 @@ class Parking extends BaseController
 {
     public function index(): string
     {
+        $locked = checkFeatureUnlock('parking'); if ($locked) return $locked;
         $userId = auth()->id();
         $parkingModel = new ParkingModel();
 

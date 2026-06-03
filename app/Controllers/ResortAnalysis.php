@@ -8,6 +8,7 @@ class ResortAnalysis extends BaseController
 
     public function index(): string
     {
+        $locked = checkFeatureUnlock('resort_analysis'); if ($locked) return $locked;
         $userId = auth()->id();
         $db = db_connect();
         $reports = $db->table('resort_reports')->where('user_id', $userId)->orderBy('game_day', 'DESC')->get()->getResultArray();

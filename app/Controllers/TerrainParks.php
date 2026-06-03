@@ -10,6 +10,7 @@ class TerrainParks extends BaseController
 {
     public function index(): string
     {
+        $locked = checkFeatureUnlock('terrain_parks'); if ($locked) return $locked;
         $userId = auth()->id();
         $parkModel = new TerrainParkModel();
         $staffModel = new StaffModel();

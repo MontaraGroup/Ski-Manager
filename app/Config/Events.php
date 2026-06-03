@@ -55,3 +55,15 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+// Save difficulty choice from registration form to session
+Events::on('post_controller_constructor', static function () {
+    $request = service('request');
+    if ($request->is('post') && str_contains($request->getPath(), 'register')) {
+        $difficulty = $request->getPost('difficulty');
+        if (in_array($difficulty, ['easy', 'standard', 'hard'])) {
+            session()->set('difficulty', $difficulty);
+        }
+    }
+});
+

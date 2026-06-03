@@ -19,7 +19,9 @@ class Finances extends BaseController
 
         $finance = $financeModel->where('user_id', $userId)->first();
         if (!$finance) {
-            $financeModel->insert(['user_id' => $userId, 'cash' => 500000]);
+            $diff = session('difficulty') ?? 'standard';
+            $startingCash = match($diff) { 'easy' => 1000000, 'hard' => 200000, default => 500000 };
+            $financeModel->insert(['user_id' => $userId, 'cash' => $startingCash, 'difficulty' => $diff]);
             $finance = $financeModel->where('user_id', $userId)->first();
         }
 

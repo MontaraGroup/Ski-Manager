@@ -27,6 +27,7 @@ class Marketing extends BaseController
 
     public function index(): string
     {
+        $locked = checkFeatureUnlock('marketing'); if ($locked) return $locked;
         $userId = auth()->id();
         $campaigns = $this->model->where('user_id', $userId)->where('status !=', 'expired')->findAll();
         $activeCampaigns = array_filter($campaigns, fn($c) => $c['status'] === 'active');

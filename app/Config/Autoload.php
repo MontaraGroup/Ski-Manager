@@ -88,5 +88,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['currency', 'activity', 'auth', 'setting', 'rating', 'notify', 'time', 'breadcrumb'];
+    public $helpers = ['currency', 'activity', 'auth', 'setting', 'rating', 'notify', 'time', 'breadcrumb', 'difficulty', 'unlock_check'];
 }
