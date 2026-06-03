@@ -2,6 +2,9 @@
 <html lang="en" dir="ltr" data-theme="carboncloud">
 <head>
     <meta charset="UTF-8">
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!="dataLayer"?"\x26l="+l:"";j.async=true;j.src="https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);})(window,document,"script","dataLayer","GTM-5GGPL25W");</script>
+    <!-- End Google Tag Manager -->
     <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
@@ -68,6 +71,9 @@ a.link:hover{opacity:0.8}
 </style>
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5GGPL25W" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 
     <!-- Navbar -->
     <nav aria-label="Main navigation"><div class="navbar bg-base-100 sticky top-0 shadow-md" style="z-index:9999; position:relative px-4 lg:px-8">
