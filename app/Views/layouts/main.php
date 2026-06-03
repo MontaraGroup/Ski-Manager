@@ -2,6 +2,32 @@
 <html lang="en" dir="ltr" data-theme="carboncloud">
 <head>
     <meta charset="UTF-8">
+    <!-- Google Consent Mode v2 -->
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+    });
+    </script>
+    <!-- End Consent Mode -->
+    <!-- Google Consent Mode v2 -->
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+    });
+    </script>
+    <!-- End Consent Mode -->
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!="dataLayer"?"\x26l="+l:"";j.async=true;j.src="https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);})(window,document,"script","dataLayer","GTM-5GGPL25W");</script>
     <!-- End Google Tag Manager -->
@@ -433,6 +459,36 @@ document.addEventListener("keydown",function(e){
 var observer=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add("animate-fade-in-up");e.target.style.animationDelay=(Array.from(e.target.parentElement.children).indexOf(e.target)*0.05)+"s";observer.unobserve(e.target);}});},{threshold:0.1,rootMargin:"0px 0px -30px 0px"});
 document.querySelectorAll(".card,.alert").forEach(function(el){el.style.opacity="0";observer.observe(el);});
 </script>
+
+<!-- Cookie Consent Banner -->
+<div id="cookieConsent" class="fixed bottom-0 left-0 right-0 bg-base-200 border-t border-base-300 p-4 shadow-lg" style="z-index:99999;display:none;">
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-sm text-base-content/80">We use cookies for analytics and advertising. You can choose which to accept.</p>
+        <div class="flex gap-2 shrink-0">
+            <button onclick="acceptCookies('all')" class="btn btn-primary btn-sm">Accept All</button>
+            <button onclick="acceptCookies('analytics')" class="btn btn-outline btn-sm">Analytics Only</button>
+            <button onclick="acceptCookies('none')" class="btn btn-ghost btn-sm">Reject All</button>
+        </div>
+    </div>
+</div>
+<script>
+function acceptCookies(level){
+    var consent={
+        analytics_storage:(level==='all'||level==='analytics')?'granted':'denied',
+        ad_storage:level==='all'?'granted':'denied',
+        ad_user_data:level==='all'?'granted':'denied',
+        ad_personalization:level==='all'?'granted':'denied'
+    };
+    gtag('consent','update',consent);
+    localStorage.setItem('cookie_consent',level);
+    document.getElementById('cookieConsent').style.display='none';
+}
+(function(){
+    var saved=localStorage.getItem('cookie_consent');
+    if(saved){acceptCookies(saved);}
+    else{document.getElementById('cookieConsent').style.display='block';}
+})();
+</script>
 </body>
 <!-- Tutorial Widget -->
 <?php if (auth()->loggedIn()) : ?>
@@ -563,24 +619,7 @@ loadTutorial();
 setInterval(loadTutorial, 10000);
 </script>
 <?php endif ?>
-<!-- Cookie Consent Banner -->
-<div id="cookieBanner" class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 shadow-lg hidden" style="z-index:999999;">
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-4">
-        <div class="flex-1 text-sm">
-            <i class="fa-solid fa-cookie-bite text-warning mr-1"></i>
-            We use cookies to improve your experience. By continuing to use this site, you agree to our <a href="/cookies" class="link link-primary">Cookie Policy</a>.
-        </div>
-        <div class="flex gap-2 shrink-0">
-            <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Accept</button>
-            <button class="btn btn-ghost btn-sm" onclick="declineCookies()">Decline</button>
-        </div>
-    </div>
-</div>
-<script>
-function acceptCookies(){localStorage.setItem("cookie_consent","accepted");document.getElementById("cookieBanner").classList.add("hidden");}
-function declineCookies(){localStorage.setItem("cookie_consent","declined");document.getElementById("cookieBanner").classList.add("hidden");}
-if(!localStorage.getItem("cookie_consent")){document.getElementById("cookieBanner").classList.remove("hidden");}
-</script>
+
 <script>
 document.querySelectorAll('.navbar details').forEach(function(det) {
     det.addEventListener('toggle', function() {

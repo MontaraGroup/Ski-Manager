@@ -3,70 +3,81 @@
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
     <h1 class="text-3xl font-bold mb-2">Terms of Service</h1>
-    <p class="text-sm text-base-content/50 mb-6">Last updated: June 1, 2026</p>
+    <p class="text-sm text-base-content/50 mb-6">Last updated: June 3, 2026</p>
 
     <div class="prose prose-sm max-w-none">
         <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using Ski Manager at v2.ski-manager.net (the "Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+        <p>By accessing or using Ski Manager at skimanager.net (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. We may update these Terms at any time, and continued use constitutes acceptance of the updated Terms.</p>
 
         <h2>2. Description of Service</h2>
-        <p>Ski Manager is a free-to-play browser-based ski resort management simulation game. Players create and manage virtual ski resorts, including building infrastructure, hiring staff, managing finances, and competing with other players. The Service is provided "as is" and "as available."</p>
+        <p>Ski Manager is a free-to-play browser-based ski resort management simulation game. Players create and manage virtual ski resorts, including building infrastructure, hiring staff, managing finances, and competing on leaderboards. The Service is provided "as is" and "as available" without guarantees of uptime or data preservation.</p>
 
-        <h2>3. Account Registration</h2>
-        <p>To use the game features, you must create an account. You agree to:</p>
+        <h2>3. Eligibility</h2>
+        <p>You must be at least 13 years old (or 16 in the EU/EEA) to create an account and use the Service. By creating an account, you represent that you meet this age requirement. If you are under 18, you represent that your parent or legal guardian has reviewed and agrees to these Terms.</p>
+
+        <h2>4. Account Registration</h2>
+        <p>To use game features, you must create an account via email/password or Google Sign-In. You agree to:</p>
         <ul>
             <li>Provide accurate and complete registration information</li>
-            <li>Maintain the security of your account credentials</li>
-            <li>Accept responsibility for all activity under your account</li>
+            <li>Maintain the security and confidentiality of your account credentials</li>
+            <li>Accept responsibility for all activity that occurs under your account</li>
             <li>Notify us immediately of any unauthorized use of your account</li>
+            <li>Not share, sell, or transfer your account to another person</li>
         </ul>
-        <p>You must be at least 13 years old to create an account. We reserve the right to refuse registration or terminate accounts at our discretion.</p>
+        <p>We reserve the right to refuse registration, suspend, or terminate accounts at our discretion.</p>
 
-        <h2>4. User Conduct</h2>
+        <h2>5. User Conduct</h2>
         <p>You agree not to:</p>
         <ul>
             <li>Use the Service for any unlawful purpose</li>
-            <li>Attempt to exploit bugs, glitches, or vulnerabilities</li>
-            <li>Use automated tools, bots, or scripts to interact with the Service</li>
-            <li>Attempt to gain unauthorized access to other accounts or systems</li>
-            <li>Harass, abuse, or threaten other players</li>
-            <li>Create multiple accounts to gain unfair advantages</li>
-            <li>Interfere with or disrupt the Service or its infrastructure</li>
-            <li>Sell, trade, or transfer your account or in-game items for real money</li>
+            <li>Exploit bugs, glitches, or vulnerabilities (report them to us instead)</li>
+            <li>Use automated tools, bots, scripts, or macros to interact with the Service</li>
+            <li>Attempt to gain unauthorized access to other accounts, systems, or data</li>
+            <li>Harass, abuse, threaten, or impersonate other players</li>
+            <li>Create multiple accounts to gain unfair advantages or evade bans</li>
+            <li>Interfere with or disrupt the Service, servers, or networks</li>
+            <li>Sell, trade, or transfer accounts or in-game items for real money</li>
+            <li>Reverse engineer, decompile, or attempt to extract the source code</li>
+            <li>Use the Service to distribute spam, malware, or phishing attempts</li>
         </ul>
+        <p>Violations may result in immediate account suspension or permanent termination without notice.</p>
 
-        <h2>5. Virtual Currency and Items</h2>
-        <p>The Service includes virtual currency ("Génépis") and virtual items. These have no real-world monetary value. We reserve the right to modify, adjust, or remove virtual currencies and items at any time. Virtual items and currency are licensed, not sold, and remain our property.</p>
+        <h2>6. Virtual Currency and Items</h2>
+        <p>The Service includes virtual currencies (including "Euros" and "G&eacute;n&eacute;pis") and virtual items. These have no real-world monetary value and cannot be exchanged for real currency. We reserve the right to modify, adjust, rebalance, or remove virtual currencies and items at any time without compensation. Virtual items and currency are licensed to you, not sold, and remain our property.</p>
 
-        <h2>6. Intellectual Property</h2>
-        <p>All content, design, code, graphics, and game mechanics of Ski Manager are owned by us or our licensors and are protected by copyright, trademark, and other intellectual property laws. The trail map imagery is used under license from Mapsynergy/Skimap.com. You may not reproduce, distribute, or create derivative works from our content without written permission.</p>
+        <h2>7. Game Resets and Changes</h2>
+        <p>We may perform game resets, balance changes, economy adjustments, or data wipes as part of normal game operations, updates, or maintenance. We are not obligated to provide advance notice of such changes, though we will make reasonable efforts to do so. No compensation is owed for game changes or resets.</p>
 
-        <h2>7. Modifications to Service</h2>
-        <p>We reserve the right to modify, suspend, or discontinue the Service (or any part of it) at any time, with or without notice. We may also perform game resets, balance changes, or wipes as part of normal game operations. We are not liable for any modification, suspension, or discontinuation of the Service.</p>
+        <h2>8. Intellectual Property</h2>
+        <p>All content, design, code, graphics, game mechanics, text, and branding of Ski Manager are owned by us or our licensors and are protected by copyright, trademark, and other intellectual property laws. The trail map imagery is used under license from Mapsynergy (skimap.com). You may not reproduce, distribute, modify, or create derivative works from our content without prior written permission.</p>
+        <p>You retain ownership of any feedback or suggestions you submit, but grant us a perpetual, royalty-free license to use such feedback to improve the Service.</p>
 
-        <h2>8. Account Termination</h2>
-        <p>We may suspend or terminate your account at any time for violation of these Terms, including but not limited to cheating, exploiting, or disruptive behavior. You may delete your account at any time through your Account Settings. Upon termination, all game data associated with your account will be permanently deleted.</p>
+        <h2>9. Advertising</h2>
+        <p>The Service displays third-party advertisements, including ads served by Google AdSense. We are not responsible for the content of third-party advertisements. Your interactions with advertisers are solely between you and the advertiser. The presence of an advertisement does not constitute our endorsement of the advertised product or service.</p>
 
-        <h2>9. Disclaimers</h2>
-        <p>The Service is provided on an "as is" and "as available" basis without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, error-free, or free of harmful components. We are not responsible for any loss of game data or progress.</p>
+        <h2>10. Account Termination</h2>
+        <p>We may suspend or terminate your account at any time for violation of these Terms, including cheating, exploiting, disruptive behavior, or any reason at our sole discretion. You may delete your account at any time through <a href="/settings" class="link link-primary">Settings</a>. Upon termination, all game data associated with your account will be permanently deleted within 30 days.</p>
 
-        <h2>10. Limitation of Liability</h2>
-        <p>To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, including but not limited to loss of data, loss of profits, or interruption of service.</p>
+        <h2>11. Disclaimers</h2>
+        <p>THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, SECURE, OR FREE OF HARMFUL COMPONENTS. WE ARE NOT RESPONSIBLE FOR ANY LOSS OF GAME DATA OR PROGRESS.</p>
 
-        <h2>11. Advertising</h2>
-        <p>The Service may display third-party advertisements, including ads served by Google AdSense. We are not responsible for the content of third-party advertisements. Your interaction with advertisers is solely between you and the advertiser.</p>
+        <h2>12. Limitation of Liability</h2>
+        <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SERVICE, INCLUDING BUT NOT LIMITED TO LOSS OF DATA, LOSS OF PROFITS, LOSS OF GOODWILL, OR INTERRUPTION OF SERVICE, WHETHER BASED ON WARRANTY, CONTRACT, TORT, OR ANY OTHER LEGAL THEORY.</p>
 
-        <h2>12. Third-Party Links</h2>
-        <p>The Service may contain links to third-party websites or services. We are not responsible for the content, privacy policies, or practices of third-party sites. We encourage you to read the terms and privacy policies of any third-party sites you visit.</p>
+        <h2>13. Indemnification</h2>
+        <p>You agree to indemnify and hold harmless Ski Manager, its operators, and affiliates from any claims, damages, losses, or expenses (including legal fees) arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.</p>
 
-        <h2>13. Governing Law</h2>
-        <p>These Terms shall be governed by and construed in accordance with applicable laws, without regard to conflict of law principles.</p>
+        <h2>14. Third-Party Links</h2>
+        <p>The Service may contain links to third-party websites or services. We are not responsible for the content, privacy policies, or practices of third-party sites. Accessing external links is at your own risk.</p>
 
-        <h2>14. Changes to Terms</h2>
-        <p>We reserve the right to update these Terms at any time. Material changes will be communicated through the Service or via email. Continued use of the Service after changes constitutes acceptance of the updated Terms.</p>
+        <h2>15. Severability</h2>
+        <p>If any provision of these Terms is found to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary, and the remaining provisions will remain in full effect.</p>
 
-        <h2>15. Contact</h2>
-        <p>For questions about these Terms, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a> or use our <a href="/contact">Contact Form</a>.</p>
+        <h2>16. Governing Law</h2>
+        <p>These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these Terms or the Service shall be resolved through good-faith negotiation before pursuing formal legal action.</p>
+
+        <h2>17. Contact</h2>
+        <p>For questions about these Terms, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
     </div>
 </div>
 <?= $this->endSection() ?>

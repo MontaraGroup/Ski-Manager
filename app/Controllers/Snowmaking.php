@@ -15,6 +15,21 @@ class Snowmaking extends BaseController
         $this->cannonModel = new SnowCannonModel();
     }
 
+    private function getCannonTypes(): array
+    {
+        $db = db_connect();
+        $rows = $db->table('cannon_types')->orderBy('sort_order')->get()->getResultArray();
+        $types = [];
+        foreach ($rows as $r) {
+            $types[(int) $r['level']] = [
+                'name' => $r['name'], 'output' => (int) $r['output_per_day'],
+                'energy' => (int) $r['energy_cost'], 'water' => (int) $r['water_usage'],
+                'cost' => (int) $r['cost'],
+            ];
+        }
+        return $types;
+    }
+
     public function index(): string
     {
         $userId = auth()->id();
@@ -36,24 +51,12 @@ class Snowmaking extends BaseController
         $totalEnergy = array_sum(array_column($activeCannons, 'energy_cost'));
         $totalWater = array_sum(array_column($activeCannons, 'water_usage'));
 
-        $cannonTypes = [
-            1 => ['name' => 'Fan Gun (Basic)', 'output' => 3, 'energy' => 500, 'water' => 100, 'cost' => 15000],
-            2 => ['name' => 'Fan Gun (Advanced)', 'output' => 6, 'energy' => 800, 'water' => 180, 'cost' => 35000],
-            3 => ['name' => 'Lance Gun', 'output' => 8, 'energy' => 600, 'water' => 220, 'cost' => 50000],
-            4 => ['name' => 'Tower Gun', 'output' => 12, 'energy' => 1200, 'water' => 350, 'cost' => 85000],
-            5 => ['name' => 'All-Weather System', 'output' => 15, 'energy' => 1800, 'water' => 500, 'cost' => 150000],
-        ];
-
         $db = db_connect();
         return view('snowmaking/index', [
-            'cannons' => $cannons,
-            'snowmakers' => $snowmakers,
-            'temp' => $temp,
-            'canMakeSnow' => $canMakeSnow,
-            'totalOutput' => $totalOutput,
-            'totalEnergy' => $totalEnergy,
-            'totalWater' => $totalWater,
-            'cannonTypes' => $cannonTypes,
+            'cannons' => $cannons, 'snowmakers' => $snowmakers,
+            'temp' => $temp, 'canMakeSnow' => $canMakeSnow,
+            'totalOutput' => $totalOutput, 'totalEnergy' => $totalEnergy,
+            'totalWater' => $totalWater, 'cannonTypes' => $this->getCannonTypes(),
         ]);
     }
 
@@ -61,14 +64,7 @@ class Snowmaking extends BaseController
     {
         $userId = auth()->id();
         $level = (int) $this->request->getPost('level');
-
-        $types = [
-            1 => ['name' => 'Fan Gun (Basic)', 'output' => 3, 'energy' => 500, 'water' => 100],
-            2 => ['name' => 'Fan Gun (Advanced)', 'output' => 6, 'energy' => 800, 'water' => 180],
-            3 => ['name' => 'Lance Gun', 'output' => 8, 'energy' => 600, 'water' => 220],
-            4 => ['name' => 'Tower Gun', 'output' => 12, 'energy' => 1200, 'water' => 350],
-            5 => ['name' => 'All-Weather System', 'output' => 15, 'energy' => 1800, 'water' => 500],
-        ];
+        $types = $this->getCannonTypes();
 
         if (!isset($types[$level])) {
             return redirect()->back()->with('error', 'Invalid cannon type.');
@@ -95,14 +91,8 @@ class Snowmaking extends BaseController
     {
         $userId = auth()->id();
         $cannon = $this->cannonModel->where('id', $id)->where('user_id', $userId)->first();
-
-        if (!$cannon) {
-            return redirect()->back()->with('error', 'Cannon not found.');
-        }
-
-        if ($cannon['condition_pct'] <= 0) {
-            return redirect()->back()->with('error', 'This cannon is broken and needs repair.');
-        }
+        if (!$cannon) return redirect()->back()->with('error', 'Cannon not found.');
+        if ($cannon['condition_pct'] <= 0) return redirect()->back()->with('error', 'This cannon is broken and needs repair.');
 
         $newStatus = $cannon['status'] === 'active' ? 'off' : 'active';
         $this->cannonModel->update($id, ['status' => $newStatus]);
@@ -115,10 +105,7 @@ class Snowmaking extends BaseController
     {
         $userId = auth()->id();
         $cannon = $this->cannonModel->where('id', $id)->where('user_id', $userId)->first();
-
-        if (!$cannon) {
-            return redirect()->back()->with('error', 'Cannon not found.');
-        }
+        if (!$cannon) return redirect()->back()->with('error', 'Cannon not found.');
 
         $this->cannonModel->update($id, ['condition_pct' => 100, 'status' => 'off']);
         return redirect()->to('/snowmaking')->with('success', $cannon['cannon_name'] . ' repaired.');
@@ -128,10 +115,7 @@ class Snowmaking extends BaseController
     {
         $userId = auth()->id();
         $cannon = $this->cannonModel->where('id', $id)->where('user_id', $userId)->first();
-
-        if (!$cannon) {
-            return redirect()->back()->with('error', 'Cannon not found.');
-        }
+        if (!$cannon) return redirect()->back()->with('error', 'Cannon not found.');
 
         $this->cannonModel->delete($id);
         log_activity($userId, 'Snowmaking', 'Sold ' . $cannon['cannon_name'], 'fa-solid fa-money-bill-wave');

@@ -2,31 +2,40 @@
 namespace App\Controllers;
 class Insurance extends BaseController
 {
+    private function getInsuranceTypes(): array
+    {
+        $db = db_connect();
+        $rows = $db->table('insurance_types')->orderBy('sort_order')->get()->getResultArray();
+        $types = [];
+        foreach ($rows as $r) {
+            $types[$r['type_key']] = ['name' => $r['name'], 'premium' => (int) $r['premium'], 'coverage' => (int) $r['coverage'], 'icon' => $r['icon']];
+        }
+        return $types;
+    }
+
     public function index(): string
     {
         $userId = auth()->id();
         $db = db_connect();
+        $insuranceTypes = $this->getInsuranceTypes();
+
         $policies = $db->table('insurance')->where('user_id', $userId)->get()->getResultArray();
         if (empty($policies)) {
-            $defaults = [
-                ['type' => 'liability', 'name' => 'Public Liability', 'premium' => 500, 'coverage' => 100000, 'icon' => 'fa-solid fa-shield-halved'],
-                ['type' => 'property', 'name' => 'Property Damage', 'premium' => 800, 'coverage' => 200000, 'icon' => 'fa-solid fa-building'],
-                ['type' => 'accident', 'name' => 'Guest Accident', 'premium' => 1200, 'coverage' => 300000, 'icon' => 'fa-solid fa-user-injured'],
-                ['type' => 'weather', 'name' => 'Weather Damage', 'premium' => 600, 'coverage' => 150000, 'icon' => 'fa-solid fa-cloud-bolt'],
-                ['type' => 'equipment', 'name' => 'Equipment Breakdown', 'premium' => 400, 'coverage' => 80000, 'icon' => 'fa-solid fa-gear'],
-                ['type' => 'business', 'name' => 'Business Interruption', 'premium' => 1500, 'coverage' => 500000, 'icon' => 'fa-solid fa-briefcase'],
-            ];
-            foreach ($defaults as $d) {
-                $db->table('insurance')->insert(['user_id' => $userId, 'policy_type' => $d['type'], 'name' => $d['name'], 'premium_per_day' => $d['premium'], 'coverage_amount' => $d['coverage'], 'active' => 0, 'created_at' => date('Y-m-d H:i:s')]);
+            foreach ($insuranceTypes as $key => $t) {
+                $db->table('insurance')->insert(['user_id' => $userId, 'policy_type' => $key, 'name' => $t['name'], 'premium_per_day' => $t['premium'], 'coverage_amount' => $t['coverage'], 'active' => 0, 'created_at' => date('Y-m-d H:i:s')]);
             }
             $policies = $db->table('insurance')->where('user_id', $userId)->get()->getResultArray();
         }
+
+        $icons = [];
+        foreach ($insuranceTypes as $key => $t) { $icons[$key] = $t['icon']; }
+
         $activePolicies = array_filter($policies, fn($p) => $p['active']);
         $totalPremium = array_sum(array_column($activePolicies, 'premium_per_day'));
         $totalCoverage = array_sum(array_column($activePolicies, 'coverage_amount'));
-        $icons = ['liability' => 'fa-solid fa-shield-halved', 'property' => 'fa-solid fa-building', 'accident' => 'fa-solid fa-user-injured', 'weather' => 'fa-solid fa-cloud-bolt', 'equipment' => 'fa-solid fa-gear', 'business' => 'fa-solid fa-briefcase'];
         return view('insurance/index', ['policies' => $policies, 'totalPremium' => $totalPremium, 'totalCoverage' => $totalCoverage, 'activeCount' => count($activePolicies), 'icons' => $icons]);
     }
+
     public function toggle(int $id)
     {
         $userId = auth()->id();

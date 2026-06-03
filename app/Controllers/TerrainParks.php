@@ -24,7 +24,7 @@ class TerrainParks extends BaseController
             'parks' => $parks,
             'parkCrew' => $parkCrew,
             'slopes' => $slopes,
-            'parkConfig' => TerrainParkModel::PARK_CONFIG,
+            'parkConfig' => TerrainParkModel::loadParkConfig(),
             'cash' => $finances['cash'] ?? 0,
         ]);
     }
@@ -40,7 +40,8 @@ class TerrainParks extends BaseController
         $name = $this->request->getPost('name');
         $slopeId = $this->request->getPost('slope_id');
 
-        if (!isset(TerrainParkModel::PARK_CONFIG[$parkType])) {
+        $parkConfig = TerrainParkModel::loadParkConfig();
+        if (!isset($parkConfig[$parkType])) {
             return redirect()->to('/terrain-parks')->with('error', 'Invalid park type.');
         }
 
@@ -68,7 +69,6 @@ class TerrainParks extends BaseController
         ]);
 
         log_activity($userId, 'terrain_park_build', "Started building " . TerrainParkModel::getLabel($parkType) . " ({$size}) for " . currency($config['cost']));
-
         return redirect()->to('/terrain-parks')->with('success', TerrainParkModel::getLabel($parkType) . ' is now under construction!');
     }
 
@@ -76,17 +76,13 @@ class TerrainParks extends BaseController
     {
         $userId = auth()->id();
         $parkModel = new TerrainParkModel();
-
         $park = $parkModel->where('id', $id)->where('user_id', $userId)->first();
         if (!$park || $park['status'] === 'under_construction') {
             return redirect()->to('/terrain-parks')->with('error', 'Cannot toggle this park feature.');
         }
-
         $newStatus = $park['status'] === 'open' ? 'closed' : 'open';
         $parkModel->update($id, ['status' => $newStatus]);
-
         log_activity($userId, 'terrain_park_toggle', ucfirst($newStatus) . " " . $park['name']);
-
         return redirect()->to('/terrain-parks')->with('success', $park['name'] . ' is now ' . $newStatus . '.');
     }
 
@@ -95,25 +91,17 @@ class TerrainParks extends BaseController
         $userId = auth()->id();
         $parkModel = new TerrainParkModel();
         $financeModel = model('FinanceModel');
-
         $park = $parkModel->where('id', $id)->where('user_id', $userId)->first();
-        if (!$park) {
-            return redirect()->to('/terrain-parks')->with('error', 'Park feature not found.');
-        }
+        if (!$park) return redirect()->to('/terrain-parks')->with('error', 'Park feature not found.');
 
         $config = TerrainParkModel::getConfig($park['park_type'], $park['size']);
         $repairCost = round($config['cost'] * 0.15 * (1 - $park['condition_pct'] / 100));
-
         $finances = $financeModel->where('user_id', $userId)->first();
-        if (($finances['cash'] ?? 0) < $repairCost) {
-            return redirect()->to('/terrain-parks')->with('error', 'Not enough cash for repairs.');
-        }
+        if (($finances['cash'] ?? 0) < $repairCost) return redirect()->to('/terrain-parks')->with('error', 'Not enough cash for repairs.');
 
         $financeModel->where('user_id', $userId)->set('cash', "cash - {$repairCost}", false)->update();
         $parkModel->update($id, ['condition_pct' => 100.00, 'status' => 'open']);
-
         log_activity($userId, 'terrain_park_repair', "Repaired " . $park['name'] . " for " . currency($repairCost));
-
         return redirect()->to('/terrain-parks')->with('success', $park['name'] . ' has been fully repaired!');
     }
 
@@ -121,22 +109,15 @@ class TerrainParks extends BaseController
     {
         $userId = auth()->id();
         $parkModel = new TerrainParkModel();
-
         $park = $parkModel->where('id', $id)->where('user_id', $userId)->first();
-        if (!$park) {
-            return redirect()->to('/terrain-parks')->with('error', 'Park feature not found.');
-        }
+        if (!$park) return redirect()->to('/terrain-parks')->with('error', 'Park feature not found.');
 
         $config = TerrainParkModel::getConfig($park['park_type'], $park['size']);
         $refund = round($config['cost'] * 0.25);
-
         $financeModel = model('FinanceModel');
         $financeModel->where('user_id', $userId)->set('cash', "cash + {$refund}", false)->update();
-
         $parkModel->delete($id);
-
         log_activity($userId, 'terrain_park_demolish', "Demolished " . $park['name'] . ", refunded " . currency($refund));
-
         return redirect()->to('/terrain-parks')->with('success', $park['name'] . ' demolished. ' . currency($refund) . ' refunded.');
     }
 
@@ -145,28 +126,19 @@ class TerrainParks extends BaseController
         $userId = auth()->id();
         $staffModel = new StaffModel();
         $financeModel = model('FinanceModel');
-
         $hireCost = 2000;
         $finances = $financeModel->where('user_id', $userId)->first();
-        if (($finances['cash'] ?? 0) < $hireCost) {
-            return redirect()->to('/terrain-parks')->with('error', 'Not enough cash to hire park crew.');
-        }
+        if (($finances['cash'] ?? 0) < $hireCost) return redirect()->to('/terrain-parks')->with('error', 'Not enough cash to hire park crew.');
 
         $names = ['Jake', 'Tyler', 'Kai', 'Mika', 'Sasha', 'Riley', 'Quinn', 'Devon', 'Avery', 'Jordan'];
         $financeModel->where('user_id', $userId)->set('cash', "cash - {$hireCost}", false)->update();
-
         $staffModel->insert([
             'user_id' => $userId,
             'name' => $names[array_rand($names)] . ' ' . chr(rand(65, 90)) . '.',
-            'role' => 'park_crew',
-            'salary' => 350,
-            'morale' => 80,
-            'level' => rand(1, 3),
-            'status' => 'active',
+            'role' => 'park_crew', 'salary' => 350, 'morale' => 80,
+            'level' => rand(1, 3), 'status' => 'active',
         ]);
-
         log_activity($userId, 'park_crew_hire', "Hired park crew member for " . currency($hireCost));
-
         return redirect()->to('/terrain-parks')->with('success', 'New park crew member hired!');
     }
 }
