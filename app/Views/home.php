@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Game<?= $this->endSection() ?>
+<?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Tycoon Game<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 
 <?php
@@ -18,9 +18,9 @@
     <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
             <div class="lg:col-span-3">
-                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-circle animate-pulse-soft text-xs"></i> <?= $playerCount ?> players building resorts right now</div>
+                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-circle animate-pulse-soft text-xs"></i> Season 1 is Live</div>
                 <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
-                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Every decision matters - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
+                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Build lifts, hire staff, manage snowmaking, and survive 135 days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
                 <div class="flex gap-3 flex-wrap mb-6">
                     <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-lg"><i class="fa-solid fa-play"></i> Play Free - Takes 30 Seconds</a>
                 </div>
@@ -84,7 +84,7 @@
 <section class="py-12 px-4 bg-base-100">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold mb-3">While you're reading this, other players are...</h2>
+            <h2 class="text-3xl font-bold mb-3">What will you build?</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="card bg-base-200/50 hover:bg-base-200 transition-colors">
@@ -117,13 +117,13 @@
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-8">
             <h2 class="text-3xl font-bold mb-3">This isn't a clicker game</h2>
-            <p class="text-base-content/60 max-w-lg mx-auto">Every system is connected. Hire too many staff? Your expenses spike. Skip insurance? One accident costs everything. It's a real management sim.</p>
+            <p class="text-base-content/60 max-w-lg mx-auto">A deep ski resort tycoon simulator where every system is connected. Hire too many staff? Your expenses spike. Skip insurance? One accident costs everything. The most detailed browser-based ski management game available.</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
                 <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2"><i class="fa-solid fa-map text-primary text-xl"></i></div>
                 <div class="text-sm font-bold">Trail Map</div>
-                <div class="text-xs text-base-content/50">Draw your own slopes</div>
+                <div class="text-xs text-base-content/50">Draw and build your resort</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
                 <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2"><i class="fa-solid fa-users text-warning text-xl"></i></div>
@@ -137,8 +137,8 @@
             </div></div>
             <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
                 <div class="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-2"><i class="fa-solid fa-coins text-success text-xl"></i></div>
-                <div class="text-sm font-bold">Full Economy</div>
-                <div class="text-xs text-base-content/50">Loans, insurance, taxes</div>
+                <div class="text-sm font-bold">Economy Simulation</div>
+                <div class="text-xs text-base-content/50">Loans, insurance, regulations</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
                 <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mb-2"><i class="fa-solid fa-snowflake text-error text-xl"></i></div>
@@ -159,6 +159,21 @@
                 <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2"><i class="fa-solid fa-bolt text-primary text-xl"></i></div>
                 <div class="text-sm font-bold">Energy & Water</div>
                 <div class="text-xs text-base-content/50">Manage your resources</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-2"><i class="fa-solid fa-building-columns text-accent text-xl"></i></div>
+                <div class="text-sm font-bold">Government</div>
+                <div class="text-xs text-base-content/50">Regulations and compliance</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mb-2"><i class="fa-solid fa-gauge text-error text-xl"></i></div>
+                <div class="text-sm font-bold">3 Difficulty Modes</div>
+                <div class="text-xs text-base-content/50">Easy, Standard, Hard</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2"><i class="fa-solid fa-star text-warning text-xl"></i></div>
+                <div class="text-sm font-bold">55 Achievements</div>
+                <div class="text-xs text-base-content/50">Unlock features as you grow</div>
             </div></div>
         </div>
     </div>
