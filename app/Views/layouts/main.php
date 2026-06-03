@@ -2,6 +2,9 @@
 <html lang="en" dir="ltr" data-theme="carboncloud">
 <head>
     <meta charset="UTF-8">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EXZWEK41WB"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-EXZWEK41WB");</script>
     <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
@@ -43,7 +46,6 @@
     }
     </script>
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
 <style>
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
