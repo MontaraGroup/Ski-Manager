@@ -148,7 +148,6 @@ $routes->post("/settings/resort-name", "Settings::updateResortName");
 $routes->post("/settings/reset-tutorial", "Settings::resetTutorial");
 $routes->post("/settings/clear-notifications", "Settings::clearNotifications");
 $routes->post("/settings/clear-activity", "Settings::clearActivityLog");
-$routes->post('/snowmaking/buy', 'Snowmaking::buy');
 $routes->post('/snowmaking/repair/(:num)', 'Snowmaking::repair/$1');
 $routes->post('/snowmaking/sell/(:num)', 'Snowmaking::sell/$1');
 $routes->post('/snowmaking/toggle/(:num)', 'Snowmaking::toggle/$1');

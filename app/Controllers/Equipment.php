@@ -14,11 +14,11 @@ class Equipment extends BaseController
 
         $groomerCatalog = [];
         foreach ($groomers as $g) {
-            $groomerCatalog[$g['model_key']] = ['brand' => $g['brand'], 'name' => $g['name'], 'desc' => $g['description'], 'capacity' => (int) $g['capacity'], 'fuel' => (int) $g['fuel_cost'], 'cost' => (int) $g['cost'], 'img' => $g['icon']];
+            $groomerCatalog[$g['model_key']] = ['brand' => $g['brand'], 'name' => $g['name'], 'desc' => $g['description'], 'capacity' => (int) $g['capacity'], 'fuel' => (int) $g['fuel_cost'], 'cost' => (int) $g['cost'], 'img' => $g['icon'], 'output_per_day' => (int) $g['output_per_day'], 'energy_kwh' => (int) $g['energy_kwh'], 'water_liters' => (int) $g['water_liters']];
         }
         $snowmakerCatalog = [];
         foreach ($snowmakers as $s) {
-            $snowmakerCatalog[$s['model_key']] = ['brand' => $s['brand'], 'name' => $s['name'], 'desc' => $s['description'], 'capacity' => (int) $s['capacity'], 'fuel' => (int) $s['fuel_cost'], 'cost' => (int) $s['cost'], 'img' => $s['icon']];
+            $snowmakerCatalog[$s['model_key']] = ['brand' => $s['brand'], 'name' => $s['name'], 'desc' => $s['description'], 'capacity' => (int) $s['capacity'], 'fuel' => (int) $s['fuel_cost'], 'cost' => (int) $s['cost'], 'img' => $s['icon'], 'output_per_day' => (int) $s['output_per_day'], 'energy_kwh' => (int) $s['energy_kwh'], 'water_liters' => (int) $s['water_liters']];
         }
 
         $equipment = $db->table('equipment')->where('user_id', $userId)->get()->getResultArray();
@@ -41,7 +41,7 @@ class Equipment extends BaseController
         $db = db_connect();
         $item = $db->table('equipment_catalog')->where('model_key', $modelKey)->get()->getRowArray();
         if (!$item) return null;
-        return ['brand' => $item['brand'], 'name' => $item['name'], 'desc' => $item['description'], 'capacity' => (int) $item['capacity'], 'fuel' => (int) $item['fuel_cost'], 'cost' => (int) $item['cost'], 'img' => $item['icon'], 'type' => $item['equipment_type']];
+        return ['brand' => $item['brand'], 'name' => $item['name'], 'desc' => $item['description'], 'capacity' => (int) $item['capacity'], 'fuel' => (int) $item['fuel_cost'], 'cost' => (int) $item['cost'], 'img' => $item['icon'], 'type' => $item['equipment_type'], 'output_per_day' => (int) $item['output_per_day'], 'energy_kwh' => (int) $item['energy_kwh'], 'water_liters' => (int) $item['water_liters']];
     }
 
     public function buy()
@@ -65,6 +65,9 @@ class Equipment extends BaseController
             'brand' => $item['brand'],
             'capacity' => $item['capacity'],
             'fuel_cost' => $item['fuel'],
+            'output_per_day' => $item['output_per_day'],
+            'energy_kwh' => $item['energy_kwh'],
+            'water_liters' => $item['water_liters'],
             'condition_pct' => 100,
             'status' => 'off',
             'created_at' => date('Y-m-d H:i:s'),
@@ -81,8 +84,7 @@ class Equipment extends BaseController
         $db = db_connect();
         $eq = $db->table('equipment')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
         if (!$eq) return redirect()->back()->with('error', 'Not found.');
-
-        if ((int) $eq['condition_pct'] <= 0) return redirect()->back()->with('error', 'Broken — repair first.');
+        if ((int) $eq['condition_pct'] <= 0) return redirect()->back()->with('error', 'Broken - repair first.');
 
         $new = $eq['status'] === 'active' ? 'off' : 'active';
         $db->table('equipment')->where('id', $id)->update(['status' => $new, 'updated_at' => date('Y-m-d H:i:s')]);
