@@ -2,9 +2,6 @@
 <html lang="en" dir="ltr" data-theme="carboncloud">
 <head>
     <meta charset="UTF-8">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EXZWEK41WB"></script>
-    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-EXZWEK41WB");</script>
     <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
