@@ -3,92 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 20px; }
-    h1 { font-size: 22px; color: #1a1a2e; border-bottom: 3px solid #3b82f6; padding-bottom: 8px; margin-bottom: 15px; }
-    h2 { font-size: 15px; color: #1a1a2e; margin-top: 20px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-    h3 { font-size: 12px; color: #555; margin-top: 12px; margin-bottom: 4px; }
-    .score-box { display: inline-block; width: 80px; text-align: center; padding: 8px; margin: 4px; border: 1px solid #ddd; border-radius: 6px; }
-    .score-value { font-size: 20px; font-weight: bold; }
-    .score-label { font-size: 9px; color: #888; }
-    .overall { font-size: 36px; font-weight: bold; text-align: center; padding: 15px; margin: 10px 0; border: 2px solid #3b82f6; border-radius: 10px; color: #3b82f6; }
-    .overall-text { text-align: center; font-size: 12px; color: #666; margin-bottom: 15px; }
-    table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-    th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 10px; }
-    th { background: #f5f5f5; font-weight: bold; color: #555; }
-    .rec-critical { border-left: 3px solid #ef4444; padding-left: 8px; margin: 6px 0; background: #fef2f2; padding: 6px 8px; border-radius: 4px; }
-    .rec-warning { border-left: 3px solid #f59e0b; padding-left: 8px; margin: 6px 0; background: #fffbeb; padding: 6px 8px; border-radius: 4px; }
-    .rec-info { border-left: 3px solid #3b82f6; padding-left: 8px; margin: 6px 0; background: #eff6ff; padding: 6px 8px; border-radius: 4px; }
-    .rec-area { font-weight: bold; font-size: 9px; color: #888; text-transform: uppercase; }
-    .rec-text { font-size: 10px; margin-top: 2px; }
-    .header { display: table; width: 100%; margin-bottom: 10px; }
-    .header-left { display: table-cell; vertical-align: middle; }
-    .header-right { display: table-cell; vertical-align: middle; text-align: right; color: #888; font-size: 9px; }
-    .footer { text-align: center; font-size: 8px; color: #aaa; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 8px; }
-    .green { color: #22c55e; } .red { color: #ef4444; } .yellow { color: #f59e0b; } .blue { color: #3b82f6; }
+    @page { margin: 25px 30px; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10px; color: #2d3748; margin: 0; padding: 0; }
+
+    /* Header banner */
+    .banner { background: #1e3a5f; color: white; padding: 20px 25px; margin: -25px -30px 20px -30px; }
+    .banner h1 { font-size: 24px; margin: 0 0 3px 0; font-weight: 800; letter-spacing: -0.5px; }
+    .banner .subtitle { font-size: 10px; opacity: 0.7; }
+    .banner .meta { float: right; text-align: right; font-size: 9px; opacity: 0.8; line-height: 1.6; }
+
+    /* Overall score card */
+    .score-hero { text-align: center; margin: 15px 0 20px 0; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background: #f7fafc; }
+    .score-hero .number { font-size: 48px; font-weight: 900; letter-spacing: -2px; }
+    .score-hero .label { font-size: 13px; font-weight: 600; color: #4a5568; margin-top: 2px; }
+    .score-hero .desc { font-size: 10px; color: #718096; margin-top: 6px; }
+    .score-green { color: #059669; }
+    .score-yellow { color: #d97706; }
+    .score-red { color: #dc2626; }
+
+    /* Section headers */
+    h2 { font-size: 13px; color: #1e3a5f; margin: 22px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #1e3a5f; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Category score cards */
+    .cat-grid { width: 100%; margin: 0 0 5px 0; }
+    .cat-grid td { text-align: center; padding: 10px 5px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; width: 14.2%; }
+    .cat-score { font-size: 22px; font-weight: 800; }
+    .cat-label { font-size: 8px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+    .cat-bar { height: 4px; border-radius: 2px; background: #e2e8f0; margin: 5px auto 0; width: 80%; }
+    .cat-bar-fill { height: 100%; border-radius: 2px; }
+
+    /* Snapshot table */
+    .snap-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .snap-table th { background: #f1f5f9; padding: 7px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+    .snap-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
+    .snap-table tr:last-child td { border-bottom: none; }
+    .snap-label { color: #64748b; }
+    .snap-value { font-weight: 700; text-align: right; }
+
+    /* Recommendations */
+    .rec { padding: 10px 12px; margin: 6px 0; border-radius: 6px; page-break-inside: avoid; }
+    .rec-critical { background: #fef2f2; border: 1px solid #fecaca; }
+    .rec-warning { background: #fffbeb; border: 1px solid #fde68a; }
+    .rec-info { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .rec-badge { display: inline-block; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 3px; color: white; }
+    .rec-badge-critical { background: #dc2626; }
+    .rec-badge-warning { background: #d97706; }
+    .rec-badge-info { background: #2563eb; }
+    .rec-area { font-size: 8px; color: #64748b; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rec-text { font-size: 10px; margin-top: 5px; line-height: 1.5; color: #374151; }
+
+    .all-good { text-align: center; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; }
+    .all-good-icon { font-size: 24px; color: #059669; }
+    .all-good-text { font-size: 12px; font-weight: 600; color: #059669; margin-top: 5px; }
+
+    /* Footer */
+    .footer { text-align: center; font-size: 7px; color: #94a3b8; margin-top: 25px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+
+    /* Utilities */
+    .green { color: #059669; } .red { color: #dc2626; } .yellow { color: #d97706; } .blue { color: #2563eb; }
+    .clearfix::after { content: ""; display: table; clear: both; }
 </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="header-left">
-        <h1>Ski Manager - Resort Analysis</h1>
+<!-- Header Banner -->
+<div class="banner clearfix">
+    <div class="meta">
+        Day <?= $report['game_day'] ?> - Season <?= (int) ceil($report['game_day'] / 135) ?><br>
+        <?= date('F j, Y', strtotime($report['created_at'])) ?><br>
+        <?= date('g:i A', strtotime($report['created_at'])) ?>
     </div>
-    <div class="header-right">
-        Day <?= $report['game_day'] ?><br>
-        Generated: <?= date('M j, Y', strtotime($report['created_at'])) ?><br>
-        skimanager.net
-    </div>
+    <h1>Resort Analysis Report</h1>
+    <div class="subtitle">skimanager.net - Comprehensive Resort Performance Review</div>
 </div>
 
-<div class="overall"><?= $data['overall_score'] ?>%</div>
-<div class="overall-text">
-    <?= $data['overall_score'] >= 80 ? 'Excellent! Your resort is performing well.' : ($data['overall_score'] >= 60 ? 'Good foundation, but room for improvement.' : ($data['overall_score'] >= 40 ? 'Your resort needs attention in several areas.' : 'Significant improvements needed across the board.')) ?>
+<!-- Overall Score -->
+<div class="score-hero">
+    <div class="number <?= $data['overall_score'] >= 70 ? 'score-green' : ($data['overall_score'] >= 40 ? 'score-yellow' : 'score-red') ?>"><?= $data['overall_score'] ?>%</div>
+    <div class="label">Overall Resort Score</div>
+    <div class="desc"><?= $data['overall_score'] >= 80 ? 'Excellent! Your resort is performing at a high level across all categories.' : ($data['overall_score'] >= 60 ? 'Solid foundation with room for strategic improvements in key areas.' : ($data['overall_score'] >= 40 ? 'Several areas require attention to improve resort performance.' : 'Critical improvements needed. Focus on the recommendations below.')) ?></div>
 </div>
 
-<h2>Category Scores</h2>
-<table>
+<!-- Category Scores -->
+<h2>Performance by Category</h2>
+<table class="cat-grid" cellspacing="6">
     <tr>
         <?php
-        $catLabels = ['infrastructure' => 'Infrastructure', 'staffing' => 'Staffing', 'finances' => 'Finances', 'amenities' => 'Amenities', 'equipment' => 'Equipment', 'resources' => 'Resources', 'safety' => 'Safety'];
-        foreach ($data['scores'] as $cat => $score) : ?>
-            <th style="text-align:center"><?= $catLabels[$cat] ?? ucfirst($cat) ?></th>
+        $catLabels = ['infrastructure' => 'Infra', 'staffing' => 'Staff', 'finances' => 'Finance', 'amenities' => 'Amenity', 'equipment' => 'Equip', 'resources' => 'Resource', 'safety' => 'Safety'];
+        $catIcons = ['infrastructure' => 'Mountain', 'staffing' => 'Team', 'finances' => 'Money', 'amenities' => 'Facility', 'equipment' => 'Tools', 'resources' => 'Power', 'safety' => 'Shield'];
+        foreach ($data['scores'] as $cat => $score) :
+            $color = $score >= 70 ? '#059669' : ($score >= 40 ? '#d97706' : '#dc2626');
+            $bgColor = $score >= 70 ? '#f0fdf4' : ($score >= 40 ? '#fffbeb' : '#fef2f2');
+        ?>
+        <td style="background:<?= $bgColor ?>">
+            <div class="cat-score" style="color:<?= $color ?>"><?= $score ?>%</div>
+            <div class="cat-label"><?= $catLabels[$cat] ?? ucfirst($cat) ?></div>
+            <div class="cat-bar"><div class="cat-bar-fill" style="width:<?= $score ?>%;background:<?= $color ?>"></div></div>
+        </td>
         <?php endforeach ?>
+    </tr>
+</table>
+
+<!-- Resort Snapshot -->
+<h2>Resort Snapshot</h2>
+<table class="snap-table">
+    <tr>
+        <th>Metric</th><th style="text-align:right">Value</th>
+        <th>Metric</th><th style="text-align:right">Value</th>
+        <th>Metric</th><th style="text-align:right">Value</th>
     </tr>
     <tr>
-        <?php foreach ($data['scores'] as $cat => $score) : ?>
-            <td style="text-align:center;font-size:18px;font-weight:bold" class="<?= $score >= 70 ? 'green' : ($score >= 40 ? 'yellow' : 'red') ?>"><?= $score ?>%</td>
-        <?php endforeach ?>
+        <td class="snap-label">Cash on Hand</td><td class="snap-value"><?= number_format($data['stats']['cash']) ?> &euro;</td>
+        <td class="snap-label">Open Slopes</td><td class="snap-value"><?= $data['stats']['open_slopes'] ?> / <?= $data['stats']['slopes'] ?></td>
+        <td class="snap-label">Open Lifts</td><td class="snap-value"><?= $data['stats']['open_lifts'] ?> / <?= $data['stats']['lifts'] ?></td>
+    </tr>
+    <tr>
+        <td class="snap-label">Active Staff</td><td class="snap-value"><?= $data['stats']['staff'] ?></td>
+        <td class="snap-label">Avg Morale</td><td class="snap-value"><?= $data['stats']['avg_morale'] ?>%</td>
+        <td class="snap-label">Buildings</td><td class="snap-value"><?= $data['stats']['buildings'] ?></td>
+    </tr>
+    <tr>
+        <td class="snap-label">Equipment</td><td class="snap-value"><?= $data['stats']['equipment'] ?></td>
+        <td class="snap-label">Infra Condition</td><td class="snap-value"><?= $data['stats']['avg_infra_condition'] ?>%</td>
+        <td class="snap-label">Equip Condition</td><td class="snap-value"><?= $data['stats']['avg_equip_condition'] ?>%</td>
+    </tr>
+    <tr>
+        <td class="snap-label">Parking Lots</td><td class="snap-value"><?= $data['stats']['parking'] ?></td>
+        <td class="snap-label">Terrain Parks</td><td class="snap-value"><?= $data['stats']['terrain_parks'] ?></td>
+        <td class="snap-label">Energy Sources</td><td class="snap-value"><?= $data['stats']['energy_sources'] ?></td>
+    </tr>
+    <tr>
+        <td class="snap-label">Water Sources</td><td class="snap-value"><?= $data['stats']['water_sources'] ?></td>
+        <td class="snap-label">Insurance</td><td class="snap-value"><?= $data['stats']['insurance'] ?> policies</td>
+        <td class="snap-label">Total Debt</td><td class="snap-value red"><?= number_format($data['stats']['total_debt']) ?> &euro;</td>
+    </tr>
+    <tr>
+        <td class="snap-label">Daily Salary</td><td class="snap-value"><?= number_format($data['stats']['daily_salary']) ?> &euro;</td>
+        <td class="snap-label"></td><td></td>
+        <td class="snap-label"></td><td></td>
     </tr>
 </table>
 
-<h2>Resort Snapshot</h2>
-<table>
-    <tr><th>Metric</th><th>Value</th><th>Metric</th><th>Value</th></tr>
-    <tr><td>Cash</td><td><?= number_format($data['stats']['cash']) ?> &euro;</td><td>Staff</td><td><?= $data['stats']['staff'] ?></td></tr>
-    <tr><td>Slopes</td><td><?= $data['stats']['open_slopes'] ?>/<?= $data['stats']['slopes'] ?></td><td>Avg Morale</td><td><?= $data['stats']['avg_morale'] ?>%</td></tr>
-    <tr><td>Lifts</td><td><?= $data['stats']['open_lifts'] ?>/<?= $data['stats']['lifts'] ?></td><td>Buildings</td><td><?= $data['stats']['buildings'] ?></td></tr>
-    <tr><td>Equipment</td><td><?= $data['stats']['equipment'] ?></td><td>Infra Condition</td><td><?= $data['stats']['avg_infra_condition'] ?>%</td></tr>
-    <tr><td>Parking</td><td><?= $data['stats']['parking'] ?></td><td>Terrain Parks</td><td><?= $data['stats']['terrain_parks'] ?></td></tr>
-    <tr><td>Energy Sources</td><td><?= $data['stats']['energy_sources'] ?></td><td>Water Sources</td><td><?= $data['stats']['water_sources'] ?></td></tr>
-    <tr><td>Insurance Policies</td><td><?= $data['stats']['insurance'] ?></td><td>Total Debt</td><td class="red"><?= number_format($data['stats']['total_debt']) ?> &euro;</td></tr>
-    <tr><td>Daily Salary</td><td><?= number_format($data['stats']['daily_salary']) ?> &euro;</td><td></td><td></td></tr>
-</table>
-
-<h2>Recommendations (<?= count($data['recommendations']) ?>)</h2>
+<!-- Recommendations -->
+<h2>Expert Recommendations (<?= count($data['recommendations']) ?>)</h2>
 <?php if (empty($data['recommendations'])) : ?>
-    <p class="green" style="font-size:12px;font-weight:bold">&#10003; No recommendations - your resort is in great shape!</p>
+    <div class="all-good">
+        <div class="all-good-icon">&#10003;</div>
+        <div class="all-good-text">No recommendations - your resort is in excellent shape!</div>
+    </div>
 <?php else : ?>
-    <?php foreach ($data['recommendations'] as $rec) : ?>
-        <div class="rec-<?= $rec['type'] ?>">
-            <span class="rec-area"><?= strtoupper($rec['type']) ?> - <?= $rec['area'] ?></span>
+    <?php foreach ($data['recommendations'] as $i => $rec) : ?>
+        <div class="rec rec-<?= $rec['type'] ?>">
+            <span class="rec-badge rec-badge-<?= $rec['type'] ?>"><?= strtoupper($rec['type']) ?></span>
+            <span class="rec-area"><?= $rec['area'] ?></span>
             <div class="rec-text"><?= $rec['text'] ?></div>
         </div>
     <?php endforeach ?>
 <?php endif ?>
 
+<!-- Footer -->
 <div class="footer">
-    Ski Manager Resort Analysis Report &bull; Day <?= $report['game_day'] ?> &bull; <?= date('M j, Y g:i A', strtotime($report['created_at'])) ?><br>
-    Generated at skimanager.net &bull; &copy; <?= date('Y') ?> Ski Manager
+    CONFIDENTIAL - Ski Manager Resort Analysis Report &bull; Day <?= $report['game_day'] ?> &bull; Generated <?= date('F j, Y \a\t g:i A', strtotime($report['created_at'])) ?><br>
+    skimanager.net &bull; &copy; <?= date('Y') ?> Ski Manager. All rights reserved. This report was generated by the Ski Manager analysis engine.
 </div>
 
 </body>
