@@ -1,108 +1,213 @@
 <?= $this->extend('layouts/main') ?>
-
-<?= $this->section('title') ?>Home<?= $this->endSection() ?>
-
+<?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Game<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 
+<?php
+    $db = db_connect();
+    $playerCount = $db->table('users')->countAllResults(false);
+    $totalSlopes = $db->table('player_items')->where('item_type', 'slope')->countAllResults(false);
+    $totalStaff = $db->table('staff')->where('status', 'active')->countAllResults(false);
+    $topPlayer = $db->query("SELECT u.username, pf.cash FROM player_finances pf JOIN users u ON u.id = pf.user_id ORDER BY pf.cash DESC LIMIT 1")->getRowArray();
+    $recentPlayer = $db->table('users')->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
+    $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
+    $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+?>
+
 <!-- Hero -->
-<div class="min-h-[80vh] flex items-center bg-gradient-to-br from-base-300 via-base-200 to-base-100">
-    <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
-        <div class="max-w-2xl">
-            <p class="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Free browser game</p>
-            <h1 class="text-4xl md:text-5xl font-black leading-[1.1] mb-5">Your mountain.<br>Your rules.</h1>
-            <p class="text-lg text-base-content/60 mb-8 max-w-lg">Build a ski resort from nothing. Lay slopes, install lifts, hire staff, deal with blizzards, and try not to go bankrupt. It's harder than it sounds.</p>
-            <div class="flex gap-3 flex-wrap">
-                <a href="/register" class="btn btn-primary btn-lg">Start playing</a>
-                <a href="/about" class="btn btn-ghost btn-lg">What is this?</a>
+<div class="min-h-[70vh] flex items-center bg-gradient-to-br from-base-300 via-base-200 to-base-100 relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+            <div class="lg:col-span-3">
+                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-circle animate-pulse-soft text-xs"></i> <?= $playerCount ?> players building resorts right now</div>
+                <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
+                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Every decision matters - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
+                <div class="flex gap-3 flex-wrap mb-6">
+                    <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-lg"><i class="fa-solid fa-play"></i> Play Free - Takes 30 Seconds</a>
+                </div>
+                <div class="flex items-center gap-4 text-xs text-base-content/50">
+                    <span><i class="fa-solid fa-check text-success mr-1"></i>No downloads</span>
+                    <span><i class="fa-solid fa-check text-success mr-1"></i>No pay-to-win</span>
+                    <span><i class="fa-solid fa-check text-success mr-1"></i>No credit card</span>
+                </div>
+            </div>
+
+            <!-- Live feed card -->
+            <div class="lg:col-span-2 hidden lg:block">
+                <div class="card bg-base-100 shadow-xl">
+                    <div class="card-body p-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span></span>
+                            <span class="text-xs font-semibold text-success">Live - Day <?= $gameDay ?></span>
+                        </div>
+                        <?php if ($weather) : ?>
+                        <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg mb-3">
+                            <i class="fa-solid fa-<?= $weather['temp'] <= -5 ? 'snowflake text-info' : 'cloud-sun text-warning' ?> text-2xl"></i>
+                            <div>
+                                <div class="font-bold"><?= $weather['temp'] ?>°C · <?= $weather['condition_name'] ?></div>
+                                <div class="text-xs text-base-content/50">Today on the mountain</div>
+                            </div>
+                        </div>
+                        <?php endif ?>
+                        <?php if ($topPlayer) : ?>
+                        <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg mb-3">
+                            <i class="fa-solid fa-crown text-warning text-xl"></i>
+                            <div>
+                                <div class="font-bold text-sm"><?= esc($topPlayer['username']) ?></div>
+                                <div class="text-xs text-base-content/50">Richest resort - <?= currency((int) $topPlayer['cash']) ?></div>
+                            </div>
+                        </div>
+                        <?php endif ?>
+                        <?php if ($recentPlayer) : ?>
+                        <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                            <i class="fa-solid fa-user-plus text-primary text-xl"></i>
+                            <div>
+                                <div class="font-bold text-sm"><?= esc($recentPlayer['username']) ?></div>
+                                <div class="text-xs text-base-content/50">Just joined <?= timeAgo($recentPlayer['created_at']) ?></div>
+                            </div>
+                        </div>
+                        <?php endif ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- What you actually do -->
-<section class="py-20 px-4 bg-base-100">
+<!-- Urgency bar -->
+<section class="py-4 bg-warning text-warning-content">
+    <div class="max-w-5xl mx-auto px-4 text-center text-sm font-semibold">
+        <i class="fa-solid fa-clock mr-1"></i> Season <?= (int) ceil($gameDay / 135) ?> is live - Day <?= (($gameDay - 1) % 135) + 1 ?>/135. The mountain won't wait for you.
+    </div>
+</section>
+
+<!-- The hook - show what they're missing -->
+<section class="py-12 px-4 bg-base-100">
     <div class="max-w-5xl mx-auto">
-        <h2 class="text-2xl font-bold mb-8">What you'll actually spend your time doing</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="flex gap-4">
-                <i class="fa-solid fa-map text-primary text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Drawing slopes on a map</h3>
-                    <p class="text-sm text-base-content/60">Click points on an interactive trail map to lay out runs and lift lines. Pick the type, difficulty, and watch it appear on your mountain.</p>
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold mb-3">While you're reading this, other players are...</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card bg-base-200/50 hover:bg-base-200 transition-colors">
+                <div class="card-body text-center">
+                    <div class="text-4xl mb-3">🏔️</div>
+                    <h3 class="font-bold mb-2">Opening new slopes</h3>
+                    <p class="text-sm text-base-content/60">Drawing runs on an interactive map, choosing difficulty ratings, and watching visitors pour in. <?= $totalSlopes ?> slopes built so far.</p>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <i class="fa-solid fa-users text-warning text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Managing people who don't want to work</h3>
-                    <p class="text-sm text-base-content/60">Staff have morale. It drops. You throw them a party or give them a raise. They're happy for a while. Then it drops again.</p>
+            <div class="card bg-base-200/50 hover:bg-base-200 transition-colors">
+                <div class="card-body text-center">
+                    <div class="text-4xl mb-3">💰</div>
+                    <h3 class="font-bold mb-2">Making serious money</h3>
+                    <p class="text-sm text-base-content/60">Hotels, restaurants, parking fees, ticket sales. The top player has <?= $topPlayer ? currency((int) $topPlayer['cash']) : '€500,000+' ?>. Can you beat that?</p>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <i class="fa-solid fa-cloud-sun text-info text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Checking the weather obsessively</h3>
-                    <p class="text-sm text-base-content/60">Weather changes daily. Blizzards shut down lifts. Sunny days melt your snow. You'll learn to love cloudy skies with light snowfall.</p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <i class="fa-solid fa-coins text-success text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Watching numbers go up (or down)</h3>
-                    <p class="text-sm text-base-content/60">Revenue, expenses, visitor counts, snow depth, staff morale, eco score, reputation. There are a lot of numbers. Most of them matter.</p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <i class="fa-solid fa-snowflake text-info text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Buying expensive snow machines</h3>
-                    <p class="text-sm text-base-content/60">Real brands — TechnoAlpin, Sufag, Demaclenko. Real groomers — PistenBully, Prinoth. Fictional prices. Still expensive.</p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <i class="fa-solid fa-building-columns text-primary text-xl mt-1 shrink-0 w-6"></i>
-                <div>
-                    <h3 class="font-bold mb-1">Dealing with the government</h3>
-                    <p class="text-sm text-base-content/60">Regulations cost money to comply with. Ignoring them costs more. There's an inspection chance every day you're non-compliant.</p>
+            <div class="card bg-base-200/50 hover:bg-base-200 transition-colors">
+                <div class="card-body text-center">
+                    <div class="text-4xl mb-3">❄️</div>
+                    <h3 class="font-bold mb-2">Fighting the weather</h3>
+                    <p class="text-sm text-base-content/60">Today it's <?= $weather ? $weather['temp'] . '°C and ' . strtolower($weather['condition_name']) : 'cold' ?>. Some are turning on snow machines. Others are panicking.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- The boring-but-important details -->
+<!-- What makes it different -->
 <section class="py-16 px-4">
     <div class="max-w-5xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card bg-base-100 shadow-sm">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold mb-3">This isn't a clicker game</h2>
+            <p class="text-base-content/60 max-w-lg mx-auto">Every system is connected. Hire too many staff? Your expenses spike. Skip insurance? One accident costs everything. It's a real management sim.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2"><i class="fa-solid fa-map text-primary text-xl"></i></div>
+                <div class="text-sm font-bold">Trail Map</div>
+                <div class="text-xs text-base-content/50">Draw your own slopes</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2"><i class="fa-solid fa-users text-warning text-xl"></i></div>
+                <div class="text-sm font-bold">10 Staff Roles</div>
+                <div class="text-xs text-base-content/50">Patrol, groomers, chefs...</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center mb-2"><i class="fa-solid fa-cloud-sun text-info text-xl"></i></div>
+                <div class="text-sm font-bold">Dynamic Weather</div>
+                <div class="text-xs text-base-content/50">Changes every day</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-2"><i class="fa-solid fa-coins text-success text-xl"></i></div>
+                <div class="text-sm font-bold">Full Economy</div>
+                <div class="text-xs text-base-content/50">Loans, insurance, taxes</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mb-2"><i class="fa-solid fa-snowflake text-error text-xl"></i></div>
+                <div class="text-sm font-bold">Real Brands</div>
+                <div class="text-xs text-base-content/50">PistenBully, TechnoAlpin</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-2"><i class="fa-solid fa-person-snowboarding text-secondary text-xl"></i></div>
+                <div class="text-sm font-bold">Terrain Parks</div>
+                <div class="text-xs text-base-content/50">Halfpipes, rail gardens</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2"><i class="fa-solid fa-trophy text-warning text-xl"></i></div>
+                <div class="text-sm font-bold">Leaderboard</div>
+                <div class="text-xs text-base-content/50">Compete globally</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2"><i class="fa-solid fa-bolt text-primary text-xl"></i></div>
+                <div class="text-sm font-bold">Energy & Water</div>
+                <div class="text-xs text-base-content/50">Manage your resources</div>
+            </div></div>
+        </div>
+    </div>
+</section>
+
+<!-- Social proof -->
+<section class="py-12 px-4 bg-base-100">
+    <div class="max-w-3xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div class="card bg-base-200/50 border border-base-300">
                 <div class="card-body">
-                    <h3 class="font-bold">It's free</h3>
-                    <p class="text-sm text-base-content/60">No paywall, no pay-to-win. There's a premium currency (Génépis) but you earn it by playing, not paying.</p>
+                    <i class="fa-solid fa-heart text-error text-2xl mb-2"></i>
+                    <h3 class="font-bold">100% Free</h3>
+                    <p class="text-xs text-base-content/60">No paywalls, no pay-to-win. Earn everything by playing.</p>
                 </div>
             </div>
-            <div class="card bg-base-100 shadow-sm">
+            <div class="card bg-base-200/50 border border-base-300">
                 <div class="card-body">
-                    <h3 class="font-bold">It's in your browser</h3>
-                    <p class="text-sm text-base-content/60">No downloads, no installs, no app store. Just open the URL and play. Works on desktop and laptop.</p>
+                    <i class="fa-solid fa-globe text-info text-2xl mb-2"></i>
+                    <h3 class="font-bold">Instant Play</h3>
+                    <p class="text-xs text-base-content/60">Browser-based. No downloads. Works on any device.</p>
                 </div>
             </div>
-            <div class="card bg-base-100 shadow-sm">
+            <div class="card bg-base-200/50 border border-base-300">
                 <div class="card-body">
-                    <h3 class="font-bold">It's open source</h3>
-                    <p class="text-sm text-base-content/60">The entire codebase is on <a href="https://gitlab.com/contact1231/manager" target="_blank" class="link link-primary">GitLab</a>. Find a bug? Fix it. Want a feature? Build it.</p>
+                    <i class="fa-solid fa-code-branch text-success text-2xl mb-2"></i>
+                    <h3 class="font-bold">Open Source</h3>
+                    <p class="text-xs text-base-content/60">Built in the open on <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="link link-primary">GitLab</a>.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA -->
-<section class="py-20 px-4 bg-base-100">
-    <div class="max-w-xl mx-auto text-center">
-        <h2 class="text-2xl font-bold mb-3">It takes 30 seconds to sign up</h2>
-        <p class="text-base-content/60 mb-6">Then you can spend the next 30 hours building slopes.</p>
-        <a href="/register" class="btn btn-primary btn-lg">Create an account</a>
-        <p class="text-xs text-base-content/40 mt-4">Already playing? <a href="/login" class="link link-primary">Log in</a></p>
+<!-- Final CTA -->
+<section class="py-16 px-4 bg-gradient-to-br from-primary to-secondary text-primary-content relative overflow-hidden mb-0" style="margin-bottom:0;">
+    <div class="max-w-xl mx-auto text-center relative">
+        <?php if (auth()->loggedIn()) : ?>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Get back to your resort.</h2>
+        <p class="text-lg" style="opacity:0.8;">Your mountain needs you. Check in and keep building.</p>
+        <a href="/dashboard" class="btn btn-lg gap-2 shadow-xl mt-6" style="background:white;color:#2563eb;"><i class="fa-solid fa-gauge-high"></i> Go to Dashboard</a>
+        <?php else : ?>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Your resort is waiting.</h2>
+        <p class="text-lg opacity-80 mb-8">€500,000 starting cash. An empty mountain. What you build is up to you.</p>
+        <a href="/register" class="btn btn-lg gap-2 shadow-xl" style="background:white;color:#2563eb;"><i class="fa-solid fa-play"></i> Start Building Now</a>
+        <?php endif ?>
+        <div class="mt-6 text-sm" style="opacity:0.6;">
+            Already playing? <a href="/login" class="underline hover:opacity-100">Sign in</a>
+        </div>
     </div>
 </section>
 

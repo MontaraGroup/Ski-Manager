@@ -12,7 +12,7 @@
             </a>
             <div>
                 <h1 class="text-2xl font-bold">Staff</h1>
-                <p class="text-sm text-base-content/50"><?= count($staff) ?> employees — <?= currency($totalSalary) ?>/day total salary</p>
+                <p class="text-sm text-base-content/50"><?= count($staff) ?> employees - <?= currency($totalSalary) ?>/day total salary</p>
             </div>
         </div>
         <a href="/morale" class="btn btn-outline btn-sm"><i class="fa-solid fa-face-smile mr-1"></i>Morale</a>
@@ -110,7 +110,7 @@
                                         <span class="badge badge-info badge-sm">Training</span>
                                     <?php endif ?>
                                 </td>
-                                <td class="text-xs text-base-content/50"><?= $member['assigned_to'] ? esc($member['assigned_to']) : '—' ?></td>
+                                <td class="text-xs text-base-content/50"><?= $member['assigned_to'] ? esc($member['assigned_to']) : '-' ?></td>
                                 <td>
                                     <form action="/staff/fire/<?= $member['id'] ?>" method="post" onsubmit="return confirm('Fire <?= esc($member['name']) ?>? This cannot be undone.')">
                                         <?= csrf_field() ?>

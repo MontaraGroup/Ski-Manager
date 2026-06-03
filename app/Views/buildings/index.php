@@ -55,9 +55,9 @@
                                 <div class="min-w-0">
                                     <div class="font-semibold text-sm"><?= esc($b['name']) ?></div>
                                     <div class="text-xs text-base-content/50">
-                                        Lv.<?= $b['level'] ?> —
-                                        <?= $type === 'ski_patrol' ? $b['capacity'] . ' sector(s)' : 'Cap: ' . $b['capacity'] ?> —
-                                        <?php if ($b['revenue_per_day'] > 0) : ?><?= currency($b['revenue_per_day']) ?>/day income — <?php endif ?>
+                                        Lv.<?= $b['level'] ?> -
+                                        <?= $type === 'ski_patrol' ? $b['capacity'] . ' sector(s)' : 'Cap: ' . $b['capacity'] ?> -
+                                        <?php if ($b['revenue_per_day'] > 0) : ?><?= currency($b['revenue_per_day']) ?>/day income - <?php endif ?>
                                         <?= currency($b['upkeep_per_day']) ?>/day upkeep
                                     </div>
                                 </div>
@@ -109,8 +109,8 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm"><?= $info['name'] ?></div>
                                     <div class="text-xs text-base-content/50">
-                                        <?= $type === 'ski_patrol' ? $info['capacity'] . ' sector(s)' : 'Capacity: ' . $info['capacity'] ?> —
-                                        <?php if ($info['revenue'] > 0) : ?><?= currency($info['revenue']) ?>/day — <?php endif ?>
+                                        <?= $type === 'ski_patrol' ? $info['capacity'] . ' sector(s)' : 'Capacity: ' . $info['capacity'] ?> -
+                                        <?php if ($info['revenue'] > 0) : ?><?= currency($info['revenue']) ?>/day - <?php endif ?>
                                         <?= currency($info['upkeep']) ?>/day upkeep
                                     </div>
                                 </div>

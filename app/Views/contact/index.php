@@ -55,11 +55,11 @@
                         <i class="fa-brands fa-discord text-lg w-6 text-center"></i>
                         <div><div class="text-sm font-semibold">Discord</div><div class="text-xs text-base-content/50">Fastest way to get help</div></div>
                     </a>
-                    <a href="https://gitlab.com/contact1231/manager/-/issues" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
+                    <a href="https://gitlab.com/contact1231/skimanager-v2/-/issues" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-solid fa-bug text-lg w-6 text-center"></i>
                         <div><div class="text-sm font-semibold">Report a Bug</div><div class="text-xs text-base-content/50">GitLab issue tracker</div></div>
                     </a>
-                    <a href="https://gitlab.com/contact1231/manager" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
+                    <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-brands fa-gitlab text-lg w-6 text-center"></i>
                         <div><div class="text-sm font-semibold">Contribute</div><div class="text-xs text-base-content/50">Open source on GitLab</div></div>
                     </a>

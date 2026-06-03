@@ -15,7 +15,7 @@ $isOffSeason = $seasonDay > 135;
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-cloud-sun mr-2 text-info"></i>Weather & Climate</h1>
-            <p class="text-sm text-base-content/50">Day <?= $gameDay ?> — <?= $isOffSeason ? 'Off-Season' : 'Season 1' ?></p>
+            <p class="text-sm text-base-content/50">Day <?= $gameDay ?> - <?= $isOffSeason ? 'Off-Season' : 'Season 1' ?></p>
         </div>
     </div>
 
@@ -144,7 +144,7 @@ $isOffSeason = $seasonDay > 135;
                 <?php if ($weather['condition'] === 'Sunny') : ?>
                     <p><i class="fa-solid fa-sun mr-1 text-warning"></i>Great day for visitors, but snow is melting. Consider running snow cannons tonight if temps drop.</p>
                 <?php elseif ($weather['condition'] === 'Blizzard') : ?>
-                    <p><i class="fa-solid fa-wind mr-1 text-error"></i>Blizzard conditions — lifts are likely suspended. Revenue will be low but your snow base is building up.</p>
+                    <p><i class="fa-solid fa-wind mr-1 text-error"></i>Blizzard conditions - lifts are likely suspended. Revenue will be low but your snow base is building up.</p>
                 <?php elseif (in_array($weather['condition'], ['Light Snow', 'Heavy Snow'])) : ?>
                     <p><i class="fa-solid fa-snowflake mr-1 text-info"></i>Natural snowfall means you can save on snowmaking costs today. Great for slope conditions.</p>
                 <?php elseif ($weather['condition'] === 'Freezing Rain') : ?>

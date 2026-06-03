@@ -35,12 +35,12 @@
         <h2>4. Third-Party Services</h2>
         <p>We use the following third-party services that may collect information:</p>
         <ul>
-            <li><strong>Google Analytics</strong> — for website usage analytics. Google's privacy policy applies.</li>
-            <li><strong>Google AdSense</strong> — for displaying advertisements. Google may use cookies to serve ads based on your browsing history.</li>
-            <li><strong>Google Sign-In</strong> — for authentication. We receive basic profile information from Google when you choose to sign in with your Google account.</li>
-            <li><strong>Cloudflare</strong> — for security, CDN, and performance. Cloudflare may process connection data.</li>
-            <li><strong>Sentry</strong> — for error tracking and performance monitoring. Sentry may collect technical error data.</li>
-            <li><strong>Hotjar</strong> — for understanding user behavior through heatmaps and session recordings.</li>
+            <li><strong>Google Analytics</strong> - for website usage analytics. Google's privacy policy applies.</li>
+            <li><strong>Google AdSense</strong> - for displaying advertisements. Google may use cookies to serve ads based on your browsing history.</li>
+            <li><strong>Google Sign-In</strong> - for authentication. We receive basic profile information from Google when you choose to sign in with your Google account.</li>
+            <li><strong>Cloudflare</strong> - for security, CDN, and performance. Cloudflare may process connection data.</li>
+            <li><strong>Sentry</strong> - for error tracking and performance monitoring. Sentry may collect technical error data.</li>
+            <li><strong>Hotjar</strong> - for understanding user behavior through heatmaps and session recordings.</li>
         </ul>
 
         <h2>5. Data Sharing</h2>

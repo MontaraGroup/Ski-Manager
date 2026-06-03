@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold">Welcome back, <?= auth()->user()->username ?></h1>
-            <p class="text-base-content/60 mt-1 text-sm">Day <?= $gameDay ?> — here's your resort at a glance.</p>
+            <p class="text-base-content/60 mt-1 text-sm">Day <?= $gameDay ?> - here's your resort at a glance.</p>
         </div>
         <button id="editModeBtn" onclick="toggleEditMode()" class="btn btn-ghost btn-sm gap-1 mt-2 md:mt-0"><i class="fa-solid fa-pen"></i> Edit Layout</button>
     </div>

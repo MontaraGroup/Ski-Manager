@@ -98,7 +98,7 @@
                     <?= csrf_field() ?>
                     <input type="hidden" name="task" value="<?= $key ?>">
                     <button type="submit" class="btn btn-primary btn-sm w-full" <?= $needsRepair === 0 ? 'disabled' : '' ?>>
-                        <i class="fa-solid fa-wrench mr-1"></i> <?= $needsRepair > 0 ? 'Run — ' . currency($totalCost) : 'All Good' ?>
+                        <i class="fa-solid fa-wrench mr-1"></i> <?= $needsRepair > 0 ? 'Run - ' . currency($totalCost) : 'All Good' ?>
                     </button>
                 </form>
             </div></div>

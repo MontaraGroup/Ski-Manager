@@ -22,7 +22,7 @@
                 </form>
             </div>
             <?php if (empty($parkCrew)) : ?>
-                <p class="text-base-content/60 mt-2">No park crew hired yet. Park features need dedicated crew to maintain — without them, condition decays faster.</p>
+                <p class="text-base-content/60 mt-2">No park crew hired yet. Park features need dedicated crew to maintain - without them, condition decays faster.</p>
             <?php else : ?>
                 <div class="overflow-x-auto mt-2">
                     <table class="table table-sm">
@@ -77,7 +77,7 @@
                 <div class="form-control">
                     <label class="label"><span class="label-text">On Slope (optional)</span></label>
                     <select name="slope_id" class="select select-bordered select-sm">
-                        <option value="">— Standalone —</option>
+                        <option value="">- Standalone -</option>
                         <?php foreach ($slopes as $slope) : ?>
                             <option value="<?= $slope['id'] ?>"><?= esc($slope['name'] ?? 'Slope #' . $slope['id']) ?></option>
                         <?php endforeach ?>

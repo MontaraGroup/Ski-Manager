@@ -20,8 +20,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
-    <link rel="preload" href="/css/style.css?v=8" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=8" fetchpriority="high">
+    <link rel="preload" href="/css/style.css?v=9" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=9" fetchpriority="high">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
@@ -44,6 +44,29 @@
     </script>
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
+<style>
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:0.7}}
+.animate-fade-in-up{animation:fadeInUp 0.4s ease-out both}
+.animate-fade-in{animation:fadeIn 0.3s ease-out both}
+.animate-slide-in-right{animation:slideInRight 0.4s ease-out both}
+.animate-scale-in{animation:scaleIn 0.3s ease-out both}
+.animate-pulse-soft{animation:pulse-soft 2s ease-in-out infinite}
+.card{transition:transform 0.15s ease,box-shadow 0.15s ease}
+.card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.btn{transition:transform 0.1s ease,box-shadow 0.1s ease}
+.btn:active{transform:scale(0.97)}
+.badge{transition:all 0.2s ease}
+.progress{transition:value 0.5s ease}
+.alert{animation:fadeInUp 0.3s ease-out both}
+.stat-value,.text-2xl.font-bold,.text-3xl.font-bold{transition:color 0.3s ease}
+a.link{transition:opacity 0.15s ease}
+a.link:hover{opacity:0.8}
+.dropdown-content{animation:scaleIn 0.15s ease-out both}
+</style>
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -283,7 +306,7 @@
         </div>
         <div class="border-t border-base-300">
             <div class="flex flex-col md:flex-row items-center justify-between p-4 max-w-6xl mx-auto text-sm text-base-content/60">
-                <p><i class="fa-solid fa-person-skiing mr-1"></i><span class="font-bold">Ski Manager</span> &copy; <?= date('Y') ?> — Build. Manage. Dominate the slopes.</p>
+                <p><i class="fa-solid fa-person-skiing mr-1"></i><span class="font-bold">Ski Manager</span> &copy; <?= date('Y') ?> - Build. Manage. Dominate the slopes.</p>
                 <div class="flex gap-4 mt-2 md:mt-0">
                     <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="link link-hover"><i class="fa-brands fa-discord mr-1"></i>Discord</a>
                 </div>
@@ -373,6 +396,45 @@ document.querySelectorAll("form").forEach(function(f){
         if(btn&&!f.dataset.confirm){btn.classList.add("loading");btn.disabled=true;}
     });
 });
+</script>
+<script>
+document.querySelectorAll("[data-count]").forEach(function(el){
+    var target=parseInt(el.dataset.count),current=0,step=Math.max(1,Math.floor(target/30));
+    var timer=setInterval(function(){current+=step;if(current>=target){current=target;clearInterval(timer);}el.textContent=current.toLocaleString();},20);
+});
+</script>
+<script>
+document.addEventListener("keydown",function(e){
+    if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.tagName==="SELECT")return;
+    if(e.key==="d")window.location="/dashboard";
+    if(e.key==="r")window.location="/resort";
+    if(e.key==="m")window.location="/map";
+    if(e.key==="w")window.location="/weather";
+    if(e.key==="s")window.location="/staff";
+    if(e.key==="f")window.location="/finances";
+    if(e.key==="?"){e.preventDefault();document.getElementById("shortcutModal").showModal();}
+});
+</script>
+<dialog id="shortcutModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-keyboard mr-2"></i>Keyboard Shortcuts</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+            <div><kbd class="kbd kbd-sm">D</kbd> Dashboard</div>
+            <div><kbd class="kbd kbd-sm">R</kbd> Resort</div>
+            <div><kbd class="kbd kbd-sm">M</kbd> Trail Map</div>
+            <div><kbd class="kbd kbd-sm">W</kbd> Weather</div>
+            <div><kbd class="kbd kbd-sm">S</kbd> Staff</div>
+            <div><kbd class="kbd kbd-sm">F</kbd> Finances</div>
+            <div><kbd class="kbd kbd-sm">Ctrl+K</kbd> Search</div>
+            <div><kbd class="kbd kbd-sm">?</kbd> This help</div>
+        </div>
+        <div class="modal-action"><form method="dialog"><button class="btn btn-sm">Close</button></form></div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+<script>
+var observer=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add("animate-fade-in-up");e.target.style.animationDelay=(Array.from(e.target.parentElement.children).indexOf(e.target)*0.05)+"s";observer.unobserve(e.target);}});},{threshold:0.1,rootMargin:"0px 0px -30px 0px"});
+document.querySelectorAll(".card,.alert").forEach(function(el){el.style.opacity="0";observer.observe(el);});
 </script>
 </body>
 <!-- Tutorial Widget -->

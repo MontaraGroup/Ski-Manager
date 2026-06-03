@@ -29,7 +29,7 @@
             </div>
             <div class="flex-1">
                 <h2 class="text-lg font-bold">Compliance Score</h2>
-                <p class="text-sm text-base-content/60"><?= $complianceScore >= 100 ? 'Perfect! All regulations met.' : ($complianceScore >= 75 ? 'Good standing with minor gaps.' : ($complianceScore >= 50 ? 'Moderate risk — several regulations not met.' : 'High risk — major compliance issues.')) ?></p>
+                <p class="text-sm text-base-content/60"><?= $complianceScore >= 100 ? 'Perfect! All regulations met.' : ($complianceScore >= 75 ? 'Good standing with minor gaps.' : ($complianceScore >= 50 ? 'Moderate risk - several regulations not met.' : 'High risk - major compliance issues.')) ?></p>
             </div>
         </div>
     </div></div>
@@ -84,7 +84,7 @@
         <div class="flex items-center gap-2 mb-3">
             <h2 class="text-lg font-bold"><?= $tierInfo[0] ?></h2>
             <span class="badge <?= $tierInfo[2] ?> badge-sm">Tier <?= $tierNum ?></span>
-            <span class="text-xs text-base-content/50">— <?= $tierInfo[1] ?></span>
+            <span class="text-xs text-base-content/50">- <?= $tierInfo[1] ?></span>
         </div>
         <div class="space-y-2">
         <?php foreach ($tierRegs as $reg) : ?>

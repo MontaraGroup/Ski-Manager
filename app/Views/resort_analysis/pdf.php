@@ -31,7 +31,7 @@
 
 <div class="header">
     <div class="header-left">
-        <h1>Ski Manager — Resort Analysis</h1>
+        <h1>Ski Manager - Resort Analysis</h1>
     </div>
     <div class="header-right">
         Day <?= $report['game_day'] ?><br>
@@ -76,11 +76,11 @@
 
 <h2>Recommendations (<?= count($data['recommendations']) ?>)</h2>
 <?php if (empty($data['recommendations'])) : ?>
-    <p class="green" style="font-size:12px;font-weight:bold">&#10003; No recommendations — your resort is in great shape!</p>
+    <p class="green" style="font-size:12px;font-weight:bold">&#10003; No recommendations - your resort is in great shape!</p>
 <?php else : ?>
     <?php foreach ($data['recommendations'] as $rec) : ?>
         <div class="rec-<?= $rec['type'] ?>">
-            <span class="rec-area"><?= strtoupper($rec['type']) ?> — <?= $rec['area'] ?></span>
+            <span class="rec-area"><?= strtoupper($rec['type']) ?> - <?= $rec['area'] ?></span>
             <div class="rec-text"><?= $rec['text'] ?></div>
         </div>
     <?php endforeach ?>

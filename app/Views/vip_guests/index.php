@@ -6,7 +6,7 @@
     <?php if (empty($activeVips)) : ?>
         <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body text-center py-12">
             <i class="fa-solid fa-star text-4xl text-base-content/20 mb-3"></i>
-            <p class="text-base-content/60">No VIP guests right now. Keep improving your resort — they show up when your resort meets their standards!</p>
+            <p class="text-base-content/60">No VIP guests right now. Keep improving your resort - they show up when your resort meets their standards!</p>
         </div></div>
     <?php else : ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -60,7 +60,7 @@
         <h2 class="card-title text-base"><i class="fa-solid fa-circle-info mr-1 text-info"></i> How VIP Guests Work</h2>
         <ul class="text-sm space-y-1 mt-2 text-base-content/70">
             <li><i class="fa-solid fa-check text-success mr-1"></i> VIPs arrive randomly based on your resort quality</li>
-            <li><i class="fa-solid fa-check text-success mr-1"></i> Each has requirements — enough slopes, staff, buildings, etc.</li>
+            <li><i class="fa-solid fa-check text-success mr-1"></i> Each has requirements - enough slopes, staff, buildings, etc.</li>
             <li><i class="fa-solid fa-check text-success mr-1"></i> Meet their needs during their stay = cash reward + reputation boost</li>
             <li><i class="fa-solid fa-check text-success mr-1"></i> Fail to meet requirements = they leave disappointed, no reward</li>
             <li><i class="fa-solid fa-check text-success mr-1"></i> Rarer VIPs have bigger rewards but tougher requirements</li>

@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Admin — <?= esc($user['username']) ?><?= $this->endSection() ?>
+<?= $this->section('title') ?>Admin - <?= esc($user['username']) ?><?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-5xl mx-auto p-4 lg:p-8">
     <div class="flex items-center gap-3 mb-6">

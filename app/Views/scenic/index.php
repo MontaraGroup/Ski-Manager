@@ -7,7 +7,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-camera mr-2 text-primary"></i>Scenic Lifts & Sightseeing</h1>
-            <p class="text-sm text-base-content/50">Turn your lifts into tourist attractions — set prices, add upgrades, earn year-round</p>
+            <p class="text-sm text-base-content/50">Turn your lifts into tourist attractions - set prices, add upgrades, earn year-round</p>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-calendar mr-1"></i>Current Earning</div>
                 <div class="text-2xl font-bold <?= $isSummer ? 'text-success' : 'text-warning' ?>"><?= currency($seasonRevenue) ?></div>
-                <div class="text-xs text-base-content/50"><?= $isSummer ? 'Summer — full rate' : 'Winter — 30% rate' ?></div>
+                <div class="text-xs text-base-content/50"><?= $isSummer ? 'Summer - full rate' : 'Winter - 30% rate' ?></div>
             </div>
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-<?= $isSummer ? 'sun' : 'snowflake' ?> mr-1"></i>Season</div>
@@ -130,7 +130,7 @@
 
     <!-- Upgrade Ideas -->
     <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-sparkles mr-1 text-warning"></i> Available Upgrades</h2>
-    <p class="text-sm text-base-content/60 mb-3">Coming soon — enhance your scenic lifts with premium experiences.</p>
+    <p class="text-sm text-base-content/60 mb-3">Coming soon - enhance your scenic lifts with premium experiences.</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <?php foreach ($upgrades as $key => $up) : ?>
         <div class="card bg-base-200/50 border border-base-300 opacity-60"><div class="card-body p-3">

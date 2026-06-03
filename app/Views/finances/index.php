@@ -6,7 +6,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-coins mr-2 text-warning"></i>Finances</h1>
-            <p class="text-sm text-base-content/50">Day <?= $gameDay ?> — Financial overview</p>
+            <p class="text-sm text-base-content/50">Day <?= $gameDay ?> - Financial overview</p>
         </div>
     </div>
 

@@ -50,7 +50,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-check-circle text-5xl text-success/30 mb-3"></i>
                     <p class="font-semibold text-success">Debt Free!</p>
-                    <p class="text-sm text-base-content/50 mt-1">No active loans — your finances are clean</p>
+                    <p class="text-sm text-base-content/50 mt-1">No active loans - your finances are clean</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-3">
@@ -154,7 +154,7 @@
                     </div>
                     <div class="space-y-1.5">
                         <div><i class="fa-solid fa-lock mr-1"></i> Maximum 3 active loans at a time</div>
-                        <div><i class="fa-solid fa-check mr-1 text-success"></i> Pay off early anytime — no penalties</div>
+                        <div><i class="fa-solid fa-check mr-1 text-success"></i> Pay off early anytime - no penalties</div>
                         <div><i class="fa-solid fa-triangle-exclamation mr-1 text-error"></i> Emergency credit has the highest interest rate</div>
                     </div>
                 </div>

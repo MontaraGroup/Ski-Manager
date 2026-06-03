@@ -18,7 +18,7 @@
             <div class="flex flex-col md:flex-row md:items-center gap-3">
                 <div class="flex items-center gap-3 flex-1">
                     <div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center"><i class="<?= $icons[$p['policy_type']] ?? 'fa-solid fa-shield' ?> text-lg <?= $p['active'] ? 'text-info' : 'text-base-content/30' ?>"></i></div>
-                    <div><div class="font-semibold text-sm"><?= esc($p['name']) ?></div><div class="text-xs text-base-content/50">Premium: <?= currency((int)$p['premium_per_day']) ?>/day — Coverage: <?= currency((int)$p['coverage_amount']) ?></div></div>
+                    <div><div class="font-semibold text-sm"><?= esc($p['name']) ?></div><div class="text-xs text-base-content/50">Premium: <?= currency((int)$p['premium_per_day']) ?>/day - Coverage: <?= currency((int)$p['coverage_amount']) ?></div></div>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="badge <?= $p['active'] ? 'badge-success' : 'badge-ghost' ?> badge-sm"><?= $p['active'] ? 'Active' : 'Inactive' ?></span>

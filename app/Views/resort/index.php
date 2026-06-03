@@ -20,7 +20,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <div class="avatar placeholder"><div class="bg-primary text-primary-content rounded-full w-14 h-14 flex items-center justify-center"><i class="fa-solid fa-mountain-sun text-2xl"></i></div></div>
                 <div>
                     <h1 class="text-2xl font-bold"><?= esc($resort['name']) ?></h1>
-                    <p class="text-sm text-base-content/50"><?= $resort['location'] ? esc($resort['location']) . ' — ' : '' ?>Altitude: <?= $altitudeLabels[$resort['altitude']] ?? 'Unknown' ?></p>
+                    <p class="text-sm text-base-content/50"><?= $resort['location'] ? esc($resort['location']) . ' - ' : '' ?>Altitude: <?= $altitudeLabels[$resort['altitude']] ?? 'Unknown' ?></p>
                     <div class="flex items-center gap-2 mt-1">
                         <?php if ($resort['is_open']) : ?><span class="badge badge-success badge-sm">Open</span><?php else : ?><span class="badge badge-error badge-sm">Closed</span><?php endif ?>
                     </div>
@@ -105,7 +105,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                                 <tr>
                                     <td class="font-semibold"><?= esc($slope['name']) ?></td>
                                     <td><?= ucwords(str_replace('_', ' ', $slope['subtype'])) ?></td>
-                                    <td><span class="badge <?= $diffColors[$slope['difficulty']] ?? 'badge-ghost' ?> badge-sm"><?= ucfirst($slope['difficulty'] ?? '—') ?></span></td>
+                                    <td><span class="badge <?= $diffColors[$slope['difficulty']] ?? 'badge-ghost' ?> badge-sm"><?= ucfirst($slope['difficulty'] ?? '-') ?></span></td>
                                     <td>
                                         <div class="flex items-center gap-1">
                                             <progress class="progress <?= (int)$slope['condition_pct'] > 50 ? 'progress-success' : ((int)$slope['condition_pct'] > 20 ? 'progress-warning' : 'progress-error') ?> w-14" value="<?= $slope['condition_pct'] ?>" max="100"></progress>
@@ -159,7 +159,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
             <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-sm">Resort Info</h3><a href="/resort/edit" class="btn btn-ghost btn-xs">Edit</a></div>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between"><span class="text-base-content/50">Name</span><span class="font-semibold"><?= esc($resort['name']) ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Location</span><span><?= $resort['location'] ? esc($resort['location']) : '—' ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Location</span><span><?= $resort['location'] ? esc($resort['location']) : '-' ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Status</span><?php if ($resort['is_open']) : ?><span class="text-success font-semibold">Open</span><?php else : ?><span class="text-error font-semibold">Closed</span><?php endif ?></div>
             </div>
         </div></div>

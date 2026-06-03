@@ -7,7 +7,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-seedling mr-2 text-success"></i>Génépis</h1>
-            <p class="text-sm text-base-content/50">Your premium currency — earn through gameplay, spend on boosts</p>
+            <p class="text-sm text-base-content/50">Your premium currency - earn through gameplay, spend on boosts</p>
         </div>
     </div>
 

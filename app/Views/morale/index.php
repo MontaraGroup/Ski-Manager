@@ -120,10 +120,10 @@
                 <div class="card-body p-4">
                     <h3 class="font-semibold text-sm mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>Morale Effects</h3>
                     <ul class="text-xs text-base-content/60 space-y-1.5">
-                        <li><span class="text-success font-semibold">80-100%</span> — Staff work faster, +10% efficiency</li>
-                        <li><span class="text-info font-semibold">60-79%</span> — Normal performance</li>
-                        <li><span class="text-warning font-semibold">40-59%</span> — Slower work, -10% efficiency</li>
-                        <li><span class="text-error font-semibold">0-39%</span> — Risk of quitting, -25% efficiency</li>
+                        <li><span class="text-success font-semibold">80-100%</span> - Staff work faster, +10% efficiency</li>
+                        <li><span class="text-info font-semibold">60-79%</span> - Normal performance</li>
+                        <li><span class="text-warning font-semibold">40-59%</span> - Slower work, -10% efficiency</li>
+                        <li><span class="text-error font-semibold">0-39%</span> - Risk of quitting, -25% efficiency</li>
                         <li class="pt-1"><i class="fa-solid fa-arrow-down mr-1"></i>Morale drops 2/day naturally</li>
                         <li><i class="fa-solid fa-arrow-down mr-1"></i>Low pay, overwork, bad weather lower it faster</li>
                     </ul>

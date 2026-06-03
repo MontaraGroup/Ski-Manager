@@ -78,17 +78,17 @@
             <!-- Step 2: Configure (Lift) -->
             <div id="step2Lift" class="p-4 flex-1 overflow-y-auto hidden">
                 <button class="btn btn-ghost btn-xs mb-3 gap-1 step-back"><i class="fa-solid fa-chevron-left text-xs"></i> Back</button>
-                <p class="text-sm font-semibold mb-1" id="selectedPathName">—</p>
-                <p class="text-xs text-base-content/50 mb-4" id="selectedPathLength">—</p>
+                <p class="text-sm font-semibold mb-1" id="selectedPathName">-</p>
+                <p class="text-xs text-base-content/50 mb-4" id="selectedPathLength">-</p>
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-semibold block mb-2">Lift Type</label>
                         <div class="grid grid-cols-1 gap-1.5">
-                            <label class="cursor-pointer"><input type="radio" name="liftType" value="button" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Button Lift</span> — <span class="text-base-content/50">1,000 skiers/hr, 3 m/s</span></div></div></label>
-                            <label class="cursor-pointer"><input type="radio" name="liftType" value="chair_fixed" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Chairlift (Fixed)</span> — <span class="text-base-content/50">2,400 skiers/hr, 3 m/s</span></div></div></label>
-                            <label class="cursor-pointer"><input type="radio" name="liftType" value="chair_detach" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Chairlift (Detachable)</span> — <span class="text-base-content/50">3,400 skiers/hr, 5 m/s</span></div></div></label>
-                            <label class="cursor-pointer"><input type="radio" name="liftType" value="gondola" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Gondola</span> — <span class="text-base-content/50">3,500 skiers/hr, 6 m/s</span></div></div></label>
-                            <label class="cursor-pointer"><input type="radio" name="liftType" value="cable_car" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Cable Car</span> — <span class="text-base-content/50">4,000 skiers/hr, 8 m/s</span></div></div></label>
+                            <label class="cursor-pointer"><input type="radio" name="liftType" value="button" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Button Lift</span> - <span class="text-base-content/50">1,000 skiers/hr, 3 m/s</span></div></div></label>
+                            <label class="cursor-pointer"><input type="radio" name="liftType" value="chair_fixed" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Chairlift (Fixed)</span> - <span class="text-base-content/50">2,400 skiers/hr, 3 m/s</span></div></div></label>
+                            <label class="cursor-pointer"><input type="radio" name="liftType" value="chair_detach" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Chairlift (Detachable)</span> - <span class="text-base-content/50">3,400 skiers/hr, 5 m/s</span></div></div></label>
+                            <label class="cursor-pointer"><input type="radio" name="liftType" value="gondola" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Gondola</span> - <span class="text-base-content/50">3,500 skiers/hr, 6 m/s</span></div></div></label>
+                            <label class="cursor-pointer"><input type="radio" name="liftType" value="cable_car" class="peer hidden"><div class="border border-base-300 rounded-lg p-2.5 peer-checked:border-primary peer-checked:bg-primary/10 hover:bg-base-200 transition-colors"><div class="text-xs"><span class="font-semibold">Cable Car</span> - <span class="text-base-content/50">4,000 skiers/hr, 8 m/s</span></div></div></label>
                         </div>
                     </div>
                     <div>
@@ -106,8 +106,8 @@
             <!-- Step 2: Configure (Slope) -->
             <div id="step2Slope" class="p-4 flex-1 overflow-y-auto hidden">
                 <button class="btn btn-ghost btn-xs mb-3 gap-1 step-back"><i class="fa-solid fa-chevron-left text-xs"></i> Back</button>
-                <p class="text-sm font-semibold mb-1" id="selectedSlopeName">—</p>
-                <p class="text-xs text-base-content/50 mb-4" id="selectedSlopeLength">—</p>
+                <p class="text-sm font-semibold mb-1" id="selectedSlopeName">-</p>
+                <p class="text-xs text-base-content/50 mb-4" id="selectedSlopeLength">-</p>
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-semibold block mb-2">Type</label>
@@ -135,9 +135,9 @@
             <!-- Confirm bar -->
             <div id="step3" class="p-4 border-t border-base-300 shrink-0 hidden">
                 <div class="bg-base-200 rounded-lg p-3 text-xs space-y-1 mb-3">
-                    <div class="flex justify-between"><span class="text-base-content/50">Length</span><span class="font-mono" id="confirmLength">—</span></div>
-                    <div class="flex justify-between"><span class="text-base-content/50">Build time</span><span class="font-mono" id="confirmTime">—</span></div>
-                    <div class="flex justify-between font-semibold text-sm"><span>Total Cost</span><span class="font-mono text-primary" id="confirmCost">—</span></div>
+                    <div class="flex justify-between"><span class="text-base-content/50">Length</span><span class="font-mono" id="confirmLength">-</span></div>
+                    <div class="flex justify-between"><span class="text-base-content/50">Build time</span><span class="font-mono" id="confirmTime">-</span></div>
+                    <div class="flex justify-between font-semibold text-sm"><span>Total Cost</span><span class="font-mono text-primary" id="confirmCost">-</span></div>
                 </div>
                 <div class="flex gap-2">
                     <button class="btn btn-success btn-sm flex-1" id="confirmBuildBtn">Build</button>

@@ -149,7 +149,7 @@
                         </div>
                         <form action="/snowmaking/buy" method="post"><?= csrf_field() ?>
                             <input type="hidden" name="level" value="<?= $level ?>">
-                            <button class="btn btn-info btn-xs w-full"><i class="fa-solid fa-plus mr-1"></i> Buy — <?= currency($ct['cost']) ?></button>
+                            <button class="btn btn-info btn-xs w-full"><i class="fa-solid fa-plus mr-1"></i> Buy - <?= currency($ct['cost']) ?></button>
                         </form>
                     </div>
                 </div>
@@ -160,8 +160,8 @@
                 <h3 class="font-semibold text-xs mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>Snowmaking Guide</h3>
                 <ul class="text-xs text-base-content/60 space-y-1">
                     <li><i class="fa-solid fa-temperature-low mr-1 text-info"></i> Requires temperature ≤ -2°C</li>
-                    <li><i class="fa-solid fa-droplet mr-1 text-blue-400"></i> Needs water supply — check <a href="/water" class="link link-primary">Water Management</a></li>
-                    <li><i class="fa-solid fa-bolt mr-1 text-error"></i> Uses energy — check <a href="/energy" class="link link-primary">Energy Management</a></li>
+                    <li><i class="fa-solid fa-droplet mr-1 text-blue-400"></i> Needs water supply - check <a href="/water" class="link link-primary">Water Management</a></li>
+                    <li><i class="fa-solid fa-bolt mr-1 text-error"></i> Uses energy - check <a href="/energy" class="link link-primary">Energy Management</a></li>
                     <li><i class="fa-solid fa-mountain mr-1"></i> Snow output improves slope conditions</li>
                     <li><i class="fa-solid fa-users mr-1"></i> <a href="/staff/hire" class="link link-primary">Hire snowmakers</a> for better efficiency</li>
                 </ul>

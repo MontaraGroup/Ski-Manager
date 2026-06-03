@@ -28,7 +28,7 @@ $routes->get('/admin/broadcast', 'Admin::broadcast');
 $routes->get('/admin/settings', 'Admin::gameSettings');
 $routes->get('/admin/user/(:num)', 'Admin::editUser/$1');
 $routes->get('/bank', 'Bank::index');
-$routes->get('/bugs', function() { return redirect()->to('https://gitlab.com/contact1231/manager/-/issues'); });
+$routes->get('/bugs', function() { return redirect()->to('https://gitlab.com/contact1231/skimanager-v2/-/issues'); });
 $routes->get('/contact', 'Contact::index');
 $routes->get('/cookies', 'Legal::cookies');
 $routes->get('/daily-bonus', 'DailyBonus::index');

@@ -67,21 +67,21 @@
                             <input type="radio" name="altitude" value="low" class="radio radio-primary radio-sm" <?= ($resort['altitude'] ?? '') === 'low' ? 'checked' : '' ?>>
                             <div>
                                 <div class="text-sm font-semibold">Low Altitude</div>
-                                <div class="text-xs text-base-content/50">Below 1,000 m — Lower build costs, less natural snow</div>
+                                <div class="text-xs text-base-content/50">Below 1,000 m - Lower build costs, less natural snow</div>
                             </div>
                         </label>
                         <label class="cursor-pointer flex items-center gap-3">
                             <input type="radio" name="altitude" value="medium" class="radio radio-primary radio-sm" <?= ($resort['altitude'] ?? 'medium') === 'medium' ? 'checked' : '' ?>>
                             <div>
                                 <div class="text-sm font-semibold">Medium Altitude</div>
-                                <div class="text-xs text-base-content/50">1,000–2,000 m — Balanced costs, good snow coverage</div>
+                                <div class="text-xs text-base-content/50">1,000–2,000 m - Balanced costs, good snow coverage</div>
                             </div>
                         </label>
                         <label class="cursor-pointer flex items-center gap-3">
                             <input type="radio" name="altitude" value="high" class="radio radio-primary radio-sm" <?= ($resort['altitude'] ?? '') === 'high' ? 'checked' : '' ?>>
                             <div>
                                 <div class="text-sm font-semibold">High Altitude</div>
-                                <div class="text-xs text-base-content/50">Above 2,000 m — Higher build costs (x1.3), excellent snow</div>
+                                <div class="text-xs text-base-content/50">Above 2,000 m - Higher build costs (x1.3), excellent snow</div>
                             </div>
                         </label>
                     </div>

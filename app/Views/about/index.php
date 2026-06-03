@@ -10,11 +10,11 @@
         <p>Ski Manager is a free-to-play browser-based ski resort management simulation game. Players take on the role of a resort owner, building slopes and lifts, hiring staff, managing budgets, and competing to create the most successful ski resort. The game draws inspiration from classic tycoon games like <a href="https://en.wikipedia.org/wiki/RollerCoaster_Tycoon" target="_blank" rel="noopener noreferrer">RollerCoaster Tycoon</a> and <a href="https://en.wikipedia.org/wiki/SimCity" target="_blank" rel="noopener noreferrer">SimCity</a>, applied to the world of alpine skiing.</p>
 
         <h2>History</h2>
-        <p>The original Ski Manager launched as a small hobby project to explore whether a skiing-themed management game could work as a browser game. After gaining a small community of players, the project evolved through several iterations. In 2026, the entire game was rebuilt from scratch as Version 2 — a complete rewrite with a modern codebase, redesigned interface, and dramatically expanded gameplay features.</p>
+        <p>The original Ski Manager launched as a small hobby project to explore whether a skiing-themed management game could work as a browser game. After gaining a small community of players, the project evolved through several iterations. In 2026, the entire game was rebuilt from scratch as Version 2 - a complete rewrite with a modern codebase, redesigned interface, and dramatically expanded gameplay features.</p>
         <p>Today, Ski Manager includes over 30 interconnected game systems covering everything from real-time weather simulation and snowmaking operations to government compliance, insurance, financial management, and terrain park design.</p>
 
         <h2>The Developer</h2>
-        <p>Ski Manager is developed by Marcel Saintin, a web developer and skiing enthusiast. The project combines a passion for winter sports with years of experience in full-stack web development. Marcel handles all aspects of the game — design, development, server infrastructure, and community management.</p>
+        <p>Ski Manager is developed by Marcel Saintin, a web developer and skiing enthusiast. The project combines a passion for winter sports with years of experience in full-stack web development. Marcel handles all aspects of the game - design, development, server infrastructure, and community management.</p>
 
         <h2>Technology</h2>
         <p>Ski Manager v2 is built on a modern, reliable technology stack:</p>

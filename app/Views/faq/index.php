@@ -34,7 +34,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">How does the game work day-to-day?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>Every real-world day at midnight, the game processes a "tick" — this calculates your visitor count based on weather, slopes, and marketing, collects ticket and building revenue, pays staff salaries, processes loan payments, and updates equipment condition. The weather changes daily and affects how many visitors come. Your job is to balance income against expenses and grow your resort over time.</p>
+                <p>Every real-world day at midnight, the game processes a "tick" - this calculates your visitor count based on weather, slopes, and marketing, collects ticket and building revenue, pays staff salaries, processes loan payments, and updates equipment condition. The weather changes daily and affects how many visitors come. Your job is to balance income against expenses and grow your resort over time.</p>
             </div>
         </div>
 
@@ -74,7 +74,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">How do I earn more money?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>Revenue comes from several sources: lift ticket sales (your primary income), building revenue (hotels, restaurants, shops), parking fees, and terrain park visitors. To maximize income, build more slopes and lifts to attract visitors, keep your infrastructure in good condition, run marketing campaigns during slow periods, and adjust ticket prices based on demand. Keep an eye on expenses too — staff salaries, equipment fuel, loan payments, and maintenance costs can eat into profits.</p>
+                <p>Revenue comes from several sources: lift ticket sales (your primary income), building revenue (hotels, restaurants, shops), parking fees, and terrain park visitors. To maximize income, build more slopes and lifts to attract visitors, keep your infrastructure in good condition, run marketing campaigns during slow periods, and adjust ticket prices based on demand. Keep an eye on expenses too - staff salaries, equipment fuel, loan payments, and maintenance costs can eat into profits.</p>
             </div>
         </div>
 
@@ -82,7 +82,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">Can I play on mobile?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>Yes! Ski Manager is fully responsive and works on phones and tablets through your mobile browser. No app download required — just visit v2.ski-manager.net and log in. The interface adapts to smaller screens with a mobile-friendly navigation menu.</p>
+                <p>Yes! Ski Manager is fully responsive and works on phones and tablets through your mobile browser. No app download required - just visit v2.ski-manager.net and log in. The interface adapts to smaller screens with a mobile-friendly navigation menu.</p>
             </div>
         </div>
 
@@ -114,7 +114,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">I found a bug. How do I report it?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>We appreciate bug reports! You can report bugs through our <a href="/bugs" class="link link-primary">bug tracker on GitLab</a>, via the <a href="/contact" class="link link-primary">contact form</a>, or on our Discord server. Please include as much detail as possible — what you were doing, what you expected to happen, and what happened instead.</p>
+                <p>We appreciate bug reports! You can report bugs through our <a href="/bugs" class="link link-primary">bug tracker on GitLab</a>, via the <a href="/contact" class="link link-primary">contact form</a>, or on our Discord server. Please include as much detail as possible - what you were doing, what you expected to happen, and what happened instead.</p>
             </div>
         </div>
     </div>

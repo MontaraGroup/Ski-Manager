@@ -17,15 +17,15 @@
                     <p>Major update bringing resource management, terrain parks, and quality-of-life improvements to Ski Manager.</p>
                     <h3>New Features</h3>
                     <ul>
-                        <li><strong>Energy Management</strong> — Build power grid connections, solar panels, wind turbines, and diesel generators to power your resort. Monitor supply vs. demand across all your operations.</li>
-                        <li><strong>Water Management</strong> — Construct reservoirs, wells, river pumps, and water recycling plants to supply your snowmaking operations.</li>
-                        <li><strong>Terrain Parks</strong> — Build halfpipes, jump lines, rail gardens, and slopestyle courses. Hire dedicated park crew to maintain features. Attracts younger visitors.</li>
-                        <li><strong>Parking & Transit</strong> — Build surface lots, parking garages, shuttle stops, and a village gondola. Set dynamic parking fees. Visitors are turned away when parking is full.</li>
-                        <li><strong>VIP Guests</strong> — Random celebrity visitors, film crews, influencers, and ski teams arrive based on your resort quality. Meet their requirements for cash and reputation bonuses.</li>
-                        <li><strong>Resort Analysis</strong> — Order a detailed report analyzing your resort across seven categories. Costs 20 Génépis and provides actionable recommendations.</li>
-                        <li><strong>Notification System</strong> — Bell icon in the navbar with real-time notifications for construction completions, equipment breakdowns, VIP arrivals, and more.</li>
-                        <li><strong>Tutorial System</strong> — New player tutorial that guides you through hiring staff, building slopes, and setting up your resort.</li>
-                        <li><strong>Google Sign-In</strong> — Sign up or log in with your Google account for faster access.</li>
+                        <li><strong>Energy Management</strong> - Build power grid connections, solar panels, wind turbines, and diesel generators to power your resort. Monitor supply vs. demand across all your operations.</li>
+                        <li><strong>Water Management</strong> - Construct reservoirs, wells, river pumps, and water recycling plants to supply your snowmaking operations.</li>
+                        <li><strong>Terrain Parks</strong> - Build halfpipes, jump lines, rail gardens, and slopestyle courses. Hire dedicated park crew to maintain features. Attracts younger visitors.</li>
+                        <li><strong>Parking & Transit</strong> - Build surface lots, parking garages, shuttle stops, and a village gondola. Set dynamic parking fees. Visitors are turned away when parking is full.</li>
+                        <li><strong>VIP Guests</strong> - Random celebrity visitors, film crews, influencers, and ski teams arrive based on your resort quality. Meet their requirements for cash and reputation bonuses.</li>
+                        <li><strong>Resort Analysis</strong> - Order a detailed report analyzing your resort across seven categories. Costs 20 Génépis and provides actionable recommendations.</li>
+                        <li><strong>Notification System</strong> - Bell icon in the navbar with real-time notifications for construction completions, equipment breakdowns, VIP arrivals, and more.</li>
+                        <li><strong>Tutorial System</strong> - New player tutorial that guides you through hiring staff, building slopes, and setting up your resort.</li>
+                        <li><strong>Google Sign-In</strong> - Sign up or log in with your Google account for faster access.</li>
                     </ul>
                     <h3>Dashboard Improvements</h3>
                     <ul>
@@ -38,8 +38,8 @@
                     </ul>
                     <h3>Quality of Life</h3>
                     <ul>
-                        <li>Equipment durability system — equipment degrades with use and needs repair</li>
-                        <li>Resort open/close toggle — close your resort for maintenance days</li>
+                        <li>Equipment durability system - equipment degrades with use and needs repair</li>
+                        <li>Resort open/close toggle - close your resort for maintenance days</li>
                         <li>Expanded settings page with resort naming, tutorial restart, and data management</li>
                         <li>Improved mobile navigation with categorized hamburger menu</li>
                         <li>Faster Font Awesome icon loading</li>

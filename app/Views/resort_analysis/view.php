@@ -3,7 +3,7 @@
 <div class="container mx-auto p-4 max-w-5xl">
     <div class="flex items-center gap-3 mb-6">
         <a href="/resort-analysis" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i></a>
-        <h1 class="text-2xl font-bold"><i class="fa-solid fa-clipboard-check mr-2 text-primary"></i> Resort Analysis — Day <?= $report["game_day"] ?></h1>
+        <h1 class="text-2xl font-bold"><i class="fa-solid fa-clipboard-check mr-2 text-primary"></i> Resort Analysis - Day <?= $report["game_day"] ?></h1>
         <a href="/resort-analysis/pdf/<?= $report["id"] ?>" class="btn btn-outline btn-sm gap-1 ml-auto"><i class="fa-solid fa-file-pdf text-error"></i> Download PDF</a>
     </div>
 
@@ -59,7 +59,7 @@
     <!-- Recommendations -->
     <h2 class="text-xl font-semibold mb-3"><i class="fa-solid fa-lightbulb mr-1 text-warning"></i> Recommendations (<?= count($data['recommendations']) ?>)</h2>
     <?php if (empty($data['recommendations'])) : ?>
-        <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i><span>No recommendations — your resort is in great shape!</span></div>
+        <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i><span>No recommendations - your resort is in great shape!</span></div>
     <?php else : ?>
         <div class="space-y-2">
         <?php foreach ($data['recommendations'] as $rec) : ?>

@@ -37,7 +37,7 @@
                         <div class="flex flex-col md:flex-row md:items-center gap-3">
                             <div class="flex-1">
                                 <div class="font-semibold"><?= esc($c['name']) ?></div>
-                                <div class="text-xs text-base-content/50"><?= currency($c['daily_cost']) ?>/day — +<?= $c['visitor_boost'] ?>% visitors — +<?= $c['reputation_boost'] ?> rep/day — <?= $c['days_remaining'] ?> days left</div>
+                                <div class="text-xs text-base-content/50"><?= currency($c['daily_cost']) ?>/day - +<?= $c['visitor_boost'] ?>% visitors - +<?= $c['reputation_boost'] ?> rep/day - <?= $c['days_remaining'] ?> days left</div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <?php if ($c['status'] === 'active') : ?>
@@ -75,7 +75,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm"><?= $type['name'] ?></div>
                                     <div class="text-xs text-base-content/50"><?= $type['desc'] ?></div>
-                                    <div class="text-xs text-base-content/50">+<?= $type['visitors'] ?>% visitors — +<?= $type['rep'] ?> rep — <?= $type['days'] ?> days</div>
+                                    <div class="text-xs text-base-content/50">+<?= $type['visitors'] ?>% visitors - +<?= $type['rep'] ?> rep - <?= $type['days'] ?> days</div>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <div class="font-bold text-primary text-sm"><?= currency($type['price']) ?></div>

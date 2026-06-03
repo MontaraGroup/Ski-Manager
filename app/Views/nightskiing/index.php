@@ -8,7 +8,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-moon mr-2 text-warning"></i>Night Skiing</h1>
-                <p class="text-sm text-base-content/50">Extend operating hours with lighting systems — more visitors, more revenue</p>
+                <p class="text-sm text-base-content/50">Extend operating hours with lighting systems - more visitors, more revenue</p>
             </div>
         </div>
     </div>
@@ -125,7 +125,7 @@
                         </div>
                         <form action="/night-skiing/buy" method="post"><?= csrf_field() ?>
                             <input type="hidden" name="type" value="<?= $key ?>">
-                            <button class="btn btn-primary btn-xs w-full"><i class="fa-solid fa-plus mr-1"></i> Install — <?= currency($lt['cost']) ?></button>
+                            <button class="btn btn-primary btn-xs w-full"><i class="fa-solid fa-plus mr-1"></i> Install - <?= currency($lt['cost']) ?></button>
                         </form>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                     <li><i class="fa-solid fa-moon mr-1 text-warning"></i> Adds <?= $nightHours ?> hours of evening skiing</li>
                     <li><i class="fa-solid fa-users mr-1"></i> Up to +30% more daily visitors</li>
                     <li><i class="fa-solid fa-bolt mr-1 text-error"></i> Active lights consume energy daily</li>
-                    <li><i class="fa-solid fa-wrench mr-1"></i> Lights degrade — mechanics help maintain</li>
+                    <li><i class="fa-solid fa-wrench mr-1"></i> Lights degrade - mechanics help maintain</li>
                 </ul>
             </div></div>
         </div>

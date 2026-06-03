@@ -105,9 +105,8 @@ class Snowmaking extends BaseController
 
         $newStatus = $cannon['status'] === 'active' ? 'off' : 'active';
         $this->cannonModel->update($id, ['status' => $newStatus]);
-        log_activity($userId, 'Snowmaking', $cannon['cannon_name'] . ' turned ' . $label, 'fa-solid fa-power-off');
-
         $label = $newStatus === 'active' ? 'turned on' : 'turned off';
+        log_activity($userId, 'Snowmaking', $cannon['cannon_name'] . ' ' . $label, 'fa-solid fa-power-off');
         return redirect()->to('/snowmaking')->with('success', $cannon['cannon_name'] . ' ' . $label . '.');
     }
 

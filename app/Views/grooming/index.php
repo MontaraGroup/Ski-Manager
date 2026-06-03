@@ -27,7 +27,7 @@
             </div>
             <div class="flex-1">
                 <h2 class="text-lg font-bold">Overall Slope Condition</h2>
-                <p class="text-sm text-base-content/60"><?= $overallCondition >= 80 ? 'Excellent conditions — visitors love it.' : ($overallCondition >= 50 ? 'Acceptable but deteriorating. Schedule grooming soon.' : 'Poor conditions — visitors are complaining. Groom immediately.') ?></p>
+                <p class="text-sm text-base-content/60"><?= $overallCondition >= 80 ? 'Excellent conditions - visitors love it.' : ($overallCondition >= 50 ? 'Acceptable but deteriorating. Schedule grooming soon.' : 'Poor conditions - visitors are complaining. Groom immediately.') ?></p>
             </div>
         </div>
     </div></div>
@@ -147,7 +147,7 @@
                     <form action="/grooming/assign" method="post" class="flex gap-2"><?= csrf_field() ?>
                         <input type="hidden" name="groomer_id" value="<?= $g['id'] ?>">
                         <select name="sector" class="select select-bordered select-xs flex-1">
-                            <option value="" <?= !$g['assigned_to'] ? 'selected' : '' ?>>— Unassigned —</option>
+                            <option value="" <?= !$g['assigned_to'] ? 'selected' : '' ?>>- Unassigned -</option>
                             <?php foreach ($sectors as $sNum => $sec) : ?>
                             <option value="<?= $sNum ?>" <?= $g['assigned_to'] === 'sector_' . $sNum ? 'selected' : '' ?>>Sector <?= $sNum ?> (<?= count($sec['slopes']) ?> slopes, <?= $sec['avg_condition'] ?>%)</option>
                             <?php endforeach ?>
