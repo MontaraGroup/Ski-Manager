@@ -1,69 +1,97 @@
-# CodeIgniter 4 Application Starter
+# Ski Manager v2
 
-## What is CodeIgniter?
+A free-to-play browser-based ski resort management simulation game. Build slopes, hire staff, manage finances, and compete with players worldwide.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+**Play now:** [skimanager.net](https://skimanager.net)
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## Features
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+- **Interactive Trail Map** - Draw slopes and place lifts on a Leaflet.js-powered map
+- **10 Staff Roles** - Ski patrol, groomers, instructors, chefs, mechanics, and more
+- **Dynamic Weather** - Daily weather changes affect visitor count and snow conditions
+- **30+ Game Systems** - Buildings, equipment, snowmaking, night skiing, terrain parks, energy, water, parking, insurance, government regulations, and more
+- **Real Equipment Brands** - PistenBully, Prinoth, TechnoAlpin, Sufag, Demaclenko
+- **Financial Management** - Revenue tracking, loans, insurance, marketing campaigns
+- **Achievements & Leaderboards** - Track progress and compete globally
+- **Resort Analysis** - Order detailed PDF reports analyzing your resort performance
+- **VIP Guests** - Attract celebrities, film crews, and ski teams
+- **Tutorial System** - Guided walkthrough for new players
+- **Dark/Light Theme** - DaisyUI-powered theme switching
+- **Mobile Responsive** - Play on any device
+- **Google Sign-In** - Quick account creation
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+## Tech Stack
 
-## Installation & updates
+| Layer | Technology |
+|-------|-----------|
+| Backend | [CodeIgniter 4.7](https://codeigniter.com/) (PHP 8.5) |
+| Auth | [CodeIgniter Shield](https://codeigniter4.github.io/shield/) |
+| Frontend | [Tailwind CSS 4](https://tailwindcss.com/) + [DaisyUI 5](https://daisyui.com/) |
+| Trail Map | [Leaflet.js](https://leafletjs.com/) with [Mapsynergy](https://www.skimap.org/) imagery |
+| Icons | [Font Awesome 6](https://fontawesome.com/) |
+| PDF | [Dompdf](https://github.com/dompdf/dompdf) + [qpdf](https://github.com/qpdf/qpdf) |
+| Errors | [Sentry](https://sentry.io/) |
+| Database | MySQL 8 |
+| Server | VPS with Docker (OpenResty + PHP-FPM) |
+| CDN/SSL | [Cloudflare](https://www.cloudflare.com/) |
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+## Game Systems
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+| Category | Systems |
+|----------|---------|
+| Resort | Trail Map, Slopes, Lifts, Scenic Lifts, Grooming |
+| Operations | Staff, Snowmaking, Night Skiing, Terrain Parks, Parking |
+| Buildings | Hotels, Restaurants, Rentals, Retail, Real Estate, Transportation, Ski Patrol |
+| Business | Finances, Bank and Loans, Tickets, Marketing, Insurance, Equipment |
+| Resources | Energy Management, Water Management |
+| Compliance | Government Regulations, Environment |
+| Progression | Achievements, Leaderboard, Tournaments, Daily Bonus, VIP Guests |
+| Meta | Resort Analysis (PDF), Off-Season, Notifications, Tutorial |
 
 ## Setup
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+1. Clone the repo and install dependencies:
 
-## Important Change with index.php
+       git clone https://gitlab.com/contact1231/skimanager-v2.git
+       cd skimanager-v2
+       composer install
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+2. Copy the env template and configure your database:
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+       cp env .env
 
-**Please** read the user guide for a better explanation of how CI4 works!
+3. Run migrations:
 
-## Repository Management
+       php spark migrate
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+4. Build CSS:
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+       npx @tailwindcss/cli -i public/css/input.css -o public/css/style.css --minify
 
-## Server Requirements
+5. Start the dev server:
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+       php spark serve
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+## Game Tick
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+The game engine runs daily via cron (processes salaries, revenue, weather, construction, etc.):
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+    0 4 * * * cd /path/to/project && php spark game:tick
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Open a Merge Request
+
+## Links
+
+- **Play:** [skimanager.net](https://skimanager.net)
+- **Wiki:** [wiki.ski-manager.net](https://wiki.ski-manager.net)
+- **Discord:** [Join](https://discord.gg/TyEnFdfd8w)
+- **Bug Reports:** [GitLab Issues](https://gitlab.com/contact1231/skimanager-v2/-/issues)
+
+## License
+
+All rights reserved. Source code available for reference and contribution.
