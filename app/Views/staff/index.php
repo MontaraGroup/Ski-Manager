@@ -1,29 +1,27 @@
 <?= $this->extend('layouts/main') ?>
-
 <?= $this->section('title') ?>Staff<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <div class="max-w-6xl mx-auto p-4 lg:p-8">
 
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-            <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle">
-                <i class="fa-solid fa-chevron-left"></i>
-            </a>
+            <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold">Staff</h1>
                 <p class="text-sm text-base-content/50"><?= count($staff) ?> employees - <?= currency($totalSalary) ?>/day total salary</p>
             </div>
         </div>
-        <a href="/morale" class="btn btn-outline btn-sm"><i class="fa-solid fa-face-smile mr-1"></i>Morale</a>
-        <a href="/staff/hire" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus mr-1"></i>Hire Staff</a>
+        <div class="flex gap-2">
+            <a href="/morale" class="btn btn-outline btn-sm"><i class="fa-solid fa-face-smile mr-1"></i>Morale</a>
+            <a href="/staff/hire" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus mr-1"></i>Hire</a>
+        </div>
     </div>
 
     <?php if (session('success')) : ?>
-        <div class="alert alert-success mb-4" role="status"><span><?= session('success') ?></span></div>
+        <div class="alert alert-success mb-4"><span><?= session('success') ?></span></div>
     <?php endif ?>
     <?php if (session('error')) : ?>
-        <div class="alert alert-error mb-4" role="alert"><span><?= session('error') ?></span></div>
+        <div class="alert alert-error mb-4"><span><?= session('error') ?></span></div>
     <?php endif ?>
 
     <?php if (empty($staff)) : ?>
@@ -38,33 +36,38 @@
     <?php else : ?>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 text-center">
-                    <div class="text-2xl font-bold"><?= count($staff) ?></div>
-                    <div class="text-xs text-base-content/50">Total Staff</div>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 text-center">
-                    <div class="text-2xl font-bold"><?= currency($totalSalary) ?></div>
-                    <div class="text-xs text-base-content/50">Daily Salary</div>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 text-center">
-                    <?php $avgMorale = count($staff) > 0 ? round(array_sum(array_column($staff, 'morale')) / count($staff)) : 0; ?>
-                    <div class="text-2xl font-bold"><?= $avgMorale ?>%</div>
-                    <div class="text-xs text-base-content/50">Avg Morale</div>
-                </div>
-            </div>
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body p-3 text-center">
-                    <?php $avgLevel = count($staff) > 0 ? round(array_sum(array_column($staff, 'level')) / count($staff), 1) : 0; ?>
-                    <div class="text-2xl font-bold"><?= $avgLevel ?></div>
-                    <div class="text-xs text-base-content/50">Avg Level</div>
-                </div>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+                <div class="text-2xl font-bold"><?= count($staff) ?></div>
+                <div class="text-xs text-base-content/50">Total Staff</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+                <div class="text-2xl font-bold"><?= currency($totalSalary) ?></div>
+                <div class="text-xs text-base-content/50">Daily Salary</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+                <?php $avgMorale = count($staff) > 0 ? round(array_sum(array_column($staff, 'morale')) / count($staff)) : 0; ?>
+                <div class="text-2xl font-bold"><?= $avgMorale ?>%</div>
+                <div class="text-xs text-base-content/50">Avg Morale</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+                <div class="text-2xl font-bold text-success"><?= $assigned ?></div>
+                <div class="text-xs text-base-content/50">Assigned</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+                <div class="text-2xl font-bold <?= $unassigned > 0 ? 'text-warning' : 'text-success' ?>"><?= $unassigned ?></div>
+                <div class="text-xs text-base-content/50">Unassigned</div>
+            </div></div>
+        </div>
+
+        <!-- Assignment Actions -->
+        <div class="flex gap-2 mb-4">
+            <form action="/staff/auto-assign" method="post"><?= csrf_field() ?>
+                <button class="btn btn-sm btn-info gap-1"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Assign All</button>
+            </form>
+            <form action="/staff/clear-assignments" method="post"><?= csrf_field() ?>
+                <button class="btn btn-sm btn-ghost gap-1"><i class="fa-solid fa-eraser"></i> Clear All</button>
+            </form>
         </div>
 
         <!-- Staff Table -->
@@ -110,11 +113,17 @@
                                         <span class="badge badge-info badge-sm">Training</span>
                                     <?php endif ?>
                                 </td>
-                                <td class="text-xs text-base-content/50"><?= $member['assigned_to'] ? esc($member['assigned_to']) : '-' ?></td>
                                 <td>
-                                    <form action="/staff/fire/<?= $member['id'] ?>" method="post" onsubmit="return confirm('Fire <?= esc($member['name']) ?>? This cannot be undone.')">
+                                    <?php if ($member['assigned_to']) : ?>
+                                        <span class="text-xs font-semibold text-success"><i class="fa-solid fa-circle-check mr-1"></i><?= esc($member['assigned_to']) ?></span>
+                                    <?php else : ?>
+                                        <span class="text-xs text-warning"><i class="fa-solid fa-circle-exclamation mr-1"></i>Unassigned</span>
+                                    <?php endif ?>
+                                </td>
+                                <td>
+                                    <form action="/staff/fire/<?= $member['id'] ?>" method="post" onsubmit="return confirm('Fire <?= esc($member['name']) ?>?')">
                                         <?= csrf_field() ?>
-                                        <button type="submit" class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-user-minus"></i></button>
+                                        <button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-user-minus"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -126,6 +135,5 @@
         </div>
 
     <?php endif ?>
-
 </div>
 <?= $this->endSection() ?>

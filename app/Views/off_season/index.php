@@ -22,17 +22,16 @@
                 <?= $isWinter ? "Day {$seasonDay}/100 · {$daysUntilSummer}d until summer" : "Summer day {$summerDay}/35 · {$daysUntilWinter}d until winter" ?>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-1">
-            <div>
+        <div class="flex gap-1">
+            <div style="flex:100">
                 <div class="text-xs text-base-content/50 mb-1">Winter (Days 1-100)</div>
                 <progress class="progress progress-info w-full" value="<?= min($seasonDay, 100) ?>" max="100"></progress>
             </div>
-            <div>
-                <div class="text-xs text-base-content/50 mb-1">Summer (Days 101-135)</div>
+            <div style="flex:35">
+                <div class="text-xs text-base-content/50 mb-1">Summer (101-135)</div>
                 <progress class="progress progress-warning w-full" value="<?= max(0, $seasonDay - 100) ?>" max="35"></progress>
             </div>
         </div>
-    </div></div>
 
     <!-- Infrastructure Health -->
     <h2 class="text-xl font-semibold mb-3"><i class="fa-solid fa-heart-pulse mr-1 text-error"></i> Infrastructure Health</h2>

@@ -55,7 +55,8 @@ class Buildings extends BaseController
         $totalRevenue = array_sum(array_column($openBuildings, 'revenue_per_day'));
         $totalUpkeep = array_sum(array_column($openBuildings, 'upkeep_per_day'));
 
-        return view('buildings/index', [
+        $viewFile = file_exists(APPPATH . 'Views/buildings/' . $type . '.php') ? 'buildings/' . $type : 'buildings/index';
+        return view($viewFile, [
             'type' => $type, 'def' => $def, 'buildings' => $buildings,
             'totalCapacity' => $totalCapacity, 'totalRevenue' => $totalRevenue, 'totalUpkeep' => $totalUpkeep,
         ]);

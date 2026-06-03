@@ -165,3 +165,5 @@ $routes->post("/government/comply-all", "Government::complyAll");
 $routes->post("/scenic-lifts/update-price/(:num)", "ScenicLifts::updatePrice/$1");
 $routes->post("/grooming/groom-all", "Grooming::groomAll");
 $routes->get("/resort-analysis/pdf/(:num)", "ResortAnalysis::pdf/$1");
+$routes->post('/staff/auto-assign', 'Staff::autoAssign');
+$routes->post('/staff/clear-assignments', 'Staff::clearAssignments');
