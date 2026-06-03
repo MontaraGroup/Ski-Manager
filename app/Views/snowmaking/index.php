@@ -16,6 +16,33 @@
     <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
     <?php if (session('error')) : ?><div class="alert alert-error mb-4"><span><?= session('error') ?></span></div><?php endif ?>
 
+    <!-- Resource Status -->
+    <?php
+        $energySources = db_connect()->table("energy_management")->where("user_id", auth()->id())->where("status", "active")->get()->getResultArray();
+        $waterSources = db_connect()->table("water_management")->where("user_id", auth()->id())->where("status", "active")->get()->getResultArray();
+        $energySupply = array_sum(array_column($energySources, "output_kwh"));
+        $waterSupply = array_sum(array_column($waterSources, "output_liters"));
+        $energyNeeded = $totalEnergy;
+        $waterNeeded = $totalWater;
+    ?>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-bolt text-warning"></i><span class="text-xs font-semibold">Energy</span></div>
+                <a href="/energy" class="link link-primary text-xs">Manage</a>
+            </div>
+            <div class="flex items-center justify-between mt-1 text-xs"><span>Supply: <?= number_format($energySupply) ?> kWh</span><span class="<?= $energySupply >= $energyNeeded ? "text-success" : "text-error" ?>">Need: <?= number_format($energyNeeded) ?> kWh</span></div>
+            <progress class="progress <?= $energySupply >= $energyNeeded ? "progress-success" : "progress-error" ?> w-full mt-1" value="<?= min($energySupply, $energyNeeded) ?>" max="<?= max(1, $energyNeeded) ?>"></progress>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-droplet text-info"></i><span class="text-xs font-semibold">Water</span></div>
+                <a href="/water" class="link link-primary text-xs">Manage</a>
+            </div>
+            <div class="flex items-center justify-between mt-1 text-xs"><span>Supply: <?= number_format($waterSupply) ?> L</span><span class="<?= $waterSupply >= $waterNeeded ? "text-success" : "text-error" ?>">Need: <?= number_format($waterNeeded) ?> L</span></div>
+            <progress class="progress <?= $waterSupply >= $waterNeeded ? "progress-success" : "progress-error" ?> w-full mt-1" value="<?= min($waterSupply, $waterNeeded) ?>" max="<?= max(1, $waterNeeded) ?>"></progress>
+        </div></div>
+    </div>
     <!-- Temperature Status -->
     <div class="card shadow-xl mb-6 <?= $canMakeSnow ? 'bg-gradient-to-br from-sky-100 to-blue-200 dark:from-sky-900 dark:to-blue-950' : 'bg-gradient-to-br from-orange-100 to-red-200 dark:from-orange-900 dark:to-red-950' ?>">
         <div class="card-body p-6">

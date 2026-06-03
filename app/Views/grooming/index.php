@@ -61,6 +61,25 @@
     </div>
 
     <?php if (empty($groomers)) : ?>
+    <!-- Related Systems -->
+    <h2 class="text-lg font-bold mt-6 mb-3"><i class="fa-solid fa-link mr-1"></i> Related Systems</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-snowflake text-info text-xl"></i>
+            <div><div class="text-sm font-bold">Snowmaking</div><div class="text-xs text-base-content/50">Snow cannons improve slope conditions</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/equipment" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-toolbox text-warning text-xl"></i>
+            <div><div class="text-sm font-bold">Equipment Shop</div><div class="text-xs text-base-content/50">Buy groomers and snowmakers</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/off-season" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-wrench text-success text-xl"></i>
+            <div><div class="text-sm font-bold">Bulk Maintenance</div><div class="text-xs text-base-content/50">Repair all slopes at once</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+    </div>
         <div class="alert alert-warning mb-4"><i class="fa-solid fa-user-slash"></i><span>No groomer operators hired. <a href="/staff/hire" class="link font-semibold">Hire groomers</a> to maintain your slopes.</span></div>
     <?php endif ?>
     <?php if (!empty($criticalSlopes)) : ?>
@@ -126,6 +145,25 @@
             <?php if (empty($groomers)) : ?>
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-6">
                     <i class="fa-solid fa-tractor text-3xl text-base-content/20 mb-2"></i>
+    <!-- Related Systems -->
+    <h2 class="text-lg font-bold mt-6 mb-3"><i class="fa-solid fa-link mr-1"></i> Related Systems</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-snowflake text-info text-xl"></i>
+            <div><div class="text-sm font-bold">Snowmaking</div><div class="text-xs text-base-content/50">Snow cannons improve slope conditions</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/equipment" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-toolbox text-warning text-xl"></i>
+            <div><div class="text-sm font-bold">Equipment Shop</div><div class="text-xs text-base-content/50">Buy groomers and snowmakers</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/off-season" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-wrench text-success text-xl"></i>
+            <div><div class="text-sm font-bold">Bulk Maintenance</div><div class="text-xs text-base-content/50">Repair all slopes at once</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+    </div>
                     <p class="text-sm text-base-content/50"><a href="/staff/hire" class="link link-primary">Hire groomer operators</a></p>
                 </div></div>
             <?php else : ?>
@@ -183,6 +221,25 @@
 
     <div class="flex gap-3">
         <a href="/equipment" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toolbox"></i> Equipment Shop</a>
+    <!-- Related Systems -->
+    <h2 class="text-lg font-bold mt-6 mb-3"><i class="fa-solid fa-link mr-1"></i> Related Systems</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-snowflake text-info text-xl"></i>
+            <div><div class="text-sm font-bold">Snowmaking</div><div class="text-xs text-base-content/50">Snow cannons improve slope conditions</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/equipment" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-toolbox text-warning text-xl"></i>
+            <div><div class="text-sm font-bold">Equipment Shop</div><div class="text-xs text-base-content/50">Buy groomers and snowmakers</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/off-season" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-wrench text-success text-xl"></i>
+            <div><div class="text-sm font-bold">Bulk Maintenance</div><div class="text-xs text-base-content/50">Repair all slopes at once</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+    </div>
         <a href="/staff/hire" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-user-plus"></i> Hire Crew</a>
     </div>
 </div>

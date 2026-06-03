@@ -149,7 +149,7 @@
         <!-- Map -->
         <div class="flex-1">
         <!-- Map Stats Overlay -->
-        <div style="position:absolute;top:10px;left:10px;z-index:400;pointer-events:none;">
+        <div style="position:absolute;top:80px;left:10px;z-index:400;pointer-events:none;">
             <div class="card bg-base-100/90 shadow-lg" style="pointer-events:auto;backdrop-filter:blur(8px);">
                 <div class="card-body p-3">
                     <div class="flex gap-4 text-xs">

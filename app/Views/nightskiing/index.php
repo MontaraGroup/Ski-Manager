@@ -141,6 +141,8 @@
                     <li><i class="fa-solid fa-wrench mr-1"></i> Lights degrade - mechanics help maintain</li>
                 </ul>
             </div></div>
+                    <li><i class="fa-solid fa-bolt mr-1 text-warning"></i> Check your <a href="/energy" class="link link-primary">energy supply</a> to power lights</li>
+                    <li><i class="fa-solid fa-users mr-1"></i> <a href="/staff/hire" class="link link-primary">Hire mechanics</a> to maintain lights</li>
         </div>
     </div>
 </div>

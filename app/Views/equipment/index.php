@@ -123,6 +123,24 @@
             </button>
         </form>
     <?php endforeach ?>
+    <!-- Related Systems -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+        <a href="/grooming" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-tractor text-success text-xl"></i>
+            <div><div class="text-sm font-bold">Grooming</div><div class="text-xs text-base-content/50">Assign groomers to sectors</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-snowflake text-info text-xl"></i>
+            <div><div class="text-sm font-bold">Snowmaking</div><div class="text-xs text-base-content/50">Use snowmakers to produce snow</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+        <a href="/staff" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-users text-warning text-xl"></i>
+            <div><div class="text-sm font-bold">Staff</div><div class="text-xs text-base-content/50">Hire operators for your machines</div></div>
+            <i class="fa-solid fa-chevron-right text-base-content/30 ml-auto"></i>
+        </div></a>
+    </div>
     </div>
 
 </div>

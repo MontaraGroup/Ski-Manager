@@ -44,6 +44,7 @@ class Snowmaking extends BaseController
             5 => ['name' => 'All-Weather System', 'output' => 15, 'energy' => 1800, 'water' => 500, 'cost' => 150000],
         ];
 
+        $db = db_connect();
         return view('snowmaking/index', [
             'cannons' => $cannons,
             'snowmakers' => $snowmakers,
