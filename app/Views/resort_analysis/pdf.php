@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<title>Resort Analysis Report</title>
 <meta charset="UTF-8">
 <style>
     @page { margin: 25px 30px; }
