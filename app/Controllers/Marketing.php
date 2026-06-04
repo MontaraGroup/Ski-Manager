@@ -7,9 +7,9 @@ class Marketing extends BaseController
 
     public function __construct()
     {
+        helper('unlock_check');
         $this->model = new MarketingModel();
     }
-
     private function getCampaignTypes(): array
     {
         $db = db_connect();
@@ -19,7 +19,6 @@ class Marketing extends BaseController
             $types[$r['type_key']] = [
                 'name' => $r['name'], 'icon' => $r['icon'], 'cost' => (int) $r['daily_cost'],
                 'visitors' => (int) $r['visitor_boost'], 'rep' => (int) $r['reputation_boost'],
-                'days' => (int) $r['duration_days'], 'price' => (int) $r['total_price'], 'desc' => $r['description'],
             ];
         }
         return $types;

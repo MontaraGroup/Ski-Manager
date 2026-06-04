@@ -16,8 +16,9 @@ class Achievements extends BaseController
         return $defs;
     }
 
-    public function index(): string
+    public function index()
     {
+        if (!auth()->loggedIn()) return redirect()->to("/login");
         $userId = auth()->id();
         $db = db_connect();
         $achievements = $db->table('achievements')->where('user_id', $userId)->get()->getResultArray();
@@ -120,6 +121,7 @@ class Achievements extends BaseController
 
     public function claim(int $id)
     {
+        if (!auth()->loggedIn()) return redirect()->to("/login");
         $userId = auth()->id();
         $db = db_connect();
         $a = $db->table('achievements')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
@@ -133,6 +135,7 @@ class Achievements extends BaseController
 
     public function claimAll()
     {
+        if (!auth()->loggedIn()) return redirect()->to("/login");
         $userId = auth()->id();
         $db = db_connect();
         $claimable = $db->table('achievements')->where('user_id', $userId)->where('completed', 1)->where('claimed', 0)->get()->getResultArray();

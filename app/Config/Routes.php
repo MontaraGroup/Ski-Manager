@@ -69,7 +69,7 @@ $routes->get('/tournaments', 'Tournaments::index');
 $routes->get('/transportation', 'Buildings::show/transportation');
 $routes->get('/updates', 'Updates::index');
 $routes->get('/weather', 'Weather::index');
-$routes->match(['get','post'], '/resort/edit', 'Resort::edit');
+$routes->match(['GET','POST'], '/resort/edit', 'Resort::edit');
 $routes->post("/admin/add-cash-all", "Admin::addCashAll");
 $routes->post("/admin/grant-achievement", "Admin::grantAchievement");
 $routes->post("/admin/reputation", "Admin::updateReputation");

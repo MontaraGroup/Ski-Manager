@@ -372,7 +372,8 @@ class GameTick extends BaseCommand
             // ==============================
             // VIP GUEST ARRIVALS
             // ==============================
-            $resortRating = function_exists('resortRating') ? resortRating($userId) : 2;
+            $ratingData = function_exists('resortRating') ? resortRating($userId) : ['score' => 2];
+            $resortRating = (int) ($ratingData['score'] ?? $ratingData['stars'] ?? 2);
             $vipChance = min(50, ($resortRating * 8) + $vipBonus + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3));
             if (rand(1, 100) <= $vipChance) {
                 $vipTypes = [

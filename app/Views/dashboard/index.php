@@ -23,6 +23,7 @@
     $roles = []; foreach ($staffAll as $s) { $roles[$s['role']] = ($roles[$s['role']] ?? 0) + 1; }
     $avgMorale = count($staffAll) > 0 ? round(array_sum(array_column($staffAll, 'morale')) / count($staffAll)) : 0;
     $activeIns = array_filter($insurance, fn($i) => ($i['active'] ?? 0) == 1);
+    $forecast = $weather ? json_decode($weather['forecast'] ?? '[]', true) : [];
     ?>
 
     <div id="widgetContainer" class="widget-grid">
@@ -47,24 +48,24 @@
                 <div class="widget-center">
                     <i class="fa-solid fa-money-bill-wave text-success text-xl mb-1"></i>
                     <div class="text-xl font-bold"><?= currency($finance['cash'] ?? 0) ?></div>
-                    <div class="text-xs text-base-content/50 mt-1">Day <?= $gameDay ?> · Rep <?= $finance['reputation'] ?? 0 ?></div>
+                    <div class="text-xs text-base-content/50 mt-1">Day <?= $gameDay ?> · <?= number_format($dailyVisitors) ?> visitors</div>
                 </div>
             <?php elseif ($sz === 'medium') : ?>
-                <div class="grid grid-cols-3 gap-2 h-full items-center">
+                <div class="grid grid-cols-4 gap-2 h-full items-center">
                     <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-money-bill-wave"></i></div><div class="font-bold"><?= currency($finance['cash'] ?? 0) ?></div></div>
-                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-star"></i></div><div class="font-bold"><?= $finance['reputation'] ?? 0 ?></div></div>
-                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-seedling"></i></div><div class="font-bold"><?= $genepis['balance'] ?? 0 ?></div></div>
-                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-snowflake"></i></div><div class="font-bold"><?= snow($weather['snowfall'] ?? 0) ?></div></div>
-                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-calendar-day"></i></div><div class="font-bold"><?= $gameDay ?></div></div>
-                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-coins"></i></div><div class="font-bold"><?= currency($finance['total_income'] ?? 0) ?></div></div>
+                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-people-group"></i></div><div class="font-bold"><?= number_format($dailyVisitors) ?></div></div>
+                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-chart-line"></i></div><div class="font-bold <?= $netProfit >= 0 ? 'text-success' : 'text-error' ?>"><?= $netProfit >= 0 ? '+' : '' ?><?= currency($netProfit) ?></div></div>
+                    <div class="text-center"><div class="text-xs text-base-content/50"><i class="fa-solid fa-star"></i></div><div class="font-bold"><?= $finance['reputation'] ?? 0 ?> rep</div></div>
                 </div>
             <?php else : ?>
-                <div class="grid grid-cols-3 md:grid-cols-6 gap-3 h-full items-center">
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-3 h-full items-center">
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-money-bill-wave"></i> Cash</div><div class="text-lg font-bold"><?= currency($finance['cash'] ?? 0) ?></div></div>
-                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-snowflake"></i> Snow</div><div class="text-lg font-bold"><?= snow($weather['snowfall'] ?? 0) ?></div></div>
+                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-people-group"></i> Visitors</div><div class="text-lg font-bold"><?= number_format($dailyVisitors) ?></div></div>
+                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins"></i> Income</div><div class="text-lg font-bold text-success"><?= currency($finance['total_income'] ?? 0) ?></div></div>
+                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-receipt"></i> Expenses</div><div class="text-lg font-bold text-error"><?= currency($finance['total_expenses'] ?? 0) ?></div></div>
+                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-chart-line"></i> Net</div><div class="text-lg font-bold <?= $netProfit >= 0 ? 'text-success' : 'text-error' ?>"><?= $netProfit >= 0 ? '+' : '' ?><?= currency($netProfit) ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-star"></i> Rep</div><div class="text-lg font-bold"><?= $finance['reputation'] ?? 0 ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-calendar-day"></i> Day</div><div class="text-lg font-bold"><?= $gameDay ?></div></div>
-                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins"></i> Income</div><div class="text-lg font-bold"><?= currency($finance['total_income'] ?? 0) ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-seedling"></i> Genepis</div><div class="text-lg font-bold"><?= $genepis['balance'] ?? 0 ?></div></div>
                 </div>
             <?php endif ?>
@@ -104,20 +105,48 @@
                 </div>
             <?php elseif ($sz === 'medium') : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?></div></div></div>
-                    <div class="text-right text-sm"><div><i class="fa-solid fa-wind mr-1"></i><?= speed((int)$weather['wind']) ?></div><div class="text-xs text-base-content/50 mt-1"><i class="fa-solid fa-snowflake mr-1"></i><?= snow($weather['snowfall'] ?? 0) ?></div></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind</div></div></div>
+                    <?php if (!empty($forecast)) : ?>
+                    <div class="flex gap-2">
+                        <?php foreach (array_slice($forecast, 0, 3) as $fc) : ?>
+                        <div class="text-center"><i class="fa-solid <?= $wIcons[$fc['condition']] ?? 'fa-cloud' ?> text-xs"></i><div class="text-xs font-bold"><?= temp($fc['temp']) ?></div></div>
+                        <?php endforeach ?>
+                    </div>
+                    <?php endif ?>
                 </div>
             <?php else : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow</div></div></div>
+                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow · Base: <?= snow($weather['snow_base'] ?? 0) ?></div></div></div>
+                    <?php if (!empty($forecast)) : ?>
+                    <div class="flex gap-3 items-end">
+                        <?php foreach ($forecast as $i => $fc) : ?>
+                        <div class="text-center">
+                            <div class="text-[10px] text-base-content/40 mb-1">+<?= $i + 1 ?>d</div>
+                            <i class="fa-solid <?= $wIcons[$fc['condition']] ?? 'fa-cloud' ?> text-sm"></i>
+                            <div class="text-xs font-bold mt-0.5"><?= temp($fc['temp']) ?></div>
+                            <?php if (($fc['snowfall'] ?? 0) > 0) : ?><div class="text-[10px] text-info"><i class="fa-solid fa-snowflake"></i> <?= $fc['snowfall'] ?></div><?php endif ?>
+                        </div>
+                        <?php endforeach ?>
+                    </div>
+                    <?php endif ?>
                     <a href="/weather" class="btn btn-ghost btn-sm">Details <i class="fa-solid fa-chevron-right ml-1"></i></a>
                 </div>
             <?php endif ?>
         <?php endif ?>
 
         <?php // ===== ACHIEVEMENT ALERTS ===== ?>
-        <?php if ($w['widget_key'] === 'achievements_mini' && $unclaimedAchievements > 0) : ?>
-            <div class="widget-center"><i class="fa-solid fa-award text-warning text-2xl"></i><div class="font-bold mt-1"><?= $unclaimedAchievements ?></div><div class="text-xs text-base-content/50">unclaimed</div><a href="/achievements" class="btn btn-warning btn-xs mt-2">Claim</a></div>
+        <?php if ($w['widget_key'] === 'achievements_mini') : ?>
+            <?php if ($unclaimedAchievements > 0) : ?>
+                <div class="widget-center"><i class="fa-solid fa-award text-warning text-2xl"></i><div class="font-bold mt-1"><?= $unclaimedAchievements ?></div><div class="text-xs text-base-content/50">unclaimed</div><a href="/achievements" class="btn btn-warning btn-xs mt-2">Claim</a></div>
+            <?php elseif (!empty($inProgressAchievements)) : ?>
+                <div class="flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold"><i class="fa-solid fa-bell mr-1 text-base-content/40"></i>Achievements</span><span class="badge badge-ghost badge-sm">All claimed</span></div>
+                    <div class="text-xs text-base-content/50 mb-2">Closest to completion:</div>
+                    <div class="space-y-2 flex-1 overflow-y-auto"><?php foreach (array_slice($inProgressAchievements, 0, 3) as $ach) : ?><?php $pct = $ach['target'] > 0 ? round($ach['progress'] / $ach['target'] * 100) : 0; ?><div class="flex items-center gap-2"><i class="<?= $ach['icon'] ?> text-base-content/30 w-4 text-center text-xs"></i><div class="flex-1 min-w-0"><div class="text-xs font-semibold truncate"><?= esc($ach['name']) ?></div><progress class="progress progress-primary w-full" value="<?= $ach['progress'] ?>" max="<?= $ach['target'] ?>"></progress></div><span class="text-xs font-mono text-base-content/50"><?= $pct ?>%</span></div><?php endforeach ?></div>
+                </div>
+            <?php else : ?>
+                <div class="widget-center"><i class="fa-solid fa-trophy text-success text-2xl"></i><div class="text-sm font-semibold mt-2">All caught up!</div><div class="text-xs text-base-content/50">No achievements to claim</div></div>
+            <?php endif ?>
         <?php endif ?>
 
         <?php // ===== QUICK ACTIONS ===== ?>
@@ -182,7 +211,7 @@
                 <div class="grid grid-cols-3 gap-2 text-center flex-1 content-center">
                     <div><div class="font-bold text-success"><?= currency($finance['total_income'] ?? 0) ?></div><div class="text-xs text-base-content/50">Income</div></div>
                     <div><div class="font-bold text-error"><?= currency($finance['total_expenses'] ?? 0) ?></div><div class="text-xs text-base-content/50">Expenses</div></div>
-                    <div><div class="font-bold"><?= currency(($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0)) ?></div><div class="text-xs text-base-content/50">Net</div></div>
+                    <div><div class="font-bold <?= $netProfit >= 0 ? 'text-success' : 'text-error' ?>"><?= $netProfit >= 0 ? '+' : '' ?><?= currency($netProfit) ?></div><div class="text-xs text-base-content/50">Net</div></div>
                 </div>
             </div>
         <?php endif ?>
@@ -273,30 +302,20 @@
 </div>
 
 <style>
-/* iOS-style widget grid */
 .widget-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 @media (max-width: 768px) { .widget-grid { grid-template-columns: repeat(2, 1fr); } }
-
-/* Small = 1x1 square tile */
 .widget-small { grid-column: span 1; grid-row: span 1; }
-/* Medium = 2x1 wide rectangle */
 .widget-medium { grid-column: span 2; grid-row: span 1; }
-/* Large = 4 cols full width, taller */
 .widget-large { grid-column: span 4; grid-row: span 1; }
 @media (max-width: 768px) {
     .widget-small { grid-column: span 1; }
     .widget-medium { grid-column: span 2; }
     .widget-large { grid-column: span 2; }
 }
-
 .widget-item { overflow: hidden; }
 .widget-content { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .widget-small .widget-content { padding: 0.625rem; }
-
-/* Centered content helper */
 .widget-center { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
-
-/* Edit mode */
 .drag-handle { display: none; align-items: center; justify-content: space-between; padding: 0.25rem 0.75rem; font-size: 0.75rem; cursor: grab; user-select: none; background: rgba(128,128,128,0.1); }
 .drag-handle:active { cursor: grabbing; }
 .edit-mode .drag-handle { display: flex !important; }

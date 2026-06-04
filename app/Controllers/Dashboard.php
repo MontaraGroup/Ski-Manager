@@ -54,8 +54,9 @@ class Dashboard extends BaseController
             $widgets = $db->table('dashboard_widgets')->where('user_id', $userId)->orderBy('sort_order')->get()->getResultArray();
         }
 
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
+        $weather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray();
         $genepis = $db->table('genepis')->where('user_id', $userId)->get()->getRowArray();
         $slopeCount = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults(false);
         $liftCount = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults(false);
@@ -65,7 +66,6 @@ class Dashboard extends BaseController
         $inProgressAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 0)->orderBy('progress', 'DESC')->limit(5)->get()->getResultArray();
         $recentActivity = $db->table('activity_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(8)->get()->getResultArray();
         $dailyBonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
         $bonusAvailable = !$dailyBonus || (int)($dailyBonus['last_claim_day'] ?? 0) < $gameDay;
         $parkingFacilities = $db->table('parking')->where('user_id', $userId)->get()->getResultArray();
         $terrainParks = $db->table('terrain_parks')->where('user_id', $userId)->get()->getResultArray();
@@ -74,6 +74,8 @@ class Dashboard extends BaseController
         $insurance = $db->table('insurance')->where('user_id', $userId)->get()->getResultArray();
         $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
         $marketing = $db->table('marketing_campaigns')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $dailyVisitors = (int)($finance['daily_visitors'] ?? 0);
+        $netProfit = ($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0);
 
         return view('dashboard/index', [
             'widgets' => $widgets, 'availableWidgets' => $this->availableWidgets,
@@ -83,6 +85,7 @@ class Dashboard extends BaseController
             'recentActivity' => $recentActivity, 'bonusAvailable' => $bonusAvailable, 'gameDay' => $gameDay,
             'parkingFacilities' => $parkingFacilities, 'terrainParks' => $terrainParks,
             'staffAll' => $staffAll, 'equipment' => $equipment, 'insurance' => $insurance, 'loans' => $loans, 'marketing' => $marketing,
+            'dailyVisitors' => $dailyVisitors, 'netProfit' => $netProfit,
         ]);
     }
 
