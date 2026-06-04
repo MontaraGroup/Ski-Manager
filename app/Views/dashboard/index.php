@@ -124,7 +124,7 @@
         <?php if ($w['widget_key'] === 'actions') : ?>
             <div class="flex flex-col h-full">
                 <h2 class="text-sm font-semibold mb-2"><i class="fa-solid fa-bolt mr-1 text-warning"></i>Quick Actions</h2>
-                <div class="grid grid-cols-<?= $sz === 'small' ? '2' : ($sz === 'medium' ? '4' : '4') ?> gap-<?= $sz === 'small' ? '1' : '2' ?> flex-1 content-start">
+                <div class="grid grid-cols-<?= $sz === 'small' ? '2' : '4' ?> gap-<?= $sz === 'small' ? '1' : '2' ?> flex-1 content-start">
                     <a href="/resort" class="btn btn-primary <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-mountain-sun"></i><?= $sz !== 'small' ? 'Resort' : '' ?></a>
                     <a href="/map" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-map"></i><?= $sz !== 'small' ? 'Map' : '' ?></a>
                     <a href="/finances" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-coins"></i><?= $sz !== 'small' ? 'Finances' : '' ?></a>

@@ -65,7 +65,7 @@
                 <div class="space-y-2">
                 <?php foreach ($lights as $light) : ?>
                     <?php $isOn = $light['status'] === 'active'; $cond = (int) $light['condition_pct']; ?>
-                    <div class="card bg-base-100 shadow-sm <?= $isOn ? '' : '' ?>">
+                    <div class="card bg-base-100 shadow-sm ">
                         <div class="card-body p-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl <?= $isOn ? 'bg-warning/20' : 'bg-base-200' ?> flex items-center justify-center">

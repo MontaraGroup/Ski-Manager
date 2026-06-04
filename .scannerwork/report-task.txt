@@ -1,0 +1,6 @@
+projectKey=skimanager-v2
+serverUrl=http://127.0.0.1:9100
+serverVersion=26.6.0.123539
+dashboardUrl=http://127.0.0.1:9100/dashboard?id=skimanager-v2
+ceTaskId=9a96b8d8-6f08-4eb2-9ec6-b70526ff0520
+ceTaskUrl=http://127.0.0.1:9100/api/ce/task?id=9a96b8d8-6f08-4eb2-9ec6-b70526ff0520

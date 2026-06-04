@@ -35,11 +35,11 @@
                 <?= csrf_field() ?>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Name (optional)</span></label>
-                        <input type="text" name="name" class="input input-bordered input-sm" placeholder="e.g. Main Lot" maxlength="100">
+                        <label class="label" for="name"><span class="label-text">Name (optional)</span></label>
+                        <input type="text" name="name" id="name" class="input input-bordered input-sm" placeholder="e.g. Main Lot" maxlength="100">
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text">Type</span></label>
+                        <label class="label" for="fee"><span class="label-text">Type</span></label>
                         <select name="parking_type" id="parkingTypeSelect" class="select select-bordered select-sm" required>
                             <?php foreach ($parkingConfig as $key => $cfg) : ?>
                                 <option value="<?= $key ?>"><?= $cfg['label'] ?></option>
@@ -115,7 +115,7 @@
                                 <?= csrf_field() ?>
                                 <div class="form-control flex-1">
                                     <label class="label"><span class="label-text text-xs">Daily fee per car</span></label>
-                                    <input type="number" name="fee" value="<?= $f['fee_per_day'] ?>" min="0" max="100" step="0.50" class="input input-bordered input-sm">
+                                    <input type="number" name="fee" id="fee" value="<?= $f['fee_per_day'] ?>" min="0" max="100" step="0.50" class="input input-bordered input-sm">
                                 </div>
                                 <button type="submit" class="btn btn-sm btn-ghost"><i class="fa-solid fa-check"></i></button>
                             </form>

@@ -57,8 +57,8 @@
             <form action="/admin/add-cash-all" method="post" class="flex items-end gap-3 mt-2" onsubmit="return confirm('Give cash to ALL players?')">
                 <?= csrf_field() ?>
                 <div class="form-control flex-1">
-                    <label class="label"><span class="label-text">Amount</span></label>
-                    <input type="number" name="amount" class="input input-bordered input-sm" min="1" max="10000000" placeholder="e.g. 50000" required>
+                    <label class="label" for="amount"><span class="label-text">Amount</span></label>
+                    <input type="number" name="amount" id="amount" class="input input-bordered input-sm" min="1" max="10000000" placeholder="e.g. 50000" required>
                 </div>
                 <button type="submit" class="btn btn-warning btn-sm"><i class="fa-solid fa-coins mr-1"></i> Give to All</button>
             </form>

@@ -20,12 +20,12 @@
                 <form action="/contact" method="post">
                     <?= csrf_field() ?>
                     <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">Name *</span></label>
-                        <input type="text" name="name" class="input input-bordered w-full" value="<?= old('name') ?? (auth()->loggedIn() ? auth()->user()->username : '') ?>" required aria-required="true" autocomplete="name">
+                        <label class="label" for="name"><span class="label-text">Name *</span></label>
+                        <input type="text" name="name" id="name" class="input input-bordered w-full" value="<?= old('name') ?? (auth()->loggedIn() ? auth()->user()->username : '') ?>" required aria-required="true" autocomplete="name">
                     </div>
                     <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">Email *</span></label>
-                        <input type="email" name="email" class="input input-bordered w-full" value="<?= old('email') ?>" required aria-required="true" autocomplete="email">
+                        <label class="label" for="email"><span class="label-text">Email *</span></label>
+                        <input type="email" name="email" id="email" class="input input-bordered w-full" value="<?= old('email') ?>" required aria-required="true" autocomplete="email">
                     </div>
                     <div class="form-control mb-4">
                         <label class="label"><span class="label-text">Subject</span></label>

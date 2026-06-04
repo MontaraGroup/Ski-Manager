@@ -41,16 +41,16 @@
         <form action="/account/password" method="post">
             <?= csrf_field() ?>
             <div class="form-control mb-3">
-                <label class="label"><span class="label-text">Current Password</span></label>
-                <input type="password" name="current_password" class="input input-bordered" required autocomplete="current-password">
+                <label class="label" for="current_password"><span class="label-text">Current Password</span></label>
+                <input type="password" name="current_password" id="current_password" class="input input-bordered" required autocomplete="current-password">
             </div>
             <div class="form-control mb-3">
-                <label class="label"><span class="label-text">New Password</span></label>
-                <input type="password" name="new_password" class="input input-bordered" required minlength="8" autocomplete="new-password">
+                <label class="label" for="new_password"><span class="label-text">New Password</span></label>
+                <input type="password" name="new_password" id="new_password" class="input input-bordered" required minlength="8" autocomplete="new-password">
             </div>
             <div class="form-control mb-3">
-                <label class="label"><span class="label-text">Confirm New Password</span></label>
-                <input type="password" name="confirm_password" class="input input-bordered" required minlength="8" autocomplete="new-password">
+                <label class="label" for="confirm_password"><span class="label-text">Confirm New Password</span></label>
+                <input type="password" name="confirm_password" id="confirm_password" class="input input-bordered" required minlength="8" autocomplete="new-password">
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Change Password</button>
         </form>
@@ -70,8 +70,8 @@
         <form action="/account/delete" method="post" onsubmit="return document.querySelector('[name=confirm_delete]').value === 'DELETE'">
             <?= csrf_field() ?>
             <div class="form-control mb-3">
-                <label class="label"><span class="label-text">Type DELETE to confirm</span></label>
-                <input type="text" name="confirm_delete" class="input input-bordered input-error" placeholder="DELETE" autocomplete="off">
+                <label class="label" for="confirm_delete"><span class="label-text">Type DELETE to confirm</span></label>
+                <input type="text" name="confirm_delete" id="confirm_delete" class="input input-bordered input-error" placeholder="DELETE" autocomplete="off">
             </div>
             <button type="submit" class="btn btn-error btn-sm">Delete My Account</button>
         </form>

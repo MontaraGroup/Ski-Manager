@@ -55,8 +55,8 @@
             <form action="/terrain-parks/build" method="post" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-3">
                 <?= csrf_field() ?>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Name (optional)</span></label>
-                    <input type="text" name="name" class="input input-bordered input-sm" placeholder="e.g. Stunt Zone" maxlength="100">
+                    <label class="label" for="name"><span class="label-text">Name (optional)</span></label>
+                    <input type="text" name="name" id="name" class="input input-bordered input-sm" placeholder="e.g. Stunt Zone" maxlength="100">
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Type</span></label>
