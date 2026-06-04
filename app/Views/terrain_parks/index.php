@@ -75,8 +75,8 @@
                     </select>
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">On Slope (optional)</span></label>
-                    <select name="slope_id" class="select select-bordered select-sm">
+                    <label for="slope_id" class="label"><span class="label-text">On Slope (optional)</span></label>
+                    <select name="slope_id" id="slope_id" class="select select-bordered select-sm">
                         <option value="">- Standalone -</option>
                         <?php foreach ($slopes as $slope) : ?>
                             <option value="<?= $slope['id'] ?>"><?= esc($slope['name'] ?? 'Slope #' . $slope['id']) ?></option>

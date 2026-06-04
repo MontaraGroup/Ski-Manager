@@ -86,7 +86,7 @@ a.link:hover{opacity:0.8}
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5GGPL25W" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5GGPL25W" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
     <!-- Navbar -->
@@ -245,7 +245,7 @@ a.link:hover{opacity:0.8}
                         </div>
                     </div>
                 </div>
-                <div class="dropdown dropdown-end"><div tabindex="0" class="btn btn-ghost btn-sm"><i class="fa-solid fa-user-circle mr-1"></i><?= auth()->user()->username ?></div><ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow w-48 z-50 mt-2"><li><a href="/dashboard"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li><li><a href="/account"><i class="fa-solid fa-gear mr-1"></i>Account</a></li><li><a href="/logout" class="text-error"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</a></li></ul></div>
+                <div class="dropdown dropdown-end"><div tabindex="0" role="button" class="btn btn-ghost btn-sm"><i class="fa-solid fa-user-circle mr-1"></i><?= auth()->user()->username ?></div><ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow w-48 z-50 mt-2"><li><a href="/dashboard"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li><li><a href="/account"><i class="fa-solid fa-gear mr-1"></i>Account</a></li><li><a href="/logout" class="text-error"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</a></li></ul></div>
             <?php else : ?>
                 <a href="/login" class="btn btn-ghost btn-sm"><i class="fa-solid fa-right-to-bracket mr-1"></i>Log in</a>
                 <a href="/register" class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus mr-1"></i>Play Free</a>
@@ -364,7 +364,6 @@ document.addEventListener("click", function(e) {
     }
 });
 </script>
-</script>
 <dialog id="confirmModal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box">
         <h3 class="text-lg font-bold" id="confirmTitle">Confirm</h3>
@@ -374,7 +373,7 @@ document.addEventListener("click", function(e) {
             <button class="btn btn-primary btn-sm" id="confirmYes">Confirm</button>
         </div>
     </div>
-    <div class="modal-backdrop" onclick="closeConfirm()"></div>
+    <div class="modal-backdrop" role="button" tabindex="-1" onclick="closeConfirm()" onkeydown="if(event.key==='Enter'||event.key===' ')closeConfirm()"></div>
 </dialog>
 <script>
 let pendingForm=null;

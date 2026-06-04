@@ -59,10 +59,10 @@
 
                 
                 <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Game Difficulty</span></label>
+                    <label for="difficulty" class="label"><span class="label-text">Game Difficulty</span></label>
                     <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
-                            <input type="radio" name="difficulty" value="easy" class="peer hidden">
+                            <input type="radio" name="difficulty" id="difficulty" value="easy" class="peer hidden">
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-success peer-checked:bg-success/10 transition-colors">
                                 <i class="fa-solid fa-face-smile text-success text-lg"></i>
                                 <div class="text-xs font-bold mt-1">Easy</div>

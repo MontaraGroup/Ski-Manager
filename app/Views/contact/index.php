@@ -28,8 +28,8 @@
                         <input type="email" name="email" id="email" class="input input-bordered w-full" value="<?= old('email') ?>" required aria-required="true" autocomplete="email">
                     </div>
                     <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">Subject</span></label>
-                        <select name="subject" class="select select-bordered w-full">
+                        <label for="subject" class="label"><span class="label-text">Subject</span></label>
+                        <select name="subject" id="subject" class="select select-bordered w-full">
                             <option value="general">General Question</option>
                             <option value="bug">Bug Report</option>
                             <option value="feature">Feature Suggestion</option>
@@ -38,8 +38,8 @@
                         </select>
                     </div>
                     <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">Message *</span></label>
-                        <textarea name="message" class="textarea textarea-bordered w-full" rows="5" required><?= old('message') ?></textarea>
+                        <label for="message" class="label"><span class="label-text">Message *</span></label>
+                        <textarea name="message" id="message" class="textarea textarea-bordered w-full" rows="5" required><?= old('message') ?></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane mr-1"></i>Send Message</button>
                 </form>
