@@ -19,6 +19,7 @@ $routes->get("terrain-parks", "TerrainParks::index");
 $routes->get("vip-guests", "VipGuests::index");
 $routes->get("water", "Resources::water");
 $routes->get('/', 'Home::index');
+$routes->head('/', 'Home::index');
 $routes->get('/about', 'About::index');
 $routes->get('/account', 'Account::index');
 $routes->get('/achievements', 'Achievements::index');

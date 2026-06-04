@@ -179,6 +179,18 @@
     </div>
 </section>
 
+
+<!-- Mid-page CTA -->
+<section class="py-10 px-4 bg-base-200">
+    <div class="max-w-xl mx-auto text-center">
+        <h2 class="text-xl font-bold mb-2">Ready to manage your own resort?</h2>
+        <p class="text-sm text-base-content/60 mb-4">Free to play. No downloads. Start building in 30 seconds.</p>
+        <?php if (!auth()->loggedIn()) : ?>
+            <a href="<?= url_to('register') ?>" class="btn btn-primary gap-2"><i class="fa-solid fa-rocket"></i> Start Your Resort Free</a>
+        <?php endif ?>
+    </div>
+</section>
+
 <!-- Social proof -->
 <section class="py-12 px-4 bg-base-100">
     <div class="max-w-3xl mx-auto">
