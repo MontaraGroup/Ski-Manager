@@ -191,8 +191,8 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to("/admin");
         try {
-            $tick = new \App\Commands\GameTick(service("logger"), service("commands"));
-            $tick->run([]);
+            exec("php /www/sites/skiv2/ci4/spark game:tick > /dev/null 2>&1 &");
+            
             return redirect()->to("/admin")->with("success", "Game tick executed successfully.");
         } catch (\Throwable $e) {
             return redirect()->to("/admin")->with("error", "Tick error: " . $e->getMessage());
