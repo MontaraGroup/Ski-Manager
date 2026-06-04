@@ -1,0 +1,11 @@
+parameters:
+    level: 1
+    paths:
+        - app/Controllers
+        - app/Commands
+        - app/Helpers
+    excludePaths:
+        - app/Views
+    scanDirectories:
+        - vendor/codeigniter4/framework/system
+        - vendor/codeigniter4/shield/src

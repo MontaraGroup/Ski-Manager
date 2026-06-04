@@ -152,7 +152,7 @@ class ResortAnalysis extends BaseController
         if (count($water) === 0) $recommendations[] = ['type' => 'info', 'area' => 'Resources', 'text' => 'No water sources. Required for snowmaking operations.'];
 
         // Safety
-        $safetyScore = min(100, $activeInsurance * 15 + (in_array('ski_patrol', $roles ?? []) ? 30 : 0));
+        $safetyScore = min(100, $activeInsurance * 15 + (in_array('ski_patrol', $roles) ? 30 : 0));
         $scores['safety'] = $safetyScore;
         if ($activeInsurance === 0) $recommendations[] = ['type' => 'warning', 'area' => 'Safety', 'text' => 'No active insurance policies. You are exposed to liability and accident costs.'];
 
