@@ -80,7 +80,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="font-semibold <?= $isCurrentUser ? 'text-primary' : '' ?>"><?= esc($player['username']) ?> <?= $isCurrentUser ? '<span class="badge badge-primary badge-xs">You</span>' : '' ?></div>
+                                        <div class="font-semibold <?= $isCurrentUser ? 'text-primary' : '' ?>"><?= esc($player['username']) ?> <?= $isCurrentUser ? '<span class="badge badge-primary badge-xs">You</span>' : '<a href="/tour/' . $player['id'] . '" class="badge badge-ghost badge-xs gap-1"><i class="fa-solid fa-binoculars text-[8px]"></i>Tour</a>' ?></div>
                                     </div>
                                 </div>
                             </td>

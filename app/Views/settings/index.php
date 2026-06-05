@@ -87,6 +87,24 @@
         </div>
     </div>
 
+    <!-- Resort Tours -->
+    <div class="card bg-base-100 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="card-title text-base"><i class="fa-solid fa-binoculars mr-2"></i>Resort Tours</h2>
+                    <p class="text-sm text-base-content/60 mt-1">Allow other players to visit and view your resort.</p>
+                </div>
+                <form action="/settings/toggle-tours" method="post">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-sm <?= ($finance["allow_tours"] ?? 1) ? "btn-success" : "btn-ghost" ?>">
+                        <i class="fa-solid <?= ($finance["allow_tours"] ?? 1) ? "fa-eye" : "fa-eye-slash" ?> mr-1"></i>
+                        <?= ($finance["allow_tours"] ?? 1) ? "Enabled" : "Disabled" ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Units & Currency -->
     <form action="/settings" method="post">
         <?= csrf_field() ?>

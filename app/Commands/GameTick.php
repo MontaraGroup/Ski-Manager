@@ -223,6 +223,22 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
+            // SNOW QUALITY UPDATE
+            // ==============================
+            $activeGroomers = count(array_filter($equipment, fn($e) => $e["equipment_type"] === "groomer" && $e["status"] === "active"));
+            $hasSnowmaking = count($activeSnowmakers) > 0;
+            $slopesForQuality = $db->table("player_items")->where("user_id", $userId)->where("item_type", "slope")->where("status", "open")->get()->getResultArray();
+            foreach ($slopesForQuality as $sl) {
+                $q = "packed";
+                if (($weather["snowfall"] ?? 0) >= 10) { $q = "powder"; }
+                elseif (($weather["snowfall"] ?? 0) >= 1) { $q = $activeGroomers > 0 ? "groomed" : "packed"; }
+                elseif (($weather["condition_name"] ?? "") === "Freezing Rain") { $q = "icy"; }
+                elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = $hasSnowmaking ? "packed" : "bare"; }
+                elseif ($activeGroomers > 0) { $q = "groomed"; }
+                $db->table("player_items")->where("id", $sl["id"])->update(["snow_quality" => $q]);
+            }
+
+            // ==============================
             // VISITOR CALCULATION (with staff bonuses)
             // ==============================
             $openSlopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults();
@@ -239,7 +255,8 @@ class GameTick extends BaseCommand
             // Patrol boost: safety reputation
             $patrolBoost = $countAssigned('ski_patrol') * 2;
 
-            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost;
+            $snowQualityBonus = 0; foreach ($slopesForQuality as $sq) { $snowQualityBonus += match($sq["snow_quality"] ?? "packed") { "powder" => 3, "groomed" => 2, "packed" => 0, "icy" => -2, "bare" => -5, default => 0 }; }
+            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus;
             $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult);
 
             // Summer reduction

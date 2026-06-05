@@ -16,7 +16,7 @@ class Settings extends BaseController
         $activityCount = $db->table('activity_log')->where('user_id', $userId)->countAllResults();
 
         return view('settings/index', [
-            'units' => $units,
+            'units' => $units, 'finance' => $finance,
             'resort' => $resort,
             'tutorial' => $tutorial,
             'notifCount' => $notifCount,
@@ -80,5 +80,16 @@ class Settings extends BaseController
         $db->table('player_finances')->where('user_id', $userId)->update(['difficulty' => $difficulty]);
         log_activity($userId, 'Settings', 'Changed difficulty to ' . ucfirst($difficulty), 'fa-solid fa-gauge');
         return redirect()->to('/settings')->with('success', 'Difficulty set to ' . ucfirst($difficulty) . '.');
+    }
+    public function toggleTours()
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $finance = $db->table("player_finances")->where("user_id", $userId)->get()->getRowArray();
+        $newVal = ($finance["allow_tours"] ?? 1) ? 0 : 1;
+        $db->table("player_finances")->where("user_id", $userId)->update(["allow_tours" => $newVal]);
+        $msg = $newVal ? "Resort tours enabled" : "Resort tours disabled";
+        log_activity($userId, "Settings", $msg, "fa-solid fa-binoculars");
+        return redirect()->to("/settings")->with("success", $msg . ".");
     }
 }
