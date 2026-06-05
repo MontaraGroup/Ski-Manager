@@ -38,6 +38,9 @@
                 </button>
                 <button class="btn btn-sm join-item tooltip tooltip-bottom" data-tip="Select" id="selectBtn">
                     <i class="fa-solid fa-arrow-pointer"></i>
+                <button class="btn btn-sm join-item tooltip tooltip-bottom" data-tip="Draw Sector Boundary" id="drawSectorBtn">
+                    <i class="fa-solid fa-draw-polygon"></i>
+                </button>
                 </button>
             </div>
             <?php endif ?>
@@ -47,6 +50,20 @@
         </div>
     </div>
 
+    <?php if ($isAdmin ?? false) : ?>
+    <!-- Admin Sector Panel -->
+    <div class="bg-base-100 border-b border-base-300 px-4 py-2 flex items-center gap-3 flex-wrap" style="position:relative; z-index:5;">
+        <span class="text-xs font-semibold text-base-content/50"><i class="fa-solid fa-layer-group mr-1"></i>Sectors:</span>
+        <?php foreach ($sectors as $sec) : ?>
+        <div class="flex items-center gap-1">
+            <span class="badge badge-sm <?= $sec["visible"] ? "badge-success" : "badge-ghost" ?>"><?= esc($sec["name"]) ?></span>
+            <form action="/map/sector/toggle/<?= $sec["id"] ?>" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs"><i class="fa-solid <?= $sec["visible"] ? "fa-eye" : "fa-eye-slash" ?> text-[10px]"></i></button></form>
+            <form action="/map/sector/delete/<?= $sec["id"] ?>" method="post" class="inline" onsubmit="return confirm('Delete this sector?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-xmark text-[10px]"></i></button></form>
+        </div>
+        <?php endforeach ?>
+        <form action="/map/sector/create" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs gap-1"><i class="fa-solid fa-plus text-[10px]"></i> New Sector</button></form>
+    </div>
+    <?php endif ?>
     <!-- Drawing Status Bar -->
     <?php if (auth()->id() === 1) : ?>
     <div id="drawingStatus" class="bg-info/10 border-b border-info/30 px-4 py-1.5 text-xs text-info flex items-center justify-between hidden" style="position:relative; z-index:5;">
@@ -55,6 +72,12 @@
             <span id="drawingStatusText">Click on the map to start drawing...</span>
         </div>
         <div class="flex gap-2">
+            <select id="sectorSelect" class="select select-xs select-bordered">
+                <option value="0">No Sector</option>
+                <?php foreach ($sectors as $sec) : ?>
+                <option value="<?= $sec["id"] ?>"><?= esc($sec["name"]) ?></option>
+                <?php endforeach ?>
+            </select>
             <button class="btn btn-xs btn-success" id="finishDrawBtn" disabled>Finish</button>
             <button class="btn btn-xs btn-ghost" id="undoDrawBtn" disabled>Undo</button>
             <button class="btn btn-xs btn-ghost text-error" id="cancelDrawBtn">Cancel</button>
@@ -200,7 +223,7 @@
             </div>
         </div>
             <div id="mapid" class="w-full" style="background: #1a2332; height: calc(100vh - 130px);"></div>
-<style>#mapid{will-change:transform;transform:translateZ(0);-webkit-transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;perspective:1000px;contain:layout style paint;}#mapid .leaflet-tile-pane,#mapid .leaflet-overlay-pane,#mapid .leaflet-image-layer{will-change:transform;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;image-rendering:optimizeSpeed;}#mapid .leaflet-zoom-anim .leaflet-zoom-animated{will-change:transform;transition:transform 0.25s cubic-bezier(0,0,0.25,1);}</style>
+<style>#mapid{will-change:transform;transform:translateZ(0);-webkit-transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;perspective:1000px;contain:layout style paint;}#mapid .leaflet-tile-pane,#mapid .leaflet-overlay-pane,#mapid .leaflet-image-layer{will-change:transform;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;image-rendering:optimizeSpeed;}#mapid .leaflet-zoom-anim .leaflet-zoom-animated{will-change:transform;transition:transform 0.25s cubic-bezier(0,0,0.25,1);}.sector-label{background:rgba(0,0,0,0.7)!important;border:none!important;color:#fff!important;font-size:11px!important;font-weight:bold!important;padding:2px 6px!important;border-radius:4px!important;}</style>
         </div>
     </div>
 </div>
@@ -251,6 +274,22 @@
     map.setMinZoom(map.getZoom());
 
     var dbSegments = <?= json_encode($segments ?? []) ?>;
+    var sectorData = <?= json_encode($sectors ?? []) ?>;
+    var sectorColors = ["#22c55e","#3b82f6","#ef4444","#f97316","#a855f7","#06b6d4","#ec4899","#eab308"];
+    sectorData.forEach(function(sec, i) {
+        if (sec.boundary_points) {
+            var pts = JSON.parse(sec.boundary_points);
+            if (pts.length >= 3) {
+                L.polygon(pts, {
+                    color: sectorColors[i % sectorColors.length],
+                    fillColor: sectorColors[i % sectorColors.length],
+                    fillOpacity: 0.1,
+                    weight: 2,
+                    dashArray: "5,5"
+                }).addTo(map).bindTooltip(sec.name, {permanent: true, direction: "center", className: "sector-label"});
+            }
+        }
+    });
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
         var color = seg.type === 'lift' ? '#facc15' : '#22c55e';
@@ -334,7 +373,7 @@
         formData.append('name', name);
         formData.append('points', JSON.stringify(points));
         formData.append('length_meters', length);
-        formData.append('sector', 0);
+        formData.append('sector', document.getElementById('sectorSelect') ? document.getElementById('sectorSelect').value : 0);
         formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
 
         fetch('/map/segment', { method: 'POST', body: formData })
@@ -450,6 +489,59 @@
     document.getElementById('drawSlopeBtn').addEventListener('click', function() { startDraw('slope'); });
     document.getElementById('selectBtn').addEventListener('click', function() { cancelDraw(); this.classList.add('btn-active'); });
     document.getElementById('cancelDrawBtn').addEventListener('click', cancelDraw);
+
+    // Sector boundary drawing
+    var sectorDrawMode = false, sectorDrawPoints = [], sectorDrawPolygon = null, sectorDrawMarkers = [];
+    var drawSectorBtn = document.getElementById("drawSectorBtn");
+    if (drawSectorBtn) {
+        drawSectorBtn.addEventListener("click", function() {
+            cancelDraw();
+            sectorDrawMode = true;
+            sectorDrawPoints = [];
+            sectorDrawMarkers = [];
+            drawingStatus.classList.remove("hidden");
+            drawingStatusText.textContent = "Click to place sector boundary points. Click Finish when done (min 3 points).";
+            finishBtn.disabled = true;
+            map.getContainer().style.cursor = "crosshair";
+            drawSectorBtn.classList.add("btn-active");
+        });
+    }
+    map.on("click", function(e) {
+        if (!sectorDrawMode) return;
+        sectorDrawPoints.push([e.latlng.lat, e.latlng.lng]);
+        var m = L.circleMarker(e.latlng, {radius:4, color:"#a855f7", fillColor:"#a855f7", fillOpacity:1}).addTo(map);
+        sectorDrawMarkers.push(m);
+        if (sectorDrawPolygon) map.removeLayer(sectorDrawPolygon);
+        if (sectorDrawPoints.length >= 2) {
+            sectorDrawPolygon = L.polygon(sectorDrawPoints, {color:"#a855f7", fillColor:"#a855f7", fillOpacity:0.15, weight:2, dashArray:"5,5"}).addTo(map);
+        }
+        finishBtn.disabled = sectorDrawPoints.length < 3;
+        drawingStatusText.textContent = sectorDrawPoints.length + " points placed. " + (sectorDrawPoints.length < 3 ? "Need at least 3." : "Click Finish to save.");
+    });
+    finishBtn.addEventListener("click", function() {
+        if (!sectorDrawMode || sectorDrawPoints.length < 3) return;
+        var secSelect = document.getElementById("sectorSelect");
+        var secId = secSelect ? secSelect.value : 0;
+        if (!secId || secId === "0") { alert("Select a sector first"); return; }
+        var fd = new FormData();
+        fd.append("<?= csrf_token() ?>", "<?= csrf_hash() ?>");
+        fd.append("points", JSON.stringify(sectorDrawPoints));
+        fetch("/map/sector/boundary/" + secId, { method: "POST", body: fd })
+            .then(function(r){return r.json()})
+            .then(function(d){ if(d.success) location.reload(); });
+    });
+    document.getElementById("cancelDrawBtn").addEventListener("click", function() {
+        if (sectorDrawMode) {
+            sectorDrawMode = false;
+            sectorDrawPoints = [];
+            sectorDrawMarkers.forEach(function(m){map.removeLayer(m);});
+            if (sectorDrawPolygon) map.removeLayer(sectorDrawPolygon);
+            sectorDrawPolygon = null;
+            if (drawSectorBtn) drawSectorBtn.classList.remove("btn-active");
+            drawingStatus.classList.add("hidden");
+            map.getContainer().style.cursor = "";
+        }
+    });
     document.getElementById('finishDrawBtn').addEventListener('click', finishDraw);
     document.getElementById('undoDrawBtn').addEventListener('click', undoDraw);
     document.getElementById('quickDrawLift').addEventListener('click', function() { closePanel(); startDraw('lift'); });

@@ -17,21 +17,38 @@ class ResortMap extends BaseController
         'Vail' => ['name' => 'Vail', 'location' => 'Colorado, USA', 'width' => 600, 'height' => 340],
     ];
 
+    private function getSelectedMap(): array
+    {
+        $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
+        $selectedMap = $finance['resort_map'] ?? 'Vail';
+        return [$selectedMap, self::RESORT_MAPS[$selectedMap] ?? self::RESORT_MAPS['Vail']];
+    }
+
     public function index(): string
     {
         $model = new MapSegmentModel();
+        $db = db_connect();
+        $isAdmin = auth()->id() === 1;
 
-        $userId = auth()->id();
-        $finance = db_connect()->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $selectedMap = $finance['resort_map'] ?? 'Vail';
-        $mapConfig = self::RESORT_MAPS[$selectedMap] ?? self::RESORT_MAPS['Vail'];
-        $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
+        [$selectedMap, $mapConfig] = $this->getSelectedMap();
+
+        $sectors = $db->table('resort_sectors')->where('resort_map', $selectedMap)->orderBy('sort_order')->get()->getResultArray();
+        $visibleSectorIds = array_column(array_filter($sectors, fn($s) => $s['visible']), 'id');
+
+        if ($isAdmin) {
+            $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
+        } elseif (!empty($visibleSectorIds)) {
+            $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->whereIn('sector', $visibleSectorIds)->findAll();
+        } else {
+            $segments = [];
+        }
 
         return view('resort_map/index', [
             'segments' => $segments,
             'selectedMap' => $selectedMap,
             'mapConfig' => $mapConfig,
-            
+            'sectors' => $sectors,
+            'isAdmin' => $isAdmin,
         ]);
     }
 
@@ -47,6 +64,41 @@ class ResortMap extends BaseController
         return redirect()->to('/map')->with('success', 'Map changed to ' . self::RESORT_MAPS[$map]['name'] . '.');
     }
 
+    public function createSector()
+    {
+        if (auth()->id() !== 1) return redirect()->to('/map');
+        $db = db_connect();
+        [$selectedMap] = $this->getSelectedMap();
+        $count = $db->table('resort_sectors')->where('resort_map', $selectedMap)->countAllResults();
+        $db->table('resort_sectors')->insert([
+            'resort_map' => $selectedMap,
+            'name' => 'Sector ' . ($count + 1),
+            'visible' => 0,
+            'sort_order' => $count + 1,
+        ]);
+        return redirect()->to('/map')->with('success', 'Sector ' . ($count + 1) . ' created.');
+    }
+
+    public function toggleSector(int $id)
+    {
+        if (auth()->id() !== 1) return redirect()->to('/map');
+        $db = db_connect();
+        $sector = $db->table('resort_sectors')->where('id', $id)->get()->getRowArray();
+        if ($sector) {
+            $db->table('resort_sectors')->where('id', $id)->update(['visible' => $sector['visible'] ? 0 : 1]);
+        }
+        return redirect()->to('/map')->with('success', 'Sector visibility toggled.');
+    }
+
+    public function deleteSector(int $id)
+    {
+        if (auth()->id() !== 1) return redirect()->to('/map');
+        $db = db_connect();
+        $db->table('map_segments')->where('sector', $id)->update(['sector' => 0]);
+        $db->table('resort_sectors')->where('id', $id)->delete();
+        return redirect()->to('/map')->with('success', 'Sector deleted.');
+    }
+
     public function saveSegment()
     {
         if (!auth()->loggedIn() || auth()->id() !== 1) {
@@ -54,6 +106,7 @@ class ResortMap extends BaseController
         }
 
         $model = new MapSegmentModel();
+        [$selectedMap] = $this->getSelectedMap();
 
         $data = [
             'type' => $this->request->getPost('type'),
@@ -62,7 +115,7 @@ class ResortMap extends BaseController
             'length_meters' => (int) $this->request->getPost('length_meters'),
             'sector' => (int) $this->request->getPost('sector'),
             'user_id' => auth()->id(),
-            'resort_map' => db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray()['resort_map'] ?? 'Vail',
+            'resort_map' => $selectedMap,
         ];
 
         $model->insert($data);
@@ -85,9 +138,20 @@ class ResortMap extends BaseController
     public function getSegments()
     {
         $model = new MapSegmentModel();
-                $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
-        $selectedMap = $finance['resort_map'] ?? 'Vail';
-        $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
+        $db = db_connect();
+        $isAdmin = auth()->id() === 1;
+        [$selectedMap] = $this->getSelectedMap();
+
+        if ($isAdmin) {
+            $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
+        } else {
+            $visibleSectorIds = array_column($db->table('resort_sectors')->where('resort_map', $selectedMap)->where('visible', 1)->get()->getResultArray(), 'id');
+            if (!empty($visibleSectorIds)) {
+                $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->whereIn('sector', $visibleSectorIds)->findAll();
+            } else {
+                $segments = [];
+            }
+        }
 
         return $this->response->setJSON($segments);
     }
@@ -181,5 +245,13 @@ class ResortMap extends BaseController
             'name' => trim($name),
             'cost' => $cost,
         ]);
+    }
+    public function saveSectorBoundary(int $id)
+    {
+        if (auth()->id() !== 1) return $this->response->setStatusCode(401)->setJSON(["error" => "Unauthorized"]);
+        $db = db_connect();
+        $points = $this->request->getPost("points");
+        $db->table("resort_sectors")->where("id", $id)->update(["boundary_points" => $points]);
+        return $this->response->setJSON(["success" => true]);
     }
 }
