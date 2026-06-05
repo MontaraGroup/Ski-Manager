@@ -31,7 +31,7 @@ class ResortMap extends BaseController
             'segments' => $segments,
             'selectedMap' => $selectedMap,
             'mapConfig' => $mapConfig,
-            'resortMaps' => self::RESORT_MAPS,
+            
         ]);
     }
 

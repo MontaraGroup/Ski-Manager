@@ -83,7 +83,6 @@ $routes->post("/admin/trigger-tick", "Admin::triggerTick");
 $routes->post("/dashboard/reorder-widgets", "Dashboard::reorderWidgets");
 $routes->post("/dashboard/resize-widget", "Dashboard::resizeWidget");
 $routes->post("/map/build", "ResortMap::buildItem");
-$routes->post("/map/change-map", "ResortMap::changeMap");
 $routes->get("/api/map-image/(:segment)", "MapImage::serve/$1");
 $routes->post("/tutorial/advance", "Tutorial::advance");
 $routes->post("/tutorial/restart", "Tutorial::restart");

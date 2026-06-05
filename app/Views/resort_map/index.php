@@ -13,21 +13,6 @@
             </a>
             <h1 class="text-lg font-bold">Trail Map</h1>
         </div>
-            <div class="dropdown dropdown-bottom">
-                <div tabindex="0" class="btn btn-ghost btn-sm gap-1"><i class="fa-solid fa-map-location-dot"></i> <?= $mapConfig['name'] ?></div>
-                <div tabindex="0" class="dropdown-content bg-base-100 rounded-box shadow-xl z-50 w-64 mt-2 p-2">
-                    <div class="text-xs font-semibold text-base-content/50 px-2 py-1 mb-1">Change Resort Map</div>
-                    <?php foreach ($resortMaps as $key => $rm) : ?>
-                    <form action="/map/change-map" method="post" class="inline">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="resort_map" value="<?= $key ?>">
-                        <button type="submit" class="w-full text-left px-2 py-1.5 rounded hover:bg-base-200 text-sm flex items-center justify-between <?= $key === $selectedMap ? 'font-bold text-primary' : '' ?>">
-                            <span><?= $rm['name'] ?></span>
-                            <span class="text-xs text-base-content/50"><?= $rm['location'] ?></span>
-                        </button>
-                    </form>
-                    <?php endforeach ?>
-                </div>
             </div>
         <div class="flex items-center gap-2">
             <div class="join">
