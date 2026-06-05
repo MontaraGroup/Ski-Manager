@@ -56,6 +56,21 @@ Events::on('pre_system', static function (): void {
     }
 });
 
+Events::on("register", static function ($user) {
+    $db = db_connect();
+    $difficulty = session("difficulty") ?? "standard";
+    $resortMap = session("resort_map") ?? "ParkCity";
+    $cash = match($difficulty) { "easy" => 1000000, "hard" => 200000, default => 500000 };
+    $existing = $db->table("player_finances")->where("user_id", $user->id)->countAllResults();
+    if (!$existing) {
+        $db->table("player_finances")->insert(["user_id" => $user->id, "cash" => $cash, "total_income" => 0, "total_expenses" => 0, "difficulty" => $difficulty, "resort_map" => $resortMap]);
+        $db->table("genepis")->insert(["user_id" => $user->id, "balance" => 0]);
+        $db->table("daily_bonus")->insert(["user_id" => $user->id, "last_claim_day" => 0, "streak" => 0]);
+        log_activity($user->id, "register", "Joined Ski Manager");
+        notify($user->id, "welcome", "Welcome to Ski Manager!", "Start by hiring staff and building your first slope.", "fa-solid fa-mountain-sun", "/dashboard");
+    }
+});
+
 // Save difficulty choice from registration form to session
 Events::on('post_controller_constructor', static function () {
     $request = service('request');
