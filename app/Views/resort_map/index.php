@@ -282,6 +282,30 @@
         }
     });
 
+
+    // Detect and render connection points
+    var connectionPoints = {};
+    drawnPaths.forEach(function(p) {
+        var start = p.points[0][0].toFixed(2) + ',' + p.points[0][1].toFixed(2);
+        var end = p.points[p.points.length-1][0].toFixed(2) + ',' + p.points[p.points.length-1][1].toFixed(2);
+        if (!connectionPoints[start]) connectionPoints[start] = { pt: p.points[0], count: 0, types: [] };
+        if (!connectionPoints[end]) connectionPoints[end] = { pt: p.points[p.points.length-1], count: 0, types: [] };
+        connectionPoints[start].count++;
+        connectionPoints[start].types.push(p.type);
+        connectionPoints[end].count++;
+        connectionPoints[end].types.push(p.type);
+    });
+    Object.keys(connectionPoints).forEach(function(key) {
+        var cp = connectionPoints[key];
+        if (cp.count >= 2) {
+            var hasLift = cp.types.indexOf('lift') !== -1;
+            var hasSlope = cp.types.indexOf('slope') !== -1;
+            var color = (hasLift && hasSlope) ? '#a855f7' : (hasLift ? '#facc15' : '#22c55e');
+            L.circleMarker(cp.pt, {
+                radius: 8, color: '#fff', fillColor: color, fillOpacity: 1, weight: 3
+            }).addTo(map).bindTooltip(cp.count + ' segments connected', {direction: 'top'});
+        }
+    });
     // Panel functions
     function showStep(step) {
         [step1, step2Lift, step2Slope].forEach(function(s) { s.style.display = 'none'; });
@@ -581,5 +605,63 @@
         if (addMidBtn) addMidBtn.classList.remove('btn-active');
         map.getContainer().style.cursor = '';
     });
+
+    // Sector boundary drawing
+    var sectorDrawMode = false, sectorDrawPoints = [], sectorDrawPolygon = null, sectorDrawMarkers = [];
+    var drawSectorBtn = document.getElementById('drawSectorBtn');
+    if (drawSectorBtn) {
+        drawSectorBtn.addEventListener('click', function() {
+            cancelDraw();
+            midstationMode = false;
+            sectorDrawMode = true;
+            sectorDrawPoints = [];
+            sectorDrawMarkers = [];
+            if (drawingStatus) drawingStatus.classList.remove('hidden');
+            if (drawingStatusText) drawingStatusText.textContent = 'Click to place sector boundary points. Click Finish when done (min 3).';
+            if (finishBtn) finishBtn.disabled = true;
+            map.getContainer().style.cursor = 'crosshair';
+            drawSectorBtn.classList.add('btn-active');
+        });
+    }
+    map.on('click', function(e) {
+        if (!sectorDrawMode) return;
+        sectorDrawPoints.push([e.latlng.lat, e.latlng.lng]);
+        var m = L.circleMarker(e.latlng, {radius:4, color:'#a855f7', fillColor:'#a855f7', fillOpacity:1}).addTo(map);
+        sectorDrawMarkers.push(m);
+        if (sectorDrawPolygon) map.removeLayer(sectorDrawPolygon);
+        if (sectorDrawPoints.length >= 2) {
+            sectorDrawPolygon = L.polygon(sectorDrawPoints, {color:'#a855f7', fillColor:'#a855f7', fillOpacity:0.15, weight:2, dashArray:'5,5'}).addTo(map);
+        }
+        if (finishBtn) finishBtn.disabled = sectorDrawPoints.length < 3;
+        if (drawingStatusText) drawingStatusText.textContent = sectorDrawPoints.length + ' points. ' + (sectorDrawPoints.length < 3 ? 'Need at least 3.' : 'Click Finish to save.');
+    });
+    if (finishBtn) finishBtn.addEventListener('click', function() {
+        if (!sectorDrawMode || sectorDrawPoints.length < 3) return;
+        var secSelect = document.getElementById('sectorSelect');
+        var secId = secSelect ? secSelect.value : 0;
+        if (!secId || secId === '0') { alert('Select a sector first from the dropdown.'); return; }
+        var fd = new FormData();
+        fd.append(csrfName, csrfHash);
+        fd.append('points', JSON.stringify(sectorDrawPoints));
+        fetch('/map/sector/boundary/' + secId, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (d.success) location.reload(); });
+        sectorDrawMode = false;
+        sectorDrawPoints = [];
+        if (drawSectorBtn) drawSectorBtn.classList.remove('btn-active');
+        if (drawingStatus) drawingStatus.classList.add('hidden');
+        map.getContainer().style.cursor = '';
+    });
+    if (document.getElementById('cancelDrawBtn')) {
+        document.getElementById('cancelDrawBtn').addEventListener('click', function() {
+            if (sectorDrawMode) {
+                sectorDrawMode = false;
+                sectorDrawPoints = [];
+                sectorDrawMarkers.forEach(function(m) { map.removeLayer(m); });
+                if (sectorDrawPolygon) { map.removeLayer(sectorDrawPolygon); sectorDrawPolygon = null; }
+                if (drawSectorBtn) drawSectorBtn.classList.remove('btn-active');
+            }
+        });
+    }
 </script>
 <?= $this->endSection() ?>
