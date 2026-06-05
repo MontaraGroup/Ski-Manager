@@ -263,4 +263,20 @@ class ResortMap extends BaseController
         $model->update($id, ["midstations" => $midstations]);
         return $this->response->setJSON(["success" => true]);
     }
+    public function createSectorWithBoundary()
+    {
+        if (auth()->id() !== 1) return $this->response->setStatusCode(401)->setJSON(["error" => "Unauthorized"]);
+        $db = db_connect();
+        [$selectedMap] = $this->getSelectedMap();
+        $count = $db->table("resort_sectors")->where("resort_map", $selectedMap)->countAllResults();
+        $points = $this->request->getPost("points");
+        $db->table("resort_sectors")->insert([
+            "resort_map" => $selectedMap,
+            "name" => "Sector " . ($count + 1),
+            "boundary_points" => $points,
+            "visible" => 0,
+            "sort_order" => $count + 1,
+        ]);
+        return $this->response->setJSON(["success" => true, "id" => $db->insertID()]);
+    }
 }

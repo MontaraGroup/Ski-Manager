@@ -245,7 +245,9 @@
     var sectorData = <?= json_encode($sectors ?? []) ?>;
     var sectorColors = ["#22c55e","#3b82f6","#ef4444","#f97316","#a855f7","#06b6d4","#ec4899","#eab308"];
 
-    // Render sector boundaries
+    // Render sector boundaries (admin only)
+    var isAdmin = <?= json_encode($isAdmin ?? false) ?>;
+    if (isAdmin) {
     sectorData.forEach(function(sec, i) {
         if (sec.boundary_points) {
             var pts = JSON.parse(sec.boundary_points);
@@ -254,6 +256,7 @@
             }
         }
     });
+    }
 
     var drawnPaths = [];
     var selectedPathId = null;
@@ -510,13 +513,24 @@
     if (dsb) dsb.addEventListener('click', function() { startDraw('slope'); });
     if (selb) selb.addEventListener('click', function() { cancelDraw(); this.classList.add('btn-active'); });
     if (document.getElementById('cancelDrawBtn')) document.getElementById('cancelDrawBtn').addEventListener('click', cancelDraw);
-    if (undoBtn) undoBtn.addEventListener('click', function() {
-        drawPoints.pop();
-        var m = tempMarkers.pop();
-        if (m) map.removeLayer(m);
-        updateDrawLine();
-        if (finishBtn) finishBtn.disabled = drawPoints.length < 2;
-        if (undoBtn) undoBtn.disabled = drawPoints.length === 0;
+    if (undoBtn) undoBtn.addEventListener("click", function() {
+        if (sectorDrawMode) {
+            sectorDrawPoints.pop();
+            var m = sectorDrawMarkers.pop();
+            if (m) map.removeLayer(m);
+            if (sectorDrawPolygon) map.removeLayer(sectorDrawPolygon);
+            if (sectorDrawPoints.length >= 2) sectorDrawPolygon = L.polygon(sectorDrawPoints, {color:"#a855f7", fillColor:"#a855f7", fillOpacity:0.15, weight:2, dashArray:"5,5"}).addTo(map);
+            else sectorDrawPolygon = null;
+            if (finishBtn) finishBtn.disabled = sectorDrawPoints.length < 3;
+            if (undoBtn) undoBtn.disabled = sectorDrawPoints.length === 0;
+        } else {
+            drawPoints.pop();
+            var m = tempMarkers.pop();
+            if (m) map.removeLayer(m);
+            updateDrawLine();
+            if (finishBtn) finishBtn.disabled = drawPoints.length < 2;
+            if (undoBtn) undoBtn.disabled = drawPoints.length === 0;
+        }
     });
 
     // Back buttons
@@ -639,7 +653,7 @@
         if (!sectorDrawMode || sectorDrawPoints.length < 3) return;
         var secSelect = document.getElementById('sectorSelect');
         var secId = secSelect ? secSelect.value : 0;
-        if (!secId || secId === '0') { alert('Select a sector first from the dropdown.'); return; }
+        if (!secId || secId === "0") { var fd3 = new FormData(); fd3.append(csrfName, csrfHash); fd3.append("points", JSON.stringify(sectorDrawPoints)); fetch("/map/sector/create-with-boundary", { method: "POST", body: fd3 }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) location.reload(); }); sectorDrawMode = false; return; }
         var fd = new FormData();
         fd.append(csrfName, csrfHash);
         fd.append('points', JSON.stringify(sectorDrawPoints));
