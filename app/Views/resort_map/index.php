@@ -238,7 +238,9 @@
         minZoom: 0,
         maxZoom: 3,
         zoomSnap: 0.5,
-        attributionControl: false
+        attributionControl: false,
+        maxBounds: bounds,
+        maxBoundsViscosity: 1.0
     });
 
     var img = new Image(); img.onload = function(){ L.imageOverlay(mapImage, bounds).addTo(map); }; img.src = mapImage;
