@@ -126,3 +126,4 @@ _modules/*
 /phpunit.xml
 writable/maps/
 public/img/thumbs/
+public/img/*.jpg

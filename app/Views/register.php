@@ -96,7 +96,7 @@
                         <label class="cursor-pointer">
                             <input type="radio" name="resort_map" value="<?= $key ?>" class="peer hidden" <?= $key === 'Vail' ? 'checked' : '' ?>>
                             <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
-                                <img src="/img/thumbs/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1">
+                                <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1">
                                 <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
                                 <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
                             </div>
