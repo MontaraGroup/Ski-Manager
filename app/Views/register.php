@@ -95,7 +95,7 @@
                         <?php $enabled = ($key === 'ParkCity'); ?>
                         <?php $enabled = ($key === 'ParkCity'); ?>
                         <label class="<?= $enabled ? 'cursor-pointer' : '' ?>">
-                            <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
+                            <div class="border-2 rounded-lg p-2 text-center transition-colors <?= $enabled ? 'border-primary bg-primary/10' : 'border-base-300' ?>">
                                 <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1 <?= !$enabled ? 'grayscale' : '' ?>">
                                 <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
                                 <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
