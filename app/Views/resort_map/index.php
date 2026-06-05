@@ -88,10 +88,10 @@
     <div class="flex relative">
 
         <!-- Build Panel -->
-        <div id="buildPanel" class="absolute right-0 top-0 bottom-0 w-80 bg-base-100 border-l border-base-300 translate-x-full transition-transform duration-300 flex flex-col shadow-xl" style="z-index:500;">
+        <div id="buildPanel" class="fixed right-0 top-0 bottom-0 w-80 bg-base-100 border-l border-base-300 transition-transform duration-300 flex flex-col shadow-xl" style="z-index:9000;background-color:#2a2d3e !important;transform:translateX(100%);">
 
             <div class="p-4 border-b border-base-300 flex items-center justify-between shrink-0">
-                <h2 class="font-bold" id="panelTitle">Build</h2>
+                <h2 class="font-bold" id="panelTitle" style="color:inherit;">Build</h2>
                 <button class="btn btn-ghost btn-sm btn-circle" id="closeBuildPanel">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -548,8 +548,8 @@
     });
 
     function showStep(step) { [step1, step2Lift, step2Slope].forEach(function(s) { s.classList.add('hidden'); }); step.classList.remove('hidden'); }
-    function openPanel() { panel.classList.remove('translate-x-full'); panelTitle.textContent = 'Build'; showStep(step1); updatePathsList(); }
-    function closePanel() { panel.classList.add('translate-x-full'); step3.classList.add('hidden'); selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
+    function openPanel() { panel.style.transform = 'translateX(0)'; panelTitle.textContent = 'Build'; showStep(step1); updatePathsList(); }
+    function closePanel() { panel.style.transform = 'translateX(100%)'; step3.classList.add('hidden'); selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
 
     document.getElementById('buildModeBtn').addEventListener('click', openPanel);
     document.getElementById('closeBuildPanel').addEventListener('click', closePanel);
