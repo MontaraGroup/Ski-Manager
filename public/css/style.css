@@ -15,3 +15,13 @@
 .peer:checked~.peer-checked\:bg-error\/10{background-color:oklch(var(--er)/0.1)}
 .peer:checked~.peer-checked\:border-success{border-color:oklch(var(--su))}
 .peer:checked~.peer-checked\:bg-success\/10{background-color:oklch(var(--su)/0.1)}
+
+/* Peer-checked fixes for DaisyUI v5 */
+.peer:checked~.peer-checked\:border-info{border-color:var(--color-info)}
+.peer:checked~.peer-checked\:bg-info\/10{background-color:color-mix(in oklab, var(--color-info) 10%, transparent)}
+.peer:checked~.peer-checked\:border-error{border-color:var(--color-error)}
+.peer:checked~.peer-checked\:bg-error\/10{background-color:color-mix(in oklab, var(--color-error) 10%, transparent)}
+.peer:checked~.peer-checked\:border-success{border-color:var(--color-success)}
+.peer:checked~.peer-checked\:bg-success\/10{background-color:color-mix(in oklab, var(--color-success) 10%, transparent)}
+.peer:checked~.peer-checked\:border-primary{border-color:var(--color-primary)}
+.peer:checked~.peer-checked\:bg-primary\/10{background-color:color-mix(in oklab, var(--color-primary) 10%, transparent)}

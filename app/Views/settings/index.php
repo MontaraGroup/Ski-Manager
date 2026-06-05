@@ -1,68 +1,5 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Settings
-    <!-- Game Difficulty -->
-    <div class="card bg-base-100 shadow-sm border border-base-300">
-        <div class="card-body">
-            <h2 class="card-title text-lg">Game Difficulty</h2>
-            <p class="text-sm text-base-content/60 mb-3">Changes how challenging the game is. Affects revenue, costs, decay rates, and available features.</p>
-            <form action="/settings/difficulty" method="post">
-                <?= csrf_field() ?>
-                <?php $currentDifficulty = getDifficulty(); ?>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <label class="cursor-pointer">
-                        <input type="radio" name="difficulty" value="easy" class="peer hidden" <?= $currentDifficulty === 'easy' ? 'checked' : '' ?>>
-                        <div class="card border-2 border-base-300 peer-checked:border-success peer-checked:bg-success/10 transition-colors">
-                            <div class="card-body p-4 text-center">
-                                <i class="fa-solid fa-face-smile text-2xl text-success mb-2"></i>
-                                <div class="font-bold">Easy</div>
-                                <ul class="text-xs text-base-content/60 text-left mt-2 space-y-1">
-                                    <li><i class="fa-solid fa-plus text-success mr-1"></i>+50% revenue</li>
-                                    <li><i class="fa-solid fa-minus text-success mr-1"></i>-25% costs</li>
-                                    <li><i class="fa-solid fa-minus text-success mr-1"></i>-50% decay</li>
-                                    <li><i class="fa-solid fa-eye-slash text-success mr-1"></i>Simplified menus</li>
-                                    <li><i class="fa-solid fa-coins text-success mr-1"></i>1M starting cash</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </label>
-                    <label class="cursor-pointer">
-                        <input type="radio" name="difficulty" value="standard" class="peer hidden" <?= $currentDifficulty === 'standard' ? 'checked' : '' ?>>
-                        <div class="card border-2 border-base-300 peer-checked:border-info peer-checked:bg-info/10 transition-colors">
-                            <div class="card-body p-4 text-center">
-                                <i class="fa-solid fa-face-meh text-2xl text-info mb-2"></i>
-                                <div class="font-bold">Standard</div>
-                                <ul class="text-xs text-base-content/60 text-left mt-2 space-y-1">
-                                    <li><i class="fa-solid fa-equals text-info mr-1"></i>Normal revenue</li>
-                                    <li><i class="fa-solid fa-equals text-info mr-1"></i>Normal costs</li>
-                                    <li><i class="fa-solid fa-equals text-info mr-1"></i>Normal decay</li>
-                                    <li><i class="fa-solid fa-eye text-info mr-1"></i>All features</li>
-                                    <li><i class="fa-solid fa-coins text-info mr-1"></i>500K starting cash</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </label>
-                    <label class="cursor-pointer">
-                        <input type="radio" name="difficulty" value="hard" class="peer hidden" <?= $currentDifficulty === 'hard' ? 'checked' : '' ?>>
-                        <div class="card border-2 border-base-300 peer-checked:border-error peer-checked:bg-error/10 transition-colors">
-                            <div class="card-body p-4 text-center">
-                                <i class="fa-solid fa-skull text-2xl text-error mb-2"></i>
-                                <div class="font-bold">Hard</div>
-                                <ul class="text-xs text-base-content/60 text-left mt-2 space-y-1">
-                                    <li><i class="fa-solid fa-minus text-error mr-1"></i>-25% revenue</li>
-                                    <li><i class="fa-solid fa-plus text-error mr-1"></i>+30% costs</li>
-                                    <li><i class="fa-solid fa-plus text-error mr-1"></i>+50% decay</li>
-                                    <li><i class="fa-solid fa-gavel text-error mr-1"></i>2x inspections</li>
-                                    <li><i class="fa-solid fa-coins text-error mr-1"></i>200K starting cash</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </label>
-                </div>
-                <button class="btn btn-primary btn-sm"><i class="fa-solid fa-save mr-1"></i>Save Difficulty</button>
-            </form>
-        </div>
-    </div>
-
 <?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-2xl mx-auto p-4 lg:p-8">
@@ -227,10 +164,8 @@
         </div>
     </div>
 
-</div>
-
     <!-- Game Difficulty -->
-    <div class="card bg-base-100 shadow-sm border border-base-300">
+    <div class="card bg-base-100 shadow-sm border border-base-300 mb-4">
         <div class="card-body">
             <h2 class="card-title text-lg">Game Difficulty</h2>
             <p class="text-sm text-base-content/60 mb-3">Changes how challenging the game is. Affects revenue, costs, decay rates, and available features.</p>
@@ -291,5 +226,7 @@
             </form>
         </div>
     </div>
+</div>
+
 
 <?= $this->endSection() ?>
