@@ -61,7 +61,7 @@
                 <div class="form-control mb-4">
                     <label for="difficulty" class="label"><span class="label-text">Game Difficulty</span></label>
                     <div class="grid grid-cols-3 gap-2">
-                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
+                        <label class="cursor-pointer">
                             <input type="radio" name="difficulty" id="difficulty" value="easy" class="peer hidden">
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-success peer-checked:bg-success/10 transition-colors">
                                 <i class="fa-solid fa-face-smile text-success text-lg"></i>
@@ -69,7 +69,7 @@
                                 <div class="text-[10px] text-base-content/50">More cash, simpler</div>
                             </div>
                         </label>
-                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
+                        <label class="cursor-pointer">
                             <input type="radio" name="difficulty" value="standard" class="peer hidden" checked>
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-info peer-checked:bg-info/10 transition-colors">
                                 <i class="fa-solid fa-face-meh text-info text-lg"></i>
@@ -77,7 +77,7 @@
                                 <div class="text-[10px] text-base-content/50">Balanced</div>
                             </div>
                         </label>
-                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
+                        <label class="cursor-pointer">
                             <input type="radio" name="difficulty" value="hard" class="peer hidden">
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-error peer-checked:bg-error/10 transition-colors">
                                 <i class="fa-solid fa-skull text-error text-lg"></i>
@@ -103,8 +103,8 @@
                                 </div>
                             </label>
                             <?php if (!$enabled) : ?>
-                            <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-base-300/60 backdrop-blur-[1px]">
-                                <span class="badge badge-sm badge-neutral">Coming Soon</span>
+                            <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-base-300/60 backdrop-blur-[1px]" style="margin:2px;">
+                                <span class="text-[9px] font-bold bg-neutral text-neutral-content px-1.5 py-0.5 rounded">Soon</span>
                             </div>
                             <?php endif ?>
                         </div>
