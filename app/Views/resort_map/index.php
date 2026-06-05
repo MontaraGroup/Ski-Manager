@@ -198,6 +198,7 @@
             </div>
         </div>
             <div id="mapid" class="w-full" style="background: #1a2332; height: calc(100vh - 130px);"></div>
+<style>#mapid{will-change:transform;transform:translateZ(0);-webkit-transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;perspective:1000px;contain:layout style paint;}#mapid .leaflet-tile-pane,#mapid .leaflet-overlay-pane,#mapid .leaflet-image-layer{will-change:transform;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;image-rendering:optimizeSpeed;}#mapid .leaflet-zoom-anim .leaflet-zoom-animated{will-change:transform;transition:transform 0.25s cubic-bezier(0,0,0.25,1);}</style>
         </div>
     </div>
 </div>
@@ -232,6 +233,7 @@
     var bounds = [[0, 0], [imgH, imgW]];
 
     var map = L.map('mapid', {
+        preferCanvas: true,
         crs: L.CRS.Simple,
         minZoom: 0,
         maxZoom: 3,
@@ -239,7 +241,7 @@
         attributionControl: false
     });
 
-    L.imageOverlay(mapImage, bounds).addTo(map);
+    var img = new Image(); img.onload = function(){ L.imageOverlay(mapImage, bounds).addTo(map); }; img.src = mapImage;
     map.fitBounds(bounds);
     map.setView([170, 300], 1);
 
