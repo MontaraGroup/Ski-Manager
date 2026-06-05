@@ -93,17 +93,15 @@
                         <?php $maps = ['ParkCity' => 'Park City, UT', 'Vail' => 'Vail, CO', 'AspenSnowmass' => 'Aspen, CO', 'DeerValley' => 'Deer Valley, UT', 'Killington' => 'Killington, VT', 'BigSkyCombo' => 'Big Sky, MT', 'PalisadesTahoe' => 'Palisades, CA']; ?>
                         <?php foreach ($maps as $key => $loc) : ?>
                         <?php $enabled = ($key === 'ParkCity'); ?>
-                        <div class="relative">
-                            <label class="<?= $enabled ? 'cursor-pointer' : '' ?>">
-                                <input type="radio" name="resort_map" value="<?= $key ?>" class="peer hidden" <?= $enabled ? 'checked' : 'disabled' ?>>
-                                <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors relative overflow-hidden <?= !$enabled ? 'opacity-50' : '' ?>">
-                                    <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1 relative z-0">
-                                    <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
-                                    <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
-                                    <?php if (!$enabled) : ?><div class="absolute inset-0 flex items-center justify-center bg-base-300/60 backdrop-blur-[1px] z-10"><span class="text-[9px] font-bold bg-neutral text-neutral-content px-1.5 py-0.5 rounded">Soon</span></div><?php endif ?>
-                                </div>
-                            </label>
-                        </div>
+                        <?php $enabled = ($key === 'ParkCity'); ?>
+                        <label class="<?= $enabled ? 'cursor-pointer' : '' ?>">
+                            <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
+                                <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1 <?= !$enabled ? 'grayscale' : '' ?>">
+                                <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
+                                <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
+                                <?php if (!$enabled) : ?><div class="text-[9px] font-bold text-center mt-1"><span class="bg-neutral text-neutral-content px-1.5 py-0.5 rounded">Coming Soon</span></div><?php endif ?>
+                            </div>
+                        </label>
                         <?php endforeach ?>
                     </div>
                 </div>
