@@ -127,7 +127,8 @@
                     </div>
                 </div>
                 <?php endforeach ?>
-                <form action="/map/sector/create" method="post"><?= csrf_field() ?><button class="btn btn-outline btn-xs w-full"><i class="fa-solid fa-plus mr-1"></i> New Sector</button></form>
+                <form action="/map/sector/create" method="post"><?= csrf_field() ?><button class="btn btn-outline btn-xs w-full mb-2"><i class="fa-solid fa-plus mr-1"></i> New Sector</button></form>
+                    <form action="/map/sector/auto-assign" method="post"><?= csrf_field() ?><button class="btn btn-outline btn-xs w-full"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Auto-assign</button></form>
             </div>
         </div>
         <?php endif ?>
@@ -309,6 +310,28 @@
             }).addTo(map).bindTooltip(cp.count + ' segments connected', {direction: 'top'});
         }
     });
+
+    // Point-in-polygon test (ray casting)
+    function pointInPolygon(pt, polygon) {
+        var x = pt[0], y = pt[1], inside = false;
+        for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            var xi = polygon[i][0], yi = polygon[i][1];
+            var xj = polygon[j][0], yj = polygon[j][1];
+            if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        return inside;
+    }
+
+    // Auto-detect sector for a point
+    function detectSector(pt) {
+        for (var i = 0; i < sectorData.length; i++) {
+            if (sectorData[i].boundary_points) {
+                var poly = JSON.parse(sectorData[i].boundary_points);
+                if (poly.length >= 3 && pointInPolygon(pt, poly)) return sectorData[i].id;
+            }
+        }
+        return 0;
+    }
     // Panel functions
     function showStep(step) {
         [step1, step2Lift, step2Slope].forEach(function(s) { s.style.display = 'none'; });
@@ -488,7 +511,9 @@
         formData.append('name', name);
         formData.append('points', JSON.stringify(points));
         formData.append('length_meters', length);
-        formData.append('sector', sectorSel ? sectorSel.value : 0);
+        var selSector = sectorSel ? sectorSel.value : "0";
+        if (selSector === "0") { var mid = points[Math.floor(points.length/2)]; selSector = detectSector(mid) || 0; }
+        formData.append("sector", selSector);
 
         fetch('/map/segment', { method: 'POST', body: formData }).then(function(r) { return r.json(); }).then(function(d) {
             if (d.success) {

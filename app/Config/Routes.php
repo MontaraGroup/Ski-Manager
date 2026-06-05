@@ -90,6 +90,7 @@ $routes->post("/map/sector/toggle/(:num)", "ResortMap::toggleSector/$1");
 $routes->post("/map/sector/delete/(:num)", "ResortMap::deleteSector/$1");
 $routes->post("/map/sector/boundary/(:num)", "ResortMap::saveSectorBoundary/$1");
 $routes->post("/map/sector/create-with-boundary", "ResortMap::createSectorWithBoundary");
+$routes->post("/map/sector/auto-assign", "ResortMap::autoAssignSectors");
 $routes->post("/map/segment/midstation/(:num)", "ResortMap::saveMidstation/$1");
 $routes->post("/tutorial/advance", "Tutorial::advance");
 $routes->post("/tutorial/restart", "Tutorial::restart");

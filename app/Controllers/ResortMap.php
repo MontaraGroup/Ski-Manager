@@ -279,4 +279,37 @@ class ResortMap extends BaseController
         ]);
         return $this->response->setJSON(["success" => true, "id" => $db->insertID()]);
     }
+    public function autoAssignSectors()
+    {
+        if (auth()->id() !== 1) return redirect()->to("/map");
+        $db = db_connect();
+        [$selectedMap] = $this->getSelectedMap();
+        $sectors = $db->table("resort_sectors")->where("resort_map", $selectedMap)->get()->getResultArray();
+        $segments = $db->table("map_segments")->where("resort_map", $selectedMap)->get()->getResultArray();
+        $updated = 0;
+        foreach ($segments as $seg) {
+            $points = json_decode($seg["points"], true);
+            $mid = $points[intdiv(count($points), 2)] ?? $points[0];
+            foreach ($sectors as $sec) {
+                $poly = json_decode($sec["boundary_points"] ?? "[]", true);
+                if (count($poly) >= 3 && $this->pointInPolygon($mid, $poly)) {
+                    $db->table("map_segments")->where("id", $seg["id"])->update(["sector" => $sec["id"]]);
+                    $updated++;
+                    break;
+                }
+            }
+        }
+        return redirect()->to("/map")->with("success", $updated . " segments auto-assigned to sectors.");
+    }
+
+    private function pointInPolygon(array $pt, array $polygon): bool
+    {
+        $x = $pt[0]; $y = $pt[1]; $inside = false;
+        for ($i = 0, $j = count($polygon) - 1; $i < count($polygon); $j = $i++) {
+            $xi = $polygon[$i][0]; $yi = $polygon[$i][1];
+            $xj = $polygon[$j][0]; $yj = $polygon[$j][1];
+            if (($yi > $y) !== ($yj > $y) && $x < ($xj - $xi) * ($y - $yi) / ($yj - $yi) + $xi) $inside = !$inside;
+        }
+        return $inside;
+    }
 }
