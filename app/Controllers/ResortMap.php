@@ -20,12 +20,12 @@ class ResortMap extends BaseController
     public function index(): string
     {
         $model = new MapSegmentModel();
-        $segments = $model->where('active', 1)->findAll();
 
         $userId = auth()->id();
         $finance = db_connect()->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
         $selectedMap = $finance['resort_map'] ?? 'Vail';
         $mapConfig = self::RESORT_MAPS[$selectedMap] ?? self::RESORT_MAPS['Vail'];
+        $segments = $model->where('active', 1)->where('user_id', $userId)->where('resort_map', $selectedMap)->findAll();
 
         return view('resort_map/index', [
             'segments' => $segments,
@@ -61,6 +61,8 @@ class ResortMap extends BaseController
             'points' => $this->request->getPost('points'),
             'length_meters' => (int) $this->request->getPost('length_meters'),
             'sector' => (int) $this->request->getPost('sector'),
+            'user_id' => auth()->id(),
+            'resort_map' => db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray()['resort_map'] ?? 'Vail',
         ];
 
         $model->insert($data);
@@ -83,7 +85,9 @@ class ResortMap extends BaseController
     public function getSegments()
     {
         $model = new MapSegmentModel();
-        $segments = $model->where('active', 1)->findAll();
+                $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
+        $selectedMap = $finance['resort_map'] ?? 'Vail';
+        $segments = $model->where('active', 1)->where('user_id', auth()->id())->where('resort_map', $selectedMap)->findAll();
 
         return $this->response->setJSON($segments);
     }
