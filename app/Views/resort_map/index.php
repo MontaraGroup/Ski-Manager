@@ -50,20 +50,6 @@
         </div>
     </div>
 
-    <?php if ($isAdmin ?? false) : ?>
-    <!-- Admin Sector Panel -->
-    <div class="bg-base-100 border-b border-base-300 px-4 py-2 flex items-center gap-3 flex-wrap" style="position:relative; z-index:5;">
-        <span class="text-xs font-semibold text-base-content/50"><i class="fa-solid fa-layer-group mr-1"></i>Sectors:</span>
-        <?php foreach ($sectors as $sec) : ?>
-        <div class="flex items-center gap-1">
-            <span class="badge badge-sm <?= $sec["visible"] ? "badge-success" : "badge-ghost" ?>"><?= esc($sec["name"]) ?></span>
-            <form action="/map/sector/toggle/<?= $sec["id"] ?>" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs"><i class="fa-solid <?= $sec["visible"] ? "fa-eye" : "fa-eye-slash" ?> text-[10px]"></i></button></form>
-            <form action="/map/sector/delete/<?= $sec["id"] ?>" method="post" class="inline" onsubmit="return confirm('Delete this sector?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-xmark text-[10px]"></i></button></form>
-        </div>
-        <?php endforeach ?>
-        <form action="/map/sector/create" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs gap-1"><i class="fa-solid fa-plus text-[10px]"></i> New Sector</button></form>
-    </div>
-    <?php endif ?>
     <!-- Drawing Status Bar -->
     <?php if (auth()->id() === 1) : ?>
     <div id="drawingStatus" class="bg-info/10 border-b border-info/30 px-4 py-1.5 text-xs text-info flex items-center justify-between hidden" style="position:relative; z-index:5;">
@@ -115,6 +101,21 @@
                         <div class="text-left"><div class="font-semibold text-sm">Draw Slope Path</div><div class="text-xs text-base-content/50">Click points on the map</div></div>
                     </button>
                     </div>
+                <div class="divider text-xs">Sectors</div>
+                <div class="space-y-2">
+                    <?php foreach ($sectors as $sec) : ?>
+                    <div class="flex items-center justify-between bg-base-200 rounded-lg px-3 py-1.5">
+                        <span class="text-xs font-semibold <?= $sec["visible"] ? "text-success" : "text-base-content/40" ?>">
+                            <i class="fa-solid <?= $sec["visible"] ? "fa-eye" : "fa-eye-slash" ?> mr-1 text-[10px]"></i><?= esc($sec["name"]) ?>
+                        </span>
+                        <div class="flex gap-1">
+                            <form action="/map/sector/toggle/<?= $sec["id"] ?>" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs"><i class="fa-solid fa-power-off text-[10px]"></i></button></form>
+                            <form action="/map/sector/delete/<?= $sec["id"] ?>" method="post" class="inline" onsubmit="return confirm('Delete?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-trash text-[10px]"></i></button></form>
+                        </div>
+                    </div>
+                    <?php endforeach ?>
+                    <form action="/map/sector/create" method="post"><?= csrf_field() ?><button class="btn btn-outline btn-xs w-full gap-1"><i class="fa-solid fa-plus"></i> New Sector</button></form>
+                </div>
                 <?php endif ?>
                 </div>
             </div>
