@@ -50,6 +50,12 @@
                 <option value="<?= $sec['id'] ?>"><?= esc($sec['name']) ?></option>
                 <?php endforeach ?>
             </select>
+            <select id="drawDifficulty" class="select select-xs select-bordered hidden">
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+                <option value="black">Black</option>
+            </select>
             <button class="btn btn-xs btn-success" id="finishDrawBtn" disabled>Finish</button>
             <button class="btn btn-xs btn-ghost" id="undoDrawBtn" disabled>Undo</button>
             <button class="btn btn-xs btn-ghost text-error" id="cancelDrawBtn">Cancel</button>
@@ -266,7 +272,8 @@
     // Render existing segments
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
-        var color = seg.type === 'lift' ? '#facc15' : '#22c55e';
+        var diffColors = {green:'#22c55e', blue:'#3b82f6', red:'#ef4444', black:'#111827'};
+        var color = seg.type === 'lift' ? '#facc15' : (diffColors[seg.difficulty] || '#22c55e');
         var dashArray = seg.type === 'lift' ? '8 4' : null;
         var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(map);
         var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
@@ -432,6 +439,8 @@
         var lb = document.getElementById('drawLiftBtn'), sb = document.getElementById('drawSlopeBtn');
         if (lb) lb.classList.toggle('btn-active', type === 'lift');
         if (sb) sb.classList.toggle('btn-active', type === 'slope');
+        var dd = document.getElementById("drawDifficulty");
+        if (dd) dd.classList.toggle("hidden", type === "lift");
     }
 
     function cancelDraw() {
@@ -449,7 +458,9 @@
     }
 
     function updateDrawLine() {
-        var color = drawMode === 'lift' ? '#facc15' : '#22c55e';
+        var dd = document.getElementById('drawDifficulty');
+        var dColors = {green:'#22c55e', blue:'#3b82f6', red:'#ef4444', black:'#111827'};
+        var color = drawMode === 'lift' ? '#facc15' : (dd ? (dColors[dd.value] || '#22c55e') : '#22c55e');
         var dashArray = drawMode === 'lift' ? '8 4' : null;
         if (drawLine) map.removeLayer(drawLine);
         if (drawPoints.length >= 2) drawLine = L.polyline(drawPoints, { color: color, weight: 4, opacity: 0.8, dashArray: dashArray }).addTo(map);
@@ -509,6 +520,9 @@
         formData.append(csrfName, csrfHash);
         formData.append('type', type);
         formData.append('name', name);
+        var drawDiff = document.getElementById("drawDifficulty");
+        var difficulty = (type === "slope" && drawDiff) ? drawDiff.value : null;
+        if (difficulty) formData.append("difficulty", difficulty);
         formData.append('points', JSON.stringify(points));
         formData.append('length_meters', length);
         var selSector = sectorSel ? sectorSel.value : "0";
@@ -702,5 +716,7 @@
             }
         });
     }
+    var ddSel = document.getElementById("drawDifficulty");
+    if (ddSel) ddSel.addEventListener("change", function() { if (drawMode === "slope") updateDrawLine(); });
 </script>
 <?= $this->endSection() ?>

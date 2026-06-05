@@ -115,6 +115,7 @@ class ResortMap extends BaseController
             'points' => $this->request->getPost('points'),
             'length_meters' => (int) $this->request->getPost('length_meters'),
             'sector' => (int) $this->request->getPost('sector'),
+            'difficulty' => $this->request->getPost('difficulty'),
             'user_id' => auth()->id(),
             'resort_map' => $selectedMap,
         ];
