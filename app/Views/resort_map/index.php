@@ -13,8 +13,22 @@
             </a>
             <h1 class="text-lg font-bold">Trail Map</h1>
         </div>
+            <?php if (auth()->id() === 1) : ?>
+            <div class="dropdown dropdown-bottom">
+                <div tabindex="0" class="btn btn-ghost btn-xs gap-1"><i class="fa-solid fa-map-location-dot"></i> <?= $mapConfig['name'] ?></div>
+                <div tabindex="0" class="dropdown-content bg-base-100 rounded-box shadow-xl z-50 w-56 mt-2 p-2">
+                    <?php foreach (\App\Controllers\ResortMap::RESORT_MAPS as $key => $rm) : ?>
+                    <form action="/map/change-map" method="post" class="inline">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="resort_map" value="<?= $key ?>">
+                        <button type="submit" class="w-full text-left px-2 py-1.5 rounded hover:bg-base-200 text-sm <?= $key === $selectedMap ? 'font-bold text-primary' : '' ?>"><?= $rm['name'] ?></button>
+                    </form>
+                    <?php endforeach ?>
+                </div>
             </div>
+            <?php endif ?>
         <div class="flex items-center gap-2">
+            <?php if (auth()->id() === 1) : ?>
             <div class="join">
                 <button class="btn btn-sm join-item tooltip tooltip-bottom" data-tip="Draw Lift Line" id="drawLiftBtn">
                     <i class="fa-solid fa-cable-car"></i>
@@ -26,6 +40,7 @@
                     <i class="fa-solid fa-arrow-pointer"></i>
                 </button>
             </div>
+            <?php endif ?>
             <button class="btn btn-primary btn-sm gap-1" id="buildModeBtn">
                 <i class="fa-solid fa-plus"></i> Build
             </button>
@@ -33,6 +48,7 @@
     </div>
 
     <!-- Drawing Status Bar -->
+    <?php if (auth()->id() === 1) : ?>
     <div id="drawingStatus" class="bg-info/10 border-b border-info/30 px-4 py-1.5 text-xs text-info flex items-center justify-between hidden" style="position:relative; z-index:5;">
         <div class="flex items-center gap-2">
             <span class="loading loading-ring loading-xs"></span>
@@ -45,6 +61,7 @@
         </div>
     </div>
 
+    <?php endif ?>
     <div class="flex relative">
 
         <!-- Build Panel -->

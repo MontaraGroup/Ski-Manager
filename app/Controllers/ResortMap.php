@@ -25,7 +25,7 @@ class ResortMap extends BaseController
         $finance = db_connect()->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
         $selectedMap = $finance['resort_map'] ?? 'Vail';
         $mapConfig = self::RESORT_MAPS[$selectedMap] ?? self::RESORT_MAPS['Vail'];
-        $segments = $model->where('active', 1)->where('user_id', $userId)->where('resort_map', $selectedMap)->findAll();
+        $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
 
         return view('resort_map/index', [
             'segments' => $segments,
@@ -49,7 +49,7 @@ class ResortMap extends BaseController
 
     public function saveSegment()
     {
-        if (!auth()->loggedIn()) {
+        if (!auth()->loggedIn() || auth()->id() !== 1) {
             return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
         }
 
@@ -72,7 +72,7 @@ class ResortMap extends BaseController
 
     public function deleteSegment(int $id)
     {
-        if (!auth()->loggedIn()) {
+        if (!auth()->loggedIn() || auth()->id() !== 1) {
             return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthorized']);
         }
 
@@ -87,7 +87,7 @@ class ResortMap extends BaseController
         $model = new MapSegmentModel();
                 $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
         $selectedMap = $finance['resort_map'] ?? 'Vail';
-        $segments = $model->where('active', 1)->where('user_id', auth()->id())->where('resort_map', $selectedMap)->findAll();
+        $segments = $model->where('active', 1)->where('resort_map', $selectedMap)->findAll();
 
         return $this->response->setJSON($segments);
     }
