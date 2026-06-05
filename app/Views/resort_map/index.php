@@ -227,7 +227,7 @@
     var finishBtn = document.getElementById('finishDrawBtn');
     var undoBtn = document.getElementById('undoDrawBtn');
 
-    var mapImage = '/img/<?= $selectedMap ?>.jpg';
+    var mapImage = null;
     var imgH = <?= $mapConfig['height'] ?>, imgW = <?= $mapConfig['width'] ?>;
     var bounds = [[0, 0], [imgH, imgW]];
 
@@ -239,9 +239,11 @@
         attributionControl: false
     });
 
-    L.imageOverlay(mapImage, bounds).addTo(map);
-    map.fitBounds(bounds);
-    map.setView([170, 300], 1);
+    fetch("/api/map-image/<?= $selectedMap ?>").then(r=>r.json()).then(d=>{
+        L.imageOverlay(d.data, bounds).addTo(map);
+        map.fitBounds(bounds);
+        map.setView([170, 300], 1);
+    });
 
     var dbSegments = <?= json_encode($segments ?? []) ?>;
     dbSegments.forEach(function(seg) {
