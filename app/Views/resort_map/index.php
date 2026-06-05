@@ -88,7 +88,7 @@
     <div class="flex relative">
 
         <!-- Build Panel -->
-        <div id="buildPanel" class="fixed right-0 top-0 bottom-0 w-80 bg-base-100 border-l border-base-300 transition-transform duration-300 flex flex-col shadow-xl" style="z-index:9000;background-color:#2a2d3e !important;transform:translateX(100%);">
+        <div id="buildPanel" class="fixed right-0 w-80 border-l border-base-300 transition-transform duration-300 flex flex-col shadow-2xl rounded-l-xl overflow-hidden" style="z-index:9000;background-color:#2a2d3e;top:6rem;bottom:1rem;transform:translateX(100%);">
 
             <div class="p-4 border-b border-base-300 flex items-center justify-between shrink-0">
                 <h2 class="font-bold" id="panelTitle" style="color:inherit;">Build</h2>
@@ -99,8 +99,8 @@
 
             <!-- Step 1: Choose what to build -->
             <div id="step1" class="p-4 flex-1 overflow-y-auto">
-                <p class="text-sm font-semibold mb-2">Available Runs</p>
-                <p class="text-sm text-base-content/60 mb-3">Select a run to build on:</p>
+                <p class="text-sm font-semibold mb-2">Available Segments</p>
+                <p class="text-sm text-base-content/60 mb-3">Click a segment to build a lift or slope on it:</p>
                 <div id="drawnPathsList" class="space-y-2 mb-4">
                     <div class="text-xs text-base-content/40 text-center py-4">No paths drawn yet. Use the draw tools above.</div>
                 </div>
@@ -285,6 +285,8 @@
     map.setMinZoom(map.getZoom());
 
     var dbSegments = <?= json_encode($segments ?? []) ?>;
+    var builtSegmentIds = <?= json_encode($builtSegmentIds ?? []) ?>;
+    var builtIds = builtSegmentIds.map(String);
     var sectorData = <?= json_encode($sectors ?? []) ?>;
     var sectorColors = ["#22c55e","#3b82f6","#ef4444","#f97316","#a855f7","#06b6d4","#ec4899","#eab308"];
     sectorData.forEach(function(sec, i) {
@@ -467,28 +469,32 @@
     }
 
     function updatePathsList() {
-        if (drawnPaths.length === 0) {
-            pathsList.innerHTML = '<div class="text-xs text-base-content/40 text-center py-4">No paths drawn yet. Use the draw tools above.</div>';
+        var isAdmin = <?= json_encode($isAdmin ?? false) ?>;
+        var available = drawnPaths.filter(function(p) { return isAdmin || builtIds.indexOf(String(p.dbId)) === -1; });
+        if (available.length === 0) {
+            pathsList.innerHTML = '<div class="text-xs text-base-content/40 text-center py-4">No available runs to build on.</div>';
             return;
         }
         var html = '';
-        drawnPaths.forEach(function(p) {
+        available.forEach(function(p) {
             var icon = p.type === 'lift' ? '<i class="fa-solid fa-cable-car text-warning"></i>' : '<i class="fa-solid fa-person-skiing text-success"></i>';
-            html += '<div class="flex items-center gap-2 bg-base-200 rounded-lg p-2 cursor-pointer hover:bg-base-300 transition-colors" data-path-id="' + p.id + '">'
+            var built = builtIds.indexOf(String(p.dbId)) !== -1;
+            html += '<div class="flex items-center gap-2 bg-base-200 rounded-lg p-2 cursor-pointer hover:bg-base-300 transition-colors' + (built ? ' opacity-50' : '') + '" data-path-id="' + p.id + '">'
                 + '<span class="text-lg">' + icon + '</span>'
-                + '<div class="flex-1 min-w-0"><div class="text-xs font-semibold truncate">' + p.name + '</div><div class="text-xs text-base-content/50">' + p.length.toLocaleString() + ' <?= isImperial() ? "ft" : "m" ?></div></div>'
-                + '<button class="btn btn-ghost btn-xs text-error delete-path" data-id="' + p.id + '"><i class="fa-solid fa-xmark"></i></button></div>';
+                + '<div class="flex-1 min-w-0"><div class="text-xs font-semibold truncate">' + p.name + (built ? ' (Built)' : '') + '</div><div class="text-xs text-base-content/50">' + p.length.toLocaleString() + ' <?= isImperial() ? "ft" : "m" ?></div></div>';
+            if (isAdmin) html += '<button class="btn btn-ghost btn-xs text-error delete-path" data-id="' + p.id + '"><i class="fa-solid fa-xmark"></i></button>';
+            html += '</div>';
         });
         pathsList.innerHTML = html;
         pathsList.querySelectorAll('[data-path-id]').forEach(function(el) {
             el.addEventListener('click', function(e) { if (e.target.closest('.delete-path')) return; selectPath(parseInt(this.dataset.pathId)); });
         });
-        pathsList.querySelectorAll('.delete-path').forEach(function(el) {
-            el.addEventListener('click', function(e) { e.stopPropagation(); if (confirm('Delete this segment?')) deletePath(parseInt(this.dataset.id)); });
-        });
+        if (isAdmin) {
+            pathsList.querySelectorAll('.delete-path').forEach(function(el) {
+                el.addEventListener('click', function(e) { e.stopPropagation(); if (confirm('Delete this segment?')) deletePath(parseInt(this.dataset.id)); });
+            });
+        }
     }
-
-
     // Snap-to-endpoint for connecting segments
     var SNAP_DISTANCE = 15;
     function findNearestEndpoint(latlng) {

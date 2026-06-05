@@ -49,6 +49,7 @@ class ResortMap extends BaseController
             'mapConfig' => $mapConfig,
             'sectors' => $sectors,
             'isAdmin' => $isAdmin,
+            'builtSegmentIds' => array_column((new PlayerItemModel())->where('user_id', auth()->id())->findAll(), 'segment_id'),
         ]);
     }
 
