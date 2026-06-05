@@ -58,8 +58,9 @@ Events::on('pre_system', static function (): void {
 
 Events::on("register", static function ($user) {
     $db = db_connect();
-    $difficulty = session("difficulty") ?? "standard";
-    $resortMap = session("resort_map") ?? "ParkCity";
+    $request = service("request");
+    $difficulty = $request->getPost("difficulty") ?? session("difficulty") ?? "standard";
+    $resortMap = $request->getPost("resort_map") ?? session("resort_map") ?? "ParkCity";
     $cash = match($difficulty) { "easy" => 1000000, "hard" => 200000, default => 500000 };
     $existing = $db->table("player_finances")->where("user_id", $user->id)->countAllResults();
     if (!$existing) {
