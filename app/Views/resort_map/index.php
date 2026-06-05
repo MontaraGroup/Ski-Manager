@@ -235,7 +235,7 @@
     var map = L.map('mapid', {
         preferCanvas: true,
         crs: L.CRS.Simple,
-        minZoom: 0,
+        minZoom: -2,
         maxZoom: 3,
         zoomSnap: 0.5,
         attributionControl: false,
@@ -246,6 +246,7 @@
     var img = new Image(); img.onload = function(){ L.imageOverlay(mapImage, bounds).addTo(map); }; img.src = mapImage;
     map.fitBounds(bounds);
     map.setView([170, 300], 1);
+    map.setMinZoom(map.getZoom());
 
     var dbSegments = <?= json_encode($segments ?? []) ?>;
     dbSegments.forEach(function(seg) {
