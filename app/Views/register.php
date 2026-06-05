@@ -61,7 +61,7 @@
                 <div class="form-control mb-4">
                     <label for="difficulty" class="label"><span class="label-text">Game Difficulty</span></label>
                     <div class="grid grid-cols-3 gap-2">
-                        <label class="cursor-pointer">
+                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
                             <input type="radio" name="difficulty" id="difficulty" value="easy" class="peer hidden">
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-success peer-checked:bg-success/10 transition-colors">
                                 <i class="fa-solid fa-face-smile text-success text-lg"></i>
@@ -69,7 +69,7 @@
                                 <div class="text-[10px] text-base-content/50">More cash, simpler</div>
                             </div>
                         </label>
-                        <label class="cursor-pointer">
+                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
                             <input type="radio" name="difficulty" value="standard" class="peer hidden" checked>
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-info peer-checked:bg-info/10 transition-colors">
                                 <i class="fa-solid fa-face-meh text-info text-lg"></i>
@@ -77,7 +77,7 @@
                                 <div class="text-[10px] text-base-content/50">Balanced</div>
                             </div>
                         </label>
-                        <label class="cursor-pointer">
+                        <label class="<?= $key !== 'ParkCity' ? 'opacity-40 pointer-events-none' : 'cursor-pointer' ?>">
                             <input type="radio" name="difficulty" value="hard" class="peer hidden">
                             <div class="border-2 border-base-300 rounded-lg p-3 text-center peer-checked:border-error peer-checked:bg-error/10 transition-colors">
                                 <i class="fa-solid fa-skull text-error text-lg"></i>
@@ -88,19 +88,26 @@
                     </div>
                 </div>
                 <div class="form-control mb-4">
-                <div class="form-control mb-4">
                     <label class="label"><span class="label-text">Choose Your Resort</span></label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <?php $maps = ['Vail' => 'Vail, CO', 'AspenSnowmass' => 'Aspen, CO', 'ParkCity' => 'Park City, UT', 'DeerValley' => 'Deer Valley, UT', 'Killington' => 'Killington, VT', 'BigSkyCombo' => 'Big Sky, MT', 'PalisadesTahoe' => 'Palisades, CA']; ?>
+                        <?php $maps = ['ParkCity' => 'Park City, UT', 'Vail' => 'Vail, CO', 'AspenSnowmass' => 'Aspen, CO', 'DeerValley' => 'Deer Valley, UT', 'Killington' => 'Killington, VT', 'BigSkyCombo' => 'Big Sky, MT', 'PalisadesTahoe' => 'Palisades, CA']; ?>
                         <?php foreach ($maps as $key => $loc) : ?>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="resort_map" value="<?= $key ?>" class="peer hidden" <?= $key === 'Vail' ? 'checked' : '' ?>>
-                            <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
-                                <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1">
-                                <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
-                                <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
+                        <?php $enabled = ($key === 'ParkCity'); ?>
+                        <div class="relative">
+                            <label class="<?= $enabled ? 'cursor-pointer' : '' ?>">
+                                <input type="radio" name="resort_map" value="<?= $key ?>" class="peer hidden" <?= $enabled ? 'checked' : 'disabled' ?>>
+                                <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors <?= !$enabled ? 'opacity-50' : '' ?>">
+                                    <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1">
+                                    <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
+                                    <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
+                                </div>
+                            </label>
+                            <?php if (!$enabled) : ?>
+                            <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-base-300/60 backdrop-blur-[1px]">
+                                <span class="badge badge-sm badge-neutral">Coming Soon</span>
                             </div>
-                        </label>
+                            <?php endif ?>
+                        </div>
                         <?php endforeach ?>
                     </div>
                 </div>
