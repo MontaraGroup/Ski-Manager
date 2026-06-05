@@ -61,8 +61,12 @@ Events::on('post_controller_constructor', static function () {
     $request = service('request');
     if ($request->is('post') && str_contains($request->getPath(), 'register')) {
         $difficulty = $request->getPost('difficulty');
+        $resortMap = $request->getPost('resort_map');
         if (in_array($difficulty, ['easy', 'standard', 'hard'])) {
             session()->set('difficulty', $difficulty);
+            if ($resortMap && in_array($resortMap, ['AspenSnowmass','BigSkyCombo','DeerValley','Killington','PalisadesTahoe','ParkCity','Vail'])) {
+                session()->set('resort_map', $resortMap);
+            }
         }
     }
 });

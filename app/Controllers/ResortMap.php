@@ -7,12 +7,44 @@ use App\Models\PlayerItemModel;
 
 class ResortMap extends BaseController
 {
+    public const RESORT_MAPS = [
+        'AspenSnowmass' => ['name' => 'Aspen Snowmass', 'location' => 'Colorado, USA', 'width' => 600, 'height' => 340],
+        'BigSkyCombo' => ['name' => 'Big Sky', 'location' => 'Montana, USA', 'width' => 600, 'height' => 340],
+        'DeerValley' => ['name' => 'Deer Valley', 'location' => 'Utah, USA', 'width' => 600, 'height' => 340],
+        'Killington' => ['name' => 'Killington', 'location' => 'Vermont, USA', 'width' => 600, 'height' => 340],
+        'PalisadesTahoe' => ['name' => 'Palisades Tahoe', 'location' => 'California, USA', 'width' => 600, 'height' => 340],
+        'ParkCity' => ['name' => 'Park City', 'location' => 'Utah, USA', 'width' => 600, 'height' => 340],
+        'Vail' => ['name' => 'Vail', 'location' => 'Colorado, USA', 'width' => 600, 'height' => 340],
+    ];
+
     public function index(): string
     {
         $model = new MapSegmentModel();
         $segments = $model->where('active', 1)->findAll();
 
-        return view('resort_map/index', ['segments' => $segments]);
+        $userId = auth()->id();
+        $finance = db_connect()->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $selectedMap = $finance['resort_map'] ?? 'Vail';
+        $mapConfig = self::RESORT_MAPS[$selectedMap] ?? self::RESORT_MAPS['Vail'];
+
+        return view('resort_map/index', [
+            'segments' => $segments,
+            'selectedMap' => $selectedMap,
+            'mapConfig' => $mapConfig,
+            'resortMaps' => self::RESORT_MAPS,
+        ]);
+    }
+
+    public function changeMap()
+    {
+        $userId = auth()->id();
+        $map = $this->request->getPost('resort_map');
+        if (!isset(self::RESORT_MAPS[$map])) {
+            return redirect()->to('/map')->with('error', 'Invalid map.');
+        }
+        db_connect()->table('player_finances')->where('user_id', $userId)->update(['resort_map' => $map]);
+        log_activity($userId, 'Resort', 'Changed trail map to ' . self::RESORT_MAPS[$map]['name'], 'fa-solid fa-map');
+        return redirect()->to('/map')->with('success', 'Map changed to ' . self::RESORT_MAPS[$map]['name'] . '.');
     }
 
     public function saveSegment()

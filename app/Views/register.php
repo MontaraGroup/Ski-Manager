@@ -88,6 +88,22 @@
                     </div>
                 </div>
                 <div class="form-control mb-4">
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Choose Your Resort</span></label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <?php $maps = ['Vail' => 'Vail, CO', 'AspenSnowmass' => 'Aspen, CO', 'ParkCity' => 'Park City, UT', 'DeerValley' => 'Deer Valley, UT', 'Killington' => 'Killington, VT', 'BigSkyCombo' => 'Big Sky, MT', 'PalisadesTahoe' => 'Palisades, CA']; ?>
+                        <?php foreach ($maps as $key => $loc) : ?>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="resort_map" value="<?= $key ?>" class="peer hidden" <?= $key === 'Vail' ? 'checked' : '' ?>>
+                            <div class="border-2 border-base-300 rounded-lg p-2 text-center peer-checked:border-primary peer-checked:bg-primary/10 transition-colors">
+                                <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1">
+                                <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
+                                <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
+                            </div>
+                        </label>
+                        <?php endforeach ?>
+                    </div>
+                </div>
                     <label class="cursor-pointer flex items-start gap-2">
                         <input type="checkbox" name="terms" class="checkbox checkbox-primary checkbox-sm mt-0.5" required>
                         <span class="label-text text-sm">I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" class="link link-primary">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" class="link link-primary">Privacy Policy</a></span>

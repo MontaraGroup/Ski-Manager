@@ -29,7 +29,7 @@ class GameTick extends BaseCommand
 
             $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             if (!$finance) {
-                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard']);
+                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'Vail']);
                 $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             }
 
