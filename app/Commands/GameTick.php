@@ -484,7 +484,7 @@ class GameTick extends BaseCommand
             $tomorrowSeasonDay = (($tomorrow - 1) % 135) + 1;
             $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= 80;
             $isTomorrowSummer = $tomorrowSeasonDay > 100;
-            if ($isTomorrowSummer) { $temp = mt_rand(10, 25); } elseif ($isDeepWinter) { $temp = mt_rand(-15, -2); } else { $temp = mt_rand(-8, 5); }
+            if ($isTomorrowSummer) { $temp = mt_rand(12, 28); } elseif ($isDeepWinter) { $temp = mt_rand(-10, 0); } else { $temp = mt_rand(-5, 8); }
             $wind = mt_rand(5, 30);
             $snowfall = in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0;
             $prev = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();

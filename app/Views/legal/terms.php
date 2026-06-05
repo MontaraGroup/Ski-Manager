@@ -85,7 +85,7 @@
         <p>The Service may be considered an early access or continuously developing product. Features, gameplay mechanics, virtual economies, and content may change at any time without notice.</p>
 
         <h2>19. Governing Law</h2>
-        <p>These Terms shall be governed by and construed in accordance with the laws of the State of Michigan, United States, without regard to conflict of law principles. Any disputes arising from these Terms or the Service shall be resolved through good-faith negotiation before pursuing formal legal action.</p>
+        <p>These Terms shall be governed by and construed in accordance with the laws of the United States, without regard to conflict of law principles. Any disputes arising from these Terms or the Service shall be resolved through good-faith negotiation before pursuing formal legal action.</p>
 
         <h2>20. Contact</h2>
         <p>For questions about these Terms, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
