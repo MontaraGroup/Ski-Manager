@@ -8,7 +8,7 @@ class Account extends BaseController
 {
     public function index(): string
     {
-        return view('account/index');
+        return redirect()->to('/settings');
     }
 
     public function changePassword()
