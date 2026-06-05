@@ -236,7 +236,7 @@
         preferCanvas: true,
         crs: L.CRS.Simple,
         minZoom: -2,
-        maxZoom: 3,
+        maxZoom: 2,
         zoomSnap: 0.5,
         attributionControl: false,
         maxBounds: bounds,
