@@ -141,6 +141,14 @@
                             <label class="flex-1 cursor-pointer"><input type="radio" name="liftCap" value="8" class="peer hidden"><div class="btn btn-outline btn-sm w-full peer-checked:btn-primary">8</div></label>
                         </div>
                     </div>
+                <?php if (auth()->id() === 1) : ?>
+                <div class="mt-3 pt-3 border-t border-base-300">
+                    <label class="text-xs font-semibold block mb-2"><i class="fa-solid fa-circle-dot mr-1"></i>Midstations</label>
+                    <div id="midstationList" class="text-xs text-base-content/50 mb-2">No midstations</div>
+                    <button type="button" id="addMidstationBtn" class="btn btn-outline btn-xs gap-1"><i class="fa-solid fa-plus"></i> Add Midstation</button>
+                    <p class="text-[10px] text-base-content/40 mt-1">Click a point on the lift line to place a midstation.</p>
+                </div>
+                <?php endif ?>
                 </div>
             </div>
 
@@ -434,8 +442,8 @@
         if (path.type === 'lift') {
             panelTitle.textContent = 'Build Lift';
             document.getElementById('selectedPathName').textContent = path.name;
-            document.getElementById('selectedPathLength').textContent = path.length.toLocaleString() + ' <?= isImperial() ? "ft" : "m" ?>';
-            showStep(step2Lift);
+            var mCount = path.midstations ? path.midstations.length : 0; document.getElementById('selectedPathLength').textContent = path.length.toLocaleString() + ' <?= isImperial() ? "ft" : "m" ?>';
+            showStep(step2Lift); var ml = document.getElementById('midstationList'); if(ml) ml.textContent = mCount ? mCount + ' midstation' + (mCount>1?'s':'') : 'No midstations';
             updateConfirm(path);
         } else {
             panelTitle.textContent = 'Build Slope';
@@ -546,6 +554,40 @@
     document.getElementById('drawSlopeBtn').addEventListener('click', function() { startDraw('slope'); });
     document.getElementById('selectBtn').addEventListener('click', function() { cancelDraw(); this.classList.add('btn-active'); });
     document.getElementById('cancelDrawBtn').addEventListener('click', cancelDraw);
+
+    // Midstation button mode
+    var midstationMode = false;
+    var addMidBtn = document.getElementById('addMidstationBtn');
+    if (addMidBtn) {
+        addMidBtn.addEventListener('click', function() {
+            if (!selectedPathId) return;
+            midstationMode = true;
+            this.classList.add('btn-active');
+            map.getContainer().style.cursor = 'crosshair';
+            drawingStatus.classList.remove('hidden');
+            drawingStatusText.textContent = 'Click on the lift line to place a midstation.';
+        });
+    }
+    map.on('click', function(e) {
+        if (!midstationMode || !selectedPathId) return;
+        var path = drawnPaths.find(function(p) { return p.id === selectedPathId; });
+        if (!path || path.type !== 'lift') return;
+        var mp = [e.latlng.lat, e.latlng.lng];
+        if (!path.midstations) path.midstations = [];
+        path.midstations.push(mp);
+        L.circleMarker(mp, {radius:6, color:"#facc15", fillColor:"#fff", fillOpacity:1, weight:2}).addTo(map).bindTooltip("Midstation", {direction:"top"});
+        var fd = new FormData();
+        fd.append("<?= csrf_token() ?>", "<?= csrf_hash() ?>");
+        fd.append("midstations", JSON.stringify(path.midstations));
+        fetch("/map/segment/midstation/" + path.dbId, { method: "POST", body: fd });
+        // Update panel list
+        var list = document.getElementById('midstationList');
+        if (list) list.textContent = path.midstations.length + ' midstation' + (path.midstations.length > 1 ? 's' : '');
+        midstationMode = false;
+        if (addMidBtn) addMidBtn.classList.remove('btn-active');
+        map.getContainer().style.cursor = '';
+        drawingStatus.classList.add('hidden');
+    });
 
     // Sector boundary drawing
     var sectorDrawMode = false, sectorDrawPoints = [], sectorDrawPolygon = null, sectorDrawMarkers = [];
