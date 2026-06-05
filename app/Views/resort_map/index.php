@@ -53,7 +53,8 @@
             <select id="drawDifficulty" class="select select-xs select-bordered hidden">
                 <option value="green">Green</option>
                 <option value="blue">Blue</option>
-                <option value="red">Red</option>
+                <option value="double_black">Double Black</option>
+                <option value="terrain_park">Terrain Park</option>
                 <option value="black">Black</option>
             </select>
             <button class="btn btn-xs btn-success" id="finishDrawBtn" disabled>Finish</button>
@@ -92,8 +93,9 @@
                         <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#facc15;display:inline-block;"></span> Lift</div>
                         <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#22c55e;display:inline-block;"></span> Green Run</div>
                         <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#3b82f6;display:inline-block;"></span> Blue Run</div>
-                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#ef4444;display:inline-block;"></span> Red Run</div>
-                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#111827;display:inline-block;"></span> Black Run</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#111827;display:inline-block;border:1px solid #666;"></span> Double Black</div>
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#111827;display:inline-block;"></span> Black
+                        <div class="flex items-center gap-2"><span style="width:16px;height:3px;background:#f97316;display:inline-block;"></span> Terrain Park</div></div>
                     </div>
                 </div>
             </div>
@@ -187,7 +189,7 @@
         <div style="display:flex;gap:4px;margin-bottom:12px;">
             <label style="flex:1;cursor:pointer;"><input type="radio" name="slopeDiff" value="green" style="display:none;" class="peer"><div class="btn btn-sm w-full peer-checked:btn-success" style="background:#22c55e20;">Green</div></label>
             <label style="flex:1;cursor:pointer;"><input type="radio" name="slopeDiff" value="blue" style="display:none;" class="peer"><div class="btn btn-sm w-full peer-checked:btn-info" style="background:#3b82f620;">Blue</div></label>
-            <label style="flex:1;cursor:pointer;"><input type="radio" name="slopeDiff" value="red" style="display:none;" class="peer"><div class="btn btn-sm w-full peer-checked:btn-error" style="background:#ef444420;">Red</div></label>
+            <label style="flex:1;cursor:pointer;"><input type="radio" name="slopeDiff" value="terrain_park" style="display:none;" class="peer"><div class="btn btn-sm w-full peer-checked:btn-warning" style="background:#f9731620;">Park</div></label>
             <label style="flex:1;cursor:pointer;"><input type="radio" name="slopeDiff" value="black" style="display:none;" class="peer"><div class="btn btn-sm w-full peer-checked:btn-neutral">Black</div></label>
         </div>
     </div>
@@ -272,7 +274,7 @@
     // Render existing segments
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
-        var diffColors = {green:'#22c55e', blue:'#3b82f6', red:'#ef4444', black:'#111827'};
+        var diffColors = {green:'#22c55e', blue:'#3b82f6', black:'#111827', double_black:'#111827', terrain_park:'#f97316'};
         var color = seg.type === 'lift' ? '#facc15' : (diffColors[seg.difficulty] || '#22c55e');
         var dashArray = seg.type === 'lift' ? '8 4' : null;
         var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(map);
@@ -459,7 +461,7 @@
 
     function updateDrawLine() {
         var dd = document.getElementById('drawDifficulty');
-        var dColors = {green:'#22c55e', blue:'#3b82f6', red:'#ef4444', black:'#111827'};
+        var dColors = {green:'#22c55e', blue:'#3b82f6', black:'#111827', double_black:'#111827', terrain_park:'#f97316'};
         var color = drawMode === 'lift' ? '#facc15' : (dd ? (dColors[dd.value] || '#22c55e') : '#22c55e');
         var dashArray = drawMode === 'lift' ? '8 4' : null;
         if (drawLine) map.removeLayer(drawLine);
