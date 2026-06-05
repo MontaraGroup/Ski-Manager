@@ -99,11 +99,12 @@
 
             <!-- Step 1: Choose what to build -->
             <div id="step1" class="p-4 flex-1 overflow-y-auto">
-                <p class="text-sm text-base-content/60 mb-3">Select a drawn path to build on:</p>
+                <p class="text-sm font-semibold mb-2">Available Runs</p>
+                <p class="text-sm text-base-content/60 mb-3">Select a run to build on:</p>
                 <div id="drawnPathsList" class="space-y-2 mb-4">
                     <div class="text-xs text-base-content/40 text-center py-4">No paths drawn yet. Use the draw tools above.</div>
                 </div>
-                <div class="divider text-xs">or draw a new path</div>
+                <?php if (auth()->id() === 1) : ?><div class="divider text-xs">Admin: Draw new path</div>
                 <div class="space-y-2">
                     <button class="btn btn-outline w-full justify-start gap-3 h-auto py-3" id="quickDrawLift">
                         <span class="w-8 h-8 rounded-lg bg-info/20 flex items-center justify-center text-info shrink-0"><i class="fa-solid fa-cable-car text-lg"></i></span>
@@ -113,6 +114,8 @@
                         <span class="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center text-success shrink-0"><i class="fa-solid fa-person-skiing text-lg"></i></span>
                         <div class="text-left"><div class="font-semibold text-sm">Draw Slope Path</div><div class="text-xs text-base-content/50">Click points on the map</div></div>
                     </button>
+                    </div>
+                <?php endif ?>
                 </div>
             </div>
 
