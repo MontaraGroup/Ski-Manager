@@ -298,6 +298,15 @@
         var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
         var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
         var path = { id: parseInt(seg.id), dbId: parseInt(seg.id), type: seg.type, points: points, length: parseInt(seg.length_meters), line: line, markers: [startMarker, endMarker], name: seg.name };
+        // Render midstations for lifts
+        if (seg.type === "lift" && seg.midstations) {
+            var mids = typeof seg.midstations === "string" ? JSON.parse(seg.midstations) : seg.midstations;
+            if (mids && mids.length) {
+                mids.forEach(function(mp) {
+                    L.circleMarker([mp[0], mp[1]], {radius:6, color:"#facc15", fillColor:"#fff", fillOpacity:1, weight:2}).addTo(map).bindTooltip("Midstation", {direction:"top"});
+                });
+            }
+        }
         drawnPaths.push(path);
         if (seg.id > pathIdCounter) pathIdCounter = parseInt(seg.id);
         line.on('click', function() { selectPath(path.id); });
@@ -468,9 +477,57 @@
         });
     }
 
+
+    // Snap-to-endpoint for connecting segments
+    var SNAP_DISTANCE = 15;
+    function findNearestEndpoint(latlng) {
+        var nearest = null, minDist = Infinity;
+        drawnPaths.forEach(function(p) {
+            var pts = p.points;
+            [pts[0], pts[pts.length-1]].forEach(function(ep) {
+                var d = map.latLngToContainerPoint(L.latLng(ep[0], ep[1])).distanceTo(map.latLngToContainerPoint(latlng));
+                if (d < SNAP_DISTANCE && d < minDist) { minDist = d; nearest = ep; }
+            });
+            if (p.midstations) {
+                p.midstations.forEach(function(mp) {
+                    var d = map.latLngToContainerPoint(L.latLng(mp[0], mp[1])).distanceTo(map.latLngToContainerPoint(latlng));
+                    if (d < SNAP_DISTANCE && d < minDist) { minDist = d; nearest = mp; }
+                });
+            }
+        });
+        return nearest;
+    }
+
+    // Add midstation to a lift (admin only, right-click on a lift line)
+    map.on('contextmenu', function(e) {
+        if (!<?= json_encode($isAdmin ?? false) ?>) return;
+        drawnPaths.forEach(function(p) {
+            if (p.type !== 'lift') return;
+            var closest = L.GeometryUtil ? null : null;
+            var pts = p.points;
+            for (var i = 0; i < pts.length - 1; i++) {
+                var a = L.latLng(pts[i]), b = L.latLng(pts[i+1]);
+                var d = L.latLng(e.latlng.lat, e.latlng.lng).distanceTo(a) + L.latLng(e.latlng.lat, e.latlng.lng).distanceTo(b) - a.distanceTo(b);
+                if (Math.abs(d) < 5) {
+                    var mp = [e.latlng.lat, e.latlng.lng];
+                    if (!p.midstations) p.midstations = [];
+                    p.midstations.push(mp);
+                    L.circleMarker(mp, {radius:6, color:"#facc15", fillColor:"#fff", fillOpacity:1, weight:2}).addTo(map).bindTooltip("Midstation", {direction:"top"});
+                    // Save to server
+                    var fd = new FormData();
+                    fd.append("<?= csrf_token() ?>", "<?= csrf_hash() ?>");
+                    fd.append("midstations", JSON.stringify(p.midstations));
+                    fetch("/map/segment/midstation/" + p.dbId, { method: "POST", body: fd });
+                    return;
+                }
+            }
+        });
+    });
     map.on('click', function(e) {
         if (!drawMode) return;
-        drawPoints.push([e.latlng.lat, e.latlng.lng]);
+        var snap = findNearestEndpoint(e.latlng);
+        var pt = snap ? snap : [e.latlng.lat, e.latlng.lng];
+        drawPoints.push(pt);
         updateDrawLine();
         var m = L.circleMarker([e.latlng.lat, e.latlng.lng], { radius: 4, color: '#fff', fillColor: '#fff', fillOpacity: 0.8, weight: 1 }).addTo(map);
         tempMarkers.push(m);

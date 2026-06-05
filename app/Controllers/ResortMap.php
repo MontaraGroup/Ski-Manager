@@ -254,4 +254,12 @@ class ResortMap extends BaseController
         $db->table("resort_sectors")->where("id", $id)->update(["boundary_points" => $points]);
         return $this->response->setJSON(["success" => true]);
     }
+    public function saveMidstation(int $id)
+    {
+        if (auth()->id() !== 1) return $this->response->setStatusCode(401)->setJSON(["error" => "Unauthorized"]);
+        $model = new MapSegmentModel();
+        $midstations = $this->request->getPost("midstations");
+        $model->update($id, ["midstations" => $midstations]);
+        return $this->response->setJSON(["success" => true]);
+    }
 }
