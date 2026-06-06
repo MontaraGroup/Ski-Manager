@@ -45,6 +45,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 </div>
 
 <div id="map" data-image="<?= esc($mapConfig['image']) ?>"></div>
+    <div id="mapLoader" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;text-align:center"><span class="loading loading-spinner loading-lg text-primary"></span><p class="text-sm text-base-content/50 mt-2">Loading trail map...</p></div>
 
 <div class="map-legend" id="mapLegend">
     <div class="map-legend-item"><span style="background:#f59e0b"></span> Lift</div>
@@ -229,9 +230,10 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             L.imageOverlay(MAP_IMAGE,bounds).addTo(map);
             map.fitBounds(bounds);
             map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);
-            renderSegments();
+            renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();
         };
         img.onerror = function(){
+            var ld=document.getElementById('mapLoader');if(ld)ld.remove();
             console.error('Map image failed:',MAP_IMAGE);
             el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f87171"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px"></i> Map image failed to load</div>';
         };
@@ -278,7 +280,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     function bindUI(){
         var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
         fab.addEventListener('click',function(){drawer.style.display='block';fab.style.display='none';renderSegments('lift');});
-        document.getElementById('closeDrawer').addEventListener('click',function(){drawer.style.display='none';fab.style.display='';deselectSeg();renderSegments();});
+        document.getElementById('closeDrawer').addEventListener('click',function(){drawer.style.display='none';fab.style.display='';deselectSeg();renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();});
         document.querySelectorAll('.build-tab').forEach(function(t){
             t.addEventListener('click',function(){
                 document.querySelectorAll('.build-tab').forEach(function(b){b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
