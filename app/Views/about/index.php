@@ -21,7 +21,7 @@
         <ul>
             <li><strong>Backend:</strong> <a href="https://codeigniter.com/" target="_blank" rel="noopener noreferrer">CodeIgniter 4</a> (PHP framework) with <a href="https://codeigniter4.github.io/shield/" target="_blank" rel="noopener noreferrer">Shield</a> authentication</li>
             <li><strong>Frontend:</strong> <a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">Tailwind CSS 4</a> with <a href="https://daisyui.com/" target="_blank" rel="noopener noreferrer">DaisyUI 5</a> component library</li>
-            <li><strong>Trail Map:</strong> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet.js</a> with map imagery from <a href="https://www.skimap.org/" target="_blank" rel="noopener noreferrer">Mapsynergy/Skimap</a></li>
+            <li><strong>Trail Map:</strong> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet.js</a> with map imagery from <a href="https://skimap.com/" target="_blank" rel="noopener noreferrer">Mapsynergy/Skimap</a></li>
             <li><strong>Icons:</strong> <a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer">Font Awesome 6</a></li>
             <li><strong>Database:</strong> MySQL 8</li>
             <li><strong>Hosting:</strong> VPS with <a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a> CDN and SSL</li>

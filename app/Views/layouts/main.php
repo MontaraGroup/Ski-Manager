@@ -328,6 +328,7 @@ a.link:hover{opacity:0.8}
                 <p><i class="fa-solid fa-person-skiing mr-1"></i><span class="font-bold">Ski Manager</span> &copy; <?= date('Y') ?> - Build. Manage. Dominate the slopes.</p>
                 <div class="flex gap-4 mt-2 md:mt-0">
                     <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="link link-hover"><i class="fa-brands fa-discord mr-1"></i>Discord</a>
+                    <a href="https://skimap.com" target="_blank" rel="noopener noreferrer" class="link link-hover text-base-content/40"><i class="fa-solid fa-map mr-1"></i>Maps by Mapsynergy</a>
                 </div>
             </div>
         </div>

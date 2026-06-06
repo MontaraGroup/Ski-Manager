@@ -17,7 +17,7 @@ class Leaderboard extends BaseController
                 u.created_at,
                 (SELECT COUNT(*) FROM staff s WHERE s.user_id = u.id AND s.status != 'fired') as staff_count
             FROM users u
-            WHERE u.id != 1
+            WHERE u.id NOT IN (1, 3)
             ORDER BY u.created_at ASC
         ")->getResultArray();
 
