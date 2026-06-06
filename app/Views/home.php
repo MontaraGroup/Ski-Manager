@@ -47,7 +47,7 @@
     <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
             <div class="lg:col-span-3">
-                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-circle animate-pulse-soft text-xs"></i> Season 1 is Live</div>
+                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-clock text-xs"></i> Season 1 Starts June 7</div>
                 <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
                 <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Build lifts, hire staff, manage snowmaking, and survive <?= getSeasonLength() ?> days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
                 <div class="flex gap-3 flex-wrap mb-6">
