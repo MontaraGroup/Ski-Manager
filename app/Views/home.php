@@ -3,11 +3,13 @@
 <?= $this->section('content') ?>
 <!-- Season 1 Countdown -->
 <div id="s1countdown" class="bg-gradient-to-r from-primary to-info text-primary-content">
-    <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col items-center gap-3 text-center">
-        <i class="fa-solid fa-mountain-sun text-4xl"></i>
-        <div class="text-2xl font-bold">Season 1: Park City</div>
-        <div class="text-3xl font-mono font-bold tracking-wider" id="s1timer"></div>
-        <a href="/register" class="btn btn-lg btn-outline border-white text-white hover:bg-white hover:text-primary gap-2"><i class="fa-solid fa-play"></i> Join Season 1</a>
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-mountain-sun text-xl"></i>
+            <span class="font-bold text-lg">Season 1: Park City</span>
+            <span class="font-mono font-bold" id="s1timer"></span>
+        </div>
+        <a href="/register" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary gap-1"><i class="fa-solid fa-play"></i> Join Season 1</a>
     </div>
 </div>
 <script>
