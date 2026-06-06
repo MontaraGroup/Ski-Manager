@@ -114,10 +114,12 @@
 
     <!-- Step 1: Segment List -->
     <div id="step1" style="padding:16px;">
-        <p style="font-size:14px;font-weight:600;color:#ccc;margin-bottom:8px;">Available Segments</p>
-        <p style="font-size:12px;color:#888;margin-bottom:12px;">Click a segment to build on it:</p>
-        <div id="drawnPathsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-            <div style="text-align:center;padding:16px;color:#666;font-size:12px;">No segments available.</div>
+        <p style="font-size:14px;font-weight:600;color:#ccc;margin-bottom:12px;">What do you want to build?</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button id="showLifts" onclick="filterSegments('lift')" style="flex:1;padding:16px;background:#333;border:2px solid #444;border-radius:10px;cursor:pointer;text-align:center;color:#ccc;"><i class="fa-solid fa-cable-car" style="font-size:24px;color:#facc15;display:block;margin-bottom:8px;"></i>Build Lift</button>
+            <button id="showSlopes" onclick="filterSegments('slope')" style="flex:1;padding:16px;background:#333;border:2px solid #444;border-radius:10px;cursor:pointer;text-align:center;color:#ccc;"><i class="fa-solid fa-person-skiing" style="font-size:24px;color:#22c55e;display:block;margin-bottom:8px;"></i>Build Slope</button>
+        </div>
+        <div id="drawnPathsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;display:none;">
         </div>
         <?php if ($isAdmin ?? false) : ?>
         <div style="border-top:1px solid #3a3d4e;padding-top:12px;margin-top:8px;">
@@ -273,14 +275,16 @@
 
     // Render existing segments
     var segmentLayer = L.layerGroup();
+    var liftLayer = L.layerGroup();
+    var slopeLayer = L.layerGroup();
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
         var diffColors = {green:'#22c55e', blue:'#3b82f6', black:'#111827', double_black:'#111827', terrain_park:'#f97316'};
         var color = seg.type === 'lift' ? '#facc15' : (diffColors[seg.difficulty] || '#22c55e');
         var dashArray = seg.type === 'lift' ? '8 4' : null;
-        var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(isAdmin ? map : segmentLayer);
-        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
-        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
+        var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(isAdmin ? map : (seg.type === "lift" ? liftLayer : slopeLayer));
+        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : (seg.type === "lift" ? liftLayer : slopeLayer));
+        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : (seg.type === "lift" ? liftLayer : slopeLayer));
         var path = { id: parseInt(seg.id), dbId: parseInt(seg.id), type: seg.type, points: points, length: parseInt(seg.length_meters), line: line, markers: [startMarker, endMarker], name: seg.name, midstations: seg.midstations };
         drawnPaths.push(path);
         line.on('click', function() { selectPath(path.id); });
@@ -345,12 +349,21 @@
         return 0;
     }
     // Panel functions
+    var activeFilter = null;
+    function filterSegments(type) {
+        activeFilter = type;
+        if (!isAdmin) { map.removeLayer(liftLayer); map.removeLayer(slopeLayer); map.addLayer(type === "lift" ? liftLayer : slopeLayer); }
+        document.getElementById("drawnPathsList").style.display = "flex";
+        document.getElementById("showLifts").style.borderColor = type === "lift" ? "#facc15" : "#444";
+        document.getElementById("showSlopes").style.borderColor = type === "slope" ? "#22c55e" : "#444";
+        updatePathsList(type);
+    }
     function showStep(step) {
         [step1, step2Lift, step2Slope].forEach(function(s) { s.style.display = 'none'; });
         step.style.display = 'block';
     }
-    function openPanel() { if (!isAdmin) map.addLayer(segmentLayer); panel.style.transform = 'translateX(0)'; panelTitle.textContent = 'Build'; showStep(step1); updatePathsList(); }
-    function closePanel() { if (!isAdmin) map.removeLayer(segmentLayer); panel.style.transform = 'translateX(100%)'; step3.style.display = 'none'; selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
+    function openPanel() { panel.style.transform = 'translateX(0)'; panelTitle.textContent = 'Build'; showStep(step1); // user picks lift or slope first }
+    function closePanel() { if (!isAdmin) { map.removeLayer(liftLayer); map.removeLayer(slopeLayer); } activeFilter = null; document.getElementById('drawnPathsList').style.display = 'none'; panel.style.transform = 'translateX(100%)'; step3.style.display = 'none'; selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
 
     function selectPath(id) {
         var path = drawnPaths.find(function(p) { return p.id === id; });
@@ -385,9 +398,9 @@
         step3.style.display = 'block';
     }
 
-    function updatePathsList() {
+    function updatePathsList(filterType) {
         var isAdmin = <?= json_encode($isAdmin ?? false) ?>;
-        var available = drawnPaths.filter(function(p) { return isAdmin || builtIds.indexOf(String(p.dbId)) === -1; });
+        var available = drawnPaths.filter(function(p) { return (isAdmin || builtIds.indexOf(String(p.dbId)) === -1) && (!filterType || p.type === filterType); });
         if (available.length === 0) {
             pathsList.innerHTML = '<div style="text-align:center;padding:16px;color:#666;font-size:12px;">No available segments.</div>';
             return;
@@ -517,8 +530,8 @@
         var color = type === 'lift' ? '#facc15' : '#22c55e';
         var dashArray = type === 'lift' ? '8 4' : null;
         var permanentLine = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(map);
-        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
-        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
+        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : (seg.type === "lift" ? liftLayer : slopeLayer));
+        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : (seg.type === "lift" ? liftLayer : slopeLayer));
 
         var sectorSel = document.getElementById('sectorSelect');
         var formData = new FormData();
