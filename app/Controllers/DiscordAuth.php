@@ -52,7 +52,7 @@ class DiscordAuth extends BaseController
         curl_close($ch);
 
         if (!isset($tokenResponse['access_token'])) {
-            return redirect()->to('/login')->with('error', 'Discord login failed.');
+            log_message("error", "Discord token error: " . json_encode($tokenResponse)); return redirect()->to("/login")->with("error", "Discord login failed. Check logs.");
         }
 
         // Get user info
