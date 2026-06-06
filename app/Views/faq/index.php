@@ -82,7 +82,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">Can I play on mobile?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>Yes! Ski Manager is fully responsive and works on phones and tablets through your mobile browser. No app download required - just visit v2.ski-manager.net and log in. The interface adapts to smaller screens with a mobile-friendly navigation menu.</p>
+                <p>Yes! Ski Manager is fully responsive and works on phones and tablets through your mobile browser. No app download required - just visit ski-manager.net and log in. The interface adapts to smaller screens with a mobile-friendly navigation menu.</p>
             </div>
         </div>
 
