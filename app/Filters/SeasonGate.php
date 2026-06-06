@@ -18,6 +18,9 @@ class SeasonGate implements FilterInterface
         $season = $db->table('seasons')->where('active', 1)->get()->getRowArray();
 
         if ($season && strtotime($season['start_date']) > time()) {
+        if ($season && ($season["maintenance"] ?? 0)) {
+            return redirect()->to("/");
+        }
             return redirect()->to('/coming-soon');
         }
     }

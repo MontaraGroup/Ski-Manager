@@ -19,6 +19,12 @@
     <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
     <?php if (session('error')) : ?><div class="alert alert-error mb-4"><span><?= session('error') ?></span></div><?php endif ?>
 
+    <?php $__season = db_connect()->table("seasons")->where("active", 1)->get()->getRowArray(); ?>
+    <div class="flex gap-2 mb-4">
+        <form action="/admin/maintenance" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-sm <?= ($__season["maintenance"] ?? 0) ? "btn-error" : "btn-outline" ?> gap-1"><i class="fa-solid fa-wrench"></i><?= ($__season["maintenance"] ?? 0) ? "Maintenance ON" : "Maintenance Off" ?></button></form>
+        <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-clock"></i> Day <?= $gameDay ?> / <?= $__season["duration_days"] ?? 135 ?></div>
+        <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-calendar"></i> Started <?= $__season["start_date"] ?? "N/A" ?></div>
+    </div>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= $totalUsers ?></div><div class="text-xs text-base-content/50">Players</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= currency($totalCash) ?></div><div class="text-xs text-base-content/50">Total Cash</div></div></div>
@@ -40,6 +46,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div class="lg:col-span-2">
             <h2 class="text-lg font-bold mb-3">Players</h2>
+            <input type="text" id="playerSearch" class="input input-sm input-bordered w-full mb-3" placeholder="Search players...">
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-0"><div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead><tr><th>ID</th><th>Username</th><th>Cash</th><th>Staff</th><th>Buildings</th><th>Items</th><th>Joined</th><th>Actions</th></tr></thead>
@@ -89,3 +96,11 @@
     </div>
 </div>
 <?= $this->endSection() ?>
+<script data-cfasync="false">
+document.getElementById('playerSearch').addEventListener('input',function(){
+    var q=this.value.toLowerCase();
+    document.querySelectorAll('table.table tbody tr').forEach(function(r){
+        r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';
+    });
+});
+</script>

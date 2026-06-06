@@ -315,4 +315,50 @@ class Admin extends BaseController
             'totalDebt' => $totalDebt, 'playerCount' => count($finances),
         ]);
     }
+
+    public function toggleMaintenance()
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $season = $db->table('seasons')->where('active', 1)->get()->getRowArray();
+        if ($season) {
+            $new = $season['maintenance'] ? 0 : 1;
+            $db->table('seasons')->where('id', $season['id'])->update(['maintenance' => $new]);
+            return redirect()->to('/admin')->with('success', 'Maintenance mode ' . ($new ? 'enabled' : 'disabled'));
+        }
+        return redirect()->to('/admin')->with('error', 'No active season');
+    }
+
+    public function updateSeason()
+    {
+        $this->checkAdmin();
+        $d = $this->request->getPost();
+        db_connect()->table('seasons')->where('active', 1)->update([
+            'name' => $d['name'], 'start_date' => $d['start_date'],
+            'duration_days' => (int) $d['duration_days'], 'winter_days' => (int) $d['winter_days'],
+        ]);
+        return redirect()->to('/admin/settings')->with('success', 'Season updated.');
+    }
+
+    public function toggleSectorRelease(int $id)
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $s = $db->table('resort_sectors')->where('id', $id)->get()->getRowArray();
+        if ($s) $db->table('resort_sectors')->where('id', $id)->update(['released' => $s['released'] ? 0 : 1]);
+        return redirect()->to('/admin/settings')->with('success', 'Sector updated.');
+    }
+
+    public function errorLog(): string
+    {
+        $this->checkAdmin();
+        $file = WRITEPATH . 'logs/log-' . date('Y-m-d') . '.log';
+        $lines = [];
+        if (file_exists($file)) {
+            $all = file($file, FILE_IGNORE_NEW_LINES);
+            $lines = array_filter($all, fn($l) => !str_contains($l, 'DEBUG') && !str_contains($l, 'Session:'));
+            $lines = array_slice(array_values($lines), -30);
+        }
+        return view('admin/errors', ['lines' => $lines]);
+    }
 }

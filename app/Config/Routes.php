@@ -6,6 +6,10 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->get("coming-soon", function(){ return view("countdown"); });
 $routes->get("/admin/activity", "Admin::activityLog");
+$routes->post("/admin/maintenance", "Admin::toggleMaintenance");
+$routes->post("/admin/season", "Admin::updateSeason");
+$routes->post("/admin/sector-release/(:num)", "Admin::toggleSectorRelease/$1");
+$routes->get("/admin/errors", "Admin::errorLog");
 $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");
