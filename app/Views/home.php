@@ -22,14 +22,14 @@
     function tick(){
         var now = Date.now();
         var diff = launch - now;
-        if(diff <= 0){ el.innerHTML = "<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; return; }
+        if(diff <= 0){ el.innerHTML = '<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City'; el.style.fontWeight = 'bold'; return; }
         var h = Math.floor(diff/3600000);
         var m = Math.floor((diff%3600000)/60000);
         var s = Math.floor((diff%60000)/1000);
         el.textContent = "Launches in " + h + "h " + m + "m " + s + "s";
         setTimeout(tick, 1000);
     }
-    if(Date.now() >= launch){ el.innerHTML = "<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; } else { tick(); }
+    if(Date.now() >= launch){ el.innerHTML = '<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City'; el.style.fontWeight = 'bold'; } else { tick(); }
 })();
 </script>
 
