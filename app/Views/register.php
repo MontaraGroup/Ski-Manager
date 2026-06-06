@@ -96,7 +96,7 @@
                         <?php $enabled = ($key === 'ParkCity'); ?>
                         <label class="<?= $enabled ? 'cursor-pointer' : '' ?>">
                             <div class="border-2 rounded-lg p-2 text-center transition-colors <?= $enabled ? 'border-primary bg-primary/10' : 'border-base-300' ?>">
-                                <img src="/img/<?= $key ?>.jpg" alt="<?= $key ?>" class="w-full h-16 object-cover rounded mb-1 <?= !$enabled ? 'grayscale' : '' ?>">
+                                <?php $icons = ["ParkCity"=>"fa-mountain-sun","Vail"=>"fa-mountain","AspenSnowmass"=>"fa-tree","DeerValley"=>"fa-person-skiing","Killington"=>"fa-snowflake","BigSkyCombo"=>"fa-cloud-sun","PalisadesTahoe"=>"fa-water"]; ?><div class="w-full h-16 rounded mb-1 flex items-center justify-center <?= $enabled ? "bg-primary/10" : "bg-base-300" ?>"><i class="fa-solid <?= $icons[$key] ?? "fa-mountain" ?> text-xl <?= $enabled ? "text-primary" : "text-base-content/20" ?>"></i></div>
                                 <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
                                 <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
                                 <?php if (!$enabled) : ?><div class="text-[9px] font-bold text-center mt-1"><span class="bg-neutral text-neutral-content px-1.5 py-0.5 rounded">Coming Soon</span></div><?php endif ?>

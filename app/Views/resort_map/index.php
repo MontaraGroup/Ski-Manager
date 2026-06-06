@@ -272,14 +272,18 @@
     var drawMode = null, drawPoints = [], drawLine = null, tempMarkers = [];
 
     // Render existing segments
+    var segmentLayer = L.layerGroup();
+    if (!isAdmin) map.removeLayer(segmentLayer);
+    var isAdmin = <?= json_encode($isAdmin ?? false) ?>;
+    if (!isAdmin) segmentLayer.addTo(map); // add but we will remove it initially
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
         var diffColors = {green:'#22c55e', blue:'#3b82f6', black:'#111827', double_black:'#111827', terrain_park:'#f97316'};
         var color = seg.type === 'lift' ? '#facc15' : (diffColors[seg.difficulty] || '#22c55e');
         var dashArray = seg.type === 'lift' ? '8 4' : null;
-        var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(map);
-        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
-        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
+        var line = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(isAdmin ? map : segmentLayer);
+        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
+        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
         var path = { id: parseInt(seg.id), dbId: parseInt(seg.id), type: seg.type, points: points, length: parseInt(seg.length_meters), line: line, markers: [startMarker, endMarker], name: seg.name, midstations: seg.midstations };
         drawnPaths.push(path);
         line.on('click', function() { selectPath(path.id); });
@@ -346,8 +350,8 @@
         [step1, step2Lift, step2Slope].forEach(function(s) { s.style.display = 'none'; });
         step.style.display = 'block';
     }
-    function openPanel() { panel.style.transform = 'translateX(0)'; panelTitle.textContent = 'Build'; showStep(step1); updatePathsList(); }
-    function closePanel() { panel.style.transform = 'translateX(100%)'; step3.style.display = 'none'; selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
+    function openPanel() { if (!isAdmin) map.addLayer(segmentLayer); panel.style.transform = 'translateX(0)'; panelTitle.textContent = 'Build'; showStep(step1); updatePathsList(); }
+    function closePanel() { if (!isAdmin) map.removeLayer(segmentLayer); panel.style.transform = 'translateX(100%)'; step3.style.display = 'none'; selectedPathId = null; drawnPaths.forEach(function(p) { p.line.setStyle({ weight: 4 }); }); }
 
     function selectPath(id) {
         var path = drawnPaths.find(function(p) { return p.id === id; });
@@ -514,8 +518,8 @@
         var color = type === 'lift' ? '#facc15' : '#22c55e';
         var dashArray = type === 'lift' ? '8 4' : null;
         var permanentLine = L.polyline(points, { color: color, weight: 4, opacity: 0.9, dashArray: dashArray }).addTo(map);
-        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
-        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(map);
+        var startMarker = L.circleMarker(points[0], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
+        var endMarker = L.circleMarker(points[points.length-1], { radius: 5, color: color, fillColor: color, fillOpacity: 1 }).addTo(isAdmin ? map : segmentLayer);
 
         var sectorSel = document.getElementById('sectorSelect');
         var formData = new FormData();
