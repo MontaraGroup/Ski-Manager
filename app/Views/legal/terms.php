@@ -7,7 +7,7 @@
 
     <div class="prose prose-sm max-w-none">
         <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using Ski Manager at skimanager.net (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. We may update these Terms at any time, and continued use constitutes acceptance of the updated Terms.</p>
+        <p>By accessing or using Ski Manager at ski-manager.net (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. We may update these Terms at any time, and continued use constitutes acceptance of the updated Terms.</p>
 
         <p>Your use of the Service is also governed by our <a href="/privacy" class="link link-primary">Privacy Policy</a>, which explains how we collect, use, and protect your information.</p>
 

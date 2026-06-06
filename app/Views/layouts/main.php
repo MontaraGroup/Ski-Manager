@@ -21,13 +21,13 @@
     <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://skimanager.net/">
+    <meta property="og:url" content="https://ski-manager.net/">
     <meta property="og:site_name" content="Ski Manager">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta name="twitter:description" content="Build, manage, and grow your dream ski resort. Free to play.">
     <meta name="msvalidate.01" content="17A0AC384937E88A4F602D2B7DAE237F" />
-    <link rel="canonical" href="https://skimanager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
+    <link rel="canonical" href="https://ski-manager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
     <meta name="description" content="Ski Manager - Free online ski resort management game. Build slopes, hire staff, manage finances, and compete with players worldwide.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -51,7 +51,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Ski Manager",
-      "url": "https://skimanager.net",
+      "url": "https://ski-manager.net",
       "description": "Free online ski resort management game",
       "applicationCategory": "Game",
       "operatingSystem": "Web Browser",

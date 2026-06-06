@@ -7,7 +7,7 @@
 
     <div class="prose prose-sm max-w-none">
         <h2>1. Introduction</h2>
-        <p>Ski Manager ("we", "our", "us") operates skimanager.net (the "Service"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and online game.</p>
+        <p>Ski Manager ("we", "our", "us") operates ski-manager.net (the "Service"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and online game.</p>
 
         <p>Ski Manager is the data controller responsible for processing personal information under this Privacy Policy.</p>
 

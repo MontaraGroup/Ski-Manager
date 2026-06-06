@@ -200,11 +200,11 @@ class ResortAnalysis extends BaseController
         $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
         $dompdf->render();
         $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
-        $dompdf->addInfo("Author", "Ski Manager - skimanager.net");
+        $dompdf->addInfo("Author", "Ski Manager - ski-manager.net");
         $dompdf->addInfo("Subject", "Resort Analysis Report");
         $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
         $dompdf->addInfo("Creator", "Ski Manager v2");
-        $dompdf->addInfo("Author", "Ski Manager - skimanager.net");
+        $dompdf->addInfo("Author", "Ski Manager - ski-manager.net");
         $dompdf->addInfo("Subject", "Resort Analysis Report");
         $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
         $dompdf->addInfo("Creator", "Ski Manager v2");
