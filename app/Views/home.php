@@ -5,7 +5,7 @@
 <div id="s1countdown" class="bg-gradient-to-r from-primary to-info text-primary-content">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
         <div class="flex items-center gap-3">
-            <span class="text-2xl">🏔️</span>
+            <span class="text-2xl"><i class="fa-solid fa-mountain-sun"></i></span>
             <div>
                 <span class="font-bold">Season 1: Park City</span>
                 <span class="text-sm opacity-80 ml-2" id="s1timer"></span>
@@ -22,14 +22,14 @@
     function tick(){
         var now = Date.now();
         var diff = launch - now;
-        if(diff <= 0){ el.textContent = "Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; return; }
+        if(diff <= 0){ el.innerHTML = "<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; return; }
         var h = Math.floor(diff/3600000);
         var m = Math.floor((diff%3600000)/60000);
         var s = Math.floor((diff%60000)/1000);
         el.textContent = "Launches in " + h + "h " + m + "m " + s + "s";
         setTimeout(tick, 1000);
     }
-    if(Date.now() >= launch){ el.textContent = "Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; } else { tick(); }
+    if(Date.now() >= launch){ el.innerHTML = "<i class="fa-solid fa-mountain-sun"></i> Season 1 is LIVE - Sector 1 open at Park City"; el.style.fontWeight = "bold"; } else { tick(); }
 })();
 </script>
 
