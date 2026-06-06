@@ -267,7 +267,7 @@ a.link:hover{opacity:0.8}
                 $__snow = $__weather ? (int)$__weather["snow_base"] : 0;
                 $__genepis = $__db->table("genepis")->where("user_id", auth()->id())->get()->getRowArray();
                 $__gbal = $__genepis ? (int)$__genepis["balance"] : 0;
-                $__gameDay = max(1, (int)((strtotime(date("Y-m-d")) - strtotime("2026-06-01")) / 86400) + 1);
+                $__gameDay = max(1, (int)((strtotime(date("Y-m-d")) - strtotime(getSeasonStartDate())) / 86400) + 1);
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
             ?>

@@ -13,7 +13,7 @@ class ResortAnalysis extends BaseController
         $db = db_connect();
         $reports = $db->table('resort_reports')->where('user_id', $userId)->orderBy('game_day', 'DESC')->get()->getResultArray();
         $genepis = $db->table('genepis')->where('user_id', $userId)->get()->getRowArray();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         $todayReport = $db->table('resort_reports')->where('user_id', $userId)->where('game_day', $gameDay)->get()->getRowArray();
 
         return view('resort_analysis/index', [
@@ -29,7 +29,7 @@ class ResortAnalysis extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
 
         $existing = $db->table('resort_reports')->where('user_id', $userId)->where('game_day', $gameDay)->get()->getRowArray();
         if ($existing) return redirect()->to('/resort-analysis')->with('error', 'You already ordered a report for today.');

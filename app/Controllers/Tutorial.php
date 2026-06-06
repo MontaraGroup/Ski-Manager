@@ -144,7 +144,7 @@ class Tutorial extends BaseController
                     $canAdvance = $db->table('buildings')->where('user_id', $userId)->countAllResults() > 0;
                     break;
                 case 'claimed_bonus':
-                    $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+                    $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
                     $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
                     $canAdvance = $bonus && (int)($bonus['last_claim_day'] ?? 0) >= $gameDay;
                     break;

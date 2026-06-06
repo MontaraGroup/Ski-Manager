@@ -8,7 +8,7 @@ class Tournaments extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $tournaments = $db->table('tournaments')->where('host_id', $userId)->orderBy('created_at', 'DESC')->limit(10)->get()->getResultArray();
@@ -51,7 +51,7 @@ class Tournaments extends BaseController
         $userId = auth()->id();
         $db = db_connect();
         $type = $this->request->getPost('type');
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $types = [

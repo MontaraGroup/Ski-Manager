@@ -23,7 +23,7 @@ class Admin extends BaseController
         $totalParking = $db->table('parking')->countAllResults();
         $totalParks = $db->table('terrain_parks')->countAllResults();
 
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
@@ -173,7 +173,7 @@ class Admin extends BaseController
         if (empty($message)) return redirect()->back()->with('error', 'Message is empty.');
 
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $users = $db->table('users')->get()->getResultArray();
@@ -203,7 +203,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/admin/settings');
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $condition = $this->request->getPost('condition');
@@ -236,7 +236,7 @@ class Admin extends BaseController
         if ($amount <= 0 || $amount > 10000000) return redirect()->to('/admin')->with('error', 'Invalid amount.');
         $db = db_connect();
         $db->table('player_finances')->set('cash', "cash + {$amount}", false)->update();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         $users = $db->table('users')->get()->getResultArray();
         foreach ($users as $u) {
             $db->table('activity_log')->insert([
@@ -257,7 +257,7 @@ class Admin extends BaseController
         $tournaments = $db->table('tournaments')->orderBy('created_at', 'DESC')->limit(10)->get()->getResultArray();
         $events = $db->table('special_events')->orderBy('game_day', 'DESC')->limit(10)->get()->getResultArray();
 
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         return view('admin/settings', [

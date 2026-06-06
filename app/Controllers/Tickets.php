@@ -32,7 +32,7 @@ class Tickets extends BaseController
             $tickets = $ticketModel->where('user_id', $userId)->findAll();
         }
 
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $today = date('Y-m-d');
         $gameDay = max(1, (int) ((strtotime($today) - strtotime($startDate)) / 86400) + 1);
 

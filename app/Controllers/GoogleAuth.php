@@ -92,7 +92,7 @@ class GoogleAuth extends BaseController
         $db->table('genepis')->insert(['user_id' => $user->id, 'balance' => 0]);
         $db->table('daily_bonus')->insert(['user_id' => $user->id, 'last_claim_day' => 0, 'streak' => 0]);
 
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         log_activity($user->id, 'register', 'Joined Ski Manager via Google Sign-In');
 
         notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by hiring staff and building your first slope. Check the tutorial for a guided walkthrough!', 'fa-solid fa-mountain-sun', '/dashboard');

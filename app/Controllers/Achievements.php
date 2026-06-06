@@ -84,7 +84,7 @@ class Achievements extends BaseController
         $uniqueRoles = array_unique(array_column($staffAll, 'role'));
         $roleCount = count($uniqueRoles);
         $allHighMorale = $staffCount > 0 && min(array_column($staffAll, 'morale') ?: [0]) >= 80 ? 1 : 0;
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime('2026-06-01')) / 86400) + 1);
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         $rating = function_exists('resortRating') ? resortRating($userId) : 0;
         $patrolStations = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'ski_patrol')->where('status', 'open')->get()->getResultArray();
         $coverage = $slopeCount > 0 ? min(100, round(array_sum(array_column($patrolStations, 'capacity')) / $slopeCount * 100)) : 100;

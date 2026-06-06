@@ -16,7 +16,7 @@ class DailyBonus extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
         $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
         if (!$bonus) {
@@ -33,7 +33,7 @@ class DailyBonus extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
         $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
         if ((int) $bonus['last_claim_day'] >= $gameDay) return redirect()->back()->with('error', 'Already claimed today.');

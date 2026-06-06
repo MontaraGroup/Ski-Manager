@@ -4,7 +4,7 @@
 <?php
 $wIcons = ['Sunny' => 'fa-sun text-warning', 'Partly Cloudy' => 'fa-cloud-sun text-info', 'Cloudy' => 'fa-cloud text-base-content/50', 'Light Snow' => 'fa-snowflake text-info', 'Heavy Snow' => 'fa-snowflake text-primary', 'Blizzard' => 'fa-wind text-error', 'Freezing Rain' => 'fa-cloud-rain text-error'];
 $condColors = ['Sunny' => 'badge-warning', 'Partly Cloudy' => 'badge-info', 'Cloudy' => 'badge-ghost', 'Light Snow' => 'badge-info', 'Heavy Snow' => 'badge-primary', 'Blizzard' => 'badge-error', 'Freezing Rain' => 'badge-error'];
-$startDate = '2026-06-01';
+$startDate = getSeasonStartDate();
 $seasonDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 $seasonPct = min(100, round(($seasonDay / 135) * 100));
 $isOffSeason = $seasonDay > 135;

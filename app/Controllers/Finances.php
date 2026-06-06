@@ -43,7 +43,7 @@ class Finances extends BaseController
 
         $recentTransactions = $transModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(20)->findAll();
 
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $today = date('Y-m-d');
         $gameDay = max(1, (int) ((strtotime($today) - strtotime($startDate)) / 86400) + 1);
 

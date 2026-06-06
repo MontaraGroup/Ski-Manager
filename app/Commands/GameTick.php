@@ -14,7 +14,7 @@ class GameTick extends BaseCommand
     public function run(array $params)
     {
         $db = db_connect();
-        $startDate = '2026-06-01';
+        $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
         $seasonDay = (($gameDay - 1) % 135) + 1;
         $isWinter = $seasonDay <= 100;
