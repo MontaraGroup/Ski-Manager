@@ -83,6 +83,7 @@ a.link{transition:opacity 0.15s ease}
 a.link:hover{opacity:0.8}
 .dropdown-content{animation:scaleIn 0.15s ease-out both}
 </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
 <!-- Google Tag Manager (noscript) -->
