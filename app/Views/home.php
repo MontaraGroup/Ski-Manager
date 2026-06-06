@@ -1,19 +1,37 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Tycoon Game<?= $this->endSection() ?>
 <?= $this->section('content') ?>
-<!-- Season 1 Launch Banner -->
-<div class="bg-gradient-to-r from-primary to-info text-primary-content">
+<!-- Season 1 Countdown -->
+<div id="s1countdown" class="bg-gradient-to-r from-primary to-info text-primary-content">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
         <div class="flex items-center gap-3">
             <span class="text-2xl">🏔️</span>
             <div>
                 <span class="font-bold">Season 1: Park City</span>
-                <span class="text-sm opacity-80 ml-2">Launches June 6 at 12:00 AM ET · Sector 1 Open</span>
+                <span class="text-sm opacity-80 ml-2" id="s1timer"></span>
             </div>
         </div>
         <a href="/register" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary">Join Season 1</a>
     </div>
 </div>
+<script>
+(function(){
+    var launch = new Date("2026-06-06T04:00:00Z").getTime();
+    var el = document.getElementById("s1timer");
+    var wrap = document.getElementById("s1countdown");
+    function tick(){
+        var now = Date.now();
+        var diff = launch - now;
+        if(diff <= 0){ wrap.remove(); return; }
+        var h = Math.floor(diff/3600000);
+        var m = Math.floor((diff%3600000)/60000);
+        var s = Math.floor((diff%60000)/1000);
+        el.textContent = "Launches in " + h + "h " + m + "m " + s + "s";
+        setTimeout(tick, 1000);
+    }
+    if(Date.now() >= launch){ wrap.remove(); } else { tick(); }
+})();
+</script>
 
 <?php
     $db = db_connect();
