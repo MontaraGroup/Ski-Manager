@@ -1,6 +1,19 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Tycoon Game<?= $this->endSection() ?>
 <?= $this->section('content') ?>
+<!-- Season 1 Launch Banner -->
+<div class="bg-gradient-to-r from-primary to-info text-primary-content">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🏔️</span>
+            <div>
+                <span class="font-bold">Season 1: Park City</span>
+                <span class="text-sm opacity-80 ml-2">Launches June 6 at 12:00 AM ET · Sector 1 Open</span>
+            </div>
+        </div>
+        <a href="/register" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary">Join Season 1</a>
+    </div>
+</div>
 
 <?php
     $db = db_connect();
