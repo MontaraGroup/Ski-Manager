@@ -257,6 +257,11 @@ a.link:hover{opacity:0.8}
 
     <!-- Content -->
     <main class="flex-1" id="main-content" role="main">
+    <?php if (session("admin_original_id")) : ?>
+    <div class="bg-warning text-warning-content text-center py-2 text-sm font-semibold sticky top-0 z-50">
+        <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= auth()->user()->username ?? "user" ?> — <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
+    </div>
+    <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
     <div class="bg-base-100 border-b border-base-300 px-4 py-1.5 text-xs">
         <div class="max-w-7xl mx-auto flex items-center gap-3 md:gap-4 overflow-x-auto stats-bar scrollbar-none">

@@ -52,7 +52,7 @@ class Admin extends BaseController
         ]);
     }
 
-    public function editUser(int $id): string
+    public function editUser(int $id): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
 
@@ -368,7 +368,9 @@ class Admin extends BaseController
         $db = db_connect();
         $user = $db->table('users')->where('id', $id)->get()->getRowArray();
         if (!$user) return redirect()->to('/admin')->with('error', 'User not found.');
-        session()->set('admin_original_id', auth()->id());
+        $adminId = auth()->id();
+        auth()->logout();
+        session()->set('admin_original_id', $adminId);
         auth()->login(auth()->getProvider()->findById($id));
         return redirect()->to('/dashboard')->with('success', 'Impersonating ' . $user['username'] . '. Visit /admin/stop-impersonate to return.');
     }
@@ -377,6 +379,7 @@ class Admin extends BaseController
     {
         $originalId = session()->get('admin_original_id');
         if ($originalId) {
+            auth()->logout();
             auth()->login(auth()->getProvider()->findById($originalId));
             session()->remove('admin_original_id');
         }
