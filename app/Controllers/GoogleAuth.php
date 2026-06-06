@@ -88,7 +88,7 @@ class GoogleAuth extends BaseController
             'password' => $randomPassword,
         ]);
 
-        $db->table('player_finances')->insert(['user_id' => $user->id, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'resort_map' => session('resort_map') ?? 'Vail']);
+        $db->table('player_finances')->insert(['user_id' => $user->id, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'resort_map' => 'ParkCity', 'profile_completed' => 0]);
         $db->table('genepis')->insert(['user_id' => $user->id, 'balance' => 0]);
         $db->table('daily_bonus')->insert(['user_id' => $user->id, 'last_claim_day' => 0, 'streak' => 0]);
 
@@ -98,7 +98,7 @@ class GoogleAuth extends BaseController
         notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by hiring staff and building your first slope. Check the tutorial for a guided walkthrough!', 'fa-solid fa-mountain-sun', '/dashboard');
 
         auth()->login($user);
-        return redirect()->to('/dashboard');
+        return redirect()->to('/complete-profile');
     }
 
     private function exchangeCode(string $code): ?array

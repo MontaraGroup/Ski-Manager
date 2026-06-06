@@ -112,7 +112,7 @@ class DiscordAuth extends BaseController
             'cash' => 500000,
             'total_income' => 0,
             'total_expenses' => 0,
-            'resort_map' => session('resort_map') ?? 'ParkCity',
+            'resort_map' => 'ParkCity', 'profile_completed' => 0,
             'difficulty' => session('difficulty') ?? 'standard',
         ]);
         $db->table('genepis')->insert(['user_id' => $user->id, 'balance' => 0]);
@@ -122,6 +122,6 @@ class DiscordAuth extends BaseController
         notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by hiring staff and building your first slope.', 'fa-solid fa-mountain-sun', '/dashboard');
 
         auth()->login($user);
-        return redirect()->to('/dashboard');
+        return redirect()->to('/complete-profile');
     }
 }
