@@ -382,4 +382,20 @@ class Admin extends BaseController
         }
         return redirect()->to('/admin')->with('success', 'Back to admin account.');
     }
+
+    public function toggleEnvironment()
+    {
+        $this->checkAdmin();
+        $envFile = ROOTPATH . '.env';
+        $content = file_get_contents($envFile);
+        if (str_contains($content, "CI_ENVIRONMENT = production")) {
+            $content = str_replace("CI_ENVIRONMENT = production", "CI_ENVIRONMENT = development", $content);
+            $msg = 'Switched to DEVELOPMENT mode';
+        } else {
+            $content = str_replace("CI_ENVIRONMENT = development", "CI_ENVIRONMENT = production", $content);
+            $msg = 'Switched to PRODUCTION mode';
+        }
+        file_put_contents($envFile, $content);
+        return redirect()->to('/admin')->with('success', $msg);
+    }
 }

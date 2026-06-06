@@ -12,6 +12,7 @@ $routes->post("/admin/sector-release/(:num)", "Admin::toggleSectorRelease/$1");
 $routes->get("/admin/errors", "Admin::errorLog");
 $routes->get("/admin/impersonate/(:num)", "Admin::impersonate/$1");
 $routes->get("/admin/stop-impersonate", "Admin::stopImpersonate");
+$routes->post("/admin/toggle-env", "Admin::toggleEnvironment");
 $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");

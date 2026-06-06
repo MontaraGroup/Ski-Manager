@@ -22,6 +22,7 @@
     <?php $__season = db_connect()->table("seasons")->where("active", 1)->get()->getRowArray(); ?>
     <div class="flex gap-2 mb-4">
         <form action="/admin/maintenance" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-sm <?= ($__season["maintenance"] ?? 0) ? "btn-error" : "btn-outline" ?> gap-1"><i class="fa-solid fa-wrench"></i><?= ($__season["maintenance"] ?? 0) ? "Maintenance ON" : "Maintenance Off" ?></button></form>
+        <form action="/admin/toggle-env" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-sm <?= ENVIRONMENT === 'development' ? 'btn-warning' : 'btn-outline' ?> gap-1"><i class="fa-solid fa-code"></i><?= ENVIRONMENT === 'development' ? 'DEV Mode' : 'PROD Mode' ?></button></form>
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-clock"></i> Day <?= $gameDay ?> / <?= $__season["duration_days"] ?? 135 ?></div>
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-calendar"></i> Started <?= $__season["start_date"] ?? "N/A" ?></div>
     </div>
@@ -143,7 +144,7 @@
             <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-server mr-1 text-primary"></i>Server</h2>
             <div class="space-y-1 text-xs">
                 <div class="flex justify-between"><span class="text-base-content/50">PHP</span><span class="font-mono"><?= PHP_VERSION ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">CI4</span><span class="font-mono"><?= CodeIgniterCodeIgniter::CI_VERSION ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">CI4</span><span class="font-mono"><?= \CodeIgniter\CodeIgniter::CI_VERSION ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Memory</span><span class="font-mono"><?= round(memory_get_peak_usage(true) / 1048576, 1) ?> MB</span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">DB</span><span class="font-mono">MySQL <?= db_connect()->getVersion() ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Timezone</span><span class="font-mono"><?= date_default_timezone_get() ?></span></div>
