@@ -110,5 +110,6 @@ class Filters extends BaseFilters
      */
     public array $filters = [
         'throttle' => ['before' => ['login*', 'register*', 'magic-link*']],
+        'session' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*']],
     ];
 }
