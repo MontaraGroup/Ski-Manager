@@ -9,6 +9,8 @@ $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");
 $routes->get("auth/google/callback", "GoogleAuth::callback");
+$routes->get("auth/discord", "DiscordAuth::redirect");
+$routes->get("auth/discord/callback", "DiscordAuth::callback");
 $routes->get("energy", "Resources::energy");
 $routes->get("notifications", "Notifications::index");
 $routes->get("notifications/read-all", "Notifications::readAll");
