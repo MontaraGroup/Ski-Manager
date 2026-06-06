@@ -38,8 +38,8 @@ class ScenicLifts extends BaseController
         }
 
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
-        $seasonDay = (($gameDay - 1) % 135) + 1;
-        $isSummer = $seasonDay > 100;
+        $seasonDay = getSeasonDay();
+        $isSummer = $seasonDay > getWinterDays();
 
         $baseRevenue = 1500;
         $totalDailyRevenue = 0;

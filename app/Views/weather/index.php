@@ -6,8 +6,8 @@ $wIcons = ['Sunny' => 'fa-sun text-warning', 'Partly Cloudy' => 'fa-cloud-sun te
 $condColors = ['Sunny' => 'badge-warning', 'Partly Cloudy' => 'badge-info', 'Cloudy' => 'badge-ghost', 'Light Snow' => 'badge-info', 'Heavy Snow' => 'badge-primary', 'Blizzard' => 'badge-error', 'Freezing Rain' => 'badge-error'];
 $startDate = getSeasonStartDate();
 $seasonDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
-$seasonPct = min(100, round(($seasonDay / 135) * 100));
-$isOffSeason = $seasonDay > 135;
+$seasonPct = min(100, round(($seasonDay / getSeasonLength()) * 100));
+$isOffSeason = $seasonDay > getSeasonLength();
 ?>
 <div class="max-w-5xl mx-auto p-4 lg:p-8">
 
@@ -87,9 +87,9 @@ $isOffSeason = $seasonDay > 135;
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body p-4">
         <div class="flex justify-between text-sm mb-1">
             <span><i class="fa-solid fa-calendar mr-1"></i>Season Progress</span>
-            <span class="text-base-content/50">Day <?= $seasonDay ?> / 135</span>
+            <span class="text-base-content/50">Day <?= $seasonDay ?> / <?= getSeasonLength() ?></span>
         </div>
-        <progress class="progress progress-primary w-full mb-2" value="<?= min($seasonDay, 135) ?>" max="135"></progress>
+        <progress class="progress progress-primary w-full mb-2" value="<?= min($seasonDay, getSeasonLength()) ?>" max="<?= getSeasonLength() ?>"></progress>
         <div class="flex justify-between text-xs text-base-content/40">
             <span>Season Start</span>
             <span><?= $seasonPct ?>% complete</span>

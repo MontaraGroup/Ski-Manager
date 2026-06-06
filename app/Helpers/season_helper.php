@@ -30,8 +30,7 @@ function getGameDay(): int
 function getSeasonDay(): int
 {
     $season = getCurrentSeason();
-    $gameDay = getGameDay();
-    return (($gameDay - 1) % (int)$season['duration_days']) + 1;
+    return (($gameDay = getGameDay()) - 1) % (int)$season['duration_days'] + 1;
 }
 
 function getSeasonStartDate(): string
@@ -39,8 +38,33 @@ function getSeasonStartDate(): string
     return getCurrentSeason()['start_date'];
 }
 
+function getSeasonLength(): int
+{
+    return (int)getCurrentSeason()['duration_days'];
+}
+
+function getWinterDays(): int
+{
+    return (int)getCurrentSeason()['winter_days'];
+}
+
+function getSummerDays(): int
+{
+    $s = getCurrentSeason();
+    return (int)$s['duration_days'] - (int)$s['winter_days'];
+}
+
 function isWinterDay(): bool
 {
-    $season = getCurrentSeason();
-    return getSeasonDay() <= (int)$season['winter_days'];
+    return getSeasonDay() <= getWinterDays();
+}
+
+function getSeasonNumber(): int
+{
+    return (int)getCurrentSeason()['season_number'];
+}
+
+function getSeasonName(): string
+{
+    return getCurrentSeason()['name'];
 }

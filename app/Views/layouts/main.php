@@ -277,7 +277,7 @@ a.link:hover{opacity:0.8}
             <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/135</span>
+            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <?= $__fin ? number_format((int)($__fin["total_income"] ?? 0) / max(1, $__gameDay) / 15) : 0 ?> visitors</span>
             <span class="text-base-content/40 hidden md:inline">|</span>

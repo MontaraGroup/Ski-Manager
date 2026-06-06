@@ -30,8 +30,8 @@ class OffSeason extends BaseController
         $userId = auth()->id();
         $db = db_connect();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
-        $seasonDay = (($gameDay - 1) % 135) + 1;
-        $isWinter = $seasonDay <= 100;
+        $seasonDay = getSeasonDay();
+        $isWinter = $seasonDay <= getWinterDays();
         $isSummer = !$isWinter;
 
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
@@ -50,8 +50,8 @@ class OffSeason extends BaseController
         return view('off_season/index', [
             'gameDay' => $gameDay, 'seasonDay' => $seasonDay,
             'isWinter' => $isWinter, 'isSummer' => $isSummer,
-            'summerDay' => $isSummer ? $seasonDay - 100 : 0,
-            'daysUntilWinter' => $isSummer ? 135 - $seasonDay + 1 : 0,
+            'summerDay' => $isSummer ? $seasonDay - getWinterDays() : 0,
+            'daysUntilWinter' => $isSummer ? getSeasonLength() - $seasonDay + 1 : 0,
             'daysUntilSummer' => $isWinter ? 100 - $seasonDay + 1 : 0,
             'finance' => $finance, 'summerActivities' => $summerActivities,
             'activityConfig' => $this->getActivityConfig(),

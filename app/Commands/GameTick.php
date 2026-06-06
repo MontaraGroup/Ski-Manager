@@ -16,8 +16,8 @@ class GameTick extends BaseCommand
         $db = db_connect();
         $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
-        $seasonDay = (($gameDay - 1) % 135) + 1;
-        $isWinter = $seasonDay <= 100;
+        $seasonDay = (($gameDay - 1) % getSeasonLength()) + 1;
+        $isWinter = $seasonDay <= getWinterDays();
 
         CLI::write("Game Tick — Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
 
@@ -498,9 +498,9 @@ class GameTick extends BaseCommand
                 $cumulative += $weights[$i];
                 if ($roll <= $cumulative) { $condition = $c; break; }
             }
-            $tomorrowSeasonDay = (($tomorrow - 1) % 135) + 1;
-            $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= 80;
-            $isTomorrowSummer = $tomorrowSeasonDay > 100;
+            $tomorrowSeasonDay = (($tomorrow - 1) % getSeasonLength()) + 1;
+            $winterDays = getWinterDays(); $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= ($winterDays - 20);
+            $isTomorrowSummer = $tomorrowSeasonDay > getWinterDays();
             if ($isTomorrowSummer) { $temp = mt_rand(12, 28); } elseif ($isDeepWinter) { $temp = mt_rand(-10, 0); } else { $temp = mt_rand(-5, 8); }
             $wind = mt_rand(5, 30);
             $snowfall = in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0;

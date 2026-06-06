@@ -35,7 +35,7 @@
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-<?= $isSummer ? 'sun' : 'snowflake' ?> mr-1"></i>Season</div>
                 <div class="text-2xl font-bold"><?= $isSummer ? 'Summer' : 'Winter' ?></div>
-                <div class="text-xs text-base-content/50">Day <?= $seasonDay ?>/135</div>
+                <div class="text-xs text-base-content/50">Day <?= $seasonDay ?>/<?= getSeasonLength() ?></div>
             </div>
         </div>
     </div></div>

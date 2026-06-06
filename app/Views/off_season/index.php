@@ -25,11 +25,11 @@
         <div class="flex gap-1">
             <div style="flex:100">
                 <div class="text-xs text-base-content/50 mb-1">Winter (Days 1-100)</div>
-                <progress class="progress progress-info w-full" value="<?= min($seasonDay, 100) ?>" max="100"></progress>
+                <progress class="progress progress-info w-full" value="<?= min($seasonDay, getWinterDays()) ?>" max="<?= getWinterDays() ?>"></progress>
             </div>
             <div style="flex:35">
-                <div class="text-xs text-base-content/50 mb-1">Summer (101-135)</div>
-                <progress class="progress progress-warning w-full" value="<?= max(0, $seasonDay - 100) ?>" max="35"></progress>
+                <div class="text-xs text-base-content/50 mb-1">Summer (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>)</div>
+                <progress class="progress progress-warning w-full" value="<?= max(0, $seasonDay - getWinterDays()) ?>" max="<?= getSummerDays() ?>"></progress>
             </div>
         </div>
 
@@ -40,31 +40,31 @@
             <i class="fa-solid fa-mountain text-info text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgSlopeCond >= 70 ? 'text-success' : ($avgSlopeCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgSlopeCond ?>%</div>
             <div class="text-xs text-base-content/50">Slopes (<?= count($slopes) ?>)</div>
-            <progress class="progress <?= $avgSlopeCond >= 70 ? 'progress-success' : ($avgSlopeCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgSlopeCond ?>" max="100"></progress>
+            <progress class="progress <?= $avgSlopeCond >= 70 ? 'progress-success' : ($avgSlopeCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgSlopeCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-cable-car text-success text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgLiftCond >= 70 ? 'text-success' : ($avgLiftCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgLiftCond ?>%</div>
             <div class="text-xs text-base-content/50">Lifts (<?= count($lifts) ?>)</div>
-            <progress class="progress <?= $avgLiftCond >= 70 ? 'progress-success' : ($avgLiftCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgLiftCond ?>" max="100"></progress>
+            <progress class="progress <?= $avgLiftCond >= 70 ? 'progress-success' : ($avgLiftCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgLiftCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-building text-primary text-xl mb-1"></i>
             <div class="text-2xl font-bold text-success"><?= count($buildings) ?></div>
             <div class="text-xs text-base-content/50">Buildings (<?= count($buildings) ?>)</div>
-            <progress class="progress progress-success w-full mt-1" value="100" max="100"></progress>
+            <progress class="progress progress-success w-full mt-1" value="100" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-toolbox text-warning text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgEquipCond >= 70 ? 'text-success' : ($avgEquipCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgEquipCond ?>%</div>
             <div class="text-xs text-base-content/50">Equipment (<?= count($equipment) ?>)</div>
-            <progress class="progress <?= $avgEquipCond >= 70 ? 'progress-success' : ($avgEquipCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgEquipCond ?>" max="100"></progress>
+            <progress class="progress <?= $avgEquipCond >= 70 ? 'progress-success' : ($avgEquipCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgEquipCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-person-snowboarding text-secondary text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgParkCond >= 70 ? 'text-success' : ($avgParkCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgParkCond ?>%</div>
             <div class="text-xs text-base-content/50">Parks (<?= count($terrainParks) ?>)</div>
-            <progress class="progress <?= $avgParkCond >= 70 ? 'progress-success' : ($avgParkCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgParkCond ?>" max="100"></progress>
+            <progress class="progress <?= $avgParkCond >= 70 ? 'progress-success' : ($avgParkCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgParkCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
     </div>
 
@@ -106,7 +106,7 @@
 
     <!-- Summer Activities -->
     <h2 class="text-xl font-semibold mb-3"><i class="fa-solid fa-sun mr-1 text-warning"></i> Summer Activities</h2>
-    <p class="text-sm text-base-content/60 mb-3">Build summer attractions to generate revenue during the off-season. These earn income during summer days (101-135) and remain available year-round.</p>
+    <p class="text-sm text-base-content/60 mb-3">Build summer attractions to generate revenue during the off-season. These earn income during summer days (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>) and remain available year-round.</p>
 
     <?php if (!empty($summerActivities)) : ?>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">

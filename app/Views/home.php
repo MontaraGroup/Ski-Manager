@@ -51,7 +51,7 @@
             <div class="lg:col-span-3">
                 <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-circle animate-pulse-soft text-xs"></i> Season 1 is Live</div>
                 <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
-                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Build lifts, hire staff, manage snowmaking, and survive 135 days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
+                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Build lifts, hire staff, manage snowmaking, and survive <?= getSeasonLength() ?> days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
                 <div class="flex gap-3 flex-wrap mb-6">
                     <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-lg"><i class="fa-solid fa-play"></i> Play Free - Takes 30 Seconds</a>
                 </div>
@@ -107,7 +107,7 @@
 <!-- Urgency bar -->
 <section class="py-4 bg-warning text-warning-content">
     <div class="max-w-5xl mx-auto px-4 text-center text-sm font-semibold">
-        <i class="fa-solid fa-clock mr-1"></i> Season <?= (int) ceil($gameDay / 135) ?> is live - Day <?= (($gameDay - 1) % 135) + 1 ?>/135. The mountain won't wait for you.
+        <i class="fa-solid fa-clock mr-1"></i> Season <?= (int) ceil($gameDay / getSeasonLength()) ?> is live - Day <?= getSeasonDay() ?>/<?= getSeasonLength() ?>. The mountain won't wait for you.
     </div>
 </section>
 

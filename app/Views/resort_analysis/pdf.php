@@ -70,7 +70,7 @@
 <!-- Header Banner -->
 <div class="banner clearfix">
     <div class="meta">
-        Day <?= $report['game_day'] ?> - Season <?= (int) ceil($report['game_day'] / 135) ?><br>
+        Day <?= $report['game_day'] ?> - Season <?= (int) ceil($report['game_day'] / getSeasonLength()) ?><br>
         <?= date('F j, Y', strtotime($report['created_at'])) ?><br>
         <?= date('g:i A', strtotime($report['created_at'])) ?>
     </div>

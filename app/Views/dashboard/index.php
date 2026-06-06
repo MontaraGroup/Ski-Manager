@@ -12,7 +12,7 @@
     </div>
 
     <?php
-    $seasonLength = 135; $seasonProgress = min($gameDay, $seasonLength); $seasonNum = (int) ceil($gameDay / $seasonLength);
+    $seasonLength = getSeasonLength(); $seasonProgress = min($gameDay, $seasonLength); $seasonNum = (int) ceil($gameDay / $seasonLength);
     $wIcons = ['Sunny'=>'fa-sun text-warning','Partly Cloudy'=>'fa-cloud-sun text-info','Cloudy'=>'fa-cloud text-base-content/50','Light Snow'=>'fa-snowflake text-info','Heavy Snow'=>'fa-snowflake text-primary','Blizzard'=>'fa-wind text-error','Freezing Rain'=>'fa-cloud-rain text-error'];
     $totalParkingCap = 0; $totalOccupied = 0;
     foreach ($parkingFacilities as $pf) { if ($pf['status'] === 'open' || $pf['status'] === 'full') { $totalParkingCap += $pf['capacity']; $totalOccupied += $pf['occupied']; } }
