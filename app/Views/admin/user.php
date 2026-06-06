@@ -18,6 +18,7 @@
             <?php endif ?>
             <form action="/admin/reset/<?= $user['id'] ?>" method="post" onsubmit="return confirm('Reset all progress for this user?')"><?= csrf_field() ?><button class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-rotate-left"></i>Reset</button></form>
             <form action="/admin/delete/<?= $user['id'] ?>" method="post" onsubmit="return confirm('Permanently delete this user? This cannot be undone.')"><?= csrf_field() ?><button class="btn btn-error btn-sm gap-1"><i class="fa-solid fa-trash"></i>Delete</button></form>
+                <a href="/admin/impersonate/<?= $user['id'] ?>" class="btn btn-outline btn-sm gap-1" onclick="return confirm('Log in as this user?')"><i class="fa-solid fa-user-secret"></i>Impersonate</a>
         </div>
         <?php endif ?>
     </div>
@@ -56,7 +57,6 @@
                 <div class="flex justify-between"><span class="text-base-content/50">Units</span><span><?= esc($finance["units"] ?? "metric") ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Open</span><span><?= ($finance["resort_open"] ?? 1) ? "Yes" : "No" ?></span></div>
             </div>
-        </div></div>
         </div></div>
 
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">

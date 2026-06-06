@@ -361,4 +361,25 @@ class Admin extends BaseController
         }
         return view('admin/errors', ['lines' => $lines]);
     }
+
+    public function impersonate(int $id)
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $user = $db->table('users')->where('id', $id)->get()->getRowArray();
+        if (!$user) return redirect()->to('/admin')->with('error', 'User not found.');
+        session()->set('admin_original_id', auth()->id());
+        auth()->login(auth()->getProvider()->findById($id));
+        return redirect()->to('/dashboard')->with('success', 'Impersonating ' . $user['username'] . '. Visit /admin/stop-impersonate to return.');
+    }
+
+    public function stopImpersonate()
+    {
+        $originalId = session()->get('admin_original_id');
+        if ($originalId) {
+            auth()->login(auth()->getProvider()->findById($originalId));
+            session()->remove('admin_original_id');
+        }
+        return redirect()->to('/admin')->with('success', 'Back to admin account.');
+    }
 }

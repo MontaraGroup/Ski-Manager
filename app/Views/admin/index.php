@@ -95,6 +95,64 @@
         </div>
     </div>
 </div>
+
+    <!-- Quick Actions Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        <!-- Weather Override -->
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
+            <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-cloud-sun mr-1 text-info"></i>Set Weather</h2>
+            <form action="/admin/weather" method="post"><?= csrf_field() ?>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div><label class="label text-xs py-0">Condition</label>
+                    <select name="condition" class="select select-bordered select-xs w-full">
+                        <option value="sunny">Sunny</option><option value="cloudy">Cloudy</option>
+                        <option value="snow" selected>Snow</option><option value="heavy_snow">Heavy Snow</option>
+                        <option value="blizzard">Blizzard</option><option value="rain">Rain</option>
+                        <option value="fog">Fog</option><option value="windy">Windy</option>
+                    </select></div>
+                    <div><label class="label text-xs py-0">Temp (C)</label>
+                    <input type="number" name="temp" value="-5" class="input input-bordered input-xs w-full" min="-30" max="30"></div>
+                    <div><label class="label text-xs py-0">Wind (km/h)</label>
+                    <input type="number" name="wind" value="15" class="input input-bordered input-xs w-full" min="0" max="120"></div>
+                    <div><label class="label text-xs py-0">Snow Base (cm)</label>
+                    <input type="number" name="snow_base" value="50" class="input input-bordered input-xs w-full" min="0" max="300"></div>
+                </div>
+                <button class="btn btn-info btn-sm w-full gap-1"><i class="fa-solid fa-cloud-sun"></i>Apply Weather</button>
+            </form>
+        </div></div>
+
+        <!-- Bulk Actions -->
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
+            <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-bolt mr-1 text-warning"></i>Bulk Actions</h2>
+            <div class="space-y-2">
+                <form action="/admin/add-cash-all" method="post" class="flex gap-2" onsubmit="return confirm('Add cash to ALL players?')"><?= csrf_field() ?>
+                    <input type="number" name="amount" value="10000" class="input input-bordered input-xs flex-1" placeholder="Amount">
+                    <button class="btn btn-success btn-xs gap-1"><i class="fa-solid fa-coins"></i>Cash All</button>
+                </form>
+                <form action="/admin/grant-achievement" method="post" class="flex gap-2"><?= csrf_field() ?>
+                    <input type="text" name="achievement" class="input input-bordered input-xs flex-1" placeholder="Achievement key">
+                    <input type="number" name="user_id" class="input input-bordered input-xs w-20" placeholder="User ID">
+                    <button class="btn btn-warning btn-xs gap-1"><i class="fa-solid fa-trophy"></i>Grant</button>
+                </form>
+            </div>
+        </div></div>
+
+        <!-- Server Info -->
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
+            <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-server mr-1 text-primary"></i>Server</h2>
+            <div class="space-y-1 text-xs">
+                <div class="flex justify-between"><span class="text-base-content/50">PHP</span><span class="font-mono"><?= PHP_VERSION ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">CI4</span><span class="font-mono"><?= CodeIgniterCodeIgniter::CI_VERSION ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Memory</span><span class="font-mono"><?= round(memory_get_peak_usage(true) / 1048576, 1) ?> MB</span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">DB</span><span class="font-mono">MySQL <?= db_connect()->getVersion() ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Timezone</span><span class="font-mono"><?= date_default_timezone_get() ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Time</span><span class="font-mono"><?= date("Y-m-d H:i:s") ?></span></div>
+            </div>
+            <a href="/admin/errors" class="btn btn-outline btn-xs w-full mt-3 gap-1"><i class="fa-solid fa-bug"></i>View Error Log</a>
+        </div></div>
+
+    </div>
 <?= $this->endSection() ?>
 <script data-cfasync="false">
 document.getElementById('playerSearch').addEventListener('input',function(){
