@@ -80,7 +80,7 @@
                             </div>
                             <button type="submit" class="btn btn-primary btn-xs"><i class="fa-solid fa-check"></i></button>
                         </form>
-                        <div class="text-xs text-base-content/50 mt-1">Higher prices = more revenue but fewer riders. Sweet spot: 1,000-2,500€</div>
+                        <div class="text-xs text-base-content/50 mt-1">Higher prices = more revenue but fewer riders. Sweet spot: 1,000-<?= currency(2500) ?></div>
                     </div>
 
                     <!-- Stats -->
@@ -115,10 +115,10 @@
                 <div class="flex items-center gap-2 mb-2">
                     <label class="text-xs text-base-content/50">Starting price:</label>
                     <select name="ticket_price" class="select select-bordered select-xs">
-                        <option value="1000">1,000€</option>
-                        <option value="1500" selected>1,500€</option>
-                        <option value="2000">2,000€</option>
-                        <option value="2500">2,500€</option>
+                        <option value="1000"><?= currency(1000) ?></option>
+                        <option value="1500" selected><?= currency(1500) ?></option>
+                        <option value="2000"><?= currency(2000) ?></option>
+                        <option value="2500"><?= currency(2500) ?></option>
                     </select>
                 </div>
                 <button class="btn btn-primary btn-sm w-full gap-1"><i class="fa-solid fa-camera"></i> Make Scenic</button>

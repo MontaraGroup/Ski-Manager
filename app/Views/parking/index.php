@@ -140,7 +140,7 @@ const select = document.getElementById('parkingTypeSelect');
 const preview = document.getElementById('parkingCostPreview');
 function updatePreview() {
     const c = parkingConfig[select.value];
-    if (c) preview.innerHTML = 'Cost: <strong>$'+c.cost.toLocaleString()+'</strong> · '+c.capacity+' spots · '+c.build_days+' day build · $'+c.upkeep.toLocaleString()+'/day upkeep';
+    if (c) preview.innerHTML = 'Cost: <strong><?= currencySymbol() ?>'+c.cost.toLocaleString()+'</strong> · '+c.capacity+' spots · '+c.build_days+' day build · <?= currencySymbol() ?>'+c.upkeep.toLocaleString()+'/day upkeep';
 }
 select.addEventListener('change', updatePreview);
 updatePreview();

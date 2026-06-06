@@ -49,7 +49,7 @@
             <div class="lg:col-span-3">
                 <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-clock text-xs"></i> Season 1 Starts June 7</div>
                 <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
-                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and €500,000. Build lifts, hire staff, manage snowmaking, and survive <?= getSeasonLength() ?> days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
+                <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and <?= currency(500000) ?>. Build lifts, hire staff, manage snowmaking, and survive <?= getSeasonLength() ?> days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
                 <div class="flex gap-3 flex-wrap mb-6">
                     <a href="/register" class="btn btn-primary btn-lg gap-2 shadow-lg"><i class="fa-solid fa-play"></i> Play Free - Takes 30 Seconds</a>
                 </div>
@@ -127,7 +127,7 @@
                 <div class="card-body text-center">
                     <div class="text-4xl mb-3">💰</div>
                     <h3 class="font-bold mb-2">Making serious money</h3>
-                    <p class="text-sm text-base-content/60">Hotels, restaurants, parking fees, ticket sales. The top player has <?= $topPlayer ? currency((int) $topPlayer['cash']) : '€500,000+' ?>. Can you beat that?</p>
+                    <p class="text-sm text-base-content/60">Hotels, restaurants, parking fees, ticket sales. The top player has <?= $topPlayer ? currency((int) $topPlayer['cash']) : currency(500000) ?>. Can you beat that?</p>
                 </div>
             </div>
             <div class="card bg-base-200/50 hover:bg-base-200 transition-colors">
@@ -258,7 +258,7 @@
         <a href="/dashboard" class="btn btn-lg gap-2 shadow-xl mt-6" style="background:white;color:#2563eb;"><i class="fa-solid fa-gauge-high"></i> Go to Dashboard</a>
         <?php else : ?>
         <h2 class="text-3xl md:text-4xl font-bold mb-4">Your resort is waiting.</h2>
-        <p class="text-lg opacity-80 mb-8">€500,000 starting cash. An empty mountain. What you build is up to you.</p>
+        <p class="text-lg opacity-80 mb-8"><?= currency(500000) ?> starting cash. An empty mountain. What you build is up to you.</p>
         <a href="/register" class="btn btn-lg gap-2 shadow-xl" style="background:white;color:#2563eb;"><i class="fa-solid fa-play"></i> Start Building Now</a>
         <?php endif ?>
         <div class="mt-6 text-sm" style="opacity:0.6;">

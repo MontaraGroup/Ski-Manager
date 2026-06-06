@@ -32,7 +32,7 @@
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body p-3">
         <div class="flex items-center gap-3 text-sm">
             <span class="font-semibold">Today:</span>
-            <span><?= $weather['condition_name'] ?> · <?= $weather['temp'] ?>°C · Wind: <?= $weather['wind'] ?> km/h · Snow base: <?= $weather['snow_base'] ?> cm</span>
+            <span><?= $weather['condition_name'] ?> · <?= temp($weather['temp']) ?> · Wind: <?= speed($weather['wind']) ?> · Snow base: <?= snow($weather['snow_base']) ?></span>
         </div>
     </div></div>
     <?php endif ?>

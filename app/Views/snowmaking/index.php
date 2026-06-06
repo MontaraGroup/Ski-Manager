@@ -74,7 +74,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-snowflake text-info text-xl mb-1"></i>
             <div class="text-2xl font-bold"><?= $totalOutput ?></div>
-            <div class="text-xs text-base-content/50">cm&sup3;/day output</div>
+            <div class="text-xs text-base-content/50"><?= isImperial() ? "in" : "cm" ?>cm&sup3;/day outputsup3;/day output</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-gauge-high text-warning text-xl mb-1"></i>

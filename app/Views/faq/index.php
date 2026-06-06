@@ -26,7 +26,7 @@
             <input type="radio" name="faq" />
             <div class="collapse-title font-semibold">How do I get started?</div>
             <div class="collapse-content text-sm text-base-content/70">
-                <p>Create a free account, and you'll start with 500,000€ in cash. From there, the tutorial will guide you through hiring your first staff member, building a slope on the trail map, and setting your lift ticket prices. Within a few minutes you'll have a basic resort up and running. The game advances one day per real-world day, so check back daily to manage your resort and watch it grow.</p>
+                <p>Create a free account, and you'll start with <?= currency(500000) ?> in cash. From there, the tutorial will guide you through hiring your first staff member, building a slope on the trail map, and setting your lift ticket prices. Within a few minutes you'll have a basic resort up and running. The game advances one day per real-world day, so check back daily to manage your resort and watch it grow.</p>
             </div>
         </div>
 

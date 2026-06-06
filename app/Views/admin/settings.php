@@ -14,7 +14,7 @@
                 <thead><tr><th>Day</th><th>Condition</th><th>Temp</th><th>Wind</th><th>Snow Base</th></tr></thead>
                 <tbody>
                 <?php foreach ($weather as $w) : ?>
-                    <tr><td><?= $w['game_day'] ?></td><td><?= $w['condition_name'] ?></td><td><?= $w['temp'] ?>°C</td><td><?= $w['wind'] ?> km/h</td><td><?= $w['snow_base'] ?> cm</td></tr>
+                    <tr><td><?= $w['game_day'] ?></td><td><?= $w['condition_name'] ?></td><td><?= temp($w['temp']) ?></td><td><?= speed($w['wind']) ?></td><td><?= snow($w['snow_base']) ?></td></tr>
                 <?php endforeach ?>
                 </tbody>
             </table></div>
