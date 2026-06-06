@@ -106,7 +106,7 @@
                     </div>
                 </div>
                     <label class="cursor-pointer flex items-start gap-2">
-                        <input type="checkbox" name="terms" class="checkbox checkbox-primary checkbox-sm mt-0.5" required>
+                        <input type="checkbox" name="terms" class="checkbox checkbox-primary checkbox-sm mt-0.5" required oninvalid="this.setCustomValidity('You must accept the Terms of Service to create an account')" onchange="this.setCustomValidity('')">
                         <span class="label-text text-sm">I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" class="link link-primary">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" class="link link-primary">Privacy Policy</a></span>
                     </label>
                 </div>
