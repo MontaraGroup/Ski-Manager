@@ -14,7 +14,7 @@
 </div>
 <script>
 (function(){
-    var launch = new Date("2026-06-06T04:00:00Z").getTime();
+    var launch = new Date("2026-06-07T04:00:00Z").getTime();
     var el = document.getElementById("s1timer");
     var wrap = document.getElementById("s1countdown");
     function tick(){
