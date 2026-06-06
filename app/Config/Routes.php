@@ -4,6 +4,7 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
+$routes->get("coming-soon", function(){ return view("countdown"); });
 $routes->get("/admin/activity", "Admin::activityLog");
 $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
