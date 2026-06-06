@@ -12,6 +12,10 @@
             <a href="/admin/settings" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-gear"></i>Settings</a>
             <a href="/admin/economy" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-chart-line"></i>Economy</a>
             <a href="/admin/activity" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-clock-rotate-left"></i>Logs</a>
+            <a href="/admin/audit" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-shield-halved"></i>Audit</a>
+            <a href="/admin/compare" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-code-compare"></i>Compare</a>
+            <a href="/admin/changelogs" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-newspaper"></i>Changelogs</a>
+            <a href="/admin/export-players" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-download"></i>Export CSV</a>
             <form action="/admin/trigger-tick" method="post" class="inline" onsubmit="return confirm('Run game tick now?')"><?= csrf_field() ?><button class="btn btn-error btn-sm gap-1"><i class="fa-solid fa-play"></i>Run Tick</button></form>
         </div>
     </div>
@@ -26,13 +30,16 @@
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-clock"></i> Day <?= $gameDay ?> / <?= $__season["duration_days"] ?? 135 ?></div>
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-calendar"></i> Started <?= $__season["start_date"] ?? "N/A" ?></div>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= $totalUsers ?></div><div class="text-xs text-base-content/50">Players</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= currency($totalCash) ?></div><div class="text-xs text-base-content/50">Total Cash</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= $totalStaff ?></div><div class="text-xs text-base-content/50">Staff</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= $totalBuildings ?></div><div class="text-xs text-base-content/50">Buildings</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= $totalItems ?></div><div class="text-xs text-base-content/50">Slopes/Lifts</div></div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-warning"><?= $totalLoans ?></div><div class="text-xs text-base-content/50">Active Loans</div></div></div>
+        <?php $__avgCash = $totalUsers > 0 ? (int)($totalCash / $totalUsers) : 0; $__lastTick = db_connect()->table("activity_log")->orderBy("created_at","DESC")->limit(1)->get()->getRowArray(); ?>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-info"><?= currency($__avgCash) ?></div><div class="text-xs text-base-content/50">Avg Cash</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold <?= $__lastTick ? "text-success" : "text-error" ?>"><?= $__lastTick ? "D" . $__lastTick["game_day"] : "N/A" ?></div><div class="text-xs text-base-content/50">Last Tick</div></div></div>
     </div>
 
     <?php if ($weather) : ?>

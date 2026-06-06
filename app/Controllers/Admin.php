@@ -324,6 +324,7 @@ class Admin extends BaseController
         if ($season) {
             $new = $season['maintenance'] ? 0 : 1;
             $db->table('seasons')->where('id', $season['id'])->update(['maintenance' => $new]);
+        $this->auditLog('maintenance', null, $new ? 'enabled' : 'disabled');
             return redirect()->to('/admin')->with('success', 'Maintenance mode ' . ($new ? 'enabled' : 'disabled'));
         }
         return redirect()->to('/admin')->with('error', 'No active season');
@@ -372,6 +373,7 @@ class Admin extends BaseController
         auth()->logout();
         session()->set('admin_original_id', $adminId);
         auth()->login(auth()->getProvider()->findById($id));
+        $this->auditLog('impersonate', $id);
         return redirect()->to('/dashboard')->with('success', 'Impersonating ' . $user['username'] . '. Visit /admin/stop-impersonate to return.');
     }
 
@@ -383,6 +385,7 @@ class Admin extends BaseController
             auth()->login(auth()->getProvider()->findById($originalId));
             session()->remove('admin_original_id');
         }
+        $this->auditLog('stop_impersonate');
         return redirect()->to('/admin')->with('success', 'Back to admin account.');
     }
 
@@ -400,5 +403,97 @@ class Admin extends BaseController
         }
         file_put_contents($envFile, $content);
         return redirect()->to('/admin')->with('success', $msg);
+    }
+
+    private function auditLog(string $action, ?int $targetUserId = null, ?string $details = null): void
+    {
+        db_connect()->table('admin_audit_log')->insert([
+            'admin_id' => auth()->id(),
+            'action' => $action,
+            'target_user_id' => $targetUserId,
+            'details' => $details,
+        ]);
+    }
+
+    public function viewAuditLog(): string
+    {
+        $this->checkAdmin();
+        $logs = db_connect()->table('admin_audit_log a')
+            ->select('a.*, u.username as admin_name, t.username as target_name')
+            ->join('users u', 'u.id = a.admin_id', 'left')
+            ->join('users t', 't.id = a.target_user_id', 'left')
+            ->orderBy('a.created_at', 'DESC')->limit(100)->get()->getResultArray();
+        return view('admin/audit', ['logs' => $logs]);
+    }
+
+    public function playerComparison(): string
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $users = $db->table('users')->select('id, username')->orderBy('username')->get()->getResultArray();
+        $a = $this->request->getGet('a');
+        $b = $this->request->getGet('b');
+        $dataA = $dataB = null;
+        if ($a) {
+            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray();
+            $dataA['username'] = $db->table('users')->where('id', $a)->get()->getRowArray()['username'] ?? '';
+            $dataA['staff'] = $db->table('staff')->where('user_id', $a)->where('status !=', 'fired')->countAllResults();
+            $dataA['buildings'] = $db->table('buildings')->where('user_id', $a)->countAllResults();
+            $dataA['items'] = $db->table('player_items')->where('user_id', $a)->countAllResults();
+        }
+        if ($b) {
+            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray();
+            $dataB['username'] = $db->table('users')->where('id', $b)->get()->getRowArray()['username'] ?? '';
+            $dataB['staff'] = $db->table('staff')->where('user_id', $b)->where('status !=', 'fired')->countAllResults();
+            $dataB['buildings'] = $db->table('buildings')->where('user_id', $b)->countAllResults();
+            $dataB['items'] = $db->table('player_items')->where('user_id', $b)->countAllResults();
+        }
+        return view('admin/compare', ['users' => $users, 'dataA' => $dataA, 'dataB' => $dataB, 'a' => $a, 'b' => $b]);
+    }
+
+    public function exportPlayers()
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $rows = $db->query("SELECT u.id, u.username, u.created_at, f.cash, f.difficulty, f.resort_map, f.units,
+            (SELECT COUNT(*) FROM staff s WHERE s.user_id=u.id AND s.status!='fired') as staff,
+            (SELECT COUNT(*) FROM buildings b WHERE b.user_id=u.id) as buildings,
+            (SELECT COUNT(*) FROM player_items p WHERE p.user_id=u.id) as items
+            FROM users u LEFT JOIN player_finances f ON f.user_id=u.id ORDER BY u.id")->getResultArray();
+        $this->response->setHeader('Content-Type', 'text/csv');
+        $this->response->setHeader('Content-Disposition', 'attachment; filename="players_' . date('Y-m-d') . '.csv"');
+        $out = fopen('php://output', 'w');
+        if (!empty($rows)) { fputcsv($out, array_keys($rows[0])); foreach ($rows as $r) fputcsv($out, $r); }
+        fclose($out);
+        $this->response->send();
+        exit;
+    }
+
+    public function changelogManager(): string
+    {
+        $this->checkAdmin();
+        $entries = db_connect()->table('changelogs')->orderBy('created_at', 'DESC')->get()->getResultArray();
+        return view('admin/changelogs', ['entries' => $entries]);
+    }
+
+    public function saveChangelog()
+    {
+        $this->checkAdmin();
+        $d = $this->request->getPost();
+        $db = db_connect();
+        if (!empty($d['id'])) {
+            $db->table('changelogs')->where('id', $d['id'])->update(['version' => $d['version'], 'title' => $d['title'], 'content' => $d['content'], 'published' => isset($d['published']) ? 1 : 0]);
+        } else {
+            $db->table('changelogs')->insert(['version' => $d['version'], 'title' => $d['title'], 'content' => $d['content'], 'published' => isset($d['published']) ? 1 : 0]);
+        }
+        $this->auditLog('changelog', null, $d['title']);
+        return redirect()->to('/admin/changelogs')->with('success', 'Changelog saved.');
+    }
+
+    public function deleteChangelog(int $id)
+    {
+        $this->checkAdmin();
+        db_connect()->table('changelogs')->where('id', $id)->delete();
+        return redirect()->to('/admin/changelogs')->with('success', 'Deleted.');
     }
 }
