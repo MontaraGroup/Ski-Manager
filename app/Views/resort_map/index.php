@@ -273,9 +273,6 @@
 
     // Render existing segments
     var segmentLayer = L.layerGroup();
-    if (!isAdmin) map.removeLayer(segmentLayer);
-    var isAdmin = <?= json_encode($isAdmin ?? false) ?>;
-    if (!isAdmin) segmentLayer.addTo(map); // add but we will remove it initially
     dbSegments.forEach(function(seg) {
         var points = JSON.parse(seg.points);
         var diffColors = {green:'#22c55e', blue:'#3b82f6', black:'#111827', double_black:'#111827', terrain_park:'#f97316'};
@@ -300,6 +297,7 @@
     });
 
 
+    if (isAdmin) {
     // Detect and render connection points
     var connectionPoints = {};
     drawnPaths.forEach(function(p) {
@@ -323,6 +321,7 @@
             }).addTo(map).bindTooltip(cp.count + ' segments connected', {direction: 'top'});
         }
     });
+    }
 
     // Point-in-polygon test (ray casting)
     function pointInPolygon(pt, polygon) {
