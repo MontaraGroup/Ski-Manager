@@ -16,6 +16,7 @@ class ResortMap extends BaseController
         'Killington'     => ['name' => 'Killington',      'location' => 'Vermont, USA',    'image' => '/img/Killington.jpg',     'width' => 600, 'height' => 340],
     ];
 
+    public static function getResortMapNames(): array { return array_map(fn($m) => $m["name"], self::RESORT_MAPS); }
     private function getSelectedMap(): string
     {
         $userId = auth()->id();

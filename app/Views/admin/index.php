@@ -16,6 +16,12 @@
             <a href="/admin/compare" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-code-compare"></i>Compare</a>
             <a href="/admin/changelogs" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-newspaper"></i>Changelogs</a>
             <a href="/admin/export-players" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-download"></i>Export CSV</a>
+            <a href="/admin/features" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toggle-on"></i>Flags</a>
+            <a href="/admin/suspicious" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-triangle-exclamation"></i>Suspicious</a>
+            <a href="/admin/seasons" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-calendar-plus"></i>Seasons</a>
+            <a href="/admin/features" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toggle-on"></i>Flags</a>
+            <a href="/admin/suspicious" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-triangle-exclamation"></i>Suspicious</a>
+            <a href="/admin/seasons" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-calendar-plus"></i>Seasons</a>
             <form action="/admin/trigger-tick" method="post" class="inline" onsubmit="return confirm('Run game tick now?')"><?= csrf_field() ?><button class="btn btn-error btn-sm gap-1"><i class="fa-solid fa-play"></i>Run Tick</button></form>
         </div>
     </div>

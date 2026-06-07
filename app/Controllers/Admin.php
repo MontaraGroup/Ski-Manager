@@ -496,4 +496,94 @@ class Admin extends BaseController
         db_connect()->table('changelogs')->where('id', $id)->delete();
         return redirect()->to('/admin/changelogs')->with('success', 'Deleted.');
     }
+
+    public function featureFlags(): string
+    {
+        $this->checkAdmin();
+        $flags = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
+        return view('admin/features', ['flags' => $flags]);
+    }
+
+    public function toggleFlag(int $id)
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
+        if ($flag) {
+            $new = $flag['enabled'] ? 0 : 1;
+            $db->table('feature_flags')->where('id', $id)->update(['enabled' => $new]);
+            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ($new ? 'enabled' : 'disabled'));
+        }
+        return redirect()->to('/admin/features')->with('success', 'Flag updated.');
+    }
+
+    public function suspiciousActivity(): string
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $suspects = $db->query("
+            SELECT u.id, u.username, f.cash, f.difficulty,
+                (SELECT COUNT(*) FROM admin_audit_log WHERE target_user_id = u.id AND action = 'flagged') as times_flagged,
+                (SELECT message FROM activity_log WHERE user_id = u.id AND message LIKE '%income%' ORDER BY created_at DESC LIMIT 1) as last_income
+            FROM users u
+            JOIN player_finances f ON f.user_id = u.id
+            WHERE f.cash > (
+                CASE f.difficulty
+                    WHEN 'easy' THEN 5000000
+                    WHEN 'hard' THEN 2000000
+                    ELSE 3000000
+                END
+            )
+            ORDER BY f.cash DESC
+            LIMIT 20
+        ")->getResultArray();
+
+        $recent = $db->query("
+            SELECT u.id, u.username, f.cash, f.difficulty,
+                a1.message as latest, a1.created_at
+            FROM users u
+            JOIN player_finances f ON f.user_id = u.id
+            JOIN activity_log a1 ON a1.user_id = u.id
+            WHERE a1.message LIKE '%Admin set cash%'
+            ORDER BY a1.created_at DESC
+            LIMIT 10
+        ")->getResultArray();
+
+        return view('admin/suspicious', ['suspects' => $suspects, 'recent' => $recent]);
+    }
+
+    public function createSeason()
+    {
+        $this->checkAdmin();
+        $d = $this->request->getPost();
+        db_connect()->table('seasons')->insert([
+            'season_number' => (int) $d['season_number'],
+            'name'          => $d['name'],
+            'resort_map'    => $d['resort_map'],
+            'start_date'    => $d['start_date'],
+            'duration_days' => (int) $d['duration_days'],
+            'winter_days'   => (int) $d['winter_days'],
+            'active'        => 0,
+        ]);
+        $this->auditLog('create_season', null, $d['name']);
+        return redirect()->to('/admin/seasons')->with('success', 'Season planned.');
+    }
+
+    public function seasonPlanner(): string
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $seasons = $db->table('seasons')->orderBy('season_number')->get()->getResultArray();
+        return view('admin/seasons', ['seasons' => $seasons, 'resortMaps' => \App\Controllers\ResortMap::getResortMapNames()]);
+    }
+
+    public function activateSeason(int $id)
+    {
+        $this->checkAdmin();
+        $db = db_connect();
+        $db->table('seasons')->update(['active' => 0]);
+        $db->table('seasons')->where('id', $id)->update(['active' => 1]);
+        $this->auditLog('activate_season', null, 'Season #' . $id);
+        return redirect()->to('/admin/seasons')->with('success', 'Season activated.');
+    }
 }
