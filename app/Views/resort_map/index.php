@@ -222,51 +222,23 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         var el = document.getElementById('map');
         if(!el || typeof L==='undefined'){console.error('Leaflet not loaded or #map missing');return;}
 
-        map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
+        map = L.map('map',{crs:L.CRS.Simple,minZoom:0,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
-        var basePath = MAP_IMAGE.replace('.jpg','');
-        var imgLow = basePath + '_low.jpg';
-        var imgMed = basePath + '_med.jpg';
-        var imgFull = MAP_IMAGE;
         var h=<?= $mapConfig['height'] ?>, w=<?= $mapConfig['width'] ?>;
         var bounds=[[0,0],[h,w]];
-        var currentLayer = null;
-        var loadedLayers = {};
-
-        function setOverlay(url) {
-            if (currentLayer && currentLayer._url === url) return;
-            if (!loadedLayers[url]) {
-                loadedLayers[url] = L.imageOverlay(url, bounds);
-            }
-            if (currentLayer) map.removeLayer(currentLayer);
-            currentLayer = loadedLayers[url];
-            currentLayer.addTo(map);
-        }
-
-        function pickResolution() {
-            var z = map.getZoom();
-            if (z >= 2) setOverlay(imgFull);
-            else if (z >= -1) setOverlay(imgMed);
-            else setOverlay(imgLow);
-        }
-
-        var initImg = new Image();
-        initImg.onload = function() {
-            setOverlay(imgLow);
-            map.fitBounds(bounds);
-            map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);
-            map.on('zoomend', pickResolution);
-            var ld=document.getElementById('mapLoader');if(ld)ld.remove();
-            renderSegments();
-        };
-        initImg.onerror = function() {
-            var ld=document.getElementById('mapLoader');if(ld)ld.remove();
-            console.error('Map image failed:', imgLow);
-            document.getElementById('map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f87171"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px"></i> Map image failed to load</div>';
-        };
-        initImg.src = imgLow;
-
+        L.tileLayer('/img/tiles/<?= esc($resortMap) ?>/{z}/{x}_{y}.jpg', {
+            tileSize: 256,
+            minZoom: 0,
+            maxZoom: 4,
+            noWrap: true,
+            bounds: bounds,
+            errorTileUrl: ''
+        }).addTo(map);
+        map.fitBounds(bounds);
+        map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);
+        var ld=document.getElementById('mapLoader');if(ld)ld.remove();
+        renderSegments();
         bindUI();
         if(IS_ADMIN) bindAdmin();
     }
