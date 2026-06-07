@@ -219,7 +219,7 @@ class ResortMap extends BaseController
             'subtype'       => $segment['type'] === 'lift' ? $liftType : ($slopeType ?? $segment['type']),
             'name'          => $segment['name'] ?? 'Unnamed',
             'length_meters' => (int) ($segment['length_meters'] ?? 0),
-            'capacity'      => $seats,
+            'capacity'      => match($segment['type'] === 'lift' ? $liftType : '') { 'button' => 1000, 'chair_fixed' => 2400, 'chair_detach' => 3400, 'gondola' => 3500, 'cable_car' => 4000, default => 0 },
             'difficulty'    => $segment['difficulty'] ?? null,
             'sector'        => (int) ($segment['sector'] ?? 0),
             'created_at' => date('Y-m-d H:i:s'),

@@ -20,7 +20,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <div class="avatar placeholder"><div class="bg-primary text-primary-content rounded-full w-14 h-14 flex items-center justify-center"><i class="fa-solid fa-mountain-sun text-2xl"></i></div></div>
                 <div>
                     <h1 class="text-2xl font-bold"><?= esc($resort['name']) ?></h1>
-                    <p class="text-sm text-base-content/50"><?= $resort['location'] ? esc($resort['location']) . ' - ' : '' ?>Altitude: <?= $altitudeLabels[$resort['altitude']] ?? 'Unknown' ?></p>
+                    <p class="text-sm text-base-content/50"><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></p>
                     <div class="flex items-center gap-2 mt-1">
                         <?php if ($resort['is_open']) : ?><span class="badge badge-success badge-sm">Open</span><?php else : ?><span class="badge badge-error badge-sm">Closed</span><?php endif ?>
                     </div>
@@ -145,15 +145,6 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <img src="/img/ParkCity.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="400" loading="lazy">
                 <p class="text-xs text-base-content/50 mt-2">Click to build slopes & lifts</p>
             </a>
-        </div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-sm">Microclimate</h3><a href="/resort/edit" class="btn btn-ghost btn-xs">Edit</a></div>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-base-content/50">Altitude</span><span><?= $altitudeLabels[$resort['altitude']] ?? '' ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Aspect</span><span><?= $aspectLabels[$resort['aspect']] ?? '' ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Build Cost</span><span><?= $buildCost[$resort['altitude']] ?? '' ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Wind Risk</span><span class="<?= $windColor[$resort['aspect']] ?? '' ?>"><?= $windRisk[$resort['aspect']] ?? '' ?></span></div>
-            </div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-sm">Resort Info</h3><a href="/resort/edit" class="btn btn-ghost btn-xs">Edit</a></div>
