@@ -442,7 +442,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             var b=map.latLngToContainerPoint(L.latLng(drawPoints[i][0],drawPoints[i][1]));
             totalM+=a.distanceTo(b);
         }
-        totalM=Math.round(totalM*3);
+        totalM=Math.round(totalM*4.38);
         postJSON('/map/segment',{type:(drawType==="slope"?(document.getElementById("drawSlopeType").value||"downhill"):drawType),name:name,points:drawPoints,length_meters:Math.round(totalM),difficulty:diff,sector:sector},function(res){
             if(res.success){var newSeg={id:res.id,type:drawType==="slope"?(document.getElementById("drawSlopeType")?document.getElementById("drawSlopeType").value:"downhill"):drawType,name:document.getElementById("drawName").value||"Unnamed",points:JSON.stringify(drawPoints),length_meters:Math.round(totalM),difficulty:document.getElementById("drawDifficulty").value,sector:document.getElementById("drawSector")?document.getElementById("drawSector").value:""};SEGMENTS.push(newSeg);if(drawLine){map.removeLayer(drawLine);drawLine=null;}renderSegments(buildMode);document.getElementById("drawControls").style.display="none";}else{alert(res.error||"Save failed");}
         });
