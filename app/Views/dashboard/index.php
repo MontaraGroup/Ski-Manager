@@ -347,7 +347,25 @@ if(sessionStorage.getItem('editMode')){sessionStorage.removeItem('editMode');tog
 <?php endif ?>
 <?php if (featureEnabled("beta_activity_feed")) : ?>
 <script data-cfasync="false">
-setTimeout(function(){location.reload()},60000);
+(function(){
+    var container=document.querySelector("#widget-activity .widget-content .divide-y, #widget-activity .divide-y");
+    if(!container) return;
+    function refresh(){
+        fetch("/dashboard/activity",{headers:{"X-Requested-With":"XMLHttpRequest"}})
+        .then(function(r){return r.json();})
+        .then(function(logs){
+            if(!logs.length) return;
+            container.innerHTML="";
+            logs.forEach(function(log){
+                var div=document.createElement("div");
+                div.className="flex items-center gap-2 py-1.5";
+                div.innerHTML='<i class="'+log.icon+' text-xs text-base-content/50 w-4 text-center"></i><span class="flex-1 text-sm truncate">'+log.message+'</span><span class="text-xs text-base-content/40">D'+log.game_day+'</span>';
+                container.appendChild(div);
+            });
+        }).catch(function(){});
+    }
+    setInterval(refresh,30000);
+})();
 </script>
 <?php endif ?>
 <?= $this->endSection() ?>

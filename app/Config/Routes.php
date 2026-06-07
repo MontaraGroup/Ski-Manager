@@ -5,6 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 
 $routes->get("coming-soon", function(){ return view("countdown"); });
+$routes->get("dashboard/activity", "Dashboard::recentActivity");
 $routes->get("/admin/activity", "Admin::activityLog");
 $routes->post("/admin/maintenance", "Admin::toggleMaintenance");
 $routes->post("/admin/season", "Admin::updateSeason");

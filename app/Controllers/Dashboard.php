@@ -164,4 +164,15 @@ class Dashboard extends BaseController
         $db->table('dashboard_widgets')->where('id', $widgets[$swapIndex]['id'])->update(['sort_order' => $widgets[$index]['sort_order']]);
         return redirect()->to('/dashboard');
     }
+
+    public function recentActivity()
+    {
+        $userId = auth()->id();
+        $logs = db_connect()->table('activity_log')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'DESC')
+            ->limit(8)
+            ->get()->getResultArray();
+        return $this->response->setJSON($logs);
+    }
 }
