@@ -248,6 +248,16 @@ class Admin extends BaseController
         return redirect()->to('/admin')->with('success', currency($amount) . ' added to all ' . count($users) . ' players.');
     }
 
+    public function addGenepisAll()
+    {
+        if (!$this->checkAdmin()) return redirect()->to("/admin");
+        $amount = (int) $this->request->getPost("amount");
+        if ($amount <= 0 || $amount > 100000) return redirect()->to("/admin")->with("error", "Invalid amount.");
+        $db = db_connect();
+        $db->table("genepis")->set("balance", "balance + {$amount}", false)->set("total_earned", "total_earned + {$amount}", false)->update();
+        $this->auditLog("genepis_all", null, "+" . $amount . " to all players");
+        return redirect()->to("/admin")->with("success", number_format($amount) . " Genepis added to all players.");
+    }
     public function gameSettings(): string
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');

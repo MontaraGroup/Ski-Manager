@@ -139,6 +139,10 @@
                 <form action="/admin/add-cash-all" method="post" class="flex gap-2" onsubmit="return confirm('Add cash to ALL players?')"><?= csrf_field() ?>
                     <input type="number" name="amount" value="10000" class="input input-bordered input-xs flex-1" placeholder="Amount">
                     <button class="btn btn-success btn-xs gap-1"><i class="fa-solid fa-coins"></i>Cash All</button>
+                <form action="/admin/add-genepis-all" method="post" class="flex gap-2" onsubmit="return confirm('Add Genepis to ALL players?')"><?= csrf_field() ?>
+                    <input type="number" name="amount" value="100" class="input input-bordered input-xs flex-1" placeholder="Amount">
+                    <button class="btn btn-info btn-xs gap-1"><i class="fa-solid fa-seedling"></i>Genepis All</button>
+                </form>
                 </form>
                 <form action="/admin/grant-achievement" method="post" class="flex gap-2"><?= csrf_field() ?>
                     <input type="text" name="achievement" class="input input-bordered input-xs flex-1" placeholder="Achievement key">

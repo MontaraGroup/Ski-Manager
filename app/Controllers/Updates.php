@@ -23,12 +23,13 @@ class Updates extends BaseController
                 ->orderBy("FIELD(type, 'new', 'improved', 'fixed', 'removed'), sort_order", '', false)
                 ->get()->getResultArray();
 
+            $typeLabels = ["new" => "New Features", "improved" => "Improvements", "fixed" => "Bug Fixes", "removed" => "Removed"];
             $grouped = [];
-            foreach ($items as $item) {
-                $grouped[$item['category']][] = $item;
+            foreach (["new", "improved", "fixed", "removed"] as $t) {
+                $filtered = array_filter($items, fn($i) => $i["type"] === $t);
+                if (!empty($filtered)) $grouped[$typeLabels[$t]] = array_values($filtered);
             }
-            foreach ($grouped as &$catItems) { usort($catItems, function($a, $b) { $order = ["new" => 0, "improved" => 1, "fixed" => 2, "removed" => 3]; return ($order[$a["type"]] ?? 9) - ($order[$b["type"]] ?? 9); }); } unset($catItems);
-            $update['categories'] = $grouped;
+            $update["categories"] = $grouped;
         }
 
         return view('updates/index', ['updates' => $updates]);

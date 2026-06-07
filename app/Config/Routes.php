@@ -99,6 +99,7 @@ $routes->get("/tour/(:num)", "Tour::view/$1");
 $routes->post("/tour/(:num)/like", "Tour::like/$1");
 $routes->post("/settings/toggle-tours", "Settings::toggleTours");
 $routes->post("/admin/add-cash-all", "Admin::addCashAll");
+$routes->post("/admin/add-genepis-all", "Admin::addGenepisAll");
 $routes->post("/admin/grant-achievement", "Admin::grantAchievement");
 $routes->post("/admin/reputation", "Admin::updateReputation");
 $routes->post("/admin/reset-tutorial/(:num)", "Admin::resetTutorial/$1");
