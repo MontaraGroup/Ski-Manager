@@ -659,3 +659,5 @@ svg.leaflet-image-layer.leaflet-interactive path {
 		print-color-adjust: exact;
 		}
 	}
+.leaflet-popup { z-index: 9999 !important; }
+.leaflet-popup-pane { z-index: 9999 !important; }
