@@ -221,7 +221,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         var el = document.getElementById('map');
         if(!el || typeof L==='undefined'){console.error('Leaflet not loaded or #map missing');return;}
 
-        map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false});
+        map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
         img.onload = function(){
