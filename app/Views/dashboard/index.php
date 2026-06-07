@@ -342,7 +342,7 @@ if(sessionStorage.getItem('editMode')){sessionStorage.removeItem('editMode');tog
 </script>
 <?php if (featureEnabled("beta_live_visitors")) : ?>
 <script data-cfasync="false">
-(function(){var el=document.getElementById("liveVisitors");if(!el)return;var base=parseInt(el.dataset.count)||0,cur=base;setInterval(function(){var d=Math.floor(Math.random()*7)-3;cur=Math.max(0,cur+d);el.textContent=cur.toLocaleString();el.style.color=d>0?"#22c55e":d<0?"#f87171":"";setTimeout(function(){el.style.color=""},500)},2000)})();
+(function(){var el=document.getElementById("liveVisitors");if(!el)return;var base=parseInt(el.dataset.count)||0,cur=base;function tick(){var d=Math.random()<0.6?0:(Math.random()<0.5?-1:1);cur=Math.max(0,cur+d);el.textContent=cur.toLocaleString();if(d!==0){el.style.transition="color 0.5s";el.style.color=d>0?"rgb(34,197,94)":"rgb(248,113,113)";setTimeout(function(){el.style.color=""},1500)}setTimeout(tick,8000+Math.floor(Math.random()*7000))}setTimeout(tick,5000)})();
 </script>
 <?php endif ?>
 <?php if (featureEnabled("beta_activity_feed")) : ?>
