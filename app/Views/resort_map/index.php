@@ -45,7 +45,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     <span class="flex items-center gap-1"><i class="fa-solid fa-route text-info"></i> <?= $segmentCount ?> Segments</span>
 </div>
 
-<div id="map" data-image="<?= esc($mapConfig['image']) ?>"></div>
+<div id="map" data-image="<?= $isAdmin ? esc(str_replace(".jpg", "-Big.jpg", $mapConfig["image"])) : esc($mapConfig["image"]) ?>"></div>
     <div id="mapLoader" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;text-align:center"><span class="loading loading-spinner loading-lg text-primary"></span><p class="text-sm text-base-content/50 mt-2">Loading trail map...</p></div>
 
 <div class="map-legend" id="mapLegend">
@@ -225,6 +225,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
+        if(IS_ADMIN){var h=<?= $mapConfig["height"] ?>,w=<?= $mapConfig["width"] ?>;var bounds=[[0,0],[h,w]];var img=new Image();img.onload=function(){L.imageOverlay(MAP_IMAGE,bounds).addTo(map);map.fitBounds(bounds);map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);var ld=document.getElementById("mapLoader");if(ld)ld.remove();renderSegments();};img.src=MAP_IMAGE;bindUI();if(IS_ADMIN)bindAdmin();return;}
         var basePath = MAP_IMAGE.replace('.jpg','');
         var imgLow = basePath + '_low.jpg';
         var imgMed = basePath + '_med.jpg';
