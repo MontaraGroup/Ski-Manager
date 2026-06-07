@@ -263,7 +263,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             var c=(built||!buildMode)?segColor(seg):'#a855f7';
             var line=L.polyline(ll,{color:c,weight:built?5:4,opacity:built?1:0.7,dashArray:built?null:'6,4'}).addTo(map);
             line.bindTooltip(seg.name||seg.type,{sticky:true});
-            if(!built) line.on('click',function(){if(!drawingMode) selectSegment(seg);});
+            if(!built){line.bindPopup("<div style=\"text-align:center\"><b>"+seg.name+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><small>"+seg.type+"</small></div>");line.on("click",function(){if(!drawingMode) selectSegment(seg);});}
             segmentLayers[seg.id]=line;
         });
     }
