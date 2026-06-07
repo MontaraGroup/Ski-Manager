@@ -250,6 +250,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         }
 
         setOverlay(imgLow);
+        setTimeout(function(){var m=new Image();m.src=imgMed;m.onload=function(){var f=new Image();f.src=imgFull;};},1000);
         map.fitBounds(bounds);
         map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);
         map.on('zoomend', pickResolution);
