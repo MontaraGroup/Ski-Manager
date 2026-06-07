@@ -12,6 +12,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 <?= $this->section('content') ?>
 
 <link rel="stylesheet" href="/css/leaflet.css" />
+    <link rel="preload" href="<?= esc($mapConfig['image']) ?>" as="image">
 <style>
 #map{height:calc(100vh - 160px);width:100%;background:#1a1a2e;position:relative;z-index:0}
 .map-legend{position:absolute;bottom:12px;left:12px;z-index:800;background:rgba(30,30,46,.9);border-radius:8px;padding:10px 14px;font-size:12px;color:#ccc;display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(6px)}
