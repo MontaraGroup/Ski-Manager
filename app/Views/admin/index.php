@@ -1,13 +1,13 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Admin Panel<?= $this->endSection() ?>
 <?= $this->section('content') ?>
-<div class="max-w-6xl mx-auto p-4 lg:p-8">
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
+<div class="max-w-6xl mx-auto p-4 lg:p-8 pb-12">
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-shield-halved mr-2 text-error"></i>Admin</h1>
             <span class="badge badge-outline">Day <?= $gameDay ?></span>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
             <a href="/admin/broadcast" class="btn btn-warning btn-sm gap-1"><i class="fa-solid fa-bullhorn"></i>Broadcast</a>
             <a href="/admin/settings" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-gear"></i>Settings</a>
             <a href="/admin/economy" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-chart-line"></i>Economy</a>
@@ -15,10 +15,7 @@
             <a href="/admin/audit" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-shield-halved"></i>Audit</a>
             <a href="/admin/compare" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-code-compare"></i>Compare</a>
             <a href="/admin/changelogs" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-newspaper"></i>Changelogs</a>
-            <a href="/admin/export-players" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-download"></i>Export CSV</a>
-            <a href="/admin/features" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toggle-on"></i>Flags</a>
-            <a href="/admin/suspicious" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-triangle-exclamation"></i>Suspicious</a>
-            <a href="/admin/seasons" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-calendar-plus"></i>Seasons</a>
+            <a href="/admin/export-players" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-download"></i>Export</a>
             <a href="/admin/features" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toggle-on"></i>Flags</a>
             <a href="/admin/suspicious" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-triangle-exclamation"></i>Suspicious</a>
             <a href="/admin/seasons" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-calendar-plus"></i>Seasons</a>
@@ -107,7 +104,6 @@
                 </div>
             </div></div>
         </div>
-    </div>
 </div>
 
     <!-- Quick Actions Row -->
