@@ -119,6 +119,10 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
                     <p class="text-lg font-bold text-primary" id="selSegCost">-</p>
                 </div>
                 <button id="btnBuild" class="btn btn-success btn-sm"><i class="fa-solid fa-hammer mr-1"></i> Build</button>
+                <?php if ($isAdmin) : ?>
+                <button id="btnEditSeg" class="btn btn-warning btn-sm"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
+                <button id="btnDeleteSeg" class="btn btn-error btn-sm"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
+                <?php endif ?>
             </div>
         </div>
     </div>
@@ -294,6 +298,65 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         return COLORS['default'];
     }
 
+
+    var editMarkers = [];
+    function startEditSegment() {
+        if (!selectedSegId) return;
+        var seg = SEGMENTS.find(function(s){return s.id==selectedSegId;});
+        if (!seg) return;
+        var pts = typeof seg.points==='string' ? JSON.parse(seg.points) : seg.points;
+        clearEditMarkers();
+        pts.forEach(function(p, i) {
+            var m = L.marker([p[0]||p.lat||0, p[1]||p.lng||0], {
+                draggable: true,
+                icon: L.divIcon({className:'',html:'<div style="width:10px;height:10px;background:#f59e0b;border:2px solid #fff;border-radius:50%;margin:-5px 0 0 -5px"></div>'})
+            }).addTo(map);
+            m._ptIndex = i;
+            m.on('dragend', function(){updateEditLine();});
+            editMarkers.push(m);
+        });
+        document.getElementById('btnEditSeg').textContent='Save';
+        document.getElementById('btnEditSeg').onclick=saveEditSegment;
+    }
+
+    function updateEditLine() {
+        if (!selectedSegId || !segmentLayers[selectedSegId]) return;
+        var latlngs = editMarkers.map(function(m){return m.getLatLng();});
+        segmentLayers[selectedSegId].setLatLngs(latlngs);
+    }
+
+    function saveEditSegment() {
+        if (!selectedSegId) return;
+        var pts = editMarkers.map(function(m){var ll=m.getLatLng();return [ll.lat,ll.lng];});
+        var totalM=0;
+        for(var i=1;i<pts.length;i++){
+            var a=map.latLngToContainerPoint(L.latLng(pts[i-1][0],pts[i-1][1]));
+            var b=map.latLngToContainerPoint(L.latLng(pts[i][0],pts[i][1]));
+            totalM+=a.distanceTo(b);
+        }
+        totalM=Math.round(totalM*4.38);
+        var seg=SEGMENTS.find(function(s){return s.id==selectedSegId;});
+        postJSON('/map/segment',{id:selectedSegId,type:seg.type,name:seg.name,points:pts,length_meters:totalM,difficulty:seg.difficulty||'',sector:seg.sector||''},function(res){
+            if(res.success){seg.points=pts;seg.length_meters=totalM;clearEditMarkers();deselectSeg();renderSegments(buildMode);}
+            else alert(res.error||'Save failed');
+        });
+    }
+
+    function deleteSegment() {
+        if (!selectedSegId) return;
+        if (!confirm('Delete this segment?')) return;
+        postJSON('/map/segment/delete/'+selectedSegId,{},function(res){
+            if(res.success){SEGMENTS=SEGMENTS.filter(function(s){return s.id!=selectedSegId;});clearEditMarkers();deselectSeg();renderSegments(buildMode);}
+            else alert(res.error||'Delete failed');
+        });
+    }
+
+    function clearEditMarkers() {
+        editMarkers.forEach(function(m){map.removeLayer(m);});
+        editMarkers=[];
+        var btn=document.getElementById('btnEditSeg');
+        if(btn){btn.textContent='Edit';btn.onclick=startEditSegment;}
+    }
     function bindUI(){
         var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
         fab.addEventListener('click',function(){drawer.style.display='block';fab.style.display='none';renderSegments('lift');});
@@ -307,6 +370,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         });
         document.querySelectorAll('input[name="liftType"],input[name="seats"]').forEach(function(el){el.addEventListener('change',function(){if(el.name==='liftType')updateSeats();else updateCost();});});
         document.getElementById('btnBuild').addEventListener('click',doBuild);
+        if(IS_ADMIN){document.getElementById("btnEditSeg").addEventListener("click",startEditSegment);document.getElementById("btnDeleteSeg").addEventListener("click",deleteSegment);}
     }
 
     var activeTab='lift';
@@ -346,7 +410,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     }
 
     function deselectSeg(){
-        if(selectedSegId&&segmentLayers[selectedSegId]){
+        clearEditMarkers();if(selectedSegId&&segmentLayers[selectedSegId]){
             var s=SEGMENTS.find(function(x){return x.id==selectedSegId;});
             if(s){var b=BUILT_IDS.indexOf(String(s.id))!==-1||BUILT_IDS.indexOf(Number(s.id))!==-1;segmentLayers[selectedSegId].setStyle({color:(b||!buildMode)?segColor(s):'#a855f7',weight:b?4:3,opacity:b?1:0.7});}
         }
