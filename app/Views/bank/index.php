@@ -132,7 +132,7 @@
                             </div>
                         </div>
 
-                        <form action="/bank/borrow" method="post" onsubmit="return confirmAction(this, 'Confirm Loan', 'Borrow <?= currency($opt['amount']) ?> at <?= $opt['rate'] ?>% for <?= $opt['days'] ?> days?')">
+                        <form action="/bank/borrow" method="post" data-confirm="Borrow <?= currency($opt['amount']) ?> at <?= $opt['rate'] ?>% for <?= $opt['days'] ?> days?" data-confirm-title="Confirm Loan">
                             <?= csrf_field() ?>
                             <input type="hidden" name="type" value="<?= $key ?>">
                             <button class="btn <?= $key === 'emergency' ? 'btn-error' : 'btn-primary' ?> btn-sm w-full gap-1" <?= count($loans) >= 3 ? 'disabled' : '' ?>>
