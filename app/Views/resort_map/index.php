@@ -225,20 +225,47 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
-        img.onload = function(){
-            var h=<?= $mapConfig['height'] ?>, w=<?= $mapConfig['width'] ?>;
-            var bounds=[[0,0],[h,w]];
-            L.imageOverlay(MAP_IMAGE,bounds).addTo(map);
+        var basePath = MAP_IMAGE.replace('.jpg','');
+        var imgLow = basePath + '_low.jpg';
+        var imgMed = basePath + '_med.jpg';
+        var imgFull = MAP_IMAGE;
+        var h=<?= $mapConfig['height'] ?>, w=<?= $mapConfig['width'] ?>;
+        var bounds=[[0,0],[h,w]];
+        var currentLayer = null;
+        var loadedLayers = {};
+
+        function setOverlay(url) {
+            if (currentLayer && currentLayer._url === url) return;
+            if (!loadedLayers[url]) {
+                loadedLayers[url] = L.imageOverlay(url, bounds);
+            }
+            if (currentLayer) map.removeLayer(currentLayer);
+            currentLayer = loadedLayers[url];
+            currentLayer.addTo(map);
+        }
+
+        function pickResolution() {
+            var z = map.getZoom();
+            if (z >= 2) setOverlay(imgFull);
+            else if (z >= -1) setOverlay(imgMed);
+            else setOverlay(imgLow);
+        }
+
+        var initImg = new Image();
+        initImg.onload = function() {
+            setOverlay(imgLow);
             map.fitBounds(bounds);
             map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);
-            renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();
-        };
-        img.onerror = function(){
+            map.on('zoomend', pickResolution);
             var ld=document.getElementById('mapLoader');if(ld)ld.remove();
-            console.error('Map image failed:',MAP_IMAGE);
-            el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f87171"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px"></i> Map image failed to load</div>';
+            renderSegments();
         };
-        img.src = MAP_IMAGE;
+        initImg.onerror = function() {
+            var ld=document.getElementById('mapLoader');if(ld)ld.remove();
+            console.error('Map image failed:', imgLow);
+            document.getElementById('map').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f87171"><i class="fa-solid fa-triangle-exclamation" style="margin-right:8px"></i> Map image failed to load</div>';
+        };
+        initImg.src = imgLow;
 
         bindUI();
         if(IS_ADMIN) bindAdmin();
