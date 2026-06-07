@@ -33,6 +33,7 @@ class Filters extends BaseFilters
         'throttle'      => \App\Filters\Throttle::class,
         'profilecomplete' => \App\Filters\ProfileComplete::class,
         'seasongate' => \App\Filters\SeasonGate::class,
+        'featuregate' => \App\Filters\FeatureGate::class,
         'cors'          => Cors::class,
 
         'forcehttps'    => ForceHTTPS::class,
@@ -113,6 +114,7 @@ class Filters extends BaseFilters
     public array $filters = [
         'throttle' => ['before' => ['login*', 'register*', 'magic-link*']],
         'seasongate' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*']],
+        'featuregate' => ['before' => ['snowmaking*', 'bank*', 'night-skiing*', 'terrain-parks*', 'tournaments*', 'vip-guests*', 'daily-bonus*', 'marketing*', 'real-estate*', 'scenic*', 'off-season*', 'insurance*', 'ski-lessons*', 'equipment*', 'grooming*', 'hotels*', 'restaurants*', 'rentals*', 'parking*', 'energy*', 'water*', 'emergency*', 'government*', 'leaderboard*', 'tour*', 'retail*', 'transportation*', 'ski-patrol*']],
         'profilecomplete' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*']],
         'session' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*']],
     ];
