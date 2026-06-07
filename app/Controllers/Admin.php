@@ -510,8 +510,9 @@ class Admin extends BaseController
         $db = db_connect();
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if ($flag) {
-            $new = ((int) $flag["enabled"] + 1) % 3;
-            $db->table('feature_flags')->where('id', $id)->update(['enabled' => $new]);
+            $isBeta = str_starts_with($flag["flag_key"], "beta_");
+            $new = $isBeta ? ((int) $flag["enabled"] + 1) % 3 : ($flag["enabled"] ? 0 : 2);
+            $db->table("feature_flags")->where("id", $id)->update(["enabled" => $new]);
             $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ["off","admin only","everyone"][$new]);
         }
         return redirect()->to('/admin/features')->with('success', 'Flag updated.');

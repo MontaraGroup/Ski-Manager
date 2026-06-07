@@ -4,7 +4,7 @@
 <?php
 $live = array_filter($flags, fn($f) => !str_starts_with($f['flag_key'], 'beta_'));
 $beta = array_filter($flags, fn($f) => str_starts_with($f['flag_key'], 'beta_'));
-$labels = [0 => ['Off', 'badge-error'], 1 => ['Admin Only', 'badge-warning'], 2 => ['Everyone', 'badge-success']];
+$labels = [0 => ['Off', 'badge-error'], 1 => ['Admin', 'badge-warning'], 2 => ['Everyone', 'badge-success']];
 ?>
 <div class="max-w-4xl mx-auto p-4 lg:p-8 pb-12">
     <div class="flex items-center gap-3 mb-6">
