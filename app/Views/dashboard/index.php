@@ -60,7 +60,7 @@
             <?php else : ?>
                 <div class="grid grid-cols-4 md:grid-cols-8 gap-3 h-full items-center">
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-money-bill-wave"></i> Cash</div><div class="text-lg font-bold"><?= currency($finance['cash'] ?? 0) ?></div></div>
-                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-people-group"></i> Visitors</div><div class="text-lg font-bold"><?= number_format($dailyVisitors) ?></div></div>
+                    <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-people-group"></i> Visitors</div><div class="text-lg font-bold" id="liveVisitors" data-count="<?= $dailyVisitors ?>"><?= number_format($dailyVisitors) ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins"></i> Income</div><div class="text-lg font-bold text-success"><?= currency($finance['total_income'] ?? 0) ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-receipt"></i> Expenses</div><div class="text-lg font-bold text-error"><?= currency($finance['total_expenses'] ?? 0) ?></div></div>
                     <div class="text-center p-2 bg-base-200 rounded-lg"><div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-chart-line"></i> Net</div><div class="text-lg font-bold <?= $netProfit >= 0 ? 'text-success' : 'text-error' ?>"><?= $netProfit >= 0 ? '+' : '' ?><?= currency($netProfit) ?></div></div>
@@ -340,4 +340,14 @@ container.addEventListener('dragover',e=>{if(!editMode||!dragEl)return;e.prevent
 container.addEventListener('drop',e=>{if(!editMode||!dragEl)return;e.preventDefault();const t=e.target.closest('.widget-item');if(t&&t!==dragEl){const items=[...container.querySelectorAll('.widget-item')];if(items.indexOf(dragEl)<items.indexOf(t))container.insertBefore(dragEl,t.nextSibling);else container.insertBefore(dragEl,t);}});
 if(sessionStorage.getItem('editMode')){sessionStorage.removeItem('editMode');toggleEditMode();}
 </script>
+<?php if (featureEnabled("beta_live_visitors")) : ?>
+<script data-cfasync="false">
+(function(){var el=document.getElementById("liveVisitors");if(!el)return;var base=parseInt(el.dataset.count)||0,cur=base;setInterval(function(){var d=Math.floor(Math.random()*7)-3;cur=Math.max(0,cur+d);el.textContent=cur.toLocaleString();el.style.color=d>0?"#22c55e":d<0?"#f87171":"";setTimeout(function(){el.style.color=""},500)},2000)})();
+</script>
+<?php endif ?>
+<?php if (featureEnabled("beta_activity_feed")) : ?>
+<script data-cfasync="false">
+setTimeout(function(){location.reload()},60000);
+</script>
+<?php endif ?>
 <?= $this->endSection() ?>

@@ -277,15 +277,15 @@ a.link:hover{opacity:0.8}
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
             ?>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
+            <span data-tip="Your current cash balance" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
+            <span data-tip="Current snow base depth" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
+            <span data-tip="Resort reputation score" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
+            <span data-tip="Current game day in the season" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <?= $__fin ? number_format((int)($__fin["total_income"] ?? 0) / max(1, $__gameDay) / 15) : 0 ?> visitors</span>
+            <span data-tip="Average daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <?= $__fin ? number_format((int)($__fin["total_income"] ?? 0) / max(1, $__gameDay) / 15) : 0 ?> visitors</span>
             <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
@@ -482,6 +482,21 @@ function acceptCookies(level){
     if(saved){acceptCookies(saved);}
     else{document.getElementById('cookieConsent').style.display='block';}
 })();
+<?php if (function_exists("featureEnabled") && featureEnabled("beta_tooltips")) : ?>
+<style>[data-tip]{position:relative;cursor:help}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1d232a;color:#a6adbb;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}[data-tip]:hover::before{content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1d232a;z-index:9999}</style>
+<?php endif ?>
+<?php if (function_exists("featureEnabled") && featureEnabled("beta_mobile_nav")) : ?>
+<nav class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 z-50 md:hidden" style="padding-bottom:env(safe-area-inset-bottom)">
+    <div class="flex justify-around items-center py-2">
+        <a href="/dashboard" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "dashboard" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-gauge-high text-lg"></i>Home</a>
+        <a href="/map" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "map" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-map text-lg"></i>Map</a>
+        <a href="/weather" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "weather" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-cloud-sun text-lg"></i>Weather</a>
+        <a href="/staff" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "staff" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-users text-lg"></i>Staff</a>
+        <a href="/finances" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "finances" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-coins text-lg"></i>Money</a>
+    </div>
+</nav>
+<style>.md\:hidden{padding-bottom:60px}</style>
+<?php endif ?>
 </script>
 </body>
 <!-- Tutorial Widget -->
