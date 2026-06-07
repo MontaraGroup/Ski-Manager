@@ -15,12 +15,12 @@ class Updates extends BaseController
 
     public function index(): string
     {
-        $updates = $this->db->table('updates')->orderBy('released_at', 'DESC')->get()->getResultArray();
+        $updates = $this->db->table('updates')->orderBy('id', 'DESC')->get()->getResultArray();
 
         foreach ($updates as &$update) {
             $items = $this->db->table('update_items')
                 ->where('update_id', $update['id'])
-                ->orderBy('sort_order', 'ASC')
+                ->orderBy('FIELD(type, "new", "improved", "fixed", "removed")', '', false)->orderBy('sort_order', 'ASC')
                 ->get()->getResultArray();
 
             $grouped = [];
