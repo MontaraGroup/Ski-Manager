@@ -170,7 +170,6 @@ $routes->post('/government/toggle/(:num)', 'Government::toggle/$1');
 $routes->post('/grooming/assign', 'Grooming::assign');
 $routes->post('/insurance/toggle/(:num)', 'Insurance::toggle/$1');
 $routes->post('/map/segment', 'ResortMap::saveSegment');
-$routes->post("/map/segment/update", "ResortMap::saveSegment");
 $routes->post('/map/segment/delete/(:num)', 'ResortMap::deleteSegment/$1');
 $routes->post('/marketing/cancel/(:num)', 'Marketing::cancel/$1');
 $routes->post('/marketing/launch', 'Marketing::launch');
