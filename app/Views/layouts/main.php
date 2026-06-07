@@ -38,6 +38,8 @@
     <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
     <link rel="preload" href="/css/style.css?v=1780692626" as="style">
+    <?php if (auth()->loggedIn()) : ?><link rel="prefetch" href="/img/<?= (db_connect()->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray()["resort_map"] ?? "ParkCity") ?>_low.jpg" as="image"><?php endif ?>
+    <?php if (auth()->loggedIn()) : ?><link rel="prefetch" href="/img/<?= (db_connect()->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray()["resort_map"] ?? "ParkCity") ?>_med.jpg" as="image"><?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=1780692626" fetchpriority="high">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
@@ -85,6 +87,7 @@ a.link:hover{opacity:0.8}
 .dropdown-content{animation:scaleIn 0.15s ease-out both}
 </style>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
+    <script async src="https://fundingchoicesmessages.google.com/i/pub-5636695863753930?ers=1"></script><script>(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();</script>
 </head>
 <body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
 <!-- Google Tag Manager (noscript) -->
