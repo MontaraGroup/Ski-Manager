@@ -264,7 +264,7 @@ a.link:hover{opacity:0.8}
     <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
     <div class="bg-base-100 border-b border-base-300 px-4 py-1.5 text-xs">
-        <div class="max-w-7xl mx-auto flex items-center gap-3 md:gap-4 overflow-x-auto stats-bar scrollbar-none">
+        <div class="max-w-7xl mx-auto flex items-center gap-3 md:gap-4 overflow-x-auto overflow-y-visible stats-bar scrollbar-none">
             <?php
                 $__db = db_connect();
                 $__fin = $__db->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray();
@@ -277,15 +277,15 @@ a.link:hover{opacity:0.8}
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
             ?>
-            <span data-tip="Your current cash balance" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
+            <span title="Your current cash balance" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span data-tip="Current snow base depth" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
+            <span title="Current snow base depth" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span data-tip="Resort reputation score" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
+            <span title="Resort reputation score" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span data-tip="Current game day in the season" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
+            <span title="Current game day in the season" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
-            <span data-tip="Average daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <span id="navVisitors"><?php $__openLifts = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0; $__openSlopes = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "slope")->where("status", "open")->countAllResults(false) : 0; echo number_format($__openLifts * 80 + $__openSlopes * 40); ?> visitors</span></span>
+            <span title="Average daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <span id="navVisitors"><?php $__openLifts = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0; $__openSlopes = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "slope")->where("status", "open")->countAllResults(false) : 0; echo number_format($__openLifts * 80 + $__openSlopes * 40); ?> visitors</span></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
             <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></span>
             <span class="text-base-content/40 hidden md:inline">|</span>
@@ -482,7 +482,7 @@ function acceptCookies(level){
     if(saved){acceptCookies(saved);}
     else{document.getElementById('cookieConsent').style.display='block';}
 })();
-<?php if (function_exists("featureEnabled") && featureEnabled("beta_tooltips")) : ?>
+<?php if (function_exists("featureEnabled") && featureEnabled("tooltips")) : ?>
 <style>[data-tip]{position:relative;cursor:help}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1d232a;color:#a6adbb;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}[data-tip]:hover::before{content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1d232a;z-index:9999}</style>
 <?php endif ?>
 <?php if (function_exists("featureEnabled") && featureEnabled("beta_mobile_nav")) : ?>

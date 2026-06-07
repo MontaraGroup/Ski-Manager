@@ -340,12 +340,12 @@ container.addEventListener('dragover',e=>{if(!editMode||!dragEl)return;e.prevent
 container.addEventListener('drop',e=>{if(!editMode||!dragEl)return;e.preventDefault();const t=e.target.closest('.widget-item');if(t&&t!==dragEl){const items=[...container.querySelectorAll('.widget-item')];if(items.indexOf(dragEl)<items.indexOf(t))container.insertBefore(dragEl,t.nextSibling);else container.insertBefore(dragEl,t);}});
 if(sessionStorage.getItem('editMode')){sessionStorage.removeItem('editMode');toggleEditMode();}
 </script>
-<?php if (featureEnabled("beta_live_visitors")) : ?>
+<?php if (featureEnabled("live_visitors")) : ?>
 <script data-cfasync="false">
 (function(){var el=document.getElementById("liveVisitors");if(!el)return;var base=parseInt(el.dataset.count)||0,lifts=parseInt(el.dataset.lifts)||0,slopes=parseInt(el.dataset.slopes)||0;var capacity=Math.max(1,lifts*80+slopes*40);var cur=Math.min(base,capacity);el.textContent=cur.toLocaleString();var nv=document.getElementById("navVisitors");if(nv)nv.textContent=cur.toLocaleString()+" visitors";function tick(){if(lifts===0&&slopes===0){el.textContent="0";setTimeout(tick,10000);return}var range=Math.max(1,Math.ceil(capacity*0.02));var d=Math.floor(Math.random()*(range*2+1))-range;if(Math.random()<0.4)d=0;cur=Math.max(0,Math.min(cur+d,capacity));el.textContent=cur.toLocaleString();var nv2=document.getElementById("navVisitors");if(nv2)nv2.textContent=cur.toLocaleString()+" visitors";if(d!==0){el.style.transition="color 0.5s";el.style.color=d>0?"rgb(34,197,94)":"rgb(248,113,113)";setTimeout(function(){el.style.color=""},1500)}setTimeout(tick,8000+Math.floor(Math.random()*7000))}setTimeout(tick,5000)})();
 </script>
 <?php endif ?>
-<?php if (featureEnabled("beta_activity_feed")) : ?>
+<?php if (featureEnabled("activity_feed")) : ?>
 <script data-cfasync="false">
 (function(){
     var container=document.querySelector("#widget-activity .widget-content .divide-y, #widget-activity .divide-y");
