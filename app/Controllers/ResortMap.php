@@ -33,7 +33,6 @@ class ResortMap extends BaseController
 
     private function isAdmin(): bool
     {
-        $user = auth()->user();
         return auth()->id() === 1;
     }
 
