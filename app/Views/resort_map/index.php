@@ -225,7 +225,6 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
-        if(IS_ADMIN){var h=<?= $mapConfig["height"] ?>,w=<?= $mapConfig["width"] ?>;var bounds=[[0,0],[h,w]];var img=new Image();img.onload=function(){L.imageOverlay(MAP_IMAGE,bounds).addTo(map);map.fitBounds(bounds);map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);var ld=document.getElementById("mapLoader");if(ld)ld.remove();renderSegments();};img.src=MAP_IMAGE;bindUI();if(IS_ADMIN)bindAdmin();return;}
         var basePath = MAP_IMAGE.replace('.jpg','');
         var imgLow = basePath + '_low.jpg';
         var imgMed = basePath + '_med.jpg';
@@ -270,7 +269,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             if(!pts||pts.length<2) return;
             var ll=pts.map(function(p){return[p[0]||p.lat||0,p[1]||p.lng||0];});
             var built=BUILT_IDS.indexOf(String(seg.id))!==-1||BUILT_IDS.indexOf(Number(seg.id))!==-1;
-            if(!buildModeif(!buildMode&&!built) return;if(!buildMode&&!built) return;!builtif(!buildMode&&!built) return;if(!buildMode&&!built) return;!IS_ADMIN) return;
+            if(!buildMode&&!built&&!IS_ADMIN) return;
             if(buildMode&&!built){
                 if(buildMode==='lift'&&seg.type!=='lift') return;
                 if(buildMode==='slope'&&seg.type==='lift') return;
