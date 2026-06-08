@@ -225,6 +225,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         map = L.map('map',{crs:L.CRS.Simple,minZoom:-5,maxZoom:4,zoomControl:true,attributionControl:false}).setView([0,0],0);
 
         var img = new Image();
+        if(IS_ADMIN){var h=<?= $mapConfig["height"] ?>,w=<?= $mapConfig["width"] ?>;var bounds=[[0,0],[h,w]];var img=new Image();img.onload=function(){L.imageOverlay(MAP_IMAGE,bounds).addTo(map);map.fitBounds(bounds);map.setMaxBounds([[-h*0.1,-w*0.1],[h*1.1,w*1.1]]);var ld=document.getElementById("mapLoader");if(ld)ld.remove();renderSegments();};img.src=MAP_IMAGE;bindUI();if(IS_ADMIN)bindAdmin();return;}
         var basePath = MAP_IMAGE.replace('.jpg','');
         var imgLow = basePath + '_low.jpg';
         var imgMed = basePath + '_med.jpg';
@@ -293,7 +294,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         return COLORS['default'];
     }
 
-
+    function bindUI(){
         var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
         fab.addEventListener('click',function(){drawer.style.display='block';fab.style.display='none';renderSegments('lift');});
         document.getElementById('closeDrawer').addEventListener('click',function(){drawer.style.display='none';fab.style.display='';deselectSeg();renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();});
@@ -432,7 +433,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     function finishDraw(){
         if(drawPoints.length<2){alert('Need at least 2 points');return;}
         drawingMode=false;map.getContainer().style.cursor='';map.doubleClickZoom.enable();
-        var name=document.getElementById('drawName').value||'Unnamed';
+        var nameInput=document.getElementById('drawName').value;var segType=drawType==='slope'?(document.getElementById('drawSlopeType')?document.getElementById('drawSlopeType').value:'downhill'):drawType;var typeCount=SEGMENTS.filter(function(s){return drawType==='lift'?s.type==='lift':s.type!=='lift';}).length+1;var name=nameInput||(drawType==='lift'?'Lift Line '+typeCount:'Slope Path '+typeCount);
         var diff=document.getElementById('drawDifficulty').value;
         var sector=document.getElementById('drawSector')?document.getElementById('drawSector').value:'';
         var totalM=0;
