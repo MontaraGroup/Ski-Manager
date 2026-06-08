@@ -256,7 +256,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         map.on('zoomend', pickResolution);
         var ld=document.getElementById('mapLoader');if(ld)ld.remove();
         renderSegments();
-        if(IS_ADMIN) bindAdmin();
+        bindUI();if(IS_ADMIN) bindAdmin();
     }
 
     var buildMode=null;
