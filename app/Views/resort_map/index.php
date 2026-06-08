@@ -270,7 +270,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             if(!pts||pts.length<2) return;
             var ll=pts.map(function(p){return[p[0]||p.lat||0,p[1]||p.lng||0];});
             var built=BUILT_IDS.indexOf(String(seg.id))!==-1||BUILT_IDS.indexOf(Number(seg.id))!==-1;
-            if(!buildMode&&!built) return;
+            if(!buildModeif(!buildMode&&!built) return;if(!buildMode&&!built) return;!builtif(!buildMode&&!built) return;if(!buildMode&&!built) return;!IS_ADMIN) return;
             if(buildMode&&!built){
                 if(buildMode==='lift'&&seg.type!=='lift') return;
                 if(buildMode==='slope'&&seg.type==='lift') return;
