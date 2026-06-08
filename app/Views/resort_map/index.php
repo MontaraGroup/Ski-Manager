@@ -294,7 +294,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         return COLORS['default'];
     }
 
-
+    function bindUI(){
         var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
         fab.addEventListener('click',function(){drawer.style.display='block';fab.style.display='none';renderSegments('lift');});
         document.getElementById('closeDrawer').addEventListener('click',function(){drawer.style.display='none';fab.style.display='';deselectSeg();renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();});
