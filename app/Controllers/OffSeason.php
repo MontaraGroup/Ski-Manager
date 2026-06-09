@@ -92,8 +92,10 @@ class OffSeason extends BaseController
                 $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->update(['condition_pct' => 100]);
                 break;
             case 'buildings':
-                $count = $db->table('buildings')->where('user_id', $userId)->countAllResults();
+                $items = $db->table('buildings')->where('user_id', $userId)->where('condition_pct <', 100)->get()->getResultArray();
+                $count = count($items);
                 $totalCost = $count * $taskConfig['cost_per_unit'];
+                $db->table('buildings')->where('user_id', $userId)->update(['condition_pct' => 100]);
                 break;
             case 'equipment':
                 $items = $db->table('equipment')->where('user_id', $userId)->where('condition_pct <', 100)->get()->getResultArray();
@@ -119,5 +121,42 @@ class OffSeason extends BaseController
         notify($userId, 'maintenance', $taskConfig['name'] . ' complete', "{$count} items restored to perfect condition.", $taskConfig['icon'], '/off-season');
 
         return redirect()->to('/off-season')->with('success', $taskConfig['name'] . ' complete! ' . $count . ' items serviced for ' . currency($totalCost) . '.');
+    }
+
+    public function buildActivity()
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $activityKey = $this->request->getPost('activity_key');
+        $config = $this->getActivityConfig();
+
+        if (!isset($config[$activityKey])) {
+            return redirect()->to('/off-season')->with('error', 'Invalid activity type.');
+        }
+
+        $cfg = $config[$activityKey];
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if (($finance['cash'] ?? 0) < $cfg['cost']) {
+            return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($cfg['cost']) . '.');
+        }
+
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cfg['cost'], false)->update();
+        $db->table('buildings')->insert([
+            'user_id' => $userId,
+            'building_type' => 'off_season',
+            'name' => $cfg['name'],
+            'specialty' => $activityKey,
+            'capacity' => $cfg['capacity'],
+            'revenue_per_day' => $cfg['revenue'],
+            'upkeep_per_day' => $cfg['upkeep'],
+            'condition_pct' => 100,
+            'status' => 'open',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        log_activity($userId, 'Off-Season', 'Built ' . $cfg['name'] . ' for ' . currency($cfg['cost']), 'fa-solid fa-sun');
+        notify($userId, 'building', $cfg['name'] . ' built!', 'Your new summer activity is ready for guests.', $cfg['icon'] ?? 'fa-solid fa-sun', '/off-season');
+
+        return redirect()->to('/off-season')->with('success', $cfg['name'] . ' built for ' . currency($cfg['cost']) . '!');
     }
 }

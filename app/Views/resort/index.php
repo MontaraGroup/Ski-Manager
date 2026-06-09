@@ -53,7 +53,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
             <div class="collapse collapse-arrow bg-base-100 shadow-sm mb-2">
                 <input type="checkbox" checked />
                 <div class="collapse-title font-semibold text-sm">
-                    <i class="fa-solid fa-mountain mr-1"></i>Sector <?= $sectorNum ?>
+                    <i class="fa-solid fa-mountain mr-1"></i><?= $sector['name'] ?? 'Sector ' . $sectorNum ?>
                     <span class="badge badge-sm badge-ghost ml-2"><?= count($sector['lifts']) ?> lifts, <?= count($sector['slopes']) ?> slopes</span>
                 </div>
                 <div class="collapse-content">
@@ -99,7 +99,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                     <h4 class="text-xs font-semibold uppercase tracking-wider text-base-content/50 mb-2 mt-4"><i class="fa-solid fa-person-skiing mr-1"></i>Slopes</h4>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
-                            <thead><tr><th>Name</th><th>Type</th><th>Difficulty</th><th>Condition</th><th>Length</th><th>Status</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Name</th><th>Type</th><th>Difficulty</th><th>Condition</th><th>Snow</th><th>Length</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody>
                             <?php foreach ($sector['slopes'] as $slope) : ?>
                                 <tr>
@@ -112,6 +112,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                                             <span class="text-xs"><?= $slope['condition_pct'] ?>%</span>
                                         </div>
                                     </td>
+                                    <td><span class="badge badge-xs <?= match($slope['snow_quality'] ?? 'packed') { 'powder' => 'badge-info', 'groomed' => 'badge-success', 'packed' => 'badge-ghost', 'icy' => 'badge-warning', 'bare' => 'badge-error', default => 'badge-ghost' } ?>"><?= ucfirst($slope['snow_quality'] ?? 'packed') ?></span></td>
                                     <td><?= distance((int)$slope['length_meters']) ?></td>
                                     <td>
                                         <?php if ($slope['status'] === 'open') : ?><span class="badge badge-success badge-sm">Open</span>
@@ -137,12 +138,41 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
         <?php endif ?>
     </div>
 
+    <!-- Operations -->
+    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-gears mr-1"></i> Operations</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+        <a href="/grooming" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-tractor text-success text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Grooming</div>
+        </div></a>
+        <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-snowflake text-info text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Snowmaking</div>
+        </div></a>
+        <a href="/staff" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-users text-warning text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Staff</div>
+        </div></a>
+        <a href="/equipment" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-toolbox text-primary text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Equipment</div>
+        </div></a>
+        <a href="/night-skiing" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-moon text-secondary text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Night Skiing</div>
+        </div></a>
+        <a href="/resort-analysis" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 text-center">
+            <i class="fa-solid fa-clipboard-check text-accent text-xl mb-1"></i>
+            <div class="text-xs font-semibold">Analysis</div>
+        </div></a>
+    </div>
+
     <!-- Info Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <a href="/map" class="block text-center group">
                 <h3 class="font-semibold text-sm mb-2">Trail Map</h3>
-                <img src="/img/ParkCity.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="400" loading="lazy">
+                <img src="/img/<?= esc($resort['resort_map'] ?? 'ParkCity') ?>_low.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="340" loading="lazy">
                 <p class="text-xs text-base-content/50 mt-2">Click to build slopes & lifts</p>
             </a>
         </div></div>
@@ -150,8 +180,20 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
             <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-sm">Resort Info</h3><a href="/resort/edit" class="btn btn-ghost btn-xs">Edit</a></div>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between"><span class="text-base-content/50">Name</span><span class="font-semibold"><?= esc($resort['name']) ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Location</span><span><?= $resort['location'] ? esc($resort['location']) : '-' ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Location</span><span><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Map</span><span><?= esc($resort['resort_map'] ?? 'ParkCity') ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Status</span><?php if ($resort['is_open']) : ?><span class="text-success font-semibold">Open</span><?php else : ?><span class="text-error font-semibold">Closed</span><?php endif ?></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Sectors</span><span><?= count($sectors) ?></span></div>
+            </div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
+            <h3 class="font-semibold text-sm mb-3">Quick Stats</h3>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-base-content/50">Total Slopes</span><span class="font-semibold"><?= $openSlopes ?> open</span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Total Lifts</span><span class="font-semibold"><?= $openLifts ?> open</span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Staff</span><span class="font-semibold"><?= $staffCount ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Buildings</span><span class="font-semibold"><?= $buildingCount ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Equipment</span><span class="font-semibold"><?= isset($equipmentCount) ? $equipmentCount : '-' ?></span></div>
             </div>
         </div></div>
     </div>

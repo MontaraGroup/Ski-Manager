@@ -86,6 +86,8 @@ class Dashboard extends BaseController
             'parkingFacilities' => $parkingFacilities, 'terrainParks' => $terrainParks,
             'staffAll' => $staffAll, 'equipment' => $equipment, 'insurance' => $insurance, 'loans' => $loans, 'marketing' => $marketing,
             'dailyVisitors' => $dailyVisitors, 'netProfit' => $netProfit,
+            'dailyProfit' => $this->calcDailyProfit($userId),
+            'alerts' => $this->getAlerts($userId),
         ]);
     }
 
@@ -174,5 +176,42 @@ class Dashboard extends BaseController
             ->limit(8)
             ->get()->getResultArray();
         return $this->response->setJSON($logs);
+    }
+
+    private function calcDailyProfit(int $userId): int
+    {
+        $db = db_connect();
+        $staff = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $salaries = array_sum(array_column($staff, 'salary'));
+        $equip = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $equipCost = array_sum(array_map(fn($e) => (int)($e['fuel_cost'] ?? $e['daily_cost'] ?? 0), $equip));
+        $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $loanPay = array_sum(array_map(fn($l) => (int)($l['daily_payment'] ?? 0), $loans));
+        $tickets = $db->table('lift_tickets')->where('user_id', $userId)->where('active', 1)->where('ticket_type', 'full_day')->get()->getRowArray();
+        $ticketIncome = $tickets ? (int)$tickets['price'] * 84 : 0;
+        return $ticketIncome - $salaries - $equipCost - $loanPay;
+    }
+
+    private function getAlerts(int $userId): array
+    {
+        $alerts = [];
+        $db = db_connect();
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ($finance && (int)$finance['cash'] < 50000) {
+            $alerts[] = ['type' => 'error', 'icon' => 'fa-solid fa-money-bill-wave', 'msg' => 'Cash critically low! Consider taking a loan.', 'link' => '/bank'];
+        }
+        $broken = $db->table('equipment')->where('user_id', $userId)->where('status', 'broken')->countAllResults();
+        if ($broken > 0) {
+            $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-wrench', 'msg' => $broken . ' equipment broken. Repair needed.', 'link' => '/equipment'];
+        }
+        $critical = $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope','downhill','crosscountry','snowpark','luge'])->where('condition_pct <', 40)->countAllResults();
+        if ($critical > 0) {
+            $alerts[] = ['type' => 'error', 'icon' => 'fa-solid fa-mountain', 'msg' => $critical . ' slope(s) in critical condition!', 'link' => '/grooming'];
+        }
+        $noStaff = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults();
+        if ($noStaff === 0) {
+            $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-users', 'msg' => 'No staff hired yet.', 'link' => '/staff/hire'];
+        }
+        return $alerts;
     }
 }

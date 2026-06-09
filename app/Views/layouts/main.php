@@ -502,6 +502,7 @@ function acceptCookies(level){
 <style>.md\:hidden{padding-bottom:60px}</style>
 <?php endif ?>
 </script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
 </body>
 <!-- Tutorial Widget -->
 <?php if (auth()->loggedIn()) : ?>

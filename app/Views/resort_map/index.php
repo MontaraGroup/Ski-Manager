@@ -209,7 +209,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         lift:'#f59e0b',green:'#22c55e',blue:'#3b82f6',black:'#333',
         double_black:'#dc2626',terrain_park:'#a855f7','default':'#94a3b8'
     };
-    var COST_PER_METER = {button:800,chair_fixed:1500,chair_detach:2500,gondola:4000,cable_car:6000};
+    var COST_PER_METER = {button:80,chair_fixed:150,chair_detach:250,gondola:400,cable_car:600};
     var SEAT_MULT = {1:0.7,2:1.0,3:1.15,4:1.3,6:1.6,8:2.0,10:2.5,20:4.0,30:5.0};
     var SEAT_OPTIONS = {button:[1,2],chair_fixed:[2,3,4],chair_detach:[4,6,8],gondola:[6,8,10],cable_car:[20,30]};
 
@@ -358,8 +358,8 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         var m=parseFloat(seg.length_meters)||0,cost;
         if(seg.type==='lift'){
             var lt=document.querySelector('input[name="liftType"]:checked'),st=document.querySelector('input[name="seats"]:checked');
-            cost=m*(COST_PER_METER[lt?lt.value:'chair_fixed']||2000)*(SEAT_MULT[st?parseInt(st.value):4]||1);
-        }else{cost=m*500;}
+            cost=m*(COST_PER_METER[lt?lt.value:'chair_fixed']||200)*(SEAT_MULT[st?parseInt(st.value):4]||1);
+        }else{cost=m*50;}
         document.getElementById('selSegCost').textContent='\u20AC'+Math.round(cost).toLocaleString();
     }
 

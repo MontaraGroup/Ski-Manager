@@ -60,7 +60,7 @@
             <input type="text" id="playerSearch" class="input input-sm input-bordered w-full mb-3" placeholder="Search players...">
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-0"><div class="overflow-x-auto">
                 <table class="table table-sm">
-                    <thead><tr><th>ID</th><th>Username</th><th>Cash</th><th>Staff</th><th>Buildings</th><th>Items</th><th>Joined</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Username</th><th>Cash</th><th>Staff</th><th>Buildings</th><th>Items</th><th>Joined</th><th>Last Active</th><th>Actions</th></tr></thead>
                     <tbody>
                     <?php foreach ($users as $u) : ?>
                         <tr class="<?= isset($u['active']) && !$u['active'] ? 'opacity-40' : '' ?>">
@@ -71,6 +71,7 @@
                             <td><?= $u['building_count'] ?></td>
                             <td><?= $u['item_count'] ?></td>
                             <td class="text-xs text-base-content/50"><?= date('M j', strtotime($u['created_at'])) ?></td>
+                            <td class="text-xs <?= isset($u['last_active']) && $u['last_active'] && strtotime($u['last_active']) > strtotime('-1 hour') ? 'text-success font-semibold' : 'text-base-content/50' ?>"><?= isset($u['last_active']) && $u['last_active'] ? date('M j, g:ia', strtotime($u['last_active'])) : 'Never' ?></td>
                             <td class="flex gap-1">
                                 <a href="/admin/user/<?= $u['id'] ?>" class="btn btn-ghost btn-xs" aria-label="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
                                 <?php if ((int) $u['id'] !== 1) : ?>

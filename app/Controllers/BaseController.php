@@ -40,6 +40,8 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-        // $this->session = service('session');
+        if (function_exists('auth') && auth()->loggedIn()) {
+            db_connect()->table('player_finances')->where('user_id', auth()->id())->update(['last_active' => date('Y-m-d H:i:s')]);
+        }
     }
 }

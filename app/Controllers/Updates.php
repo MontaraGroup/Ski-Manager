@@ -15,7 +15,7 @@ class Updates extends BaseController
 
     public function index(): string
     {
-        $updates = $this->db->table('updates')->orderBy('id', 'DESC')->get()->getResultArray();
+        $updates = $this->db->table('updates')->orderBy('released_at', 'DESC')->orderBy('version', 'DESC')->get()->getResultArray();
 
         foreach ($updates as &$update) {
             $items = $this->db->table('update_items')

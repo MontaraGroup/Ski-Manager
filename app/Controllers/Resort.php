@@ -30,10 +30,15 @@ class Resort extends BaseController
         $staffCount = $staffModel->where('user_id', $userId)->where('status !=', 'fired')->countAllResults();
         $buildingCount = $buildingModel->where('user_id', $userId)->countAllResults();
 
+        $db = db_connect();
+        $sectorNames = [];
+        $sectorRows = $db->table('resort_sectors')->get()->getResultArray();
+        foreach ($sectorRows as $sr) { $sectorNames[(int)$sr['id']] = $sr['name']; }
+
         $sectors = [];
         foreach ($items as $item) {
             $s = (int) $item['sector'];
-            if (!isset($sectors[$s])) $sectors[$s] = ['lifts' => [], 'slopes' => []];
+            if (!isset($sectors[$s])) $sectors[$s] = ['lifts' => [], 'slopes' => [], 'name' => $sectorNames[$s] ?? 'Unassigned'];
             $sectors[$s][$item['item_type'] === 'lift' ? 'lifts' : 'slopes'][] = $item;
         }
         ksort($sectors);

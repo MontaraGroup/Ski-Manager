@@ -134,7 +134,7 @@ class Resources extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $source = $db->table('energy_management')->where('id', $id)->where('user_id', $userId)->first();
+        $source = $db->table('energy_management')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
         if (!$source || $source['status'] === 'under_construction') return redirect()->to('/energy')->with('error', 'Cannot toggle.');
         $new = $source['status'] === 'active' ? 'off' : 'active';
         $db->table('energy_management')->where('id', $id)->update(['status' => $new]);
@@ -146,7 +146,7 @@ class Resources extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $source = $db->table('water_management')->where('id', $id)->where('user_id', $userId)->first();
+        $source = $db->table('water_management')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
         if (!$source || $source['status'] === 'under_construction') return redirect()->to('/water')->with('error', 'Cannot toggle.');
         $new = $source['status'] === 'active' ? 'off' : 'active';
         $db->table('water_management')->where('id', $id)->update(['status' => $new]);
@@ -158,7 +158,7 @@ class Resources extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $source = $db->table('energy_management')->where('id', $id)->where('user_id', $userId)->first();
+        $source = $db->table('energy_management')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
         if (!$source) return redirect()->to('/energy')->with('error', 'Not found.');
         $cfg = $this->getResourceConfig('energy')[$source['source_type']] ?? [];
         $cost = round(($cfg['cost'] ?? 0) * 0.1 * (1 - $source['condition_pct'] / 100));
@@ -174,7 +174,7 @@ class Resources extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $source = $db->table('water_management')->where('id', $id)->where('user_id', $userId)->first();
+        $source = $db->table('water_management')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
         if (!$source) return redirect()->to('/water')->with('error', 'Not found.');
         $cfg = $this->getResourceConfig('water')[$source['source_type']] ?? [];
         $cost = round(($cfg['cost'] ?? 0) * 0.1 * (1 - $source['condition_pct'] / 100));

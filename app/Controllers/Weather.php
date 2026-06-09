@@ -8,6 +8,7 @@ class Weather extends BaseController
 {
     public function index(): string
     {
+        helper('weather');
         $model = new WeatherModel();
 
         $startDate = getSeasonStartDate();
@@ -23,10 +24,16 @@ class Weather extends BaseController
             $current = $model->where('game_day', $gameDay)->first();
         }
 
+        $baseTemp = (int) $current['temp'];
+        $currentTemp = hourlyTemp($baseTemp);
+        $hourly = getHourlyForecast($baseTemp, (int) $current['wind'], $current['condition_name']);
+        $snowWindow = snowmakingWindow($baseTemp);
+
         $weather = [
-            'temp' => (int) $current['temp'],
+            'temp' => $currentTemp,
+            'base_temp' => $baseTemp,
             'condition' => $current['condition_name'],
-            'wind' => (int) $current['wind'],
+            'wind' => $hourly[(int)date('G')]['wind'],
             'snowfall' => (int) $current['snowfall'],
             'visibility' => $current['visibility'],
             'humidity' => (int) $current['humidity'],
@@ -38,7 +45,10 @@ class Weather extends BaseController
         return view('weather/index', [
             'weather' => $weather,
             'forecast' => $forecast,
+            'hourly' => $hourly,
+            'snowWindow' => $snowWindow,
             'gameDay' => $gameDay,
+            'currentHour' => (int) date('G'),
         ]);
     }
 
@@ -50,11 +60,19 @@ class Weather extends BaseController
         $baseTemp = ['low' => -2, 'medium' => -8, 'high' => -14];
         $temp = ($baseTemp[$resort['altitude']] ?? -8) + mt_rand(-5, 5);
 
-        $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Blizzard', 'Freezing Rain'];
-        $weights = [15, 20, 20, 25, 10, 5, 5];
-        $roll = mt_rand(1, 100);
+        if ($temp <= -5) {
+            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Blizzard'];
+            $weights = [10, 15, 15, 25, 20, 15];
+        } elseif ($temp <= 0) {
+            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Freezing Rain'];
+            $weights = [15, 20, 20, 25, 10, 10];
+        } else {
+            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy'];
+            $weights = [35, 35, 30];
+        }
+        $roll = mt_rand(1, array_sum($weights));
         $cumulative = 0;
-        $condition = 'Cloudy';
+        $condition = $conditions[0];
         foreach ($conditions as $i => $c) {
             $cumulative += $weights[$i];
             if ($roll <= $cumulative) { $condition = $c; break; }
@@ -75,14 +93,17 @@ class Weather extends BaseController
 
         $forecast = [];
         for ($d = 1; $d <= 5; $d++) {
-            $fSeed = crc32('skimanager-weather-day-' . ($day + $d));
-            mt_srand($fSeed);
-            $cond = $conditions[mt_rand(0, count($conditions) - 1)];
+            mt_srand(crc32('skimanager-weather-day-' . ($day + $d)));
+            $fTemp = $temp + mt_rand(-3, 3);
+            if ($fTemp <= -5) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Heavy Snow','Blizzard']; }
+            elseif ($fTemp <= 0) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Freezing Rain']; }
+            else { $fConds = ['Sunny','Partly Cloudy','Cloudy']; }
+            $cond = $fConds[mt_rand(0, count($fConds) - 1)];
             $forecast[] = [
                 'day' => $d,
                 'temp' => $temp + mt_rand(-3, 3),
                 'condition' => $cond,
-                'snowfall' => in_array($cond, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0,
+                'snowfall' => match($cond) { 'Light Snow' => mt_rand(1, 5), 'Heavy Snow' => mt_rand(6, 15), 'Blizzard' => mt_rand(15, 30), default => 0 },
             ];
         }
 

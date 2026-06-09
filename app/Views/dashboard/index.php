@@ -11,6 +11,39 @@
         <button id="editModeBtn" onclick="toggleEditMode()" class="btn btn-ghost btn-sm gap-1 mt-2 md:mt-0"><i class="fa-solid fa-pen"></i> Edit Layout</button>
     </div>
 
+    <!-- Alerts -->
+    <?php if (!empty($alerts)) : ?>
+    <div class="space-y-2 mb-4">
+        <?php foreach ($alerts as $alert) : ?>
+        <a href="<?= $alert['link'] ?>" class="alert alert-<?= $alert['type'] ?> py-2 cursor-pointer hover:opacity-80 transition-opacity">
+            <i class="<?= $alert['icon'] ?>"></i>
+            <span class="text-sm"><?= $alert['msg'] ?></span>
+            <i class="fa-solid fa-chevron-right text-xs ml-auto"></i>
+        </a>
+        <?php endforeach ?>
+    </div>
+    <?php endif ?>
+
+    <!-- Daily Snapshot -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+            <div class="text-xs text-base-content/50">Balance</div>
+            <div class="text-lg font-bold <?= ($finance['cash'] ?? 0) >= 0 ? 'text-success' : 'text-error' ?>"><?= currency($finance['cash'] ?? 0) ?></div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+            <div class="text-xs text-base-content/50">Visitors</div>
+            <div class="text-lg font-bold"><?= number_format($dailyVisitors) ?></div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+            <div class="text-xs text-base-content/50">Daily Profit</div>
+            <div class="text-lg font-bold <?= $dailyProfit >= 0 ? 'text-success' : 'text-error' ?>"><?= $dailyProfit >= 0 ? '+' : '' ?><?= currency($dailyProfit) ?></div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
+            <div class="text-xs text-base-content/50">Weather</div>
+            <div class="text-lg font-bold"><?= $weather ? temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) : '-' ?></div>
+        </div></div>
+    </div>
+
     <?php
     $seasonLength = getSeasonLength(); $seasonProgress = min($gameDay, $seasonLength); $seasonNum = (int) ceil($gameDay / $seasonLength);
     $wIcons = ['Sunny'=>'fa-sun text-warning','Partly Cloudy'=>'fa-cloud-sun text-info','Cloudy'=>'fa-cloud text-base-content/50','Light Snow'=>'fa-snowflake text-info','Heavy Snow'=>'fa-snowflake text-primary','Blizzard'=>'fa-wind text-error','Freezing Rain'=>'fa-cloud-rain text-error'];
@@ -100,12 +133,12 @@
             <?php if ($sz === 'small') : ?>
                 <div class="widget-center">
                     <i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i>
-                    <div class="text-xl font-bold mt-1"><?= temp((int)$weather['temp']) ?></div>
+                    <div class="text-xl font-bold mt-1"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div>
                     <div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?></div>
                 </div>
             <?php elseif ($sz === 'medium') : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind</div></div></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind</div></div></div>
                     <?php if (!empty($forecast)) : ?>
                     <div class="flex gap-2">
                         <?php foreach (array_slice($forecast, 0, 3) as $fc) : ?>
@@ -116,7 +149,7 @@
                 </div>
             <?php else : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= temp((int)$weather['temp']) ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow · Base: <?= snow($weather['snow_base'] ?? 0) ?></div></div></div>
+                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow · Base: <?= snow($weather['snow_base'] ?? 0) ?></div></div></div>
                     <?php if (!empty($forecast)) : ?>
                     <div class="flex gap-3 items-end">
                         <?php foreach ($forecast as $i => $fc) : ?>

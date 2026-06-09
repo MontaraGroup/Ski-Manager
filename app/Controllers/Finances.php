@@ -47,6 +47,39 @@ class Finances extends BaseController
         $today = date('Y-m-d');
         $gameDay = max(1, (int) ((strtotime($today) - strtotime($startDate)) / 86400) + 1);
 
+        $db = db_connect();
+        $lastIncome = $db->table('financial_transactions')->where('user_id', $userId)->where('type', 'income')->where('game_day', $gameDay)->selectSum('amount')->get()->getRowArray();
+        $prevIncome = $db->table('financial_transactions')->where('user_id', $userId)->where('type', 'income')->where('game_day', max(1, $gameDay - 1))->selectSum('amount')->get()->getRowArray();
+        $estimatedIncome = (int) ($lastIncome['amount'] ?? $prevIncome['amount'] ?? 0);
+
+        $ticketIncome = 0;
+        $tickets = $db->table('lift_tickets')->where('user_id', $userId)->where('active', 1)->get()->getResultArray();
+        $visitors = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $visitorCount = 84;
+        foreach ($tickets as $tk) {
+            if ($tk['ticket_type'] === 'full_day') $ticketIncome = (int) $tk['price'] * $visitorCount;
+        }
+
+        $hotelIncome = 0;
+        $hotels = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'hotel')->where('status', 'open')->get()->getResultArray();
+        foreach ($hotels as $h) { $hotelIncome += (int) ($h['daily_revenue'] ?? 0); }
+
+        $restaurantIncome = 0;
+        $restaurants = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'restaurant')->where('status', 'open')->get()->getResultArray();
+        foreach ($restaurants as $r) { $restaurantIncome += (int) ($r['daily_revenue'] ?? 0); }
+
+        $rentalIncome = 0;
+        $rentals = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'rental')->where('status', 'open')->get()->getResultArray();
+        foreach ($rentals as $r) { $rentalIncome += (int) ($r['daily_revenue'] ?? 0); }
+
+        $loanPayments = 0;
+        $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        foreach ($loans as $l) { $loanPayments += (int) ($l['daily_payment'] ?? 0); }
+
+        $equipmentCost = 0;
+        $equip = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        foreach ($equip as $e) { $equipmentCost += (int) ($e['fuel_cost'] ?? $e['daily_cost'] ?? 0); }
+
         return view('finances/index', [
             'finance' => $finance,
             'dailySalaries' => $dailySalaries,
@@ -58,6 +91,13 @@ class Finances extends BaseController
             'staffCount' => count($staff),
             'campaignCount' => count($campaigns),
             'gameDay' => $gameDay,
+            'ticketIncome' => $ticketIncome,
+            'hotelIncome' => $hotelIncome,
+            'restaurantIncome' => $restaurantIncome,
+            'rentalIncome' => $rentalIncome,
+            'estimatedIncome' => $estimatedIncome,
+            'loanPayments' => $loanPayments,
+            'equipmentCost' => $equipmentCost,
         ]);
     }
 }

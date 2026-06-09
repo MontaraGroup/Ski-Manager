@@ -231,11 +231,11 @@ class ResortMap extends BaseController
     {
         if ($type === 'lift') {
             $base = match ($liftType) {
-                'button'     => 800,
-                'chair_fixed'  => 1500,
-                'chair_detach' => 2500,
-                'gondola'    => 4000,
-                'cable_car'  => 6000,
+                'button'     => 80,
+                'chair_fixed'  => 150,
+                'chair_detach' => 250,
+                'gondola'    => 400,
+                'cable_car'  => 600,
                 default      => 2000,
             };
             $mult = match ($seats) {
@@ -243,7 +243,7 @@ class ResortMap extends BaseController
             };
             return (int) ($meters * $base * $mult);
         }
-        return (int) ($meters * 500);
+        return (int) ($meters * 50);
     }
 
     public function saveMidstation($id = null)

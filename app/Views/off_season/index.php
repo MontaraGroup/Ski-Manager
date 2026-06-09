@@ -78,7 +78,7 @@
                 switch ($task['target']) {
                     case 'slopes': $itemCount = count($slopes); $needsRepair = count(array_filter($slopes, fn($s) => $s['condition_pct'] < 100)); break;
                     case 'lifts': $itemCount = count($lifts); $needsRepair = count(array_filter($lifts, fn($l) => $l['condition_pct'] < 100)); break;
-                    case 'buildings': $itemCount = count($buildings); $needsRepair = $itemCount; break;
+                    case 'buildings': $itemCount = count($buildings); $needsRepair = count(array_filter($buildings, fn($b) => (int)($b['condition_pct'] ?? 100) < 100)); break;
                     case 'equipment': $itemCount = count($equipment); $needsRepair = count(array_filter($equipment, fn($e) => $e['condition_pct'] < 100)); break;
                     case 'terrain_parks': $itemCount = count($terrainParks); $needsRepair = count(array_filter($terrainParks, fn($t) => $t['condition_pct'] < 100)); break;
                 }
@@ -136,7 +136,7 @@
                 <div>Upkeep: <strong><?= currency($cfg['upkeep']) ?>/day</strong></div>
                 <div>Capacity: <strong><?= $cfg['capacity'] ?> guests</strong></div>
             </div>
-            <a href="/off-season" class="btn btn-outline btn-xs w-full mt-2">Build via Buildings</a>
+            <form action="/off-season/build" method="post"><?= csrf_field() ?><input type="hidden" name="activity_key" value="<?= $key ?>"><button class="btn btn-primary btn-xs w-full mt-2"><i class="fa-solid fa-hammer mr-1"></i>Build <?= currency($cfg['cost']) ?></button></form>
         </div></div>
         <?php endforeach ?>
     </div>

@@ -33,6 +33,7 @@ class Admin extends BaseController
         foreach ($users as &$u) {
             $fin = $db->table('player_finances')->where('user_id', $u['id'])->get()->getRowArray();
             $u['cash'] = $fin ? (int) $fin['cash'] : 0;
+            $u['last_active'] = $fin['last_active'] ?? null;
             $u['reputation'] = $fin ? (int) ($fin['reputation'] ?? 0) : 0;
             $u['staff_count'] = $db->table('staff')->where('user_id', $u['id'])->where('status !=', 'fired')->countAllResults();
             $u['building_count'] = $db->table('buildings')->where('user_id', $u['id'])->countAllResults();
