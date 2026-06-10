@@ -223,6 +223,21 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
+            // AUTO-GROOM (Génépis perk)
+            // ==============================
+            $hasAutoGroom = $db->table('player_boosts')->where('user_id', $userId)->where('boost_type', 'auto_groom')->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults() > 0;
+            if ($hasAutoGroom && $activeGroomers > 0) {
+                $lowSlopes = $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark', 'luge'])->where('condition_pct <', 50)->get()->getResultArray();
+                foreach ($lowSlopes as $ls) {
+                    $boost = min(100, (int) $ls['condition_pct'] + 15);
+                    $db->table('player_items')->where('id', $ls['id'])->update(['condition_pct' => $boost]);
+                }
+                if (count($lowSlopes) > 0) {
+                    log_activity($userId, 'Grooming', 'Auto-groom: ' . count($lowSlopes) . ' slopes restored', 'fa-solid fa-robot');
+                }
+            }
+
+            // ==============================
             // SNOW QUALITY UPDATE
             // ==============================
             $activeGroomers = count(array_filter($equipment, fn($e) => $e["equipment_type"] === "groomer" && $e["status"] === "active"));

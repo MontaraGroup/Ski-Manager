@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ski-manager-v1';
+const CACHE_NAME = 'ski-manager-v2';
 const PRECACHE = [
   '/css/style.css',
   '/css/leaflet.css',
@@ -24,22 +24,33 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // Only handle same-origin requests — skip ads, analytics, external scripts
+  if (url.origin !== self.location.origin) return;
+
+  // Cache map images aggressively
   if (url.pathname.startsWith('/img/')) {
     e.respondWith(
       caches.open(CACHE_NAME).then(c =>
-        c.match(e.request).then(r => r || fetch(e.request).then(res => {
-          c.put(e.request, res.clone());
-          return res;
-        }))
+        c.match(e.request).then(r => {
+          if (r) return r;
+          return fetch(e.request).then(res => {
+            if (res.ok) c.put(e.request, res.clone());
+            return res;
+          }).catch(() => caches.match(e.request));
+        })
       )
     );
     return;
   }
+
+  // Cache static assets (CSS/JS/images)
   if (e.request.destination === 'style' || e.request.destination === 'script' || e.request.destination === 'image') {
     e.respondWith(
       caches.match(e.request).then(r => r || fetch(e.request))
     );
     return;
   }
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+
+  // Everything else — network first, no cache
 });

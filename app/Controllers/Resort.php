@@ -106,4 +106,22 @@ class Resort extends BaseController
         notify($userId, "resort", "Resort " . $status, "Your resort is now " . $status . ". " . ($new ? "Visitors are arriving!" : "No visitors while closed — upkeep still applies."), $new ? "fa-solid fa-door-open" : "fa-solid fa-door-closed", "/resort");
         return redirect()->to("/resort")->with("success", "Resort " . $status . "!");
     }
+
+    public function openAll()
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $db->table('player_items')->where('user_id', $userId)->where('status !=', 'broken')->update(['status' => 'open']);
+        log_activity($userId, 'Resort', 'Opened all slopes and lifts', 'fa-solid fa-door-open');
+        return redirect()->to('/resort')->with('success', 'All slopes and lifts opened.');
+    }
+
+    public function closeAll()
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->update(['status' => 'closed']);
+        log_activity($userId, 'Resort', 'Closed all slopes and lifts', 'fa-solid fa-door-closed');
+        return redirect()->to('/resort')->with('success', 'All slopes and lifts closed.');
+    }
 }

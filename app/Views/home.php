@@ -47,7 +47,7 @@
     <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
             <div class="lg:col-span-3">
-                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-clock text-xs"></i> Season 1 is Live - Day 1</div>
+                <div class="badge badge-primary gap-1 mb-4"><i class="fa-solid fa-clock text-xs"></i> Season 1 is Live, Day <?= $gameDay ?></div>
                 <h1 class="text-4xl md:text-6xl font-black leading-[1.05] mb-5">Build the resort<br>everyone talks about.</h1>
                 <p class="text-lg text-base-content/60 mb-8 max-w-lg leading-relaxed">Start with an empty mountain and <?= currency(500000) ?>. Build lifts, hire staff, manage snowmaking, and survive <?= getSeasonLength() ?> days without going bankrupt - hire the wrong staff, skip the snow machines, ignore the government, and you're bankrupt by Day 10.</p>
                 <div class="flex gap-3 flex-wrap mb-6">
@@ -141,6 +141,84 @@
     </div>
 </section>
 
+<!-- Trail Map Preview -->
+<section class="py-12 px-4 bg-base-200">
+    <div class="max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+                <h2 class="text-3xl font-bold mb-3">Real resort maps</h2>
+                <p class="text-base-content/60 mb-4">Build on real trail maps from top ski resorts. Draw slopes, place lifts, and watch your mountain come to life.</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <span class="badge badge-outline">Park City</span>
+                    <span class="badge badge-outline">Deer Valley</span>
+                    <span class="badge badge-outline">Vail</span>
+                    <span class="badge badge-outline">Aspen</span>
+                    <span class="badge badge-outline">Big Sky</span>
+                    <span class="badge badge-outline">Palisades Tahoe</span>
+                    <span class="badge badge-outline">Killington</span>
+                </div>
+                <p class="text-xs text-base-content/40">Maps by <a href="https://skimap.com" target="_blank" class="link">Mapsynergy</a></p>
+            </div>
+            <a href="/register" class="block">
+                <img src="/img/ParkCity_low.jpg" alt="Park City Trail Map" class="rounded-xl shadow-lg w-full hover:scale-[1.02] transition-transform" loading="lazy">
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Season Roadmap -->
+<section class="py-12 px-4 bg-base-100">
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold mb-3">Season Roadmap</h2>
+            <p class="text-base-content/60 max-w-lg mx-auto">Each season unlocks new terrain on Park City Mountain. Compete, build, and expand across the mountain.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card bg-gradient-to-br from-primary/20 to-info/20 border-2 border-primary shadow-md">
+                <div class="card-body p-5 text-center">
+                    <div class="badge badge-primary mb-2">Current</div>
+                    <h3 class="text-xl font-bold mb-1">Season 1</h3>
+                    <p class="text-sm font-semibold text-primary mb-2">Sector 1, Park City</p>
+                    <p class="text-xs text-base-content/60 mb-3">The first sector opens with beginner and intermediate terrain. Build your first lifts, hire staff, and establish your resort. 135 days to prove yourself.</p>
+                    <div class="flex justify-center gap-3 text-xs text-base-content/50">
+                        <span><i class="fa-solid fa-mountain mr-1"></i>Sector 1</span>
+                        <span><i class="fa-solid fa-calendar mr-1"></i>135 days</span>
+                        <span><i class="fa-solid fa-people-group mr-1"></i>All players</span>
+                    </div>
+                    <div class="mt-3">
+                        <progress class="progress progress-primary w-full" value="<?= $gameDay ?>" max="<?= getSeasonLength() ?>"></progress>
+                        <div class="text-xs text-base-content/40 mt-1">Day <?= $gameDay ?>/<?= getSeasonLength() ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-base-200/50 border border-base-300">
+                <div class="card-body p-5 text-center">
+                    <div class="badge badge-ghost mb-2">Coming Soon</div>
+                    <h3 class="text-xl font-bold mb-1">Season 2</h3>
+                    <p class="text-sm font-semibold text-base-content/50 mb-2">Sector 2, Park City</p>
+                    <p class="text-xs text-base-content/60 mb-3">The mountain expands. New advanced terrain unlocks with steeper slopes, longer lifts, and higher-altitude challenges. Your Season 1 progress carries over.</p>
+                    <div class="flex justify-center gap-3 text-xs text-base-content/50">
+                        <span><i class="fa-solid fa-mountain mr-1"></i>Sectors 1–2</span>
+                        <span><i class="fa-solid fa-lock mr-1"></i>After Season 1</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-base-200/50 border border-base-300">
+                <div class="card-body p-5 text-center">
+                    <div class="badge badge-ghost mb-2">Future</div>
+                    <h3 class="text-xl font-bold mb-1">Season 3</h3>
+                    <p class="text-sm font-semibold text-base-content/50 mb-2">Sector 3, Park City</p>
+                    <p class="text-xs text-base-content/60 mb-3">The full mountain opens. Expert terrain, backcountry access, and the ultimate leaderboard showdown. Only the best resort managers survive.</p>
+                    <div class="flex justify-center gap-3 text-xs text-base-content/50">
+                        <span><i class="fa-solid fa-mountain mr-1"></i>Full Mountain</span>
+                        <span><i class="fa-solid fa-lock mr-1"></i>After Season 2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- What makes it different -->
 <section class="py-16 px-4">
     <div class="max-w-5xl mx-auto">
@@ -201,8 +279,13 @@
             </div></div>
             <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
                 <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2"><i class="fa-solid fa-star text-warning text-xl"></i></div>
-                <div class="text-sm font-bold">55 Achievements</div>
+                <div class="text-sm font-bold">Achievements</div>
                 <div class="text-xs text-base-content/50">Unlock features as you grow</div>
+            </div></div>
+            <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4 items-center text-center">
+                <div class="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center mb-2"><i class="fa-solid fa-hotel text-info text-xl"></i></div>
+                <div class="text-sm font-bold">Hotels & Dining</div>
+                <div class="text-xs text-base-content/50">Lodges, restaurants, rentals</div>
             </div></div>
         </div>
     </div>
@@ -223,28 +306,22 @@
 <!-- Social proof -->
 <section class="py-12 px-4 bg-base-100">
     <div class="max-w-3xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div class="card bg-base-200/50 border border-base-300">
-                <div class="card-body">
-                    <i class="fa-solid fa-heart text-error text-2xl mb-2"></i>
-                    <h3 class="font-bold">100% Free</h3>
-                    <p class="text-xs text-base-content/60">No paywalls, no pay-to-win. Earn everything by playing.</p>
-                </div>
-            </div>
-            <div class="card bg-base-200/50 border border-base-300">
-                <div class="card-body">
-                    <i class="fa-solid fa-globe text-info text-2xl mb-2"></i>
-                    <h3 class="font-bold">Instant Play</h3>
-                    <p class="text-xs text-base-content/60">Browser-based. No downloads. Works on any device.</p>
-                </div>
-            </div>
-            <div class="card bg-base-200/50 border border-base-300">
-                <div class="card-body">
-                    <i class="fa-solid fa-code-branch text-success text-2xl mb-2"></i>
-                    <h3 class="font-bold">Open Source</h3>
-                    <p class="text-xs text-base-content/60">Built in the open on <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="link link-primary">GitLab</a>.</p>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4">
+                <i class="fa-solid fa-heart text-error text-2xl mb-2"></i>
+                <h3 class="font-bold">100% Free</h3>
+                <p class="text-xs text-base-content/60">No paywalls, no pay-to-win. Earn everything by playing.</p>
+            </div></div>
+            <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4">
+                <i class="fa-solid fa-globe text-info text-2xl mb-2"></i>
+                <h3 class="font-bold">Instant Play</h3>
+                <p class="text-xs text-base-content/60">Browser-based. No downloads. Works on any device.</p>
+            </div></div>
+            <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4">
+                <i class="fa-solid fa-code-branch text-success text-2xl mb-2"></i>
+                <h3 class="font-bold">Open Source</h3>
+                <p class="text-xs text-base-content/60">Built in the open on <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="link link-primary">GitLab</a>.</p>
+            </div></div>
         </div>
     </div>
 </section>

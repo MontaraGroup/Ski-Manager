@@ -5,8 +5,9 @@
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold">Welcome back, <?= auth()->user()->username ?></h1>
-            <p class="text-base-content/60 mt-1 text-sm">Day <?= $gameDay ?> - here's your resort at a glance.</p>
+            <?php $__hour = (int) date('G'); $__greeting = $__hour < 12 ? 'Good morning' : ($__hour < 17 ? 'Good afternoon' : 'Good evening'); ?>
+            <h1 class="text-2xl md:text-3xl font-bold"><?= $__greeting ?>, <?= auth()->user()->username ?></h1>
+            <p class="text-base-content/60 mt-1 text-sm">Day <?= $gameDay ?> · <?= date('l, F j') ?> · <?= $dailyProfit >= 0 ? 'Profitable today' : 'Losing ' . currency(abs($dailyProfit)) . '/day' ?></p>
         </div>
         <button id="editModeBtn" onclick="toggleEditMode()" class="btn btn-ghost btn-sm gap-1 mt-2 md:mt-0"><i class="fa-solid fa-pen"></i> Edit Layout</button>
     </div>
@@ -195,6 +196,8 @@
                     <a href="/terrain-parks" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-person-snowboarding"></i><?= $sz !== 'small' ? 'Parks' : '' ?></a>
                     <a href="/parking" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-square-parking"></i><?= $sz !== 'small' ? 'Parking' : '' ?></a>
                     <a href="/daily-bonus" class="btn <?= $bonusAvailable ? 'btn-warning' : 'btn-outline' ?> <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-gift"></i><?= $sz !== 'small' ? ($bonusAvailable ? 'Bonus!' : 'Bonus') : '' ?></a>
+                    <a href="/grooming" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-tractor"></i><?= $sz !== 'small' ? 'Groom' : '' ?></a>
+                    <a href="/vote" class="btn btn-outline <?= $sz === 'small' ? 'btn-xs' : 'btn-sm' ?> gap-1"><i class="fa-solid fa-check-to-slot"></i><?= $sz !== 'small' ? 'Vote' : '' ?></a>
                 </div>
             </div>
         <?php endif ?>

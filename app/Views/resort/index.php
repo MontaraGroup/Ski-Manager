@@ -42,9 +42,69 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-primary"><?= $buildingCount ?></div><div class="text-xs text-base-content/50">Buildings</div></div></div>
     </div>
 
+    <!-- Conditions & Revenue -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <?php
+            $__wdb = db_connect();
+            $__w = $__wdb->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
+            $__currentTemp = function_exists('hourlyTemp') && $__w ? hourlyTemp((int)$__w['temp']) : ($__w ? (int)$__w['temp'] : 0);
+            $__snowBase = $__w ? (int)$__w['snow_base'] : 0;
+            $__avgCond = 0; $__condCount = 0;
+            foreach (($sectors ?? []) as $sec) {
+                foreach (array_merge($sec['slopes'] ?? [], $sec['lifts'] ?? []) as $itm) {
+                    $__avgCond += (int)($itm['condition_pct'] ?? 100); $__condCount++;
+                }
+            }
+            $__avgCond = $__condCount > 0 ? round($__avgCond / $__condCount) : 100;
+            $__fin = $__wdb->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
+        ?>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake text-info' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?> text-lg"></i>
+                <div>
+                    <div class="text-lg font-bold"><?= temp($__currentTemp) ?></div>
+                    <div class="text-xs text-base-content/50"><?= $__w['condition_name'] ?? 'Clear' ?></div>
+                </div>
+            </div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-info text-lg"></i>
+                <div>
+                    <div class="text-lg font-bold"><?= snow($__snowBase) ?></div>
+                    <div class="text-xs text-base-content/50">Snow Base</div>
+                </div>
+            </div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-heart-pulse <?= $__avgCond >= 70 ? 'text-success' : ($__avgCond >= 40 ? 'text-warning' : 'text-error') ?> text-lg"></i>
+                <div>
+                    <div class="text-lg font-bold"><?= $__avgCond ?>%</div>
+                    <div class="text-xs text-base-content/50">Avg Condition</div>
+                </div>
+            </div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-wave text-success text-lg"></i>
+                <div>
+                    <div class="text-lg font-bold"><?= currency((int)($__fin['cash'] ?? 0)) ?></div>
+                    <div class="text-xs text-base-content/50">Balance</div>
+                </div>
+            </div>
+        </div></div>
+    </div>
+
     <!-- Sectors -->
     <div class="mb-6">
-        <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-mountain mr-1"></i>Sectors</h2>
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-mountain mr-1"></i>Sectors</h2>
+            <div class="flex gap-1">
+                <form action="/resort/open-all" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-success btn-xs gap-1"><i class="fa-solid fa-door-open"></i> Open All</button></form>
+                <form action="/resort/close-all" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-ghost btn-xs gap-1"><i class="fa-solid fa-door-closed"></i> Close All</button></form>
+            </div>
+        </div>
 
         <?php if (empty($sectors)) : ?>
             <div class="alert alert-info mb-4"><i class="fa-solid fa-info-circle"></i><span>No slopes or lifts built yet. Visit the <a href="/map" class="link font-semibold">Trail Map</a> to start building.</span></div>

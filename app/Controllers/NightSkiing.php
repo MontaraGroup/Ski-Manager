@@ -113,8 +113,15 @@ class NightSkiing extends BaseController
 
         if (!$light) return redirect()->back()->with('error', 'Light not found.');
 
+        $cost = 2000;
+        $db = db_connect();
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int)($finance['cash'] ?? 0) < $cost) return redirect()->back()->with('error', 'Not enough cash for repair.');
+
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cost, false)->update();
         $this->lightModel->update($id, ['condition_pct' => 100, 'status' => 'off']);
-        return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' repaired.');
+        log_activity($userId, 'Night Skiing', 'Repaired ' . $light['light_name'] . ' for ' . currency($cost), 'fa-solid fa-wrench');
+        return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' repaired for ' . currency($cost) . '.');
     }
 
     public function sell(int $id)
@@ -127,5 +134,21 @@ class NightSkiing extends BaseController
         $this->lightModel->delete($id);
         log_activity($userId, 'Night Skiing', 'Removed ' . $light['light_name'], 'fa-solid fa-trash');
         return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' removed.');
+    }
+
+    public function toggleAll()
+    {
+        $userId = auth()->id();
+        $action = $this->request->getPost('action');
+
+        if ($action === 'on') {
+            $this->lightModel->where('user_id', $userId)->where('condition_pct >', 0)->set('status', 'active')->update();
+            log_activity($userId, 'Night Skiing', 'All lights turned on', 'fa-solid fa-power-off');
+            return redirect()->to('/night-skiing')->with('success', 'All working lights turned on.');
+        } else {
+            $this->lightModel->where('user_id', $userId)->set('status', 'off')->update();
+            log_activity($userId, 'Night Skiing', 'All lights turned off', 'fa-solid fa-power-off');
+            return redirect()->to('/night-skiing')->with('success', 'All lights turned off.');
+        }
     }
 }

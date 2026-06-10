@@ -11,6 +11,18 @@
                 <p class="text-sm text-base-content/50">Extend operating hours with lighting systems - more visitors, more revenue</p>
             </div>
         </div>
+        <div class="flex gap-2">
+            <?php if (!empty($lights)) : ?>
+            <form action="/night-skiing/toggle-all" method="post"><?= csrf_field() ?>
+                <input type="hidden" name="action" value="on">
+                <button class="btn btn-warning btn-sm gap-1"><i class="fa-solid fa-power-off"></i> All On</button>
+            </form>
+            <form action="/night-skiing/toggle-all" method="post"><?= csrf_field() ?>
+                <input type="hidden" name="action" value="off">
+                <button class="btn btn-ghost btn-sm gap-1"><i class="fa-solid fa-power-off"></i> All Off</button>
+            </form>
+            <?php endif ?>
+        </div>
     </div>
 
     <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
@@ -20,6 +32,16 @@
     <?php $activeLights = array_filter($lights, fn($l) => $l['status'] === 'active'); ?>
     <div class="card bg-gradient-to-br from-slate-900 to-indigo-900 text-white shadow-xl mb-6">
         <div class="card-body p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <?php $__h = (int) date('G'); $__isNight = $__h >= 17 || $__h < 7; ?>
+                    <i class="fa-solid fa-<?= $__isNight ? 'moon text-amber-300' : 'sun text-amber-400' ?> text-lg"></i>
+                    <span class="text-sm text-white/70"><?= $__isNight ? 'Night skiing is active now (' . date('g:i A') . ')' : 'Night skiing starts at 5:00 PM (' . date('g:i A') . ' now)' ?></span>
+                </div>
+                <?php if ($__isNight && count($activeLights) > 0) : ?>
+                <span class="badge badge-warning badge-sm gap-1 animate-pulse"><i class="fa-solid fa-circle text-[6px]"></i> LIVE</span>
+                <?php endif ?>
+            </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                     <div class="text-3xl font-bold text-amber-300"><?= $totalCoverage ?>%</div>
@@ -74,7 +96,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span class="font-semibold text-sm"><?= esc($light['light_name']) ?></span>
-                                        <span class="badge badge-xs <?= $isOn ? 'badge-warning' : 'badge-ghost' ?>"><?= $isOn ? 'ON' : 'OFF' ?></span>
+                                        <span class="badge badge-xs <?= $cond <= 0 ? 'badge-error' : ($isOn ? 'badge-warning' : 'badge-ghost') ?>"><?= $cond <= 0 ? 'BROKEN' : ($isOn ? 'ON' : 'OFF') ?></span>
                                     </div>
                                     <div class="flex items-center gap-3 text-xs text-base-content/50 mt-1">
                                         <span><i class="fa-solid fa-signal mr-1"></i><?= $light['coverage'] ?>% coverage</span>
@@ -90,11 +112,11 @@
                                         <button class="btn btn-sm <?= $isOn ? 'btn-ghost' : 'btn-warning' ?>"><i class="fa-solid fa-power-off"></i></button>
                                     </form>
                                     <?php if ($cond < 100) : ?>
-                                    <form action="/night-skiing/repair/<?= $light['id'] ?>" method="post"><?= csrf_field() ?>
-                                        <button class="btn btn-sm btn-info"><i class="fa-solid fa-wrench"></i></button>
+                                    <form action="/night-skiing/repair/<?= $light['id'] ?>" method="post" data-confirm="Repair for <?= currency(2000) ?>?"><?= csrf_field() ?>
+                                        <button class="btn btn-sm btn-outline btn-info gap-1"><i class="fa-solid fa-wrench"></i><span class="text-xs"><?= currency(2000) ?></span></button>
                                     </form>
                                     <?php endif ?>
-                                    <form action="/night-skiing/sell/<?= $light['id'] ?>" method="post" onsubmit="return confirm('Remove this light?')"><?= csrf_field() ?>
+                                    <form action="/night-skiing/sell/<?= $light['id'] ?>" method="post" data-confirm="Remove this light?"><?= csrf_field() ?>
                                         <button class="btn btn-sm btn-ghost text-error"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </div>

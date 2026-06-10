@@ -95,7 +95,8 @@ a.link:hover{opacity:0.8}
 <!-- End Google Tag Manager (noscript) -->
 
     <!-- Navbar -->
-    <nav aria-label="Main navigation"><div class="navbar bg-base-100 sticky top-0 shadow-md" style="z-index:9999; position:relative px-4 lg:px-8">
+    <?php $__currentPath = '/' . trim(uri_string(), '/'); ?>
+    <nav aria-label="Main navigation"><div class="navbar bg-base-100 shadow-md" style="z-index:9999; position:sticky; top:0">
         <div class="navbar-start">
             <div class="dropdown">
                 <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
@@ -134,7 +135,8 @@ a.link:hover{opacity:0.8}
                     <li><a href="<?= isFeatureUnlocked('resort_analysis') ? '/resort-analysis' : '/achievements' ?>" class="<?= isFeatureUnlocked('resort_analysis') ? '' : 'opacity-40' ?>"><i class="fa-solid fa-clipboard-check fa-fw mr-2"></i>Analysis</a></li>
                     <li><a href="/vip-guests"><i class="fa-solid fa-star fa-fw mr-2"></i>VIP Guests</a></li>
                     <li><a href="/genepis"><i class="fa-solid fa-seedling fa-fw mr-2"></i>Genepis</a></li>
-                    <li><a href="/daily-bonus"><i class="fa-solid fa-gift fa-fw mr-2"></i>Daily Bonus</a></li>
+                    <li><a href="/daily-bonus"><i class="fa-solid fa-gift fa-fw mr-2"></i>Daily Bonus<?php if (isset($bonusAvailable) && $bonusAvailable) : ?> <span class="badge badge-warning badge-xs">!</span><?php endif ?></a></li>
+                    <li><a href="/vote"><i class="fa-solid fa-check-to-slot fa-fw mr-2"></i>Vote Season 4</a></li>
                     <li><a href="/settings"><i class="fa-solid fa-gear fa-fw mr-2"></i>Settings</a></li>
                 </ul>
             </div>
@@ -142,8 +144,8 @@ a.link:hover{opacity:0.8}
         </div>
         <div class="navbar-center hidden lg:flex">
             <ul class="menu menu-horizontal px-1 gap-1">
-                <li><a href="/"><i class="fa-solid fa-house mr-1"></i>Home</a></li>
-                <li><a href="/dashboard"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li>
+                <li><a href="/" class="<?= $__currentPath === '/' ? 'active' : '' ?>"><i class="fa-solid fa-house mr-1"></i>Home</a></li>
+                <li><a href="/dashboard" class="<?= $__currentPath === '/dashboard' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li>
                 <li>
                     <details>
                         <summary><i class="fa-solid fa-mountain-sun mr-1"></i>Resort</summary>
@@ -202,12 +204,13 @@ a.link:hover{opacity:0.8}
                             <li><a href="/emergency"><i class="fa-solid fa-truck-medical mr-1"></i>Emergency</a></li>
                             <li><a href="<?= isFeatureUnlocked('tournaments') ? '/tournaments' : '/achievements' ?>" class="<?= isFeatureUnlocked('tournaments') ? '' : 'opacity-40' ?>"><i class="fa-solid fa-trophy mr-1"></i>Events</a></li>
                             <li><a href="/achievements"><i class="fa-solid fa-award mr-1"></i>Achievements</a></li>
-                            <li><a href="/daily-bonus"><i class="fa-solid fa-fire mr-1"></i>Daily Bonus</a></li>
+                            <li><a href="/daily-bonus"><i class="fa-solid fa-fire mr-1"></i>Daily Bonus<?php $__bonusRow = db_connect()->table("daily_bonus")->where("user_id", auth()->id())->get()->getRowArray(); $__gd = max(1, (int)((strtotime(date("Y-m-d")) - strtotime(getSeasonStartDate())) / 86400) + 1); if (!$__bonusRow || (int)($__bonusRow["last_claim_day"] ?? 0) < $__gd) : ?> <span class="badge badge-warning badge-xs">!</span><?php endif ?></a></li>
                             <li><a href="/leaderboard"><i class="fa-solid fa-trophy mr-1"></i>Leaderboard</a></li>
                             <li><a href="/activity"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Activity Log</a></li>
                             <li><a href="https://wiki.ski-manager.net" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book mr-1"></i>Wiki</a></li>
                             <li><a href="/genepis"><i class="fa-solid fa-seedling mr-1"></i>Génépis</a></li>
                             <?php if (auth()->loggedIn() && auth()->id() === 1) : ?><li><a href="/admin"><i class="fa-solid fa-shield-halved mr-1 text-error"></i>Admin</a></li><?php endif ?>
+                            <li><a href="/vote"><i class="fa-solid fa-check-to-slot mr-1"></i>Vote Season 4</a></li>
                             <li><a href="/settings"><i class="fa-solid fa-gear mr-1"></i>Settings</a></li>
                         </ul>
                     </details>
@@ -217,15 +220,24 @@ a.link:hover{opacity:0.8}
         <div class="navbar-end gap-2">
             <!-- Search -->
             <?php if (auth()->loggedIn()) : ?>
-            <div class="dropdown dropdown-end">
-                <div tabindex="0" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-search"></i></div>
-                <div tabindex="0" class="dropdown-content mt-2 z-50">
-                    <div class="card bg-base-100 shadow-xl w-72 p-3">
-                        <input type="text" id="globalSearch" placeholder="Search pages... (Ctrl+K)" class="input input-bordered input-sm w-full" autocomplete="off" />
-                        <div id="searchResults" class="mt-2 max-h-64 overflow-y-auto"></div>
+            <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle">
+                <i class="fa-solid fa-search"></i>
+            </button>
+            <dialog id="searchModal" class="modal modal-top">
+                <div class="modal-box max-w-lg mx-auto mt-20 p-0">
+                    <div class="flex items-center gap-2 p-3 border-b border-base-300">
+                        <i class="fa-solid fa-search text-base-content/30"></i>
+                        <input type="text" id="globalSearch" placeholder="Search pages, features, settings..." class="input input-ghost input-sm flex-1 focus:outline-none" autocomplete="off" autofocus />
+                        <kbd class="kbd kbd-xs">Esc</kbd>
+                    </div>
+                    <div id="searchResults" class="max-h-80 overflow-y-auto p-2"></div>
+                    <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/40">
+                        <i class="fa-solid fa-compass text-2xl mb-2"></i>
+                        <p>Type to search pages and features</p>
                     </div>
                 </div>
-            </div>
+                <form method="dialog" class="modal-backdrop"><button>close</button></form>
+            </dialog>
             <?php endif ?>
             <!-- Theme Switcher -->
             <label class="swap swap-rotate btn btn-ghost btn-sm btn-circle">
@@ -281,19 +293,25 @@ a.link:hover{opacity:0.8}
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
             ?>
-            <span title="Your current cash balance" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span title="Current snow base depth" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-snowflake text-info"></i> <?= snow($__snow) ?></span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span title="Resort reputation score" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-warning"></i> <?= $__rep ?> rep</span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span title="Current game day in the season" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span title="Average daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <span id="navVisitors"><?php $__openLifts = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0; $__openSlopes = $__fin ? db_connect()->table("player_items")->where("user_id", auth()->id())->where("item_type", "slope")->where("status", "open")->countAllResults(false) : 0; echo number_format($__openLifts * 80 + $__openSlopes * 40); ?> visitors</span></span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></span>
-            <span class="text-base-content/40 hidden md:inline">|</span>
-            <span class="flex items-center gap-0.5 shrink-0"><?php for ($__i = 1; $__i <= 5; $__i++) : ?><i class="fa-solid fa-star text-xs <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/40" ?>"></i><?php endfor ?></span>
+            <?php
+                $__openLifts = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0;
+                $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
+                $__visitors = $__openLifts * 80 + $__openSlopes * 40;
+                $__currentTemp = function_exists('hourlyTemp') && $__weather ? hourlyTemp((int)$__weather['temp']) : ($__weather ? (int)$__weather['temp'] : 0);
+            ?>
+            <a href="/finances" title="Cash balance" class="flex items-center gap-1 shrink-0 hover:text-success transition-colors"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></a>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <a href="/weather" title="<?= $__weather ? $__weather['condition_name'] : 'Weather' ?>" class="flex items-center gap-1 shrink-0 hover:text-info transition-colors"><i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake text-info' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?>"></i> <?= temp($__currentTemp) ?></a>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <a href="/snowmaking" title="Snow base" class="flex items-center gap-1 shrink-0 hover:text-info transition-colors"><i class="fa-solid fa-layer-group text-info"></i> <?= snow($__snow) ?></a>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <span title="Season progress" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <span title="Daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <span id="navVisitors"><?= number_format($__visitors) ?></span></span>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <a href="/genepis" title="Génépis balance" class="flex items-center gap-1 shrink-0 hover:text-success transition-colors"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></a>
+            <span class="text-base-content/20 hidden md:inline">·</span>
+            <a href="/resort-analysis" title="Resort rating" class="flex items-center gap-0.5 shrink-0"><?php for ($__i = 1; $__i <= 5; $__i++) : ?><i class="fa-solid fa-star text-xs <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/20" ?>"></i><?php endfor ?></a>
         </div>
     </div>
     <?php endif ?>
@@ -301,45 +319,56 @@ a.link:hover{opacity:0.8}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-base-100" role="contentinfo" aria-label="Site footer">
-        <div class="max-w-6xl mx-auto p-10">
-            <div class="flex flex-col md:flex-row justify-between gap-8">
+    <footer class="bg-base-200 border-t border-base-300" role="contentinfo" aria-label="Site footer">
+        <div class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
+                <!-- Brand -->
+                <div class="col-span-2 md:col-span-1">
+                    <a href="/" class="flex items-center gap-2 text-lg font-bold mb-3"><i class="fa-solid fa-person-skiing text-primary"></i>Ski Manager</a>
+                    <p class="text-xs text-base-content/50 mb-4">The most detailed free ski resort management game. Build, manage, and dominate the slopes.</p>
+                    <div class="flex gap-3">
+                        <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="Discord"><i class="fa-brands fa-discord text-lg"></i></a>
+                        <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitLab"><i class="fa-brands fa-gitlab text-lg"></i></a>
+                    </div>
+                </div>
+                <!-- Game -->
                 <div>
-                    <h6 class="text-sm font-semibold uppercase tracking-wider text-base-content/50 mb-3">Game</h6>
+                    <h6 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-3">Game</h6>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="/register" class="link link-hover"><i class="fa-solid fa-play mr-1"></i>Play Now</a></li>
-                        <li><a href="/leaderboard" class="link link-hover"><i class="fa-solid fa-trophy mr-1"></i>Leaderboard</a></li>
-                        <li><a href="/updates" class="link link-hover"><i class="fa-solid fa-newspaper mr-1"></i>Updates</a></li>
-                        <li><a href="https://wiki.ski-manager.net" target="_blank" rel="noopener noreferrer" class="link link-hover"><i class="fa-solid fa-book mr-1"></i>Wiki</a></li>
+                        <li><a href="/register" class="link link-hover text-base-content/60">Play Now</a></li>
+                        <li><a href="/leaderboard" class="link link-hover text-base-content/60">Leaderboard</a></li>
+                        <li><a href="/updates" class="link link-hover text-base-content/60">Updates</a></li>
+                        <li><a href="https://wiki.ski-manager.net" target="_blank" class="link link-hover text-base-content/60">Wiki</a></li>
+                        <li><a href="/genepis" class="link link-hover text-base-content/60">Genepis</a></li>
                     </ul>
                 </div>
+                <!-- Resources -->
                 <div>
-                    <h6 class="text-sm font-semibold uppercase tracking-wider text-base-content/50 mb-3">Support</h6>
+                    <h6 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-3">Resources</h6>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="/contact" class="link link-hover"><i class="fa-solid fa-envelope mr-1"></i>Contact</a></li>
-                        <li><a href="/faq" class="link link-hover"><i class="fa-solid fa-circle-question mr-1"></i>FAQ</a></li>
-                        <li><a href="/bugs" class="link link-hover"><i class="fa-solid fa-bug mr-1"></i>Report a Bug</a></li>
+                        <li><a href="/faq" class="link link-hover text-base-content/60">FAQ</a></li>
+                        <li><a href="/contact" class="link link-hover text-base-content/60">Contact</a></li>
+                        <li><a href="/bugs" class="link link-hover text-base-content/60">Report a Bug</a></li>
+                        <li><a href="/about" class="link link-hover text-base-content/60">About</a></li>
                     </ul>
                 </div>
+                <!-- Legal -->
                 <div>
-                    <h6 class="text-sm font-semibold uppercase tracking-wider text-base-content/50 mb-3">Legal</h6>
+                    <h6 class="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-3">Legal</h6>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="/terms" class="link link-hover"><i class="fa-solid fa-file-contract mr-1"></i>Terms of Service</a></li>
-                        <li><a href="/privacy" class="link link-hover"><i class="fa-solid fa-shield-halved mr-1"></i>Privacy Policy</a></li>
-                        <li><a href="/cookies" class="link link-hover"><i class="fa-solid fa-cookie-bite mr-1"></i>Cookie Policy</a></li>
-                        <li><a href="/disclaimer" class="link link-hover"><i class="fa-solid fa-circle-info mr-1"></i>Disclaimer</a></li>
-                        <li><a href="/sitemap" class="link link-hover"><i class="fa-solid fa-sitemap mr-1"></i>Sitemap</a></li>
+                        <li><a href="/terms" class="link link-hover text-base-content/60">Terms</a></li>
+                        <li><a href="/privacy" class="link link-hover text-base-content/60">Privacy</a></li>
+                        <li><a href="/cookies" class="link link-hover text-base-content/60">Cookies</a></li>
+                        <li><a href="/disclaimer" class="link link-hover text-base-content/60">Disclaimer</a></li>
+                        <li><a href="/sitemap" class="link link-hover text-base-content/60">Sitemap</a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="border-t border-base-300">
-            <div class="flex flex-col md:flex-row items-center justify-between p-4 max-w-6xl mx-auto text-sm text-base-content/60">
-                <p><i class="fa-solid fa-person-skiing mr-1"></i><span class="font-bold">Ski Manager</span> &copy; <?= date('Y') ?> - Build. Manage. Dominate the slopes.</p>
-                <div class="flex gap-4 mt-2 md:mt-0">
-                    <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="link link-hover"><i class="fa-brands fa-discord mr-1"></i>Discord</a>
-                    <a href="https://skimap.com" target="_blank" rel="noopener noreferrer" class="link link-hover"><i class="fa-solid fa-map mr-1"></i>Maps by Mapsynergy</a>
-                </div>
+            <div class="flex flex-col md:flex-row items-center justify-between px-4 py-3 max-w-6xl mx-auto text-xs text-base-content/40">
+                <p>&copy; <?= date('Y') ?> Ski Manager. Built with <i class="fa-solid fa-heart text-error text-[10px]"></i> for ski lovers.</p>
+                <p class="mt-1 md:mt-0">Maps by <a href="https://skimap.com" target="_blank" rel="noopener noreferrer" class="link link-hover">Mapsynergy</a> &middot; v1.1</p>
             </div>
         </div>
     </footer>
@@ -486,6 +515,7 @@ function acceptCookies(level){
     if(saved){acceptCookies(saved);}
     else{document.getElementById('cookieConsent').style.display='block';}
 })();
+</script>
 <?php if (function_exists("featureEnabled") && featureEnabled("tooltips")) : ?>
 <style>[data-tip]{position:relative;cursor:help}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1d232a;color:#a6adbb;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}[data-tip]:hover::before{content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1d232a;z-index:9999}</style>
 <?php endif ?>
