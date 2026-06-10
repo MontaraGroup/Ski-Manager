@@ -598,4 +598,20 @@ class Admin extends BaseController
         $this->auditLog('activate_season', null, 'Season #' . $id);
         return redirect()->to('/admin/seasons')->with('success', 'Season activated.');
     }
+
+    public function enableAllFlags()
+    {
+        if (auth()->id() !== 1) return redirect()->to('/');
+        db_connect()->table('feature_flags')->update(['enabled' => 2]);
+        $this->auditLog('Enabled all feature flags');
+        return redirect()->to('/admin/features')->with('success', 'All features enabled for everyone.');
+    }
+
+    public function disableAllBeta()
+    {
+        if (auth()->id() !== 1) return redirect()->to('/');
+        db_connect()->table('feature_flags')->where('flag_key LIKE', 'beta_%')->update(['enabled' => 0]);
+        $this->auditLog('Disabled all beta features');
+        return redirect()->to('/admin/features')->with('success', 'All beta features disabled.');
+    }
 }

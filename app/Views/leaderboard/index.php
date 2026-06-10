@@ -93,5 +93,16 @@
             </tbody>
         </table>
     </div></div></div>
+    <!-- Vote Promo -->
+    <a href="/vote" class="card bg-gradient-to-r from-primary/10 to-info/10 border border-primary/20 shadow-sm mt-6 hover:shadow-md transition-shadow">
+        <div class="card-body p-4 flex-row items-center gap-3">
+            <i class="fa-solid fa-check-to-slot text-primary text-2xl"></i>
+            <div class="flex-1">
+                <div class="font-bold">Where should we ski next?</div>
+                <div class="text-sm text-base-content/50">Vote for the Season 4 resort. Deer Valley? Vail? Aspen? You decide.</div>
+            </div>
+            <span class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-arrow-right"></i> Vote</span>
+        </div>
+    </a>
 </div>
 <?= $this->endSection() ?>

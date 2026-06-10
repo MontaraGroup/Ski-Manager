@@ -25,6 +25,18 @@
     </div>
     <?php endif ?>
 
+    <!-- Vote Promo -->
+    <a href="/vote" class="card bg-gradient-to-r from-primary/10 to-info/10 border border-primary/20 shadow-sm mb-4 hover:shadow-md transition-shadow">
+        <div class="card-body p-3 flex-row items-center gap-3">
+            <i class="fa-solid fa-check-to-slot text-primary text-xl"></i>
+            <div class="flex-1">
+                <div class="text-sm font-semibold">Vote for Season 4 Resort</div>
+                <div class="text-xs text-base-content/50">Help decide where we ski next. Cast your vote now.</div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-base-content/30"></i>
+        </div>
+    </a>
+
     <!-- Daily Snapshot -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">

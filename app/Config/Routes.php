@@ -22,6 +22,8 @@ $routes->post("/admin/changelogs/save", "Admin::saveChangelog");
 $routes->post("/admin/changelogs/delete/(:num)", "Admin::deleteChangelog/$1");
 $routes->get("/admin/features", "Admin::featureFlags");
 $routes->post("/admin/features/toggle/(:num)", "Admin::toggleFlag/$1");
+$routes->post("/admin/features/enable-all", "Admin::enableAllFlags");
+$routes->post("/admin/features/disable-all-beta", "Admin::disableAllBeta");
 $routes->get("/admin/suspicious", "Admin::suspiciousActivity");
 $routes->get("/admin/seasons", "Admin::seasonPlanner");
 $routes->post("/admin/seasons/create", "Admin::createSeason");
@@ -69,6 +71,7 @@ $routes->get('/genepis', 'Genepis::index');
 $routes->get('/government', 'Government::index');
 $routes->get('/grooming', 'Grooming::index');
 $routes->get('/hotels', 'Buildings::show/hotel');
+$routes->get("/compliance", "Compliance::index");
 $routes->get('/insurance', 'Insurance::index');
 $routes->get('/leaderboard', 'Leaderboard::index');
 $routes->get('/map', 'ResortMap::index');
@@ -222,3 +225,10 @@ $routes->post('/staff/auto-assign', 'Staff::autoAssign');
 $routes->post('/staff/clear-assignments', 'Staff::clearAssignments');
 $routes->post('/achievements/claim-all', 'Achievements::claimAll');
 $routes->post('/settings/difficulty', 'Settings::difficulty');
+
+// Support chat
+$routes->get('/support', 'Support::index');
+$routes->post('/support/send', 'Support::send');
+$routes->get('/admin/support', 'Support::adminIndex');
+$routes->get('/admin/support/(:num)', 'Support::adminView/$1');
+$routes->post('/admin/support/(:num)/reply', 'Support::adminReply/$1');

@@ -39,8 +39,18 @@ class Tournaments extends BaseController
         ];
 
         return view('tournaments/index', [
-            'tournaments' => $tournaments,
-            'events' => $events,
+            'tournaments' => array_map(function($t) use ($gameDay) {
+                $start = (int)($t['start_day'] ?? 0);
+                $end = (int)($t['end_day'] ?? 0);
+                if ($gameDay > $end) $t['status'] = 'ended';
+                elseif ($gameDay >= $start) $t['status'] = 'active';
+                else $t['status'] = 'upcoming';
+                return $t;
+            }, $tournaments),
+            'events' => array_map(function($e) use ($gameDay) {
+                $e['active'] = $gameDay >= (int)$e['game_day'] && $gameDay < (int)$e['game_day'] + (int)$e['duration_days'] ? 1 : 0;
+                return $e;
+            }, $events),
             'gameDay' => $gameDay,
             'tournamentTypes' => $tournamentTypes,
         ]);

@@ -219,6 +219,22 @@
     </div>
 </section>
 
+<!-- Vote CTA -->
+<?php if (auth()->loggedIn()) : ?>
+<section class="py-8 px-4 bg-gradient-to-r from-primary/10 to-info/10">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <i class="fa-solid fa-check-to-slot text-primary text-3xl"></i>
+            <div>
+                <h3 class="font-bold text-lg">Vote for Season 4</h3>
+                <p class="text-sm text-base-content/60">After Park City, where do we go? Help choose the next resort.</p>
+            </div>
+        </div>
+        <a href="/vote" class="btn btn-primary gap-1"><i class="fa-solid fa-arrow-right"></i> Cast Your Vote</a>
+    </div>
+</section>
+<?php endif ?>
+
 <!-- What makes it different -->
 <section class="py-16 px-4">
     <div class="max-w-5xl mx-auto">

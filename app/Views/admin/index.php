@@ -1,5 +1,14 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Admin Panel<?= $this->endSection() ?>
+<?= $this->section('title') ?>Admin Panel<script>
+function filterPlayers(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(function(row) {
+        var name = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+        row.style.display = !q || name.includes(q) ? '' : 'none';
+    });
+}
+</script>
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-6xl mx-auto p-4 lg:p-8 pb-12">
     <div class="mb-6">
@@ -19,6 +28,7 @@
             <a href="/admin/features" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-toggle-on"></i>Flags</a>
             <a href="/admin/suspicious" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-triangle-exclamation"></i>Suspicious</a>
             <a href="/admin/seasons" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-calendar-plus"></i>Seasons</a>
+            <a href="/admin/support" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-headset"></i>Support<?php $__unreadSupport = db_connect()->table("support_messages")->where("sender", "player")->where("is_read", 0)->countAllResults(); if ($__unreadSupport > 0) : ?> <span class="badge badge-error badge-xs"><?= $__unreadSupport ?></span><?php endif ?></a>
             <form action="/admin/trigger-tick" method="post" class="inline" onsubmit="return confirm('Run game tick now?')"><?= csrf_field() ?><button class="btn btn-error btn-sm gap-1"><i class="fa-solid fa-play"></i>Run Tick</button></form>
         </div>
     </div>
@@ -60,7 +70,11 @@
             <input type="text" id="playerSearch" class="input input-sm input-bordered w-full mb-3" placeholder="Search players...">
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-0"><div class="overflow-x-auto">
                 <table class="table table-sm">
-                    <thead><tr><th>ID</th><th>Username</th><th>Cash</th><th>Staff</th><th>Buildings</th><th>Items</th><th>Joined</th><th>Last Active</th><th>Actions</th></tr></thead>
+                    <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold"><i class="fa-solid fa-users mr-1"></i>Players <span class="badge badge-ghost badge-sm"><?= count($users) ?></span></h2>
+                <input type="text" id="playerSearch" placeholder="Search players..." class="input input-bordered input-xs w-48" oninput="filterPlayers(this.value)">
+            </div>
+            <thead><tr><th>ID</th><th>Username</th><th>Cash</th><th>Staff</th><th>Buildings</th><th>Items</th><th>Joined</th><th>Last Active</th><th>Actions</th></tr></thead>
                     <tbody>
                     <?php foreach ($users as $u) : ?>
                         <tr class="<?= isset($u['active']) && !$u['active'] ? 'opacity-40' : '' ?>">
@@ -70,7 +84,7 @@
                             <td><?= $u['staff_count'] ?></td>
                             <td><?= $u['building_count'] ?></td>
                             <td><?= $u['item_count'] ?></td>
-                            <td class="text-xs text-base-content/50"><?= date('M j', strtotime($u['created_at'])) ?></td>
+                            <td class="text-xs <?= isset($u['last_active']) && $u['last_active'] && strtotime($u['last_active']) > strtotime('-15 minutes') ? 'font-semibold' : '' ?> text-base-content/50"><?= date('M j', strtotime($u['created_at'])) ?></td>
                             <td class="text-xs <?= isset($u['last_active']) && $u['last_active'] && strtotime($u['last_active']) > strtotime('-1 hour') ? 'text-success font-semibold' : 'text-base-content/50' ?>"><?= isset($u['last_active']) && $u['last_active'] ? date('M j, g:ia', strtotime($u['last_active'])) : 'Never' ?></td>
                             <td class="flex gap-1">
                                 <a href="/admin/user/<?= $u['id'] ?>" class="btn btn-ghost btn-xs" aria-label="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
@@ -167,6 +181,15 @@
         </div></div>
 
     </div>
+<script>
+function filterPlayers(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('table tbody tr').forEach(function(row) {
+        var name = row.children[1] ? row.children[1].textContent.toLowerCase() : '';
+        row.style.display = !q || name.includes(q) ? '' : 'none';
+    });
+}
+</script>
 <?= $this->endSection() ?>
 <script data-cfasync="false">
 document.getElementById('playerSearch').addEventListener('input',function(){
