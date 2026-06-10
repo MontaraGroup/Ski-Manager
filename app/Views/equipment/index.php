@@ -133,6 +133,7 @@
                             <i class="fa-solid fa-cart-plus"></i> <?= $canBuy ? 'Add to Fleet' : 'Not enough' ?>
                         </button>
                     </form>
+
                 </div>
             </div>
         </div>
@@ -180,6 +181,7 @@
                             <i class="fa-solid fa-cart-plus"></i> <?= $canBuy ? 'Add to Fleet' : 'Not enough' ?>
                         </button>
                     </form>
+
                 </div>
             </div>
         </div>
@@ -219,4 +221,37 @@
         </div></a>
     </div>
 </div>
+<!-- Compare Bar -->
+<div id="compareBar" class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 shadow-xl p-3 z-50" style="display:none">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-primary"></i>
+            <span class="text-sm font-semibold">Compare: <span id="compareCount">0</span> selected</span>
+            <div id="compareNames" class="flex gap-1"></div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="clearCompare()" class="btn btn-ghost btn-sm">Clear</button>
+            <button onclick="showCompare()" class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-table-columns"></i> Compare</button>
+        </div>
+    </div>
+</div>
+
+<!-- Compare Modal -->
+<dialog id="compareModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box max-w-4xl w-full">
+        <h3 class="font-bold text-lg mb-4"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>Equipment Comparison</h3>
+        <div class="overflow-x-auto">
+            <table class="table table-sm" id="compareTable">
+                <thead><tr><th>Spec</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn btn-sm">Close</button></form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+
 <?= $this->endSection() ?>
