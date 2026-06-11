@@ -43,10 +43,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
-    <link rel="preload" href="/css/style.css?v=1780692626" as="style">
+    <link rel="preload" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" as="style">
     <?php if (auth()->loggedIn()) : ?><link rel="prefetch" href="/img/<?= (db_connect()->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray()["resort_map"] ?? "ParkCity") ?>_low.jpg" as="image"><?php endif ?>
     <?php if (auth()->loggedIn()) : ?><link rel="prefetch" href="/img/<?= (db_connect()->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray()["resort_map"] ?? "ParkCity") ?>_med.jpg" as="image"><?php endif ?>
-    <link rel="stylesheet" href="/css/style.css?v=1780692626" fetchpriority="high">
+    <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
