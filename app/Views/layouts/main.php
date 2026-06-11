@@ -103,49 +103,96 @@ a.link:hover{opacity:0.8}
 
     <!-- Navbar -->
     <?php $__currentPath = '/' . trim(uri_string(), '/'); ?>
+    <!-- Navbar -->
+    <?php
+        $__currentPath = '/' . trim(uri_string(), '/');
+        $__isAdmin = auth()->loggedIn() && auth()->id() === 1;
+
+        $__bonusDue = false;
+        if (auth()->loggedIn()) {
+            $__br = db_connect()->table('daily_bonus')->where('user_id', auth()->id())->get()->getRowArray();
+            $__bonusDue = !$__br || (($__br['last_claim_date'] ?? null) < date('Y-m-d'));
+        }
+
+        $__nav = [
+            'Resort' => ['icon' => 'fa-mountain-sun', 'items' => [
+                ['url' => '/resort',        'label' => 'Overview',      'icon' => 'fa-mountain-sun'],
+                ['url' => '/map',           'label' => 'Trail Map',     'icon' => 'fa-map'],
+                ['url' => '/grooming',      'label' => 'Grooming',      'icon' => 'fa-tractor',          'feature' => 'grooming'],
+                ['url' => '/snowmaking',    'label' => 'Snowmaking',    'icon' => 'fa-snowflake',        'feature' => 'snowmaking'],
+                ['url' => '/night-skiing',  'label' => 'Night Skiing',  'icon' => 'fa-moon',             'feature' => 'night_skiing'],
+                ['url' => '/scenic-lifts',  'label' => 'Scenic Lifts',  'icon' => 'fa-camera',           'feature' => 'scenic_lifts'],
+                ['url' => '/terrain-parks', 'label' => 'Terrain Parks', 'icon' => 'fa-person-snowboarding', 'feature' => 'terrain_parks'],
+                ['url' => '/parking',       'label' => 'Parking',       'icon' => 'fa-square-parking',    'feature' => 'parking'],
+                ['url' => '/resort-analysis','label' => 'Analysis',     'icon' => 'fa-clipboard-check',   'feature' => 'resort_analysis'],
+                ['url' => '/energy',        'label' => 'Energy',        'icon' => 'fa-bolt',             'hide' => 'energy'],
+                ['url' => '/water',         'label' => 'Water',         'icon' => 'fa-droplet',          'hide' => 'water'],
+            ]],
+            'Buildings' => ['icon' => 'fa-building', 'items' => [
+                ['url' => '/hotels',        'label' => 'Hotels',        'icon' => 'fa-hotel'],
+                ['url' => '/restaurants',   'label' => 'Restaurants',   'icon' => 'fa-utensils'],
+                ['url' => '/rentals',       'label' => 'Ski Rentals',   'icon' => 'fa-person-skiing'],
+                ['url' => '/retail',        'label' => 'Retail',        'icon' => 'fa-store',            'feature' => 'retail'],
+                ['url' => '/real-estate',   'label' => 'Real Estate',   'icon' => 'fa-city'],
+                ['url' => '/transportation','label' => 'Transportation','icon' => 'fa-bus',              'feature' => 'transportation'],
+                ['url' => '/off-season',    'label' => 'Off-Season',    'icon' => 'fa-sun',              'feature' => 'off_season'],
+                ['url' => '/ski-patrol',    'label' => 'Ski Patrol',    'icon' => 'fa-shield-halved'],
+            ]],
+            'Operations' => ['icon' => 'fa-coins', 'items' => [
+                ['url' => '/finances',      'label' => 'Finances',      'icon' => 'fa-coins'],
+                ['url' => '/bank',          'label' => 'Bank',          'icon' => 'fa-building-columns'],
+                ['url' => '/tickets',       'label' => 'Lift Tickets',  'icon' => 'fa-ticket'],
+                ['url' => '/staff',         'label' => 'Staff',         'icon' => 'fa-users'],
+                ['url' => '/marketing',     'label' => 'Marketing',     'icon' => 'fa-bullhorn',         'feature' => 'marketing'],
+                ['url' => '/ski-lessons',   'label' => 'Ski School',    'icon' => 'fa-chalkboard-user'],
+                ['url' => '/compliance',    'label' => 'Compliance',    'icon' => 'fa-scale-balanced'],
+                ['url' => '/equipment',     'label' => 'Equipment Shop','icon' => 'fa-shop'],
+            ]],
+            'More' => ['icon' => 'fa-star', 'items' => [
+                ['url' => '/weather',       'label' => 'Weather',       'icon' => 'fa-cloud-sun'],
+                ['url' => '/emergency',     'label' => 'Emergency',     'icon' => 'fa-truck-medical'],
+                ['url' => '/tournaments',   'label' => 'Events',        'icon' => 'fa-trophy',           'feature' => 'tournaments'],
+                ['url' => '/vip-guests',    'label' => 'VIP Guests',    'icon' => 'fa-star'],
+                ['url' => '/achievements',  'label' => 'Achievements',  'icon' => 'fa-award'],
+                ['url' => '/leaderboard',   'label' => 'Leaderboard',   'icon' => 'fa-ranking-star'],
+                ['url' => '/daily-bonus',   'label' => 'Daily Bonus',   'icon' => 'fa-fire',             'badge' => 'bonus'],
+                ['url' => '/genepis',       'label' => 'Génépis',       'icon' => 'fa-seedling'],
+                ['url' => '/activity',      'label' => 'Activity Log',  'icon' => 'fa-clock-rotate-left'],
+                ['url' => '/vote',          'label' => 'Vote Season 4', 'icon' => 'fa-check-to-slot'],
+                ['url' => 'https://wiki.ski-manager.net', 'label' => 'Wiki', 'icon' => 'fa-book', 'ext' => true],
+                ['url' => '/support',       'label' => 'Support',       'icon' => 'fa-headset'],
+                ['url' => '/settings',      'label' => 'Settings',      'icon' => 'fa-gear'],
+            ]],
+        ];
+
+        $__navItem = function (array $it) use ($__isAdmin, $__bonusDue) {
+            if (!empty($it['hide']) && function_exists('isPageHidden') && isPageHidden($it['hide'])) return '';
+            $locked = false;
+            $href = $it['url'];
+            if (!empty($it['feature'])) {
+                $unlocked = $__isAdmin || isFeatureUnlocked($it['feature']);
+                if (!$unlocked) { $locked = true; $href = '/achievements'; }
+            }
+            $ext = !empty($it['ext']);
+            $cls = $locked ? 'opacity-40' : '';
+            $badge = (!empty($it['badge']) && $it['badge'] === 'bonus' && $__bonusDue)
+                ? ' <span class="badge badge-warning badge-xs">!</span>' : '';
+            $target = $ext ? ' target="_blank" rel="noopener noreferrer"' : '';
+            return '<li><a href="' . esc($href, 'attr') . '"' . $target . ' class="' . $cls . '">'
+                . '<i class="fa-solid ' . esc($it['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($it['label']) . $badge . '</a></li>';
+        };
+    ?>
     <nav aria-label="Main navigation"><div class="navbar bg-base-100 shadow-md" style="z-index:9999; position:sticky; top:0">
         <div class="navbar-start">
             <div class="dropdown">
-                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-                    <i class="fa-solid fa-bars text-lg"></i>
-                </div>
+                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden"><i class="fa-solid fa-bars text-lg"></i></div>
                 <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-64 p-2 shadow max-h-[80vh] overflow-y-auto">
-                    <li class="menu-title text-xs">Game</li>
                     <li><a href="/dashboard"><i class="fa-solid fa-gauge-high fa-fw mr-2"></i>Dashboard</a></li>
-                    <li><a href="/resort"><i class="fa-solid fa-mountain-sun fa-fw mr-2"></i>Resort</a></li>
-                    <li><a href="/map"><i class="fa-solid fa-map fa-fw mr-2"></i>Trail Map</a></li>
-                    <li><a href="/weather"><i class="fa-solid fa-cloud-sun fa-fw mr-2"></i>Weather</a></li>
-                    <li class="menu-title text-xs mt-2">Operations</li>
-                    <li><a href="/staff"><i class="fa-solid fa-users fa-fw mr-2"></i>Staff</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('grooming')) ? '/grooming' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('grooming')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-tractor fa-fw mr-2"></i>Grooming</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('snowmaking')) ? '/snowmaking' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('snowmaking')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-snowflake fa-fw mr-2"></i>Snowmaking</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('night_skiing')) ? '/night-skiing' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('night_skiing')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-moon fa-fw mr-2"></i>Night Skiing</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('terrain_parks')) ? '/terrain-parks' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('terrain_parks')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-person-snowboarding fa-fw mr-2"></i>Terrain Parks</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('parking')) ? '/parking' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('parking')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-square-parking fa-fw mr-2"></i>Parking</a></li>
-                    <?php if (!isPageHidden('energy')) : ?><li><a href="/energy"><i class="fa-solid fa-bolt fa-fw mr-2"></i>Energy</a></li><?php endif ?>
-                    <?php if (!isPageHidden('water')) : ?><li><a href="/water"><i class="fa-solid fa-droplet fa-fw mr-2"></i>Water</a></li><?php endif ?>
-                    <li class="menu-title text-xs mt-2">Buildings</li>
-                    <li><a href="/hotels"><i class="fa-solid fa-hotel fa-fw mr-2"></i>Hotels</a></li>
-                    <li><a href="/restaurants"><i class="fa-solid fa-utensils fa-fw mr-2"></i>Restaurants</a></li>
-                    <li><a href="/rentals"><i class="fa-solid fa-ski-boot fa-fw mr-2"></i>Rentals</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('retail')) ? '/retail' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('retail')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-shop fa-fw mr-2"></i>Retail</a></li>
-                    <li class="menu-title text-xs mt-2">Business</li>
-                    <li><a href="/finances"><i class="fa-solid fa-coins fa-fw mr-2"></i>Finances</a></li>
-                    <li><a href="/bank"><i class="fa-solid fa-landmark fa-fw mr-2"></i>Bank</a></li>
-                    <li><a href="/tickets"><i class="fa-solid fa-ticket fa-fw mr-2"></i>Tickets</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('marketing')) ? '/marketing' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('marketing')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-bullhorn fa-fw mr-2"></i>Marketing</a></li>
-                    <?php if (!isPageHidden('insurance')) : ?><li><a href="/insurance"><i class="fa-solid fa-shield-halved fa-fw mr-2"></i>Insurance</a></li><?php endif ?>
-                    <li><a href="/equipment"><i class="fa-solid fa-toolbox fa-fw mr-2"></i>Equipment</a></li>
-                    <li class="menu-title text-xs mt-2">More</li>
-                    <li><a href="/achievements"><i class="fa-solid fa-trophy fa-fw mr-2"></i>Achievements</a></li>
-                    <li><a href="/leaderboard"><i class="fa-solid fa-ranking-star fa-fw mr-2"></i>Leaderboard</a></li>
-                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('resort_analysis')) ? '/resort-analysis' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('resort_analysis')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-clipboard-check fa-fw mr-2"></i>Analysis</a></li>
-                    <li><a href="/vip-guests"><i class="fa-solid fa-star fa-fw mr-2"></i>VIP Guests</a></li>
-                    <li><a href="/genepis"><i class="fa-solid fa-seedling fa-fw mr-2"></i>Genepis</a></li>
-                    <li><a href="/daily-bonus"><i class="fa-solid fa-gift fa-fw mr-2"></i>Daily Bonus<?php if (isset($bonusAvailable) && $bonusAvailable) : ?> <span class="badge badge-warning badge-xs">!</span><?php endif ?></a></li>
-                    <li><a href="/vote"><i class="fa-solid fa-check-to-slot fa-fw mr-2"></i>Vote Season 4</a></li>
-                    <li><a href="/support"><i class="fa-solid fa-headset fa-fw mr-2"></i>Support</a></li>
-                    <li><a href="/settings"><i class="fa-solid fa-gear fa-fw mr-2"></i>Settings</a></li>
+                    <?php foreach ($__nav as $__secName => $__sec) : ?>
+                        <li class="menu-title text-xs mt-1"><?= esc($__secName) ?></li>
+                        <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
+                    <?php endforeach ?>
+                    <?php if ($__isAdmin) : ?><li class="menu-title text-xs mt-1">Admin</li><li><a href="/admin"><i class="fa-solid fa-shield-halved fa-fw mr-2 text-error"></i>Admin Panel</a></li><?php endif ?>
                 </ul>
             </div>
             <a href="/" class="btn btn-ghost text-xl font-bold"><i class="fa-solid fa-person-skiing mr-2"></i>Ski Manager</a>
@@ -154,82 +201,22 @@ a.link:hover{opacity:0.8}
             <ul class="menu menu-horizontal px-1 gap-1">
                 <li><a href="/" class="<?= $__currentPath === '/' ? 'active' : '' ?>"><i class="fa-solid fa-house mr-1"></i>Home</a></li>
                 <li><a href="/dashboard" class="<?= $__currentPath === '/dashboard' ? 'active' : '' ?>"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li>
+                <?php foreach ($__nav as $__secName => $__sec) : ?>
                 <li>
                     <details>
-                        <summary><i class="fa-solid fa-mountain-sun mr-1"></i>Resort</summary>
-                        <ul class="bg-base-100 rounded-box shadow w-52 z-50">
-                            <li><a href="/resort"><i class="fa-solid fa-mountain-sun mr-1"></i>Overview</a></li>
-                            <li><a href="/map"><i class="fa-solid fa-map mr-1"></i>Trail Map</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('grooming')) ? '/grooming' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('grooming')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-tractor fa-fw mr-2"></i>Grooming</a></li>
-                                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('terrain_parks')) ? '/terrain-parks' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('terrain_parks')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-mountain-sun fa-fw mr-2"></i> Terrain Parks</a></li>
-                                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('parking')) ? '/parking' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('parking')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-square-parking fa-fw mr-2"></i> Parking</a></li>
-                                    <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('resort_analysis')) ? '/resort-analysis' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('resort_analysis')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-clipboard-check fa-fw mr-2"></i> Analysis</a></li>
-                                    <?php if (!isPageHidden('energy')) : ?><li><a href="/energy"><i class="fa-solid fa-bolt fa-fw mr-2"></i> Energy</a></li><?php endif ?>
-                                    <?php if (!isPageHidden('water')) : ?><li><a href="/water"><i class="fa-solid fa-droplet fa-fw mr-2"></i> Water</a></li><?php endif ?>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('snowmaking')) ? '/snowmaking' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('snowmaking')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-snowflake mr-1"></i>Snowmaking</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('night_skiing')) ? '/night-skiing' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('night_skiing')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-moon mr-1"></i>Night Skiing</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('scenic_lifts')) ? '/scenic-lifts' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('scenic_lifts')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-camera mr-1"></i>Scenic Lifts</a></li>
+                        <summary><i class="fa-solid <?= esc($__sec['icon'], 'attr') ?> mr-1"></i><?= esc($__secName) ?></summary>
+                        <ul class="bg-base-100 rounded-box shadow w-56 z-50">
+                            <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
                         </ul>
                     </details>
                 </li>
-                <li>
-                    <details>
-                        <summary><i class="fa-solid fa-building mr-1"></i>Buildings</summary>
-                        <ul class="bg-base-100 rounded-box shadow w-52 z-50">
-                            <li><a href="/hotels"><i class="fa-solid fa-hotel mr-1"></i>Hotels</a></li>
-                            <li><a href="/restaurants"><i class="fa-solid fa-utensils mr-1"></i>Restaurants</a></li>
-                            <li><a href="/rentals"><i class="fa-solid fa-bag-shopping mr-1"></i>Ski Rentals</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('retail')) ? '/retail' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('retail')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-store mr-1"></i>Retail</a></li>
-                            <li><a href="/real-estate"><i class="fa-solid fa-city mr-1"></i>Real Estate</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('transportation')) ? '/transportation' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('transportation')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-bus mr-1"></i>Transportation</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('off_season')) ? '/off-season' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('off_season')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-sun mr-1"></i>Off-Season</a></li>
-                            <li><a href="/ski-patrol"><i class="fa-solid fa-shield-halved mr-1"></i>Ski Patrol</a></li>
-                        </ul>
-                    </details>
-                </li>
-                <li>
-                    <details>
-                        <summary><i class="fa-solid fa-coins mr-1"></i>Operations</summary>
-                        <ul class="bg-base-100 rounded-box shadow w-52 z-50">
-                            <li><a href="/finances"><i class="fa-solid fa-coins mr-1"></i>Finances</a></li>
-                            <li><a href="/bank"><i class="fa-solid fa-building-columns mr-1"></i>Bank</a></li>
-                            <li><a href="/tickets"><i class="fa-solid fa-ticket mr-1"></i>Lift Tickets</a></li>
-                            <li><a href="/staff"><i class="fa-solid fa-users mr-1"></i>Staff</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('marketing')) ? '/marketing' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('marketing')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-bullhorn mr-1"></i>Marketing</a></li>
-                            <li><a href="/ski-lessons"><i class="fa-solid fa-chalkboard-user mr-1"></i>Ski School</a></li>
-                            <li><a href="/compliance"><i class="fa-solid fa-scale-balanced mr-1"></i>Compliance</a></li>
-                            <li><a href="/equipment"><i class="fa-solid fa-shop mr-1"></i>Equipment Shop</a></li>
-                        </ul>
-                    </details>
-                </li>
-                <li>
-                    <details>
-                        <summary><i class="fa-solid fa-star mr-1"></i>More</summary>
-                        <ul class="bg-base-100 rounded-box shadow w-52 z-50">
-                            <li><a href="/weather"><i class="fa-solid fa-cloud-sun mr-1"></i>Weather</a></li>
-                            <li><a href="/emergency"><i class="fa-solid fa-truck-medical mr-1"></i>Emergency</a></li>
-                            <li><a href="<?= (auth()->id() === 1 || isFeatureUnlocked('tournaments')) ? '/tournaments' : '/achievements' ?>" class="<?= (auth()->id() === 1 || isFeatureUnlocked('tournaments')) ? '' : 'opacity-40' ?>"><i class="fa-solid fa-trophy mr-1"></i>Events</a></li>
-                            <li><a href="/achievements"><i class="fa-solid fa-award mr-1"></i>Achievements</a></li>
-                            <li><a href="/daily-bonus"><i class="fa-solid fa-fire mr-1"></i>Daily Bonus<?php $__bonusRow = db_connect()->table("daily_bonus")->where("user_id", auth()->id())->get()->getRowArray(); $__gd = max(1, (int)((strtotime(date("Y-m-d")) - strtotime(getSeasonStartDate())) / 86400) + 1); if (!$__bonusRow || (int)($__bonusRow["last_claim_day"] ?? 0) < $__gd) : ?> <span class="badge badge-warning badge-xs">!</span><?php endif ?></a></li>
-                            <li><a href="/leaderboard"><i class="fa-solid fa-trophy mr-1"></i>Leaderboard</a></li>
-                            <li><a href="/activity"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Activity Log</a></li>
-                            <li><a href="https://wiki.ski-manager.net" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book mr-1"></i>Wiki</a></li>
-                            <li><a href="/genepis"><i class="fa-solid fa-seedling mr-1"></i>Génépis</a></li>
-                            <?php if (auth()->loggedIn() && auth()->id() === 1) : ?><li><a href="/admin"><i class="fa-solid fa-shield-halved mr-1 text-error"></i>Admin</a></li><?php endif ?>
-                            <li><a href="/vote"><i class="fa-solid fa-check-to-slot mr-1"></i>Vote Season 4</a></li>
-                            <li><a href="/support"><i class="fa-solid fa-headset mr-1"></i>Support</a></li>
-                            <li><a href="/settings"><i class="fa-solid fa-gear mr-1"></i>Settings</a></li>
-                        </ul>
-                    </details>
-                </li>
+                <?php endforeach ?>
+                <?php if ($__isAdmin) : ?><li><a href="/admin" class="text-error"><i class="fa-solid fa-shield-halved mr-1"></i>Admin</a></li><?php endif ?>
             </ul>
         </div>
         <div class="navbar-end gap-2">
-            <!-- Search -->
             <?php if (auth()->loggedIn()) : ?>
-            <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle">
-                <i class="fa-solid fa-search"></i>
-            </button>
+            <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-search"></i></button>
             <dialog id="searchModal" class="modal modal-top">
                 <div class="modal-box max-w-lg mx-auto mt-20 p-0">
                     <div class="flex items-center gap-2 p-3 border-b border-base-300">
@@ -246,7 +233,6 @@ a.link:hover{opacity:0.8}
                 <form method="dialog" class="modal-backdrop"><button>close</button></form>
             </dialog>
             <?php endif ?>
-            <!-- Theme Switcher -->
             <label class="swap swap-rotate btn btn-ghost btn-sm btn-circle">
                 <input type="checkbox" id="themeToggle" value="winter" class="theme-controller" />
                 <svg class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>

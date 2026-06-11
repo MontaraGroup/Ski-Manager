@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-2 hidden lg:block">
+            <div class="lg:col-span-2">
                 <div class="card bg-base-100 shadow-xl">
                     <div class="card-body p-5">
                         <div class="flex items-center gap-2 mb-3">
@@ -90,12 +90,6 @@
         </div>
     </div>
 </div>
-
-<section class="py-4 bg-warning text-warning-content">
-    <div class="max-w-5xl mx-auto px-4 text-center text-sm font-semibold">
-        <i class="fa-solid fa-clock mr-1"></i> Season <?= getSeasonNumber() ?> is live - Day <?= getSeasonDay() ?>/<?= getSeasonLength() ?>. The mountain won't wait for you.
-    </div>
-</section>
 
 <section class="py-12 px-4 bg-base-100">
     <div class="max-w-5xl mx-auto">
