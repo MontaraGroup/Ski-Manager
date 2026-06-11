@@ -64,7 +64,7 @@
                                 <div class="text-xs text-base-content/50"><?= ucwords(str_replace('_', ' ', $lift['subtype'] ?? '')) ?> · <?= distance((int)$lift['length_meters']) ?> · Sector <?= $lift['sector'] ?></div>
                             </div>
                         </div>
-                        <form action="/scenic-lifts/remove/<?= $lift['id'] ?>" method="post" onsubmit="return confirm('Remove scenic status?')"><?= csrf_field() ?>
+                        <form action="/scenic-lifts/remove/<?= $lift['id'] ?>" method="post" data-confirm="Remove scenic designation from this lift?"><?= csrf_field() ?>
                             <button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-xmark"></i></button>
                         </form>
                     </div>
@@ -130,20 +130,34 @@
 
     <!-- Upgrade Ideas -->
     <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-sparkles mr-1 text-warning"></i> Available Upgrades</h2>
-    <p class="text-sm text-base-content/60 mb-3">Coming soon - enhance your scenic lifts with premium experiences.</p>
+    <p class="text-sm text-base-content/60 mb-3">Enhance your scenic lifts with premium experiences to boost revenue.</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <?php foreach ($upgrades as $key => $up) : ?>
-        <div class="card bg-base-200/50 border border-base-300 opacity-60"><div class="card-body p-3">
+        <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3">
             <div class="flex items-center gap-2 mb-2">
                 <i class="<?= $up['icon'] ?> text-warning"></i>
                 <span class="font-semibold text-sm"><?= $up['name'] ?></span>
             </div>
             <p class="text-xs text-base-content/60"><?= $up['desc'] ?></p>
             <div class="text-xs mt-2"><span class="text-base-content/50">Cost:</span> <?= currency($up['cost']) ?> · <span class="text-success">+<?= currency($up['revenue_boost']) ?>/day</span></div>
-            <button class="btn btn-ghost btn-xs w-full mt-2" disabled>Coming Soon</button>
+            <?php if (!empty($scenicLifts)) : ?>
+            <form action="/scenic-lifts/upgrade" method="post" data-confirm="Buy <?= $up['name'] ?> for <?= currency($up['cost']) ?>?"><?= csrf_field() ?>
+                <input type="hidden" name="upgrade" value="<?= $key ?>">
+                <button class="btn btn-warning btn-xs w-full mt-2 gap-1"><i class="fa-solid fa-arrow-up"></i>Buy <?= currency($up['cost']) ?></button>
+            </form>
+            <?php else : ?>
+            <button class="btn btn-ghost btn-xs w-full mt-2" disabled>Need scenic lift first</button>
+            <?php endif ?>
         </div></div>
         <?php endforeach ?>
     </div>
+
+    <!-- Tips -->
+    <?php if ($isSummer) : ?>
+    <div class="alert alert-success mb-6"><i class="fa-solid fa-sun"></i><span>Summer season - your scenic lifts are earning full revenue from sightseeing tourists!</span></div>
+    <?php else : ?>
+    <div class="alert alert-info mb-6"><i class="fa-solid fa-snowflake"></i><span>Winter season - scenic lifts earn 30% of normal rate. Full revenue returns in summer.</span></div>
+    <?php endif ?>
 
     <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
         <h3 class="font-semibold text-sm mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>How Scenic Lifts Work</h3>

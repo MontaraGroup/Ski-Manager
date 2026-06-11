@@ -202,6 +202,7 @@ $routes->post('/snowmaking/toggle/(:num)', 'Snowmaking::toggle/$1');
 $routes->post("/snowmaking/toggle-all", "Snowmaking::toggleAll");
 $routes->post("/snowmaking/assign", "Snowmaking::assignCannon");
 $routes->post('/staff/fire/(:num)', 'Staff::fire/$1');
+$routes->post("/staff/train/(:num)", "Staff::train/$1");
 $routes->post('/staff/hire', 'Staff::doHire');
 $routes->post('/tickets/update', 'Tickets::updatePrice');
 $routes->post('/tournaments/cancel/(:num)', 'Tournaments::cancel/$1');

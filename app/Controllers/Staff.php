@@ -189,4 +189,23 @@ class Staff extends BaseController
 
         return $targets;
     }
+
+    public function train(int $id)
+    {
+        $userId = auth()->id();
+        $member = $this->staffModel->where('id', $id)->where('user_id', $userId)->first();
+        if (!$member) return redirect()->back()->with('error', 'Staff not found.');
+        if ((int) $member['level'] >= 10) return redirect()->back()->with('error', $member['name'] . ' is already max level.');
+
+        $cost = 5000 * (int) $member['level'];
+        $db = db_connect();
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int)($finance['cash'] ?? 0) < $cost) return redirect()->back()->with('error', 'Not enough cash. Need ' . currency($cost) . '.');
+
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cost, false)->update();
+        $this->staffModel->update($id, ['level' => (int) $member['level'] + 1]);
+
+        log_activity($userId, 'Staff', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost), 'fa-solid fa-graduation-cap');
+        return redirect()->to('/staff')->with('success', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . '! (-' . currency($cost) . ')');
+    }
 }

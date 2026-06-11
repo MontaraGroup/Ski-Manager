@@ -3,6 +3,7 @@
 <?= $this->section('content') ?>
 <div class="max-w-6xl mx-auto p-4 lg:p-8">
 
+    <?php $__maxLoans = 3; $__hasExtraSlot = db_connect()->table('player_boosts')->where('user_id', auth()->id())->where('boost_type', 'extra_loan')->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults() > 0; if ($__hasExtraSlot) $__maxLoans = 4; ?>
     <div class="flex items-center gap-3 mb-6">
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
@@ -24,7 +25,7 @@
                 </div>
                 <div class="text-center">
                     <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-file-invoice-dollar mr-1"></i>Active Loans</div>
-                    <div class="text-2xl font-bold"><?= count($loans) ?><span class="text-sm text-base-content/50">/3</span></div>
+                    <div class="text-2xl font-bold"><?= count($loans) ?><span class="text-sm text-base-content/50">/<?= $__maxLoans ?></span></div>
                 </div>
                 <div class="text-center">
                     <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-scale-unbalanced mr-1"></i>Total Debt</div>
@@ -36,6 +37,26 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Credit Health -->
+    <?php $__debtRatio = (int)$finance['cash'] > 0 ? round($totalDebt / (int)$finance['cash'] * 100) : 0; ?>
+    <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="text-xs text-base-content/50 mb-1">Debt-to-Cash Ratio</div>
+            <div class="text-lg font-bold <?= $__debtRatio <= 50 ? 'text-success' : ($__debtRatio <= 100 ? 'text-warning' : 'text-error') ?>"><?= $__debtRatio ?>%</div>
+            <div class="text-xs text-base-content/40"><?= $__debtRatio <= 50 ? 'Healthy' : ($__debtRatio <= 100 ? 'Caution' : 'Risky') ?></div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="text-xs text-base-content/50 mb-1">Days to Payoff</div>
+            <div class="text-lg font-bold"><?= $dailyPayments > 0 ? ceil($totalDebt / $dailyPayments) : 0 ?></div>
+            <div class="text-xs text-base-content/40">at current rate</div>
+        </div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3">
+            <div class="text-xs text-base-content/50 mb-1">Loan Slots</div>
+            <div class="text-lg font-bold"><?= $__maxLoans - count($loans) ?> free</div>
+            <div class="text-xs text-base-content/40"><?= $__hasExtraSlot ? 'Extra slot active' : '' ?></div>
+        </div></div>
     </div>
 
     <?php if ($totalDebt > (int) $finance['cash'] * 2) : ?>
@@ -96,8 +117,8 @@
         <!-- Loan Products -->
         <div class="lg:col-span-3">
             <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-hand-holding-dollar mr-1 text-success"></i> Available Loans</h2>
-            <?php if (count($loans) >= 3) : ?>
-                <div class="alert alert-warning mb-3"><i class="fa-solid fa-lock"></i><span>Maximum 3 active loans. Repay an existing loan to borrow again.</span></div>
+            <?php if (count($loans) >= $__maxLoans) : ?>
+                <div class="alert alert-warning mb-3"><i class="fa-solid fa-lock"></i><span>Maximum <?= $__maxLoans ?> active loans. Repay an existing loan to borrow again.<?php if (!$__hasExtraSlot) : ?> <a href="/genepis" class="link font-semibold">Get an extra slot</a> with Genepis.<?php endif ?></span></div>
             <?php endif ?>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <?php foreach ($loanOptions as $key => $opt) : ?>
@@ -135,7 +156,7 @@
                         <form action="/bank/borrow" method="post" data-confirm="Borrow <?= currency($opt['amount']) ?> at <?= $opt['rate'] ?>% for <?= $opt['days'] ?> days?" data-confirm-title="Confirm Loan">
                             <?= csrf_field() ?>
                             <input type="hidden" name="type" value="<?= $key ?>">
-                            <button class="btn <?= $key === 'emergency' ? 'btn-error' : 'btn-primary' ?> btn-sm w-full gap-1" <?= count($loans) >= 3 ? 'disabled' : '' ?>>
+                            <button class="btn <?= $key === 'emergency' ? 'btn-error' : 'btn-primary' ?> btn-sm w-full gap-1" <?= count($loans) >= $__maxLoans ? 'disabled' : '' ?>>
                                 <i class="fa-solid fa-hand-holding-dollar"></i> Borrow <?= currency($opt['amount']) ?>
                             </button>
                         </form>

@@ -83,8 +83,8 @@
                                 </div>
                                 <div class="flex gap-1">
                                     <form action="/buildings/toggle/<?= $b['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?><button class="btn btn-xs w-full <?= $isOpen ? 'btn-ghost' : 'btn-error' ?>"><?= $isOpen ? 'Deactivate' : 'Activate' ?></button></form>
-                                    <?php if ($b['level'] < 3) : ?><form action="/buildings/upgrade/<?= $b['id'] ?>" method="post" onsubmit="return confirm('Upgrade station?')"><?= csrf_field() ?><button class="btn btn-info btn-xs gap-1"><i class="fa-solid fa-arrow-up"></i> Upgrade</button></form><?php endif ?>
-                                    <form action="/buildings/sell/<?= $b['id'] ?>" method="post" onsubmit="return confirm('Remove station?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-trash"></i></button></form>
+                                    <?php if ($b['level'] < 3) : ?><form action="/buildings/upgrade/<?= $b['id'] ?>" method="post" data-confirm="Upgrade this station?"><?= csrf_field() ?><button class="btn btn-info btn-xs gap-1"><i class="fa-solid fa-arrow-up"></i> Upgrade</button></form><?php endif ?>
+                                    <form action="/buildings/sell/<?= $b['id'] ?>" method="post" data-confirm="Remove this station?"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-trash"></i></button></form>
                                 </div>
                             </div>
                         </div>
@@ -113,7 +113,7 @@
             <div class="space-y-2">
             <?php foreach ($def['levels'] as $lvl => $info) : $st = $stationTypes[$lvl]; ?>
                 <form action="/buildings/build" method="post"><?= csrf_field() ?><input type="hidden" name="type" value="ski_patrol"><input type="hidden" name="level" value="<?= $lvl ?>">
-                    <button class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow w-full text-left"><div class="card-body p-3">
+                    <button class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow w-full text-left" onclick="return confirm('Build this station?')"><div class="card-body p-3">
                         <div class="flex items-center gap-2 mb-1"><i class="<?= $st['icon'] ?> text-error"></i><span class="font-semibold text-sm"><?= $info['name'] ?></span></div>
                         <p class="text-xs text-base-content/50 mb-1"><?= $st['desc'] ?></p>
                         <div class="flex justify-between text-xs"><span>Covers <?= $info['capacity'] ?> sector<?= $info['capacity'] > 1 ? 's' : '' ?></span><span class="font-bold text-primary"><?= currency($info['cost']) ?></span></div>
@@ -144,8 +144,8 @@
             <div class="card bg-base-100 shadow-sm mt-4"><div class="card-body p-3">
                 <h3 class="font-semibold text-xs mb-2"><i class="fa-solid fa-lightbulb mr-1 text-warning"></i>Safety Compliance</h3>
                 <ul class="text-xs text-base-content/60 space-y-1">
-                    <li><i class="fa-solid fa-file-shield mr-1"></i> <a href="/government" class="link link-primary">Safety regulations</a> reduce accident penalties</li>
-                    <li><i class="fa-solid fa-shield-halved mr-1"></i> <a href="/insurance" class="link link-primary">Liability insurance</a> covers lawsuit costs</li>
+                    <li><i class="fa-solid fa-file-shield mr-1"></i> <a href="/compliance?tab=government" class="link link-primary">Safety regulations</a> reduce accident penalties</li>
+                    <li><i class="fa-solid fa-shield-halved mr-1"></i> <a href="/compliance?tab=insurance" class="link link-primary">Liability insurance</a> covers lawsuit costs</li>
                     <li><i class="fa-solid fa-mountain mr-1"></i> Each slope needs patrol coverage</li>
                 </ul>
             </div></div>

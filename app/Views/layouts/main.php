@@ -23,7 +23,13 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ski-manager.net/">
     <meta property="og:site_name" content="Ski Manager">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://ski-manager.net/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ski Manager - build and run your own ski resort">
+    <meta name="twitter:image" content="https://ski-manager.net/og-image.png">
+    <meta name="theme-color" content="#1a2940">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Ski Manager - Free Online Ski Resort Game">
     <meta name="twitter:description" content="Build, manage, and grow your dream ski resort. Free to play.">
     <meta name="msvalidate.01" content="17A0AC384937E88A4F602D2B7DAE237F" />
@@ -58,6 +64,7 @@
       "description": "Free online ski resort management game",
       "applicationCategory": "Game",
       "operatingSystem": "Web Browser",
+      "image": "https://ski-manager.net/og-image.png",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
     }
     </script>
