@@ -16,7 +16,7 @@ class GameTick extends BaseCommand
         $db = db_connect();
         $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
-        $seasonDay = (($gameDay - 1) % getSeasonLength()) + 1;
+        $seasonDay = (($gameDay - 1) % max(1, getSeasonLength())) + 1;
         $isWinter = $seasonDay <= getWinterDays();
 
         CLI::write("Game Tick — Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
@@ -26,14 +26,16 @@ class GameTick extends BaseCommand
         foreach ($users as $user) {
             $userId = (int) $user['id'];
             CLI::write("Processing user {$userId}...", 'yellow');
+            try {
 
             $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             if (!$finance) {
-                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'Vail']);
+                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
                 $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             }
 
             $cash = (int) $finance['cash'];
+            $weather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray() ?: [];
             $dayIncome = 0;
             $dayExpenses = 0;
 
@@ -223,6 +225,7 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
+            $activeGroomers = count(array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer' && $e['status'] === 'active'));
             // AUTO-GROOM (Génépis perk)
             // ==============================
             $hasAutoGroom = $db->table('player_boosts')->where('user_id', $userId)->where('boost_type', 'auto_groom')->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults() > 0;
@@ -240,7 +243,6 @@ class GameTick extends BaseCommand
             // ==============================
             // SNOW QUALITY UPDATE
             // ==============================
-            $activeGroomers = count(array_filter($equipment, fn($e) => $e["equipment_type"] === "groomer" && $e["status"] === "active"));
             $hasSnowmaking = count($activeSnowmakers) > 0;
             $slopesForQuality = $db->table("player_items")->where("user_id", $userId)->where("item_type", "slope")->where("status", "open")->get()->getResultArray();
             foreach ($slopesForQuality as $sl) {
@@ -492,7 +494,11 @@ class GameTick extends BaseCommand
             // ==============================
             log_activity($userId, 'Daily Report', "Day {$gameDay}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
 
-            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses} | Visitors: {$visitors} | Cash: {$newCash}", 'white');
+            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses} | Visitors: {$visitors} | Cash: {$newCash}", "white");
+            } catch (\Throwable $e) {
+                CLI::write("  ERROR processing user {$userId}: " . $e->getMessage(), "red");
+                log_message("error", "GameTick user {$userId} failed: " . $e->getMessage());
+            }
         }
 
         // ==============================
