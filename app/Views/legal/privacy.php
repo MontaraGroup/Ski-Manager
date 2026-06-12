@@ -7,7 +7,7 @@
     <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-user-shield text-2xl text-primary"></i><h1 class="text-3xl font-bold">Privacy Policy</h1></div>
     <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
-    <div class="prose prose-sm max-w-none">
+    <div class="card bg-base-100 shadow-sm"><div class="card-body prose prose-sm max-w-none">
         <h2>1. Introduction</h2>
         <p>Ski Manager ("we", "our", "us") operates ski-manager.net (the "Service"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website and online game.</p>
 
@@ -107,6 +107,8 @@
         <h2>14. Contact Us</h2>
         <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
     </div>
+</div>
+    <div class="text-center mt-6"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" class="btn btn-ghost btn-sm gap-1"><i class="fa-solid fa-arrow-up"></i> Back to top</a></div>
     <div class="divider mt-8 mb-4"></div>
     <div class="flex flex-wrap gap-2 justify-center text-sm">
         <a href="/terms" class="link link-hover">Terms</a><span class="text-base-content/30">·</span>
