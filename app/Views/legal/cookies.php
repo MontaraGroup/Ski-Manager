@@ -7,7 +7,7 @@
     <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-cookie-bite text-2xl text-primary"></i><h1 class="text-3xl font-bold">Cookie Policy</h1></div>
     <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
-    <div class="card bg-base-100 shadow-sm"><div class="card-body prose prose-sm max-w-none">
+    <div class="card bg-base-100 shadow-sm"><div class="card-body legal-prose">
         <h2>1. What Are Cookies?</h2>
         <p>Cookies are small text files stored on your device when you visit a website. They help websites remember your preferences, keep you logged in, and understand how you use the site. We also use similar technologies such as localStorage and browser storage. References to "cookies" in this policy include these similar technologies where applicable.</p>
 

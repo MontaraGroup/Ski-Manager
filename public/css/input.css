@@ -222,3 +222,13 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
     .hero-content h1 { font-size: 1.75rem !important; }
     .hero-content p { font-size: 0.875rem; }
 }
+
+/* Legal page readability */
+.legal-prose { font-size: 0.95rem; line-height: 1.75; }
+.legal-prose h2 { font-size: 1.15rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.5rem; padding-top: 1rem; border-top: 1px solid oklch(var(--bc) / 0.08); }
+.legal-prose h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.legal-prose h3 { font-size: 1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.35rem; }
+.legal-prose p { margin-bottom: 0.85rem; color: oklch(var(--bc) / 0.8); }
+.legal-prose ul { margin: 0.5rem 0 1rem 1.25rem; list-style: disc; }
+.legal-prose li { margin-bottom: 0.35rem; color: oklch(var(--bc) / 0.8); }
+.legal-prose table { font-size: 0.85rem; }

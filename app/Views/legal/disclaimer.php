@@ -7,7 +7,7 @@
     <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-triangle-exclamation text-2xl text-primary"></i><h1 class="text-3xl font-bold">Disclaimer</h1></div>
     <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
-    <div class="card bg-base-100 shadow-sm"><div class="card-body prose prose-sm max-w-none">
+    <div class="card bg-base-100 shadow-sm"><div class="card-body legal-prose">
         <h2>General Disclaimer</h2>
         <p>Ski Manager is an online entertainment game and simulation. All in-game financial figures, statistics, resort data, and scenarios are entirely fictional and intended for entertainment purposes only. Nothing in this game constitutes real financial, business, investment, or operational advice.</p>
 

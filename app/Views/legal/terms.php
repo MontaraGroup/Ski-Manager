@@ -7,7 +7,7 @@
     <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-file-contract text-2xl text-primary"></i><h1 class="text-3xl font-bold">Terms of Service</h1></div>
     <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
-    <div class="card bg-base-100 shadow-sm"><div class="card-body prose prose-sm max-w-none">
+    <div class="card bg-base-100 shadow-sm"><div class="card-body legal-prose">
         <h2>1. Acceptance of Terms</h2>
         <p>By accessing or using Ski Manager at ski-manager.net (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the Service. We may update these Terms at any time, and continued use constitutes acceptance of the updated Terms.</p>
 
