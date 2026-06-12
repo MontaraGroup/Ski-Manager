@@ -1,9 +1,11 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Disclaimer<?= $this->endSection() ?>
+<?= $this->section('title') ?>Disclaimer
+</div>
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <h1 class="text-3xl font-bold mb-2">Disclaimer</h1>
-    <p class="text-sm text-base-content/50 mb-6">Last updated: June 3, 2026</p>
+    <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-triangle-exclamation text-2xl text-primary"></i><h1 class="text-3xl font-bold">Disclaimer</h1></div>
+    <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
     <div class="prose prose-sm max-w-none">
         <h2>General Disclaimer</h2>
@@ -16,7 +18,7 @@
         <p>While we strive to make Ski Manager realistic, all game mechanics are simplified for entertainment. Real ski resort operations involve significantly more complexity, regulation, and expertise. The game should not be used as a reference for actual resort management, construction, engineering, environmental planning, or financial decision-making.</p>
 
         <h2>Brand References</h2>
-        <p>References to real-world companies, products, and brands (including PistenBully, Prinoth, TechnoAlpin, Demaclenko, SMI, and Sufag) are used solely for identification, descriptive, and simulation purposes. All trademarks, brand names, and logos are property of their respective owners. Ski Manager is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
+        <p>References to real-world companies, products, and brands (including PistenBully, Prinoth, TechnoAlpin, Demaclenko, HKD, and SMI) are used solely for identification, descriptive, and simulation purposes. All trademarks, brand names, and logos are property of their respective owners. Ski Manager is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
 
         <h2>Trail Map</h2>
         <p>Certain trail map imagery and related materials are used under license from Mapsynergy (<a href="https://skimap.com" class="link link-primary" target="_blank" rel="noopener">skimap.com</a>) and remain the property of their respective owners. The map is a stylized artistic representation and does not depict real-time conditions, actual terrain, or any specific real-world ski resort.</p>
@@ -42,6 +44,13 @@
         
         <h2>Contact</h2>
         <p>Questions about this disclaimer? Contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+    </div>
+    <div class="divider mt-8 mb-4"></div>
+    <div class="flex flex-wrap gap-2 justify-center text-sm">
+        <a href="/terms" class="link link-hover">Terms</a><span class="text-base-content/30">·</span>
+        <a href="/privacy" class="link link-hover">Privacy</a><span class="text-base-content/30">·</span>
+        <a href="/cookies" class="link link-hover">Cookies</a><span class="text-base-content/30">·</span>
+        <a href="/disclaimer" class="link link-hover">Disclaimer</a>
     </div>
 </div>
 <?= $this->endSection() ?>

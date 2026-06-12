@@ -1,9 +1,11 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Terms of Service<?= $this->endSection() ?>
+<?= $this->section('title') ?>Terms of Service
+</div>
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <h1 class="text-3xl font-bold mb-2">Terms of Service</h1>
-    <p class="text-sm text-base-content/50 mb-6">Last updated: June 3, 2026</p>
+    <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-file-contract text-2xl text-primary"></i><h1 class="text-3xl font-bold">Terms of Service</h1></div>
+    <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
     <div class="prose prose-sm max-w-none">
         <h2>1. Acceptance of Terms</h2>
@@ -18,7 +20,7 @@
         <p>You must be at least 13 years old (or 16 in the EU/EEA) to create an account and use the Service. By creating an account, you represent that you meet this age requirement. If you are under 18, you represent that your parent or legal guardian has reviewed and agrees to these Terms.</p>
 
         <h2>4. Account Registration</h2>
-        <p>To use game features, you must create an account via email/password or Google Sign-In. You agree to:</p>
+        <p>To use game features, you must create an account via email/password, Google Sign-In, or Discord. You agree to:</p>
         <ul>
             <li>Provide accurate and complete registration information</li>
             <li>Maintain the security and confidentiality of your account credentials</li>
@@ -89,6 +91,13 @@
 
         <h2>20. Contact</h2>
         <p>For questions about these Terms, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+    </div>
+    <div class="divider mt-8 mb-4"></div>
+    <div class="flex flex-wrap gap-2 justify-center text-sm">
+        <a href="/terms" class="link link-hover">Terms</a><span class="text-base-content/30">·</span>
+        <a href="/privacy" class="link link-hover">Privacy</a><span class="text-base-content/30">·</span>
+        <a href="/cookies" class="link link-hover">Cookies</a><span class="text-base-content/30">·</span>
+        <a href="/disclaimer" class="link link-hover">Disclaimer</a>
     </div>
 </div>
 <?= $this->endSection() ?>

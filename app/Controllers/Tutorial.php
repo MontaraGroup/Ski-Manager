@@ -7,14 +7,14 @@ class Tutorial extends BaseController
     public const STEPS = [
         [
             'title' => 'Welcome to Ski Manager!',
-            'text' => "You're the new owner of a ski resort. Let's get you set up. This tutorial will walk you through the basics — you can skip it anytime.",
+            'text' => "You're the new owner of a ski resort. Let's get you set up. This quick tour covers the basics - you can skip it anytime.",
             'action' => null,
             'page' => '/dashboard',
             'icon' => 'fa-solid fa-mountain-sun',
         ],
         [
             'title' => 'Check Your Finances',
-            'text' => "First, let's see what you're working with. Head to the Finances page to see your starting cash and budget.",
+            'text' => "See what you're working with. Open the Finances page to view your starting cash and daily budget.",
             'action' => 'Visit the Finances page',
             'page' => '/finances',
             'icon' => 'fa-solid fa-coins',
@@ -22,7 +22,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Hire Your First Staff',
-            'text' => "A resort needs people to run it. Go to the Staff page and hire at least one employee — a groomer, ski patrol, or mechanic.",
+            'text' => "A resort needs people to run it. On the Staff page, hire at least one employee - a groomer, ski patroller, or mechanic.",
             'action' => 'Hire a staff member',
             'page' => '/staff',
             'icon' => 'fa-solid fa-users',
@@ -30,7 +30,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Build a Slope',
-            'text' => "Time to give your guests somewhere to ski! Open the Trail Map and build your first slope. Click on a segment and choose a slope type.",
+            'text' => "Give your guests somewhere to ski. Open the Trail Map, click a segment, and build your first slope.",
             'action' => 'Build a slope on the trail map',
             'page' => '/map',
             'icon' => 'fa-solid fa-map',
@@ -38,7 +38,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Set Your Ticket Prices',
-            'text' => "Guests need lift tickets. Go to the Tickets page and make sure your prices are set. Higher prices mean more revenue but fewer visitors.",
+            'text' => "Guests need lift tickets. On the Tickets page, set your prices - higher prices mean more revenue per guest but fewer visitors.",
             'action' => 'Visit the Tickets page',
             'page' => '/tickets',
             'icon' => 'fa-solid fa-ticket',
@@ -46,7 +46,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Check the Weather',
-            'text' => "Weather affects everything — visitor count, snow conditions, and energy costs. Check today's forecast on the Weather page.",
+            'text' => "Weather drives visitor numbers, snow conditions, and energy costs. Check today's forecast on the Weather page.",
             'action' => 'Visit the Weather page',
             'page' => '/weather',
             'icon' => 'fa-solid fa-cloud-sun',
@@ -54,15 +54,15 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Build a Building',
-            'text' => "Guests need places to eat and stay. Build a restaurant, hotel, or shop from the Buildings page to earn extra revenue.",
-            'action' => 'Build a building (hotels, restaurants, etc.)',
+            'text' => "Guests need places to eat and stay. Build a restaurant, hotel, or shop to earn extra revenue.",
+            'action' => 'Build a building (hotel, restaurant, etc.)',
             'page' => '/hotels',
             'icon' => 'fa-solid fa-building',
             'check' => 'has_building',
         ],
         [
             'title' => 'Explore Your Resort',
-            'text' => "Check out your Resort page for an overview of everything you own. This is your command center.",
+            'text' => "Your Resort page is the command center - an overview of everything you own. Take a look.",
             'action' => 'Visit the Resort page',
             'page' => '/resort',
             'icon' => 'fa-solid fa-mountain-sun',
@@ -70,7 +70,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => 'Claim Your Daily Bonus',
-            'text' => "Every day you log in, you can claim a bonus reward. Don't miss it — streaks give bigger rewards!",
+            'text' => "Log in each day to claim a bonus reward. Keep the streak going for bigger payouts.",
             'action' => 'Claim your daily bonus',
             'page' => '/daily-bonus',
             'icon' => 'fa-solid fa-gift',
@@ -78,7 +78,7 @@ class Tutorial extends BaseController
         ],
         [
             'title' => "You're Ready!",
-            'text' => "That's the basics! From here you can expand with snowmaking, night skiing, terrain parks, marketing campaigns, and more. Check the Achievements page for goals to work toward. Good luck!",
+            'text' => "That's the basics. From here you can add snowmaking, night skiing, terrain parks, marketing, and more. Check the Achievements page for goals to chase. Good luck!",
             'action' => null,
             'page' => '/dashboard',
             'icon' => 'fa-solid fa-trophy',
@@ -101,10 +101,38 @@ class Tutorial extends BaseController
         return $progress;
     }
 
-    public function checkStep(): \CodeIgniter\HTTP\ResponseInterface
+    private function canAdvance(array $stepData): bool
     {
+        $check = $stepData['check'] ?? null;
+        if ($check === null) return true;
+
         $userId = auth()->id();
         $db = db_connect();
+
+        switch ($check) {
+            case 'visit_finances':
+            case 'visit_tickets':
+            case 'visit_weather':
+            case 'visit_resort':
+                $page = $stepData['page'];
+                $referer = $this->request->getHeaderLine('Referer');
+                $currentPage = $this->request->getGet('page') ?? '';
+                return str_contains($referer, $page) || str_contains($currentPage, $page);
+            case 'has_staff':
+                return $db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults() > 0;
+            case 'has_slope':
+                return $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->countAllResults() > 0;
+            case 'has_building':
+                return $db->table('buildings')->where('user_id', $userId)->countAllResults() > 0;
+            case 'claimed_bonus':
+                $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
+                return $bonus && ($bonus['last_claim_date'] ?? null) === date('Y-m-d');
+        }
+        return false;
+    }
+
+    public function checkStep(): \CodeIgniter\HTTP\ResponseInterface
+    {
         $progress = $this->getProgress();
 
         if (!$progress || $progress['completed'] || $progress['skipped']) {
@@ -118,44 +146,11 @@ class Tutorial extends BaseController
             return $this->response->setJSON(['done' => true]);
         }
 
-        $canAdvance = false;
-        $check = $stepData['check'] ?? null;
-
-        if ($check === null) {
-            $canAdvance = true;
-        } else {
-            switch ($check) {
-                case 'visit_finances':
-                case 'visit_tickets':
-                case 'visit_weather':
-                case 'visit_resort':
-                    $page = $stepData['page'];
-                    $referer = $this->request->getHeaderLine('Referer');
-                    $currentPage = $this->request->getGet('page') ?? '';
-                    $canAdvance = str_contains($referer, $page) || str_contains($currentPage, $page);
-                    break;
-                case 'has_staff':
-                    $canAdvance = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults() > 0;
-                    break;
-                case 'has_slope':
-                    $canAdvance = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->countAllResults() > 0;
-                    break;
-                case 'has_building':
-                    $canAdvance = $db->table('buildings')->where('user_id', $userId)->countAllResults() > 0;
-                    break;
-                case 'claimed_bonus':
-                    $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
-                    $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
-                    $canAdvance = $bonus && (int)($bonus['last_claim_day'] ?? 0) >= $gameDay;
-                    break;
-            }
-        }
-
         return $this->response->setJSON([
             'step' => $step,
             'total' => count(self::STEPS),
             'data' => $stepData,
-            'canAdvance' => $canAdvance,
+            'canAdvance' => $this->canAdvance($stepData),
             'done' => false,
         ]);
     }
@@ -170,7 +165,21 @@ class Tutorial extends BaseController
             return $this->response->setJSON(['done' => true]);
         }
 
-        $nextStep = (int) $progress['current_step'] + 1;
+        $step = (int) $progress['current_step'];
+        $stepData = self::STEPS[$step] ?? null;
+
+        // Enforce gating server-side: a gated step can only advance once its action is done.
+        if ($stepData && !$this->canAdvance($stepData)) {
+            return $this->response->setJSON([
+                'step' => $step,
+                'total' => count(self::STEPS),
+                'data' => $stepData,
+                'canAdvance' => false,
+                'done' => false,
+            ]);
+        }
+
+        $nextStep = $step + 1;
 
         if ($nextStep >= count(self::STEPS)) {
             $db->table('tutorial_progress')->where('user_id', $userId)->update(['current_step' => $nextStep, 'completed' => 1]);
@@ -178,7 +187,13 @@ class Tutorial extends BaseController
         }
 
         $db->table('tutorial_progress')->where('user_id', $userId)->update(['current_step' => $nextStep]);
-        return $this->response->setJSON(['step' => $nextStep, 'data' => self::STEPS[$nextStep]]);
+        return $this->response->setJSON([
+            'step' => $nextStep,
+            'total' => count(self::STEPS),
+            'data' => self::STEPS[$nextStep],
+            'canAdvance' => $this->canAdvance(self::STEPS[$nextStep]),
+            'done' => false,
+        ]);
     }
 
     public function skip(): \CodeIgniter\HTTP\ResponseInterface

@@ -2,46 +2,66 @@
 <?= $this->section('title') ?>About Ski Manager<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <h1 class="text-3xl font-bold mb-2">About Ski Manager</h1>
-    <p class="text-base-content/60 mb-6">The story behind the game, the team, and the technology.</p>
 
-    <div class="prose prose-sm max-w-none">
-        <h2>What is Ski Manager?</h2>
-        <p>Ski Manager is a free-to-play browser-based ski resort management simulation game. Players take on the role of a resort owner, building slopes and lifts, hiring staff, managing budgets, and competing to create the most successful ski resort. The game draws inspiration from classic tycoon games like <a href="https://en.wikipedia.org/wiki/RollerCoaster_Tycoon" target="_blank" rel="noopener noreferrer">RollerCoaster Tycoon</a> and <a href="https://en.wikipedia.org/wiki/SimCity" target="_blank" rel="noopener noreferrer">SimCity</a>, applied to the world of alpine skiing.</p>
-
-        <h2>History</h2>
-        <p>The original Ski Manager launched as a small hobby project to explore whether a skiing-themed management game could work as a browser game. After gaining a small community of players, the project evolved through several iterations. In 2026, the entire game was rebuilt from scratch as Version 2 - a complete rewrite with a modern codebase, redesigned interface, and dramatically expanded gameplay features.</p>
-        <p>Today, Ski Manager includes over 30 interconnected game systems covering everything from real-time weather simulation and snowmaking operations to government compliance, insurance, financial management, and terrain park design.</p>
-
-        <h2>The Developer</h2>
-        <p>Ski Manager is developed by Marcel Saintin, a web developer and skiing enthusiast. The project combines a passion for winter sports with years of experience in full-stack web development. Marcel handles all aspects of the game - design, development, server infrastructure, and community management.</p>
-
-        <h2>Technology</h2>
-        <p>Ski Manager v2 is built on a modern, reliable technology stack:</p>
-        <ul>
-            <li><strong>Backend:</strong> <a href="https://codeigniter.com/" target="_blank" rel="noopener noreferrer">CodeIgniter 4</a> (PHP framework) with <a href="https://codeigniter4.github.io/shield/" target="_blank" rel="noopener noreferrer">Shield</a> authentication</li>
-            <li><strong>Frontend:</strong> <a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">Tailwind CSS 4</a> with <a href="https://daisyui.com/" target="_blank" rel="noopener noreferrer">DaisyUI 5</a> component library</li>
-            <li><strong>Trail Map:</strong> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet.js</a> with map imagery from <a href="https://skimap.com/" target="_blank" rel="noopener noreferrer">Mapsynergy/Skimap</a></li>
-            <li><strong>Icons:</strong> <a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer">Font Awesome 6</a></li>
-            <li><strong>Database:</strong> MySQL 8</li>
-            <li><strong>Hosting:</strong> VPS with <a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a> CDN and SSL</li>
-            <li><strong>Error Tracking:</strong> <a href="https://sentry.io/" target="_blank" rel="noopener noreferrer">Sentry</a></li>
-        </ul>
-        <p>The game is designed with <a href="https://www.w3.org/WAI/WCAG22/quickref/" target="_blank" rel="noopener noreferrer">WCAG 2.2</a> accessibility guidelines in mind, supporting keyboard navigation, screen readers, and reduced motion preferences.</p>
-
-        <h2>Equipment Brands</h2>
-        <p>Ski Manager features real-world ski industry equipment brands to provide an authentic experience:</p>
-        <ul>
-            <li><a href="https://www.pistenbully.com/" target="_blank" rel="noopener noreferrer">PistenBully</a> and <a href="https://www.prinoth.com/" target="_blank" rel="noopener noreferrer">Prinoth</a> snow groomers</li>
-            <li><a href="https://www.technoalpin.com/" target="_blank" rel="noopener noreferrer">TechnoAlpin</a>, Sufag, <a href="https://www.dfrgroup.it/" target="_blank" rel="noopener noreferrer">Demaclenko</a>, and SMI snowmaking systems</li>
-        </ul>
-        <p>All brand names and trademarks are property of their respective owners. Their inclusion in the game is for educational and simulation purposes.</p>
-
-        <h2>Community</h2>
-        <p>Ski Manager has a growing community of players who share strategies, report bugs, and suggest new features. Join us on <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer">Discord</a> or follow development updates on our <a href="/updates">Updates page</a>.</p>
-
-        <h2>Contact</h2>
-        <p>Have questions, feedback, or partnership inquiries? Reach out through our <a href="/contact">contact form</a> or email <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2"><i class="fa-solid fa-mountain-sun mr-2 text-primary"></i>About Ski Manager</h1>
+        <p class="text-base-content/60">A free, browser-based ski resort tycoon - built by one developer who loves the mountains.</p>
     </div>
+
+    <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
+        <h2 class="font-bold text-lg mb-2"><i class="fa-solid fa-circle-info mr-2 text-info"></i>What is Ski Manager?</h2>
+        <p class="text-sm text-base-content/70 leading-relaxed">Ski Manager is a free-to-play browser-based ski resort management sim. You take on the role of a resort owner - building slopes and lifts, hiring staff, managing budgets, and competing to run the most successful resort.</p>
+    </div></div>
+
+    <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
+        <h2 class="font-bold text-lg mb-2"><i class="fa-solid fa-clock-rotate-left mr-2 text-primary"></i>The Story</h2>
+        <p class="text-sm text-base-content/70 leading-relaxed mb-2">Ski Manager began as a small hobby project to find out whether a skiing-themed management game could work in the browser. It picked up a community, evolved through several iterations, and in 2026 was rebuilt from scratch as Version 2 - a complete rewrite with a modern codebase, redesigned interface, and far deeper gameplay.</p>
+        <p class="text-sm text-base-content/70 leading-relaxed">Today it runs dozens of interconnected systems, from hourly weather and snowmaking to compliance, insurance, finance, and terrain park design.</p>
+    </div></div>
+
+    <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
+        <h2 class="font-bold text-lg mb-2"><i class="fa-solid fa-user mr-2 text-primary"></i>The Developer</h2>
+        <p class="text-sm text-base-content/70 leading-relaxed">Ski Manager is built by Marcel, a web developer and skiing enthusiast. It's a one-person project combining a love of winter sports with full-stack development - Marcel handles design, code, server infrastructure, and the community. The game is free, ad-supported, and never pay-to-win.</p>
+    </div></div>
+
+    <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
+        <h2 class="font-bold text-lg mb-3"><i class="fa-solid fa-microchip mr-2 text-primary"></i>Technology</h2>
+        <ul class="space-y-2 text-sm text-base-content/70">
+            <li><i class="fa-solid fa-server fa-fw mr-1 text-base-content/40"></i><strong>Backend:</strong> <a href="https://codeigniter.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">CodeIgniter 4</a> (PHP) with <a href="https://codeigniter4.github.io/shield/" target="_blank" rel="noopener noreferrer" class="link link-primary">Shield</a> auth</li>
+            <li><i class="fa-solid fa-palette fa-fw mr-1 text-base-content/40"></i><strong>Frontend:</strong> <a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Tailwind CSS 4</a> + <a href="https://daisyui.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">DaisyUI 5</a></li>
+            <li><i class="fa-solid fa-map fa-fw mr-1 text-base-content/40"></i><strong>Trail Map:</strong> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Leaflet.js</a>, imagery from <a href="https://skimap.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Mapsynergy/Skimap</a></li>
+            <li><i class="fa-solid fa-icons fa-fw mr-1 text-base-content/40"></i><strong>Icons:</strong> <a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Font Awesome 6</a></li>
+            <li><i class="fa-solid fa-database fa-fw mr-1 text-base-content/40"></i><strong>Database:</strong> MySQL 9</li>
+            <li><i class="fa-solid fa-cloud fa-fw mr-1 text-base-content/40"></i><strong>Hosting:</strong> VPS with <a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Cloudflare</a> CDN and SSL</li>
+            <li><i class="fa-solid fa-bug fa-fw mr-1 text-base-content/40"></i><strong>Error Tracking:</strong> <a href="https://sentry.io/" target="_blank" rel="noopener noreferrer" class="link link-primary">Sentry</a></li>
+        </ul>
+        <p class="text-sm text-base-content/70 leading-relaxed mt-3">Built with <a href="https://www.w3.org/WAI/WCAG22/quickref/" target="_blank" rel="noopener noreferrer" class="link link-primary">WCAG 2.2</a> accessibility in mind - keyboard navigation, screen readers, and reduced-motion support.</p>
+    </div></div>
+
+    <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
+        <h2 class="font-bold text-lg mb-2"><i class="fa-solid fa-snowflake mr-2 text-primary"></i>Real Equipment Brands</h2>
+        <p class="text-sm text-base-content/70 leading-relaxed mb-2">For authenticity, the game features real ski-industry brands:</p>
+        <ul class="space-y-1 text-sm text-base-content/70">
+            <li><i class="fa-solid fa-tractor fa-fw mr-1 text-base-content/40"></i><a href="https://www.pistenbully.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">PistenBully</a> and <a href="https://www.prinoth.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Prinoth</a> snow groomers</li>
+            <li><i class="fa-solid fa-spray-can fa-fw mr-1 text-base-content/40"></i><a href="https://www.technoalpin.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">TechnoAlpin</a>, <a href="https://www.dfrgroup.it/" target="_blank" rel="noopener noreferrer" class="link link-primary">Demaclenko</a>, HKD, and SMI snowmaking systems</li>
+        </ul>
+        <p class="text-xs text-base-content/50 mt-3">All brand names and trademarks are property of their respective owners. Their inclusion is for simulation and educational purposes only.</p>
+    </div></div>
+
+    <div class="card bg-gradient-to-br from-primary to-secondary text-primary-content shadow-sm"><div class="card-body text-center">
+        <h2 class="font-bold text-xl mb-1">Join the community</h2>
+        <p class="text-sm opacity-80 mb-4">Share strategies, report bugs, suggest features, and follow development.</p>
+        <div class="flex gap-2 justify-center flex-wrap">
+            <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="btn btn-sm bg-base-100 text-primary border-0 hover:bg-base-200 gap-1"><i class="fa-brands fa-discord"></i> Discord</a>
+            <a href="/updates" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary gap-1"><i class="fa-solid fa-newspaper"></i> Updates</a>
+            <a href="/contact" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary gap-1"><i class="fa-solid fa-envelope"></i> Contact</a>
+        </div>
+    </div></div>
+
+    <?php if (!auth()->loggedIn()) : ?>
+    <div class="text-center mt-6">
+        <a href="/register" class="btn btn-primary btn-lg gap-2"><i class="fa-solid fa-play"></i> Play Free</a>
+    </div>
+    <?php endif ?>
 </div>
 <?= $this->endSection() ?>

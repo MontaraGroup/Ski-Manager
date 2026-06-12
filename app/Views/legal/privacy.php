@@ -1,9 +1,11 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Privacy Policy<?= $this->endSection() ?>
+<?= $this->section('title') ?>Privacy Policy
+</div>
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <h1 class="text-3xl font-bold mb-2">Privacy Policy</h1>
-    <p class="text-sm text-base-content/50 mb-6">Last updated: June 3, 2026</p>
+    <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-user-shield text-2xl text-primary"></i><h1 class="text-3xl font-bold">Privacy Policy</h1></div>
+    <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
     <div class="prose prose-sm max-w-none">
         <h2>1. Introduction</h2>
@@ -13,7 +15,7 @@
 
         <h2>2. Information We Collect</h2>
         <h3>2.1 Account Information</h3>
-        <p>When you create an account, we collect your username, email address, and password (stored in hashed form using industry-standard algorithms). If you sign in with Google, we receive your name, email address, and Google account identifier. We do not receive or store your Google password.</p>
+        <p>When you create an account, we collect your username, email address, and password (stored in hashed form using industry-standard algorithms). If you sign in with Google or Discord, we receive your name, email address, and account identifier from that provider. We do not receive or store your password.</p>
         <h3>2.2 Game Data</h3>
         <p>We store all game-related data associated with your account, including resort statistics, financial transactions, staff records, equipment, achievements, notifications, and activity logs. This data is necessary to provide the game experience.</p>
         <h3>2.3 Automatically Collected Information</h3>
@@ -62,7 +64,7 @@
             <li><strong>Compliance with legal obligations</strong> — where required by applicable law</li>
         </ul>
 
-        <h2>14. Data Sharing</h2>
+        <h2>7. Data Sharing</h2>
         <p>We do not sell your personal information. We may share information only in these circumstances:</p>
         <ul>
             <li>With your explicit consent</li>
@@ -72,15 +74,14 @@
             <li>Publicly visible game data: leaderboard rankings display your username and resort statistics only</li>
         </ul>
 
-        <h2>14. Data Retention</h2>
+        <h2>8. Data Retention</h2>
         <p>We retain your account and game data for as long as your account is active. If you delete your account, all associated personal data will be removed within 30 days, except where retention is required by law, security needs, fraud prevention, dispute resolution, or enforcement of our legal rights. Server logs are retained for up to 90 days. Anonymized analytics data may be retained indefinitely for statistical purposes.</p>
 
-        <h2>14. Data Security</h2>
-        <p>We implement security measures including:</p>
+        <h2>9. Data Security</h2>
         <p>We implement industry-standard security measures including encryption for all connections (HTTPS/TLS), password hashing, cross-site request forgery protection, login rate limiting, secure session management, and CDN-level DDoS protection. We regularly review and update our security practices.</p>
         <p>However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.</p>
 
-        <h2>14. Your Rights</h2>
+        <h2>10. Your Rights</h2>
         <p>Depending on your jurisdiction, you may have the right to:</p>
         <ul>
             <li>Access the personal data we hold about you</li>
@@ -94,17 +95,24 @@
         <p><strong>For California users (CCPA):</strong> You have the right to know what personal information is collected, request deletion, and opt out of the sale of personal information. We do not sell personal information.</p>
         <p>To exercise any rights, submit a privacy request to <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a> or use the account deletion feature in <a href="/settings" class="link link-primary">Settings</a>.</p>
 
-        <h2>14. Children's Privacy</h2>
+        <h2>11. Children's Privacy</h2>
         <p>Ski Manager is not intended for children under 13 years of age (or 16 in the EU/EEA). We do not knowingly collect personal information from children under these ages. If you are a parent and believe your child has provided us with personal information, please contact us and we will promptly delete such data.</p>
 
-        <h2>14. International Data Transfers</h2>
-        <p>The Service is hosted in the European Union. If you access the Service from outside the EU, your information may be transferred to and processed in the EU. Where required, we rely on appropriate safeguards, including Standard Contractual Clauses or other lawful transfer mechanisms.</p>
+        <h2>12. International Data Transfers</h2>
+        <p>The Service is hosted in the United States. If you access the Service from outside the United States, your information may be transferred to and processed in the United States. Where required, we rely on appropriate safeguards, including Standard Contractual Clauses or other lawful transfer mechanisms.</p>
 
-        <h2>14. Changes to This Policy</h2>
+        <h2>13. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the new policy on this page and updating the "Last updated" date. Continued use of the Service after changes constitutes acceptance of the updated policy.</p>
 
         <h2>14. Contact Us</h2>
         <p>If you have questions about this Privacy Policy, contact us at <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+    </div>
+    <div class="divider mt-8 mb-4"></div>
+    <div class="flex flex-wrap gap-2 justify-center text-sm">
+        <a href="/terms" class="link link-hover">Terms</a><span class="text-base-content/30">·</span>
+        <a href="/privacy" class="link link-hover">Privacy</a><span class="text-base-content/30">·</span>
+        <a href="/cookies" class="link link-hover">Cookies</a><span class="text-base-content/30">·</span>
+        <a href="/disclaimer" class="link link-hover">Disclaimer</a>
     </div>
 </div>
 <?= $this->endSection() ?>

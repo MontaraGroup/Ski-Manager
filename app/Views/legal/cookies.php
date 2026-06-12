@@ -1,9 +1,11 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Cookie Policy<?= $this->endSection() ?>
+<?= $this->section('title') ?>Cookie Policy
+</div>
+<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <h1 class="text-3xl font-bold mb-2">Cookie Policy</h1>
-    <p class="text-sm text-base-content/50 mb-6">Last updated: June 3, 2026</p>
+    <div class="flex items-center gap-3 mb-1"><i class="fa-solid fa-cookie-bite text-2xl text-primary"></i><h1 class="text-3xl font-bold">Cookie Policy</h1></div>
+    <div class="badge badge-ghost badge-sm mb-6"><i class="fa-solid fa-clock mr-1"></i>Last updated: June 3, 2026</div>
 
     <div class="prose prose-sm max-w-none">
         <h2>1. What Are Cookies?</h2>
@@ -112,6 +114,13 @@
 
         <h2>7. Contact</h2>
         <p>Privacy and cookie-related requests may be sent to <a href="mailto:contact@ski-manager.net">contact@ski-manager.net</a>.</p>
+    </div>
+    <div class="divider mt-8 mb-4"></div>
+    <div class="flex flex-wrap gap-2 justify-center text-sm">
+        <a href="/terms" class="link link-hover">Terms</a><span class="text-base-content/30">·</span>
+        <a href="/privacy" class="link link-hover">Privacy</a><span class="text-base-content/30">·</span>
+        <a href="/cookies" class="link link-hover">Cookies</a><span class="text-base-content/30">·</span>
+        <a href="/disclaimer" class="link link-hover">Disclaimer</a>
     </div>
 </div>
 <?= $this->endSection() ?>

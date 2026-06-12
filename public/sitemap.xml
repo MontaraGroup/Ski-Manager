@@ -5,12 +5,13 @@
   <url><loc>https://ski-manager.net/login</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://ski-manager.net/leaderboard</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://ski-manager.net/updates</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/vote</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://ski-manager.net/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://ski-manager.net/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://ski-manager.net/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://ski-manager.net/sitemap</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://ski-manager.net/terms</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://ski-manager.net/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://ski-manager.net/cookies</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://ski-manager.net/disclaimer</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://ski-manager.net/vote</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 </urlset>
