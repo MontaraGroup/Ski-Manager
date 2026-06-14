@@ -194,14 +194,38 @@
         </div></div>
 
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-server mr-1 text-primary"></i>Server</h2>
-            <div class="space-y-1 text-xs">
+            <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-server mr-1 text-primary"></i>Server Health</h2>
+            <?php
+                $__diskTotal = @disk_total_space("/") ?: 0;
+                $__diskFree  = @disk_free_space("/") ?: 0;
+                $__diskUsed  = $__diskTotal - $__diskFree;
+                $__diskPct   = $__diskTotal > 0 ? round($__diskUsed / $__diskTotal * 100) : 0;
+                $__load      = function_exists("sys_getloadavg") ? sys_getloadavg() : [0,0,0];
+                $__cores     = (int) (@shell_exec("nproc") ?: 1); if ($__cores < 1) $__cores = 1;
+                $__memLimit  = ini_get("memory_limit");
+                $__memPeak   = round(memory_get_peak_usage(true) / 1048576, 1);
+                $__dbName    = db_connect()->getDatabase();
+                $__dbSize    = db_connect()->query("SELECT ROUND(SUM(data_length + index_length)/1048576, 1) AS mb FROM information_schema.tables WHERE table_schema = ?", [$__dbName])->getRowArray()["mb"] ?? 0;
+                $__gb = fn($b) => number_format($b / 1073741824, 1) . " GB";
+            ?>
+            <!-- Disk -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs mb-1"><span class="text-base-content/50"><i class="fa-solid fa-hard-drive mr-1"></i>Disk</span><span class="font-mono"><?= $__gb($__diskUsed) ?> / <?= $__gb($__diskTotal) ?></span></div>
+                <progress class="progress <?= $__diskPct > 85 ? "progress-error" : ($__diskPct > 70 ? "progress-warning" : "progress-success") ?> w-full" value="<?= $__diskPct ?>" max="100"></progress>
+            </div>
+            <!-- Load -->
+            <div class="mb-3">
+                <div class="flex justify-between text-xs mb-1"><span class="text-base-content/50"><i class="fa-solid fa-gauge-high mr-1"></i>Load (1/5/15m)</span><span class="font-mono <?= $__load[0] > $__cores ? "text-error" : "" ?>"><?= implode(" / ", array_map(fn($l) => number_format($l, 2), $__load)) ?></span></div>
+                <div class="text-[10px] text-base-content/40"><?= $__cores ?> CPU core<?= $__cores === 1 ? "" : "s" ?></div>
+            </div>
+            <div class="space-y-1 text-xs border-t border-base-300 pt-2">
                 <div class="flex justify-between"><span class="text-base-content/50">PHP</span><span class="font-mono"><?= PHP_VERSION ?></span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">CI4</span><span class="font-mono"><?= \CodeIgniter\CodeIgniter::CI_VERSION ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Memory</span><span class="font-mono"><?= round(memory_get_peak_usage(true) / 1048576, 1) ?> MB</span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">DB</span><span class="font-mono">MySQL <?= db_connect()->getVersion() ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Memory (peak/limit)</span><span class="font-mono"><?= $__memPeak ?>M / <?= $__memLimit ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Database</span><span class="font-mono">MySQL <?= db_connect()->getVersion() ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">DB Size</span><span class="font-mono"><?= $__dbSize ?> MB</span></div>
                 <div class="flex justify-between"><span class="text-base-content/50">Timezone</span><span class="font-mono"><?= date_default_timezone_get() ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Time</span><span class="font-mono"><?= date("Y-m-d H:i:s") ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/50">Server Time</span><span class="font-mono"><?= date("g:ia") ?></span></div>
             </div>
             <a href="/admin/errors" class="btn btn-outline btn-xs w-full mt-3 gap-1"><i class="fa-solid fa-bug"></i>View Error Log</a>
         </div></div>
