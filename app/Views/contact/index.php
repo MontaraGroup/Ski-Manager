@@ -21,6 +21,8 @@
                 <h2 class="font-bold text-lg mb-4">Send a Message</h2>
                 <form action="/contact" method="post" class="space-y-4">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="form_time" value="<?= time() ?>">
+                    <div aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;"><label>Website (leave blank)<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
                     <div class="form-control">
                         <label class="label py-1" for="name"><span class="label-text font-medium">Name *</span></label>
                         <input type="text" name="name" id="name" class="input input-bordered w-full" value="<?= old('name') ?? (auth()->loggedIn() ? auth()->user()->username : '') ?>" required aria-required="true" autocomplete="name">

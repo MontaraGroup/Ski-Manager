@@ -11,6 +11,15 @@ class Contact extends BaseController
 
     public function send()
     {
+        // --- Anti-spam (silent: blocked spam sees a fake success) ---
+        $fakeOk = redirect()->to('/contact')->with('success', 'Thanks for your message! We\'ll get back to you soon.');
+        if (!empty($this->request->getPost('website'))) { return $fakeOk; }
+        $formTime = (int) $this->request->getPost('form_time');
+        if ($formTime <= 0 || (time() - $formTime) < 3) { return $fakeOk; }
+        if ((time() - $formTime) > 7200) { return $fakeOk; }
+        $rawMsg = (string) $this->request->getPost('message');
+        if (preg_match_all('#https?://#i', $rawMsg) > 2) { return $fakeOk; }
+        if (preg_match('#https?://|www\.#i', (string) $this->request->getPost('name'))) { return $fakeOk; }
         $name = strip_tags(trim($this->request->getPost('name')));
         $email = strip_tags(trim($this->request->getPost('email')));
         $subject = strip_tags(trim($this->request->getPost('subject')));
