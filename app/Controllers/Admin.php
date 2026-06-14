@@ -210,11 +210,16 @@ class Admin extends BaseController
         $condition = $this->request->getPost('condition');
         $temp = (int) $this->request->getPost('temp');
         $wind = (int) $this->request->getPost('wind');
+        $snowBase = (int) $this->request->getPost('snow_base');
         $snowfall = (int) $this->request->getPost('snowfall');
+
+        $visMap = ['Sunny' => 'Excellent', 'Partly Cloudy' => 'Good', 'Cloudy' => 'Good', 'Light Snow' => 'Moderate', 'Heavy Snow' => 'Poor', 'Blizzard' => 'Very Poor', 'Freezing Rain' => 'Poor'];
 
         $db->table('weather')->where('game_day', $gameDay)->update([
             'condition_name' => $condition, 'temp' => $temp,
-            'wind' => $wind, 'snowfall' => $snowfall,
+            'wind' => $wind, 'snow_base' => $snowBase, 'snowfall' => $snowfall,
+            'visibility' => $visMap[$condition] ?? 'Good',
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
         return redirect()->to('/admin/settings')->with('success', "Weather updated for day {$gameDay}.");
