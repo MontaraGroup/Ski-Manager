@@ -71,7 +71,7 @@ class Support extends BaseController
         if (auth()->id() !== 1) return redirect()->to('/dashboard');
         $message = trim($this->request->getPost('message') ?? '');
 
-        if (strlen($message) < 1) return redirect()->back()->with('error', 'Empty message.');
+        if (strlen($message) < 1 || strlen($message) > 2000) return redirect()->back()->with('error', 'Message must be 1-2000 characters.');
 
         db_connect()->table('support_messages')->insert([
             'user_id' => $userId,
