@@ -125,11 +125,11 @@
                                 <thead><tr><th>When</th><th>Type</th><th>Details</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($incidents as $inc) : ?>
-                                    <?php $typeColor = str_contains($inc['category'], 'accident') ? 'badge-error' : (str_contains($inc['category'], 'rescue') ? 'badge-warning' : 'badge-info'); ?>
+                                    <?php $typeColor = str_contains($inc['category'] ?? '', 'accident') ? 'badge-error' : (str_contains($inc['category'] ?? '', 'rescue') ? 'badge-warning' : 'badge-info'); ?>
                                     <tr>
-                                        <td class="text-xs whitespace-nowrap"><?= timeAgo($inc['created_at']) ?></td>
-                                        <td><span class="badge <?= $typeColor ?> badge-xs"><?= esc(ucfirst($inc['category'])) ?></span></td>
-                                        <td class="text-xs"><?= esc($inc['description']) ?></td>
+                                        <td class="text-xs whitespace-nowrap"><?= timeAgo($inc['created_at'] ?? 'now') ?></td>
+                                        <td><span class="badge <?= $typeColor ?> badge-xs"><?= esc(ucfirst($inc['category'] ?? '')) ?></span></td>
+                                        <td class="text-xs"><?= esc($inc['message'] ?? '') ?></td>
                                     </tr>
                                 <?php endforeach ?>
                                 </tbody>
