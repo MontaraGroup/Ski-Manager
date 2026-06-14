@@ -180,7 +180,30 @@ class App extends BaseConfig
      *
      * @var array<string, string>
      */
-    public array $proxyIPs = [];
+    public array $proxyIPs = [
+        '173.245.48.0/20' => 'X-Forwarded-For',
+        '103.21.244.0/22' => 'X-Forwarded-For',
+        '103.22.200.0/22' => 'X-Forwarded-For',
+        '103.31.4.0/22' => 'X-Forwarded-For',
+        '141.101.64.0/18' => 'X-Forwarded-For',
+        '108.162.192.0/18' => 'X-Forwarded-For',
+        '190.93.240.0/20' => 'X-Forwarded-For',
+        '188.114.96.0/20' => 'X-Forwarded-For',
+        '197.234.240.0/22' => 'X-Forwarded-For',
+        '198.41.128.0/17' => 'X-Forwarded-For',
+        '162.158.0.0/15' => 'X-Forwarded-For',
+        '104.16.0.0/13' => 'X-Forwarded-For',
+        '104.24.0.0/14' => 'X-Forwarded-For',
+        '172.64.0.0/13' => 'X-Forwarded-For',
+        '131.0.72.0/22' => 'X-Forwarded-For',
+        '2400:cb00::/32' => 'X-Forwarded-For',
+        '2606:4700::/32' => 'X-Forwarded-For',
+        '2803:f800::/32' => 'X-Forwarded-For',
+        '2405:b500::/32' => 'X-Forwarded-For',
+        '2405:8100::/32' => 'X-Forwarded-For',
+        '2a06:98c0::/29' => 'X-Forwarded-For',
+        '2c0f:f248::/32' => 'X-Forwarded-For',
+    ];
 
     /**
      * --------------------------------------------------------------------------

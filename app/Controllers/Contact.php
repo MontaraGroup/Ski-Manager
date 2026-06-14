@@ -20,6 +20,11 @@ class Contact extends BaseController
         $rawMsg = (string) $this->request->getPost('message');
         if (preg_match_all('#https?://#i', $rawMsg) > 2) { return $fakeOk; }
         if (preg_match('#https?://|www\.#i', (string) $this->request->getPost('name'))) { return $fakeOk; }
+        // 6. Per-IP rate limit: max 3 submissions per hour
+        $throttler = \Config\Services::throttler();
+        if ($throttler->check(md5('contact_' . $this->request->getIPAddress()), 3, HOUR) === false) {
+            return redirect()->to('/contact')->with('error', 'You have sent several messages recently. Please try again later.');
+        }
         $name = strip_tags(trim($this->request->getPost('name')));
         $email = strip_tags(trim($this->request->getPost('email')));
         $subject = strip_tags(trim($this->request->getPost('subject')));
