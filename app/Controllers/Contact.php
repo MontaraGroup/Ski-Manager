@@ -46,18 +46,58 @@ class Contact extends BaseController
             'other' => 'Other',
         ];
 
+        $subjectLabel = $subjectLabels[$subject] ?? 'Contact';
+
+        // Triage metadata
+        $sentAt   = date('Y-m-d H:i:s T');
+        $ip       = $this->request->getIPAddress();
+        $ua       = strip_tags((string) $this->request->getUserAgent()->getAgentString());
+        $loggedIn = auth()->loggedIn();
+        $userLine = $loggedIn
+            ? esc(auth()->user()->username) . ' (ID ' . (int) auth()->id() . ')'
+            : 'Not logged in';
+
+        $safeName    = esc($name);
+        $safeEmail   = esc($email);
+        $safeMsgHtml = nl2br(esc($message));
+
+        $html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">'
+            . '<div style="background:#1e3a5f;color:#fff;padding:16px 20px">'
+            . '<h2 style="margin:0;font-size:18px">⛷ Ski Manager — New Contact Message</h2>'
+            . '<p style="margin:4px 0 0;font-size:13px;opacity:0.8">' . $subjectLabel . '</p>'
+            . '</div>'
+            . '<div style="padding:20px;color:#111">'
+            . '<table style="width:100%;font-size:14px;border-collapse:collapse">'
+            . '<tr><td style="padding:4px 0;color:#6b7280;width:120px">From</td><td style="padding:4px 0;font-weight:bold">' . $safeName . '</td></tr>'
+            . '<tr><td style="padding:4px 0;color:#6b7280">Email</td><td style="padding:4px 0"><a href="mailto:' . $safeEmail . '">' . $safeEmail . '</a></td></tr>'
+            . '<tr><td style="padding:4px 0;color:#6b7280">Subject</td><td style="padding:4px 0">' . $subjectLabel . '</td></tr>'
+            . '<tr><td style="padding:4px 0;color:#6b7280">Account</td><td style="padding:4px 0">' . $userLine . '</td></tr>'
+            . '</table>'
+            . '<div style="margin:16px 0;padding:16px;background:#f9fafb;border-radius:8px;font-size:14px;line-height:1.6;white-space:normal">' . $safeMsgHtml . '</div>'
+            . '<div style="border-top:1px solid #e5e7eb;padding-top:10px;color:#9ca3af;font-size:11px">'
+            . 'Sent ' . $sentAt . ' · IP ' . esc($ip) . '<br>' . esc($ua)
+            . '</div>'
+            . '</div></div>';
+
+        $text = "Ski Manager - New Contact Message\n"
+            . "Subject: {$subjectLabel}\n"
+            . str_repeat('-', 40) . "\n"
+            . "From: {$name}\n"
+            . "Email: {$email}\n"
+            . "Account: " . ($loggedIn ? auth()->user()->username . ' (ID ' . (int) auth()->id() . ')' : 'Not logged in') . "\n"
+            . str_repeat('-', 40) . "\n\n"
+            . "{$message}\n\n"
+            . str_repeat('-', 40) . "\n"
+            . "Sent: {$sentAt}\nIP: {$ip}\nUA: {$ua}\n";
+
         $emailService = \Config\Services::email();
-        $emailService->setFrom('contact@ski-manager.net', 'Ski Manager');
+        $emailService->setFrom('contact@ski-manager.net', 'Ski Manager Contact');
         $emailService->setTo('contact@ski-manager.net');
         $emailService->setReplyTo($email, $name);
-        $emailService->setSubject('[Ski Manager] ' . ($subjectLabels[$subject] ?? 'Contact') . ' from ' . $name);
-        $emailService->setMessage(
-            "Name: {$name}\n" .
-            "Email: {$email}\n" .
-            "Subject: " . ($subjectLabels[$subject] ?? $subject) . "\n" .
-            "---\n\n" .
-            $message
-        );
+        $emailService->setSubject('[Ski Manager] ' . $subjectLabel . ' from ' . $name);
+        $emailService->setMailType('html');
+        $emailService->setMessage($html);
+        $emailService->setAltMessage($text);
 
         if ($emailService->send()) {
             return redirect()->to('/contact')->with('success', 'Thanks for your message! We\'ll get back to you soon.');
