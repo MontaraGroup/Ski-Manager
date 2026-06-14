@@ -4,8 +4,9 @@ namespace App\Controllers;
 
 class Compliance extends BaseController
 {
-    public function index(): string
+    public function index()
     {
+        if (!auth()->loggedIn()) return redirect()->to('/login');
         $tab = $this->request->getGet('tab') ?? 'government';
 
         $insurance = new Insurance();
@@ -14,7 +15,7 @@ class Compliance extends BaseController
 
         // Get data from each controller's index method via their view data
         // We'll call them directly and merge
-        $userId = auth()->id();
+        $userId = (int) auth()->id();
         $db = db_connect();
 
         // Insurance data

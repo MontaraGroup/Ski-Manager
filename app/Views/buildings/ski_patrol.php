@@ -101,7 +101,7 @@
                     <thead><tr><th>Date</th><th>Type</th><th>Details</th></tr></thead>
                     <tbody>
                     <?php foreach ($recentIncidents as $inc) : ?>
-                        <tr><td class="text-xs"><?= timeAgo($inc['created_at']) ?></td><td><span class="badge badge-ghost badge-xs"><?= esc($inc['category']) ?></span></td><td class="text-xs"><?= esc($inc['description']) ?></td></tr>
+                        <tr><td class="text-xs"><?= timeAgo($inc['created_at'] ?? 'now') ?></td><td><span class="badge badge-ghost badge-xs"><?= esc($inc['category'] ?? '') ?></span></td><td class="text-xs"><?= esc($inc['message'] ?? '') ?></td></tr>
                     <?php endforeach ?>
                     </tbody>
                 </table>

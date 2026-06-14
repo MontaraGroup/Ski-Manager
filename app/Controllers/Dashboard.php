@@ -66,7 +66,7 @@ class Dashboard extends BaseController
         $inProgressAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 0)->orderBy('progress', 'DESC')->limit(5)->get()->getResultArray();
         $recentActivity = $db->table('activity_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(8)->get()->getResultArray();
         $dailyBonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
-        $bonusAvailable = !$dailyBonus || (int)($dailyBonus['last_claim_day'] ?? 0) < $gameDay;
+        $bonusAvailable = !$dailyBonus || ($dailyBonus['last_claim_date'] ?? null) < date('Y-m-d');
         $parkingFacilities = $db->table('parking')->where('user_id', $userId)->get()->getResultArray();
         $terrainParks = $db->table('terrain_parks')->where('user_id', $userId)->get()->getResultArray();
         $staffAll = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
