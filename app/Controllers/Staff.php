@@ -30,6 +30,20 @@ class Staff extends BaseController
     public function index(): string
     {
         $userId = auth()->id();
+        // Temporary Emergency Seeder
+        $db = db_connect();
+        if (!$db->table('staff_roles')->where('role_key', 'ski_patrol')->get()->getRow()) {
+            $db->table('staff_roles')->insert([
+                'role_key' => 'ski_patrol',
+                'name' => 'Ski Patrol',
+                'description' => 'Responds to incidents, monitors trails, and maintains mountain safety.',
+                'salary' => 150,
+                'icon' => 'fa-solid fa-person-skiing',
+                'color' => 'text-error',
+                'sort_order' => 1
+            ]);
+        }
+
         if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
         $staff = $this->staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
         $roles = $this->getRoles();

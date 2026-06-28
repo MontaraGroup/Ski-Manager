@@ -34,7 +34,10 @@
             $isMyVote = $userVote && $userVote['resort_key'] === $key;
             $isLeading = $votes > 0 && $votes === max($voteCounts ?: [0]);
         ?>
-        <div class="card bg-base-100 shadow-sm <?= $isMyVote ? 'border-2 border-primary' : '' ?> <?= $isLeading ? 'ring-1 ring-warning/50' : '' ?>">
+        <?php if ($isMyVote): ?>
+        <div class="aura aura-sm text-primary/70 aura-glow rounded-2xl w-full">
+        <?php endif; ?>
+        <div class="card bg-base-100 shadow-sm w-full ">
             <div class="card-body p-4">
                 <div class="flex items-start justify-between mb-2">
                     <div class="flex items-center gap-2">

@@ -83,4 +83,45 @@ class Support extends BaseController
 
         return redirect()->to('/admin/support/' . $userId);
     }
+
+    public function editMessage($id)
+    {
+        if (!auth()->user() || !auth()->user()->inGroup('admin')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Unauthorized access.']);
+        }
+
+        $message = trim($this->request->getPost('message') ?? '');
+        if (strlen($message) < 1 || strlen($message) > 2000) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Message length must be between 1 and 2000 characters.']);
+        }
+
+        $db = db_connect();
+        $msg = $db->table('support_messages')->where('id', $id)->get()->getRowArray();
+
+        if (!$msg || $msg['sender'] !== 'admin') {
+            return $this->response->setJSON(['success' => false, 'error' => 'Message not found or not editable.']);
+        }
+
+        $db->table('support_messages')->where('id', $id)->update(['message' => $message]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    public function deleteMessage($id)
+    {
+        if (!auth()->user() || !auth()->user()->inGroup('admin')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Unauthorized access.']);
+        }
+
+        $db = db_connect();
+        $msg = $db->table('support_messages')->where('id', $id)->get()->getRowArray();
+
+        if (!$msg || $msg['sender'] !== 'admin') {
+            return $this->response->setJSON(['success' => false, 'error' => 'Message not found or cannot be unsent.']);
+        }
+
+        $db->table('support_messages')->where('id', $id)->delete();
+
+        return $this->response->setJSON(['success' => true]);
+    }
 }

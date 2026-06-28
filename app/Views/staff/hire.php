@@ -24,7 +24,7 @@
     <!-- Role Categories -->
     <?php
         $categories = [
-            'Operations' => ['patrol', 'mechanic', 'groomer', 'snowmaker'],
+            'Operations' => ['ski_patrol', 'mechanic', 'groomer', 'snowmaker'],
             'Guest Services' => ['instructor', 'receptionist', 'chef'],
             'Specialized' => ['medic', 'park_crew', 'manager'],
         ];

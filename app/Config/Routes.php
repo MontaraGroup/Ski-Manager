@@ -233,3 +233,11 @@ $routes->post('/support/send', 'Support::send');
 $routes->get('/admin/support', 'Support::adminIndex');
 $routes->get('/admin/support/(:num)', 'Support::adminView/$1');
 $routes->post('/admin/support/(:num)/reply', 'Support::adminReply/$1');
+
+// Support Admin Chat Action Modifiers
+$routes->group('admin/support', ['filter' => 'group:admin'], function($routes) {
+    $routes->post('message/(:num)/edit', 'Support::editMessage/$1');
+    $routes->post('message Suspend/(:num)/delete', 'Support::deleteMessage/$1');
+    // Direct fallbacks if layout routes do not use standard group prefixes
+    $routes->post('message/(:num)/delete', 'Support::deleteMessage/$1');
+});

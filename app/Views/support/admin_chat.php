@@ -34,8 +34,15 @@
                         $isAdmin = $msg['sender'] === 'admin';
                     ?>
                     <div class="flex <?= $isAdmin ? 'justify-end' : 'justify-start' ?>">
-                        <div class="max-w-[80%] <?= $isAdmin ? 'bg-primary text-primary-content' : 'bg-base-200' ?> rounded-2xl px-4 py-2 <?= $isAdmin ? 'rounded-tr-sm' : 'rounded-tl-sm' ?>">
-                            <div class="text-sm break-words"><?= nl2br(esc($msg['message'])) ?></div>
+                        <div class="group relative flex items-center gap-2 <?= $isAdmin ? 'flex-row-reverse' : '' ?> max-w-[85%]">
+                        <?php if ($isAdmin): ?>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <button type="button" class="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-base-content" onclick="editAdminMessage(<?= $msg['id'] ?>, this)"><i class="fa-solid fa-pencil text-[10px]"></i></button>
+                            <button type="button" class="btn btn-ghost btn-xs btn-circle text-error/60 hover:text-error" onclick="unsendAdminMessage(<?= $msg['id'] ?>, this)"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </div>
+                        <?php endif; ?>
+                        <div id="msg-container-<?= $msg['id'] ?>" class="w-full <?= $isAdmin ? 'bg-primary text-primary-content' : 'bg-base-200' ?> rounded-2xl px-4 py-2 <?= $isAdmin ? 'rounded-tr-sm' : 'rounded-tl-sm' ?>">
+                            <div class="text-sm break-words msg-text-content" data-raw="<?= esc($msg['message']) ?>"><?= nl2br(esc($msg['message'])) ?></div>
                             <div class="text-[10px] <?= $isAdmin ? 'text-primary-content/60' : 'text-base-content/40' ?> mt-1 flex items-center gap-1 <?= $isAdmin ? 'justify-end' : '' ?>">
                                 <span><?= $isAdmin ? 'You' : esc($player['username'] ?? 'Player') ?> · <?= date('g:ia', strtotime($msg['created_at'])) ?></span>
                                 <?php if (!$isAdmin) : ?>
@@ -45,6 +52,7 @@
                                 <?php endif ?>
                             </div>
                         </div>
+                    </div>
                     </div>
                 <?php endforeach ?>
             <?php endif ?>
@@ -68,6 +76,76 @@
         input.addEventListener('input', function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'; });
         input.addEventListener('keydown', function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault(); if(this.value.trim().length>0) form.submit();} });
     }
+    window.unsendAdminMessage = function(id, btn) {
+        if (!confirm("Unsend this message?")) return;
+        fetch("/admin/support/message/" + id + "/delete", {
+            method: "POST",
+            headers: { 
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRF-TOKEN": document.querySelector('input[name="csrf_test_name"]').value
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                btn.closest(".group").remove();
+            } else {
+                alert(data.error || "Failed to unsend message.");
+            }
+        });
+    };
+
+    window.editAdminMessage = function(id, btn) {
+        const container = document.getElementById("msg-container-" + id);
+        const textDiv = container.querySelector(".msg-text-content");
+        if (container.querySelector(".edit-input-field")) return;
+
+        const originalText = textDiv.getAttribute("data-raw");
+        textDiv.classList.add("hidden");
+
+        const editWrapper = document.createElement("div");
+        editWrapper.className = "flex gap-1 items-center mt-1 edit-input-field";
+        editWrapper.innerHTML = '<input type="text" class="input input-sm input-bordered text-base-content flex-1 text-sm bg-base-100" value="">' +
+            '<button class="btn btn-success btn-xs btn-square" onclick="saveAdminMessage(' + id + ')"><i class="fa-solid fa-check"></i></button>' +
+            '<button class="btn btn-ghost btn-xs btn-square" onclick="cancelEditAdminMessage(' + id + ')"><i class="fa-solid fa-xmark"></i></button>';
+        editWrapper.querySelector("input").value = originalText;
+        container.insertBefore(editWrapper, textDiv);
+    };
+
+    window.cancelEditAdminMessage = function(id) {
+        const container = document.getElementById("msg-container-" + id);
+        container.querySelector(".edit-input-field").remove();
+        container.querySelector(".msg-text-content").classList.remove("hidden");
+    };
+
+    window.saveAdminMessage = function(id) {
+        const container = document.getElementById("msg-container-" + id);
+        const input = container.querySelector(".edit-input-field input");
+        const textDiv = container.querySelector(".msg-text-content");
+        const updatedText = input.value.trim();
+
+        if (!updatedText) return;
+
+        const formData = new FormData();
+        formData.append("message", updatedText);
+        formData.append("csrf_test_name", document.querySelector('input[name="csrf_test_name"]').value);
+
+        fetch("/admin/support/message/" + id + "/edit", {
+            method: "POST",
+            body: formData,
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                textDiv.setAttribute("data-raw", updatedText);
+                textDiv.textContent = updatedText;
+                cancelEditAdminMessage(id);
+            } else {
+                alert(data.error || "Failed to update message.");
+            }
+        });
+    };
 })();
 </script>
 <?= $this->endSection() ?>

@@ -20,13 +20,15 @@
             <div class="text-lg font-bold text-success"><?= currency((int)$players[1]['cash']) ?></div>
             <div class="text-xs text-base-content/50"><?= $players[1]['slope_count'] ?> slopes · <?= $players[1]['lift_count'] ?> lifts</div>
         </div></div>
-        <div class="card bg-base-100 shadow-sm border-2 border-warning"><div class="card-body p-4 text-center">
-            <div class="text-4xl mb-1">🥇</div>
-            <div class="font-bold text-lg"><?= esc($players[0]['username']) ?></div>
-            <div class="text-xl font-bold text-success"><?= currency((int)$players[0]['cash']) ?></div>
-            <div class="text-xs text-base-content/50"><?= $players[0]['slope_count'] ?> slopes · <?= $players[0]['lift_count'] ?> lifts</div>
-            <div class="badge badge-warning badge-sm mt-1">Champion</div>
-        </div></div>
+        <div class="aura aura-gold rounded-2xl w-full">
+            <div class="card bg-base-100 border border-base-200 shadow-sm w-full"><div class="card-body p-4 text-center">
+                <div class="text-4xl mb-1">🥇</div>
+                <div class="font-bold text-lg"><?= esc($players[0]['username']) ?></div>
+                <div class="text-xl font-bold text-success"><?= currency((int)$players[0]['cash']) ?></div>
+                <div class="text-xs text-base-content/50"><?= $players[0]['slope_count'] ?> slopes · <?= $players[0]['lift_count'] ?> lifts</div>
+                <div class="badge badge-warning badge-sm mt-1 mx-auto">Champion</div>
+            </div></div>
+        </div>
         <div class="card bg-base-100 shadow-sm mt-8"><div class="card-body p-4 text-center">
             <div class="text-3xl mb-1">🥉</div>
             <div class="font-bold"><?= esc($players[2]['username']) ?></div>
