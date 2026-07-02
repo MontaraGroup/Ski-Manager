@@ -16,7 +16,8 @@
 
     <?php $streak = (int) $bonus['streak']; $maxDay = !empty($rewards) ? max(array_keys($rewards)) : 7; $pct = $maxDay > 0 ? round(min($streak, $maxDay) / $maxDay * 100) : 0; ?>
 
-    <div class="card bg-warning/10 shadow-sm mb-6"><div class="card-body p-6">
+    <div class="aura aura-dual rounded-2xl mb-6 w-full">
+        <div class="card bg-base-100 border border-base-200 shadow-sm w-full"><div class="card-body p-6">
         <div class="grid grid-cols-3 gap-4 text-center">
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-fire mr-1 text-warning"></i>Current Streak</div>
@@ -38,6 +39,7 @@
             <progress class="progress progress-warning w-full" value="<?= $pct ?>" max="100"></progress>
         </div>
     </div></div>
+    </div>
 
     <?php if ($canClaim && $streak > 0 && !$claimedYesterday) : ?>
         <div class="alert alert-warning mb-4"><i class="fa-solid fa-triangle-exclamation"></i><span>You missed a day - claiming now restarts your streak at Day 1.</span></div>

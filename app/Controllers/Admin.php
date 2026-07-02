@@ -619,4 +619,21 @@ class Admin extends BaseController
         $this->auditLog('Disabled all beta features');
         return redirect()->to('/admin/features')->with('success', 'All beta features disabled.');
     }
+
+    public function activity()
+    {
+        if (!session()->get("is_admin")) {
+            return redirect()->to("/dashboard");
+        }
+
+        $db = \Config\Database::connect();
+        
+        $data["logs"] = $db->table("activity_log")
+                           ->orderBy("created_at", "DESC")
+                           ->limit(200)
+                           ->get()
+                           ->getResultArray();
+
+        return view("admin/activity", $data);
+    }
 }

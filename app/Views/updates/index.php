@@ -1,3 +1,183 @@
+                <div class="relative pl-6">
+                    
+                    <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>
+                    <div class="card bg-base-100 shadow-sm border border-primary">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge badge-primary font-mono">v1.3.1</span>
+                                <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i></span>
+                                <span class="badge badge-outline badge-sm">Minor</span>
+                                <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
+                            </div>
+                            <h2 class="text-lg font-bold">Operations &amp; Support Overhaul</h2>
+                            <p class="text-sm text-base-content/70 mt-1">Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.</p>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                            <span><strong>Ski Patrol:</strong> Unlockable in the hiring shop to balance and maintain slope safety parameters.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
+                                        <span class="text-xs text-base-content/40">2</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Admin Chat Modifiers:</strong> Async support console elements can now edit and unsend inline messages natively.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Aura UI Components:</strong> Deployed DaisyUI v5 animated border glows, gold styles, and rainbow lighting states across prominent dashboard panels.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                            <span>Resolved UI rendering boundary and layout schema mismatches for patrol staff assets.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative pl-6">
+                    
+                    <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>
+                    <div class="card bg-base-100 shadow-sm border border-primary">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge badge-primary font-mono">v1.3.1</span>
+                                <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i></span>
+                                <span class="badge badge-outline badge-sm">Minor</span>
+                                <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
+                            </div>
+                            <h2 class="text-lg font-bold">Operations &amp; Support Overhaul</h2>
+                            <p class="text-sm text-base-content/70 mt-1">Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.</p>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                            <span><strong>Ski Patrol:</strong> Unlockable in the hiring shop to balance and maintain slope safety parameters.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
+                                        <span class="text-xs text-base-content/40">2</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Admin Chat Modifiers:</strong> Async support console elements can now edit and unsend inline messages natively.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Aura UI Components:</strong> Deployed DaisyUI v5 animated border glows, gold styles, and rainbow lighting states across prominent dashboard panels.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                            <span>Resolved UI rendering boundary and layout schema mismatches for patrol staff assets.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative pl-6">
+                    
+                    <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>
+                    <div class="card bg-base-100 shadow-sm border border-primary">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge badge-primary font-mono">v1.3.1</span>
+                                <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i></span>
+                                <span class="badge badge-outline badge-sm">Minor</span>
+                                <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
+                            </div>
+                            <h2 class="text-lg font-bold">Operations &amp; Support Overhaul</h2>
+                            <p class="text-sm text-base-content/70 mt-1">Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.</p>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                            <span><strong>Ski Patrol:</strong> Unlockable in the hiring shop to balance and maintain slope safety parameters.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
+                                        <span class="text-xs text-base-content/40">2</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Admin Chat Modifiers:</strong> Async support console elements can now edit and unsend inline messages natively.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Aura UI Components:</strong> Deployed DaisyUI v5 animated border glows, gold styles, and rainbow lighting states across prominent dashboard panels.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                            <span>Resolved UI rendering boundary and layout schema mismatches for patrol staff assets.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Game Updates<?= $this->endSection() ?>
 <?= $this->section('content') ?>
@@ -23,6 +203,66 @@
         </div></div>
     <?php else : ?>
         <div class="relative border-l-2 border-base-300 ml-3 space-y-8">
+                <div class="relative pl-6">
+                    <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>
+                    <div class="card bg-base-100 shadow-sm border border-primary">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge badge-primary font-mono">v1.3.1</span>
+                                <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i>Latest</span>
+                                <span class="badge badge-outline badge-sm">Minor</span>
+                                <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
+                            </div>
+                            <h2 class="text-lg font-bold">Operations &amp; Support Overhaul</h2>
+                            <p class="text-sm text-base-content/70 mt-1">Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.</p>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                            <span><strong>Ski Patrol:</strong> Unlockable in the hiring shop to balance and maintain slope safety parameters.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
+                                        <span class="text-xs text-base-content/40">2</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Admin Chat Modifiers:</strong> Async support console elements can now edit and unsend inline messages natively.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                            <span><strong>Aura UI Components:</strong> Deployed DaisyUI v5 animated border glows, gold styles, and rainbow lighting states across prominent dashboard panels.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
+                                        <span class="text-xs text-base-content/40">1</span>
+                                    </div>
+                                    <ul class="space-y-1.5 ml-1">
+                                        <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                            <span>Resolved UI rendering boundary and layout schema mismatches for patrol staff assets.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
         <?php foreach ($updates as $i => $update) : ?>
             <?php $latest = $i === 0; ?>
             <div class="relative pl-6">
@@ -33,7 +273,7 @@
                     <div class="card-body p-5">
                         <div class="flex items-center gap-2 mb-1 flex-wrap">
                             <span class="badge <?= $latest ? 'badge-primary' : 'badge-ghost' ?> font-mono">v<?= esc($update['version']) ?></span>
-                            <?php if ($latest) : ?><span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i>Latest</span><?php endif ?>
+                            <?php if ($latest) : ?><?php endif ?>
                             <span class="badge badge-outline badge-sm"><?= esc(ucfirst($update['type'])) ?></span>
                             <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i><?= date('F j, Y', strtotime($update['released_at'])) ?></span>
                         </div>

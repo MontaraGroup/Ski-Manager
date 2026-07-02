@@ -21,10 +21,12 @@
         $activeEvents = array_filter($events, fn($e) => $e['active'] ?? false);
     ?>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
-            <div class="text-2xl font-bold text-success"><?= count($activeTournaments) ?></div>
-            <div class="text-xs text-base-content/50">Live Now</div>
-        </div></div>
+        <div class="aura aura-holo aura-xs rounded-2xl w-full">
+            <div class="card bg-base-100 border border-base-200 shadow-sm w-full"><div class="card-body p-3 text-center">
+                <div class="text-2xl font-bold text-success"><?= count($activeTournaments) ?></div>
+                <div class="text-xs text-base-content/50">Live Now</div>
+            </div></div>
+        </div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-info"><?= count($upcomingTournaments) ?></div>
             <div class="text-xs text-base-content/50">Upcoming</div>

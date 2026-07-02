@@ -242,16 +242,55 @@ a.link:hover{opacity:0.8}
                 <?php $__notifCount = unreadNotificationCount(auth()->id()); ?>
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-circle indicator" aria-label="Notifications">
-                        <i class="fa-solid fa-bell"></i>
-                        <?php if ($__notifCount > 0) : ?><span class="indicator-item badge badge-error badge-xs"><?= $__notifCount > 9 ? "9+" : $__notifCount ?></span><?php endif ?>
+                        <i class="fa-solid fa-bell text-base-content/80"></i>
+                        <span id="navbarNotifBadge" class="indicator-item badge badge-error badge-xs <?php echo $__notifCount == 0 ? "hidden" : ""; ?>"><?= $__notifCount > 9 ? "9+" : $__notifCount ?></span>
                     </div>
-                    <div tabindex="0" class="dropdown-content card bg-base-100 shadow-xl z-50 w-72 mt-2">
+                    <div tabindex="0" class="dropdown-content card bg-base-100 shadow-2xl z-50 w-80 mt-2 border border-base-200/50">
                         <div class="card-body p-3">
-                            <div class="flex items-center justify-between mb-2"><span class="font-bold text-sm">Notifications</span><?php if ($__notifCount > 0) : ?><a href="/notifications/read-all" class="link link-primary text-xs">Mark all read</a><?php endif ?></div>
-                            <?php $__notifs = db_connect()->table("notifications")->where("user_id", auth()->id())->orderBy("created_at", "DESC")->limit(5)->get()->getResultArray(); ?>
-                            <?php if (empty($__notifs)) : ?><p class="text-xs text-base-content/40 text-center py-3">No notifications</p>
-                            <?php else : ?><div class="space-y-1"><?php foreach ($__notifs as $__n) : ?><a href="<?= $__n["link"] ?? "/notifications" ?>" class="flex items-start gap-2 p-1.5 rounded-lg hover:bg-base-200 <?= $__n["is_read"] ? "opacity-50" : "" ?>"><i class="<?= $__n["icon"] ?> text-xs mt-0.5 w-4 text-center shrink-0"></i><div class="flex-1 min-w-0"><div class="text-xs font-semibold truncate"><?= esc($__n["title"]) ?></div><div class="text-xs text-base-content/50 truncate"><?= esc($__n["message"]) ?></div></div></a><?php endforeach ?></div><?php endif ?>
-                            <a href="/notifications" class="btn btn-ghost btn-xs w-full mt-2">View All</a>
+                            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-base-100">
+                                <span class="font-bold text-xs uppercase tracking-wider text-base-content/50">Notifications</span>
+                                <?php if ($__notifCount > 0) : ?>
+                                    <a href="/notifications/read-all" class="link link-primary text-xs no-underline hover:underline">Mark all read</a>
+                                <?php endif ?>
+                            </div>
+                            <div id="navbarNotifTargetList" class="space-y-1 max-h-64 overflow-y-auto">
+                                <?php $__notifs = db_connect()->table("notifications")->where("user_id", auth()->id())->orderBy("created_at", "DESC")->limit(5)->get()->getResultArray(); ?>
+                                <?php if (empty($__notifs)) : ?>
+                                    <p class="text-xs text-base-content/40 text-center py-4">No notifications</p>
+                                <?php else : ?>
+                                    <?php foreach ($__notifs as $__n) : ?>
+                                        <?php 
+                                            $isRead = (bool)($__n["is_read"] ?? false);
+                                            $iconColor = "text-base-content/40";
+                                            $bgAccent = "bg-base-200/50";
+                                            
+                                            if (!$isRead) {
+                                                $iconStr = strtolower($__n["icon"] ?? "");
+                                                $titleStr = strtolower($__n["title"] ?? "");
+                                                if (strpos($iconStr, "snowflake") !== false || strpos($titleStr, "weather") !== false) { $iconColor = "text-info"; $bgAccent = "bg-info/10"; }
+                                                elseif (strpos($iconStr, "trophy") !== false || strpos($iconStr, "medal") !== false) { $iconColor = "text-accent"; $bgAccent = "bg-accent/10"; }
+                                                elseif (strpos($iconStr, "exclamation") !== false || strpos($iconStr, "triangle") !== false) { $iconColor = "text-error"; $bgAccent = "bg-error/10"; }
+                                                else { $iconColor = "text-primary"; $bgAccent = "bg-primary/10"; }
+                                            }
+                                        ?>
+                                        <a href="<?= esc($__n["link"] ?? "/notifications") ?>" class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-base-200/70 transition-all <?= $isRead ? "opacity-60" : "font-medium" ?>">
+                                            <div class="w-7 h-7 rounded-lg <?= $bgAccent ?> shrink-0 flex items-center justify-center">
+                                                <i class="<?= esc($__n["icon"] ?? "fa-solid fa-bell") ?> text-[11px] <?= $iconColor ?>"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-[11px] text-base-content font-bold truncate"><?= esc($__n["title"]) ?></div>
+                                                <div class="text-[10px] text-base-content/60 truncate mt-0.5"><?= esc($__n["message"]) ?></div>
+                                            </div>
+                                            <?php if (!$isRead) : ?>
+                                                <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
+                                            <?php endif; ?>
+                                        </a>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
+                            <div class="border-t border-base-100 pt-2 mt-1">
+                                <a href="/notifications" class="btn btn-ghost btn-xs w-full text-[11px]">View All</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -310,6 +349,7 @@ a.link:hover{opacity:0.8}
     <?php endif ?>
         <?= $this->renderSection('content') ?>
     </main>
+    <div id="liveAppAlertToastStack" class="toast toast-bottom toast-end z-[9999] space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Footer -->
     <footer class="bg-base-200 border-t border-base-300" role="contentinfo" aria-label="Site footer">
@@ -526,6 +566,83 @@ function acceptCookies(level){
 <?php endif ?>
 </script>
 <script>if("serviceWorker" in navigator && location.hostname === "ski-manager.net"){navigator.serviceWorker.register("/sw.js");}</script>
+
+<script>
+let processedAlertIds = new Set();
+let skipInitialToasts = true;
+
+function fetchLiveResortAlerts() {
+    fetch("/api/notifications/live")
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(res => {
+            const badgeEl = document.getElementById("navbarNotifBadge");
+            if (badgeEl) {
+                if (res.unread > 0) {
+                    badgeEl.textContent = res.unread > 9 ? "9+" : res.unread;
+                    badgeEl.classList.remove("hidden");
+                } else {
+                    badgeEl.classList.add("hidden");
+                }
+            }
+
+            if (!res.list || res.list.length === 0) return;
+
+            res.list.forEach(alert => {
+                if (alert.is_read == 1 || processedAlertIds.has(alert.id)) return;
+                processedAlertIds.add(alert.id);
+
+                if (skipInitialToasts) return;
+
+                // Build a modern, tactile DaisyUI Toast component
+                const toast = document.createElement("div");
+                
+                // Contextual neon glow mappings based on category profiles
+                let glowLayer = "shadow-[0_0_20px_rgba(59,130,246,0.15)] border-primary/20";
+                if (iconStr.includes("snowflake")) glowLayer = "shadow-[0_0_20px_rgba(0,218,255,0.2)] border-info/30";
+                else if (iconStr.includes("trophy") || iconStr.includes("medal")) glowLayer = "shadow-[0_0_20px_rgba(217,70,239,0.2)] border-accent/30";
+                else if (iconStr.includes("exclamation") || iconStr.includes("triangle")) glowLayer = "shadow-[0_0_20px_rgba(239,68,68,0.25)] border-error/30";
+
+                toast.className = `alert bg-base-100 p-3.5 flex gap-3 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 rounded-xl border ${glowLayer}`;
+
+                
+                // Color-code accent boundaries matching system classifications
+                let accentColor = "text-primary bg-primary/10";
+                const iconStr = (alert.icon || "").toLowerCase();
+                if (iconStr.includes("snowflake")) accentColor = "text-info bg-info/10";
+                else if (iconStr.includes("trophy") || iconStr.includes("medal")) accentColor = "text-accent bg-accent/10";
+                else if (iconStr.includes("exclamation") || iconStr.includes("triangle")) accentColor = "text-error bg-error/10";
+
+                toast.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg ${accentColor} flex items-center justify-center shrink-0">
+                        <i class="${alert.icon || "fa-solid fa-bell"} text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-base-content truncate">${alert.title}</div>
+                        <p class="text-[11px] text-base-content/60 truncate mt-0.5">${alert.message}</p>
+                    </div>
+                `;
+
+                const stack = document.getElementById("liveAppAlertToastStack");
+                if (stack) {
+                    stack.appendChild(toast);
+                    setTimeout(() => toast.classList.remove("translate-y-4", "opacity-0"), 50);
+                    setTimeout(() => {
+                        toast.classList.add("opacity-0", "translate-x-4");
+                        setTimeout(() => toast.remove(), 350);
+                    }, 5000);
+                }
+            });
+
+            skipInitialToasts = false;
+        }).catch(() => {});
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchLiveResortAlerts();
+    setInterval(fetchLiveResortAlerts, 10000);
+});
+</script>
+
 </body>
 <!-- Tutorial Widget -->
 <?php if (auth()->loggedIn()) : ?>
