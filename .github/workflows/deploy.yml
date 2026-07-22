@@ -1,0 +1,27 @@
+name: Production CI/CD Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    name: Auto Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Server Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            cd /opt/1panel/www/sites/skiv2/ci4
+            git fetch origin main
+            git reset --hard origin/main
+            php spark migrate --all
+            php spark cache:clear
+            rm -rf writable/cache/*
+            chmod -R 777 writable
