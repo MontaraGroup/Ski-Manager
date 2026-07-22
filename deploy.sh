@@ -13,7 +13,8 @@ php spark migrate
 echo "🧹 Clearing cache..."
 php spark cache:clear
 
-echo "🔒 Fixing permissions..."
+echo "🔒 Recreating writable folders & permissions..."
+mkdir -p writable/cache writable/session writable/logs writable/uploads writable/debugbar
 chmod -R 777 writable/
 
 echo "✅ Deployment complete!"
