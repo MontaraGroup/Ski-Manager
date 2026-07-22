@@ -10,7 +10,7 @@ class CreateUpdatesTable extends Migration
     {
         $db = \Config\Database::connect();
 
-        // 1. Create updates table if it doesn't already exist
+        // Safely check if 'updates' table exists
         if (! $db->tableExists('updates')) {
             $this->forge->addField([
                 'id'           => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
@@ -27,7 +27,7 @@ class CreateUpdatesTable extends Migration
             $this->forge->createTable('updates', true);
         }
 
-        // 2. Create update_items table if it doesn't already exist
+        // Safely check if 'update_items' table exists
         if (! $db->tableExists('update_items')) {
             $this->forge->addField([
                 'id'          => ['type' => 'INT', 'constraint' => 11, 'unsigned' => true, 'auto_increment' => true],
