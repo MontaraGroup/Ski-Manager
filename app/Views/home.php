@@ -237,7 +237,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4"><i class="fa-solid fa-heart text-error text-2xl mb-2"></i><h3 class="font-bold">100% Free</h3><p class="text-xs text-base-content/60">No paywalls, no pay-to-win. Earn everything by playing.</p></div></div>
             <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4"><i class="fa-solid fa-globe text-info text-2xl mb-2"></i><h3 class="font-bold">Instant Play</h3><p class="text-xs text-base-content/60">Browser-based. No downloads. Works on any device.</p></div></div>
-            <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4"><i class="fa-solid fa-code-branch text-success text-2xl mb-2"></i><h3 class="font-bold">Open Source</h3><p class="text-xs text-base-content/60">Built in the open on <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="link link-primary">GitLab</a>.</p></div></div>
+            <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-4"><i class="fa-solid fa-code-branch text-success text-2xl mb-2"></i><h3 class="font-bold">Open Source</h3><p class="text-xs text-base-content/60">Built in the open on <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="link link-primary">GitHub</a>.</p></div></div>
         </div>
     </div>
 </section>

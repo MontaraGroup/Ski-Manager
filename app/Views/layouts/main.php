@@ -361,7 +361,7 @@ a.link:hover{opacity:0.8}
                     <p class="text-xs text-base-content/50 mb-4">The most detailed free ski resort management game. Build, manage, and dominate the slopes.</p>
                     <div class="flex gap-3">
                         <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="Discord"><i class="fa-brands fa-discord text-lg"></i></a>
-                        <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitLab"><i class="fa-brands fa-gitlab text-lg"></i></a>
+                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitHub"><i class="fa-brands fa-github text-lg"></i></a>
                     </div>
                 </div>
                 <!-- Game -->

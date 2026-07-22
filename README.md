@@ -52,7 +52,7 @@ A free-to-play browser-based ski resort management simulation game. Build slopes
 
 1. Clone the repo and install dependencies:
 
-       git clone https://gitlab.com/contact1231/skimanager-v2.git
+       git clone https://github.com/MontaraGroup/Ski-Manager.git
        cd skimanager-v2
        composer install
 
@@ -90,7 +90,8 @@ The game engine runs daily via cron (processes salaries, revenue, weather, const
 - **Play:** [skimanager.net](https://skimanager.net)
 - **Wiki:** [wiki.ski-manager.net](https://wiki.ski-manager.net)
 - **Discord:** [Join](https://discord.gg/TyEnFdfd8w)
-- **Bug Reports:** [GitLab Issues](https://gitlab.com/contact1231/skimanager-v2/-/issues)
+- **Discord:** [Join Community](https://discord.gg/u3GzGt8K6a)
+- **Bug Reports:** [GitHub Issues](https://github.com/MontaraGroup/Ski-Manager/issues)
 
 ## License
 

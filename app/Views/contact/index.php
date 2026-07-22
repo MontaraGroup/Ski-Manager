@@ -65,11 +65,11 @@
                     </a>
                     <a href="/bugs" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-solid fa-bug text-lg w-6 text-center"></i>
-                        <div><div class="text-sm font-semibold">Report a Bug</div><div class="text-xs text-base-content/50">GitLab issue tracker</div></div>
+                        <div><div class="text-sm font-semibold">Report a Bug</div><div class="text-xs text-base-content/50">GitHub issue tracker</div></div>
                     </a>
-                    <a href="https://gitlab.com/contact1231/skimanager-v2" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
-                        <i class="fa-brands fa-gitlab text-lg w-6 text-center"></i>
-                        <div><div class="text-sm font-semibold">Contribute</div><div class="text-xs text-base-content/50">Open source on GitLab</div></div>
+                    <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
+                        <i class="fa-brands fa-github text-lg w-6 text-center"></i>
+                        <div><div class="text-sm font-semibold">Contribute</div><div class="text-xs text-base-content/50">Open source on GitHub</div></div>
                     </a>
                 </div>
             </div></div>
@@ -78,8 +78,8 @@
                 <h3 class="font-bold text-sm mb-3">Good to Know</h3>
                 <div class="space-y-2 text-xs text-base-content/60">
                     <p><strong>Response time?</strong> Usually within 48 hours.</p>
-                    <p><strong>Found a bug?</strong> GitLab issues get tracked fastest.</p>
-                    <p><strong>Feature idea?</strong> We love suggestions - use the form or GitLab.</p>
+                    <p><strong>Found a bug?</strong> GitHub issues get tracked fastest.</p>
+                    <p><strong>Feature idea?</strong> We love suggestions - use the form or GitHub.</p>
                     <p><strong>Need a quick answer?</strong> Check the <a href="/faq" class="link link-primary">FAQ</a> first.</p>
                 </div>
             </div></div>
