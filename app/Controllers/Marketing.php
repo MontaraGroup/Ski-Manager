@@ -18,7 +18,7 @@ class Marketing extends BaseController
         foreach ($rows as $r) {
             $types[$r['type_key']] = [
                 'name' => $r['name'], 'icon' => $r['icon'], 'cost' => (int) $r['daily_cost'],
-                'visitors' => (int) $r['visitor_boost'], 'rep' => (int) $r['reputation_boost'],
+                'visitors' => (int) $r['visitor_boost'], 'rep' => (int) $r['reputation_boost'], 'days' => (int) ($r['duration_days'] ?? $r['duration'] ?? $r['days'] ?? $r['days_remaining'] ?? 30),
             ];
         }
         return $types;
@@ -50,7 +50,7 @@ class Marketing extends BaseController
         $this->model->insert([
             'user_id' => $userId, 'campaign_type' => $type, 'name' => $t['name'],
             'daily_cost' => $t['cost'], 'visitor_boost' => $t['visitors'],
-            'reputation_boost' => $t['rep'], 'days_remaining' => $t['days'], 'status' => 'active',
+            'reputation_boost' => $t['rep'], 'days_remaining' => $t['days'] ?? 30, 'status' => 'active',
         ]);
         log_activity($userId, 'Marketing', 'Launched ' . $t['name'] . ' campaign', 'fa-solid fa-bullhorn');
         return redirect()->to('/marketing')->with('success', $t['name'] . ' campaign launched!');

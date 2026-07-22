@@ -55,7 +55,7 @@
             <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body p-4">
                 <h3 class="font-bold text-sm mb-3">Other Ways to Reach Us</h3>
                 <div class="space-y-3">
-                    <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
+                    <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-brands fa-discord text-lg w-6 text-center text-[#5865F2]"></i>
                         <div><div class="text-sm font-semibold">Discord</div><div class="text-xs text-base-content/50">Fastest way to get help</div></div>
                     </a>

@@ -52,7 +52,7 @@
         <h2 class="font-bold text-xl mb-1">Join the community</h2>
         <p class="text-sm opacity-80 mb-4">Share strategies, report bugs, suggest features, and follow development.</p>
         <div class="flex gap-2 justify-center flex-wrap">
-            <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="btn btn-sm bg-base-100 text-primary border-0 hover:bg-base-200 gap-1"><i class="fa-brands fa-discord"></i> Discord</a>
+            <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-sm bg-base-100 text-primary border-0 hover:bg-base-200 gap-1"><i class="fa-brands fa-discord"></i> Discord</a>
             <a href="/updates" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary gap-1"><i class="fa-solid fa-newspaper"></i> Updates</a>
             <a href="/contact" class="btn btn-sm btn-outline border-white text-white hover:bg-white hover:text-primary gap-1"><i class="fa-solid fa-envelope"></i> Contact</a>
         </div>

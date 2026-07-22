@@ -76,7 +76,7 @@
     </div>
 
     <div class="text-center text-xs text-base-content/40">
-        <p>You can also reach us on <a href="https://discord.gg/TyEnFdfd8w" target="_blank" rel="noopener noreferrer" class="link link-primary">Discord</a> or <a href="/contact" class="link link-primary">email</a>.</p>
+        <p>You can also reach us on <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="link link-primary">Discord</a> or <a href="/contact" class="link link-primary">email</a>.</p>
     </div>
 </div>
 <script>

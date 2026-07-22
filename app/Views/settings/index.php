@@ -60,7 +60,7 @@
             </div>
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2"><i class="fa-brands fa-discord text-lg text-indigo-400"></i><span class="text-sm">Discord</span></div>
-                <a href="https://discord.gg/TyEnFdfd8w" target="_blank" class="btn btn-ghost btn-sm gap-1"><i class="fa-solid fa-arrow-up-right-from-square"></i> Join</a>
+                <a href="https://discord.gg/u3GzGt8K6a" target="_blank" class="btn btn-ghost btn-sm gap-1"><i class="fa-solid fa-arrow-up-right-from-square"></i> Join</a>
             </div>
         </div>
     </div></div>
