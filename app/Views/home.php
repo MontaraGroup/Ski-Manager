@@ -19,6 +19,7 @@
     $daysRemaining = max(0, $seasonLen - $seasonDay);
 ?>
 
+<!-- Minimalist Announcement Banner -->
 <div class="bg-base-200/80 border-b border-base-300 py-2.5 px-4 text-xs font-medium">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
         <div class="flex items-center gap-2 text-base-content/80">
@@ -41,11 +42,13 @@
     </div>
 </div>
 
+<!-- Hero Section -->
 <section class="py-16 md:py-24 bg-base-100 border-b border-base-300">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <div class="lg:col-span-7 space-y-6">
+                <!-- Status Tag -->
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-base-200 border border-base-300 text-xs font-mono text-base-content/80">
                     <i class="fa-solid fa-mountain text-primary"></i>
                     <span>Season <?= getSeasonNumber() ?></span>
@@ -55,7 +58,7 @@
 
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-base-content leading-[1.1]">
                     Build the ski resort <br class="hidden sm:inline">
-                    <span class="underline decoration-primary/40 underline-offset-4">everyone talks about.</span>
+                    <span class="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">everyone talks about.</span>
                 </h1>
 
                 <p class="text-base sm:text-lg text-base-content/70 max-w-xl leading-relaxed font-normal">
@@ -77,6 +80,7 @@
                     <?php endif ?>
                 </div>
 
+                <!-- Minimal Meta Badges -->
                 <div class="flex flex-wrap items-center gap-y-2 gap-x-6 pt-4 text-xs text-base-content/60 font-medium">
                     <span class="flex items-center gap-1.5"><i class="fa-solid fa-users text-base-content/40"></i> <?= $playersLabel ?></span>
                     <span class="flex items-center gap-1.5"><i class="fa-solid fa-check text-success"></i> Instant Browser Play</span>
@@ -84,6 +88,7 @@
                 </div>
             </div>
 
+            <!-- Notion Callout Block / Live Status Box -->
             <div class="lg:col-span-5">
                 <div class="p-6 rounded-2xl bg-base-200/60 border border-base-300 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-base-300/80 pb-3">
@@ -136,6 +141,7 @@
     </div>
 </section>
 
+<!-- Core Pillars -->
 <section class="py-16 bg-base-200/40 border-b border-base-300">
     <div class="max-w-6xl mx-auto px-4">
         <div class="mb-10">
@@ -171,6 +177,7 @@
     </div>
 </section>
 
+<!-- Real Maps Section -->
 <section class="py-16 bg-base-100 border-b border-base-300">
     <div class="max-w-6xl mx-auto px-4">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -207,6 +214,7 @@
     </div>
 </section>
 
+<!-- Season Progression Roadmap -->
 <section class="py-16 bg-base-200/40 border-b border-base-300">
     <div class="max-w-6xl mx-auto px-4">
         <div class="mb-10 text-center max-w-xl mx-auto">
@@ -217,6 +225,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+            <!-- Season 1 -->
             <div class="p-6 bg-base-100 rounded-2xl border-2 border-primary/80 shadow-sm space-y-4 flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
@@ -259,6 +268,7 @@
                 </div>
             </div>
 
+            <!-- Season 2 -->
             <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4 flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
@@ -288,6 +298,7 @@
                 </div>
             </div>
 
+            <!-- Season 3 & Beyond -->
             <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4 flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
@@ -325,6 +336,7 @@
     </div>
 </section>
 
+<!-- Modular Systems Grid -->
 <section class="py-16 bg-base-100 border-b border-base-300">
     <div class="max-w-6xl mx-auto px-4">
         <div class="mb-10 text-center max-w-xl mx-auto">
@@ -384,6 +396,7 @@
     </div>
 </section>
 
+<!-- Footer Banner -->
 <section class="py-16 bg-base-200/60">
     <div class="max-w-4xl mx-auto px-4 text-center">
         <div class="p-8 rounded-2xl bg-base-100 border border-base-300 shadow-sm space-y-4">
