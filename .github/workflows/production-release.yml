@@ -1,0 +1,51 @@
+name: Production Release & Deploy
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  release-and-deploy:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update CHANGELOG.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure CHANGELOG.md exists
+          touch CHANGELOG.md
+
+          # Generate changelog entry from merged commits
+          echo "## Release $(date +'%Y-%m-%d %H:%M')" > new_entry.txt
+          echo "" >> new_entry.txt
+          git log origin/main..HEAD --pretty=format:"* %s (%h)" >> new_entry.txt
+          echo -e "\n" >> new_entry.txt
+          cat CHANGELOG.md >> new_entry.txt
+          mv new_entry.txt CHANGELOG.md
+
+          git add CHANGELOG.md
+          git commit -m "chore(changelog): update CHANGELOG.md for release [skip ci]" || echo "No changes"
+          git push origin main
+
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd ${{ secrets.PROD_PATH }}
+            git pull origin main
+            php spark migrate
+            docker exec $(docker ps --format "{{.Names}}" | grep -iE "openresty|nginx" | head -n 1) openresty -s reload
