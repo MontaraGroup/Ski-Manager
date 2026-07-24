@@ -39,6 +39,7 @@ jobs:
 
           git add CHANGELOG.md
           git commit -m "chore(changelog): update CHANGELOG.md for release [skip ci]" || echo "No changes"
+          git pull origin main --rebase
           git push origin main
 
       - name: Deploy to Production Server
