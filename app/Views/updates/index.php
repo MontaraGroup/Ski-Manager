@@ -13,8 +13,24 @@
             <div class="card bg-base-100 shadow-sm border border-primary">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
-                        <span class="badge badge-primary font-mono">Release</span>
+                        <span class="badge badge-primary font-mono">v1.3.7</span>
                         <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i>Latest</span>
+                        <span class="badge badge-outline badge-sm">Patch</span>
+                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
+                    </div>
+                    <h2 class="text-lg font-bold">Release v1.3.7 Update</h2>
+                    <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="relative pl-6">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
+            <div class="card bg-base-100 shadow-sm border border-base-300">
+                <div class="card-body p-5">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="badge badge-ghost font-mono">Release</span>
+                        
                         <span class="badge badge-outline badge-sm">Patch</span>
                         <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
                     </div>
