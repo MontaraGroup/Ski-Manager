@@ -37,8 +37,11 @@ jobs:
           cat CHANGELOG.md >> new_entry.txt
           mv new_entry.txt CHANGELOG.md
 
-          git add CHANGELOG.md
-          git commit -m "chore(changelog): update CHANGELOG.md for release [skip ci]" || echo "No changes"
+          # Generate styled timeline card for /updates page
+          python3 scripts/update_changelog_view.py
+
+          git add CHANGELOG.md app/Views/updates/index.php
+          git commit -m "chore(changelog): update CHANGELOG.md and updates view [skip ci]" || echo "No changes"
           git pull origin main --rebase
           git push origin main
 
