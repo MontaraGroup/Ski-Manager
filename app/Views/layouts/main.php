@@ -320,6 +320,14 @@ a.link:hover{opacity:0.8}
                 $__weather = getCurrentWeather();
                 $__snow = $__weather['snow_base'];
                 $__currentTemp = $__weather['temp'];
+                $__genepis = $__db->table("genepis")->where("user_id", auth()->id())->get()->getRowArray();
+                $__gbal = $__genepis ? (int)$__genepis["balance"] : 0;
+                $__gameDay = $__weather['game_day'];
+                $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
+                $__rating = resortRating(auth()->id());
+                $__openLifts = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0;
+                $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
+                $__visitors = $__openLifts * 80 + $__openSlopes * 40;
             ?>
             <a href="/finances" title="Cash balance — Click for Finances" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-money-bill-wave"></i>
