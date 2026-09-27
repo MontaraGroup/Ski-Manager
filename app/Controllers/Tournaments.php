@@ -81,6 +81,12 @@ class Tournaments extends BaseController
 
         $t = $types[$type];
 
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int)($fin['cash'] ?? 0) < $t['cost']) {
+            return redirect()->back()->with('error', 'Not enough cash to host this tournament. Need ' . currency($t['cost']) . '.');
+        }
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $t['cost'], false)->update();
+
         $db->table('tournaments')->insert([
             'name' => $t['name'],
             'description' => 'Hosted by ' . auth()->user()->username,

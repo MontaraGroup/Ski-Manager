@@ -55,22 +55,22 @@ class Finances extends BaseController
         $ticketIncome = 0;
         $tickets = $db->table('lift_tickets')->where('user_id', $userId)->where('active', 1)->get()->getResultArray();
         $visitors = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $visitorCount = 84;
+        $visitorCount = (int) ($visitors['daily_visitors'] ?? 0);
         foreach ($tickets as $tk) {
             if ($tk['ticket_type'] === 'full_day') $ticketIncome = (int) $tk['price'] * $visitorCount;
         }
 
         $hotelIncome = 0;
-        $hotels = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'hotel')->where('status', 'open')->get()->getResultArray();
-        foreach ($hotels as $h) { $hotelIncome += (int) ($h['daily_revenue'] ?? 0); }
+        $hotels = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'hotel')->where('status', 'open')->get()->getResultArray();
+        foreach ($hotels as $h) { $hotelIncome += (int) ($h['revenue_per_day'] ?? 0); }
 
         $restaurantIncome = 0;
-        $restaurants = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'restaurant')->where('status', 'open')->get()->getResultArray();
-        foreach ($restaurants as $r) { $restaurantIncome += (int) ($r['daily_revenue'] ?? 0); }
+        $restaurants = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'restaurant')->where('status', 'open')->get()->getResultArray();
+        foreach ($restaurants as $r) { $restaurantIncome += (int) ($r['revenue_per_day'] ?? 0); }
 
         $rentalIncome = 0;
-        $rentals = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'rental')->where('status', 'open')->get()->getResultArray();
-        foreach ($rentals as $r) { $rentalIncome += (int) ($r['daily_revenue'] ?? 0); }
+        $rentals = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'rental')->where('status', 'open')->get()->getResultArray();
+        foreach ($rentals as $r) { $rentalIncome += (int) ($r['revenue_per_day'] ?? 0); }
 
         $loanPayments = 0;
         $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();

@@ -10,6 +10,7 @@ class TerrainParkModel extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'user_id', 'name', 'park_type', 'size', 'condition_pct',
+        'popularity', 'daily_visitors',
         'status', 'build_days_left', 'slope_id',
     ];
 

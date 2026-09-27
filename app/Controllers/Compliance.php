@@ -60,7 +60,7 @@ class Compliance extends BaseController
     {
         $env = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
         if (!$env) {
-            $db->table('environmental')->insert(['user_id' => $userId, 'eco_score' => 50, 'carbon_offset' => 0]);
+            $db->table('environmental')->insert(['user_id' => $userId, 'eco_score' => 50, 'carbon_output' => 0]);
             $env = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
         }
         $upgrades = [];

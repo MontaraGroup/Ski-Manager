@@ -36,6 +36,19 @@ class ResortMap extends BaseController
         return auth()->id() === 1;
     }
 
+    public function changeMap()
+    {
+        $userId = auth()->id();
+        if (!$userId) return redirect()->to('/login');
+        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map');
+        $validMaps = self::getResortMapNames();
+        if (!in_array($map, $validMaps, true)) {
+            return redirect()->back()->with('error', 'Invalid map selected.');
+        }
+        db_connect()->table('player_finances')->where('user_id', $userId)->update(['resort_map' => $map]);
+        return redirect()->to('/map')->with('success', 'Map switched to ' . $map . '.');
+    }
+
     public function index()
     {
         $resortMap  = $this->getSelectedMap();

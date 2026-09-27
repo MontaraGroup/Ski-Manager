@@ -58,7 +58,7 @@
     </div>
 
     <?php
-    $seasonLength = getSeasonLength(); $seasonProgress = min($gameDay, $seasonLength); $seasonNum = (int) ceil($gameDay / $seasonLength);
+    $seasonLength = max(1, (int) getSeasonLength()); $seasonProgress = min($gameDay, $seasonLength); $seasonNum = (int) ceil($gameDay / $seasonLength);
     $wIcons = ['Sunny'=>'fa-sun text-warning','Partly Cloudy'=>'fa-cloud-sun text-info','Cloudy'=>'fa-cloud text-base-content/50','Light Snow'=>'fa-snowflake text-info','Heavy Snow'=>'fa-snowflake text-primary','Blizzard'=>'fa-wind text-error','Freezing Rain'=>'fa-cloud-rain text-error'];
     $totalParkingCap = 0; $totalOccupied = 0;
     foreach ($parkingFacilities as $pf) { if ($pf['status'] === 'open' || $pf['status'] === 'full') { $totalParkingCap += $pf['capacity']; $totalOccupied += $pf['occupied']; } }
@@ -121,7 +121,7 @@
         <?php if ($w['widget_key'] === 'season') : ?>
             <?php if ($sz === 'small') : ?>
                 <div class="widget-center">
-                    <div class="radial-progress text-primary" style="--value:<?= round($seasonProgress / $seasonLength * 100) ?>;--size:4rem;--thickness:4px;" role="progressbar"><?= round($seasonProgress / $seasonLength * 100) ?>%</div>
+                    <div class="radial-progress text-primary" style="--value:<?= round($seasonProgress / max(1, $seasonLength) * 100) ?>;--size:4rem;--thickness:4px;" role="progressbar"><?= round($seasonProgress / max(1, $seasonLength) * 100) ?>%</div>
                     <div class="text-xs text-base-content/50 mt-2">Season <?= $seasonNum ?></div>
                 </div>
             <?php else : ?>

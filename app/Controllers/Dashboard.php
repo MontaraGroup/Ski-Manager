@@ -23,9 +23,10 @@ class Dashboard extends BaseController
         'marketing_mini' => ['name' => 'Marketing', 'icon' => 'fa-solid fa-bullhorn', 'default' => false, 'size' => 'small'],
     ];
 
-    public function index(): string
+    public function index()
     {
         $userId = auth()->id();
+        if (!$userId) return redirect()->to('/login');
         $db = db_connect();
 
         $widgets = $db->table('dashboard_widgets')->where('user_id', $userId)->orderBy('sort_order')->get()->getResultArray();
