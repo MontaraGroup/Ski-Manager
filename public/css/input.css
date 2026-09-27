@@ -232,3 +232,36 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
 .legal-prose ul { margin: 0.5rem 0 1rem 1.25rem; list-style: disc; }
 .legal-prose li { margin-bottom: 0.35rem; color: oklch(var(--bc) / 0.8); }
 .legal-prose table { font-size: 0.85rem; }
+
+/* Modern Stat Pill Chips */
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid oklch(var(--bc) / 0.1);
+    background: oklch(var(--b1));
+    font-size: 0.72rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    text-decoration: none !important;
+}
+.stat-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px oklch(var(--bc) / 0.1);
+}
+
+/* Mobile Bottom Dock */
+.mobile-bottom-dock {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9990;
+    background: oklch(var(--b1) / 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid oklch(var(--bc) / 0.1);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}

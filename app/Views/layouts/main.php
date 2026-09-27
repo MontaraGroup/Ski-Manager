@@ -304,15 +304,15 @@ a.link:hover{opacity:0.8}
     </nav>
 
     <!-- Content -->
-    <main class="flex-1" id="main-content" role="main">
+    <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
     <?php if (session("admin_original_id")) : ?>
     <div class="bg-warning text-warning-content text-center py-2 text-sm font-semibold sticky top-0 z-50">
         <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= auth()->user()->username ?? "user" ?> — <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
     </div>
     <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
-    <div class="bg-base-100 border-b border-base-300 px-4 py-1.5 text-xs">
-        <div class="max-w-7xl mx-auto flex items-center gap-3 md:gap-4 overflow-x-auto overflow-y-visible stats-bar scrollbar-none">
+    <div class="bg-base-100 border-b border-base-300 px-3 py-1.5 text-xs">
+        <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 stats-bar">
             <?php
                 $__db = db_connect();
                 $__fin = $__db->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray();
@@ -324,26 +324,40 @@ a.link:hover{opacity:0.8}
                 $__gameDay = max(1, (int)((strtotime(date("Y-m-d")) - strtotime(getSeasonStartDate())) / 86400) + 1);
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
-            ?>
-            <?php
                 $__openLifts = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0;
                 $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
                 $__visitors = $__openLifts * 80 + $__openSlopes * 40;
                 $__currentTemp = function_exists('hourlyTemp') && $__weather ? hourlyTemp((int)$__weather['temp']) : ($__weather ? (int)$__weather['temp'] : 0);
             ?>
-            <a href="/finances" title="Cash balance" class="flex items-center gap-1 shrink-0 hover:text-success transition-colors"><i class="fa-solid fa-money-bill-wave text-success"></i> <?= currency($__cash) ?></a>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <a href="/weather" title="<?= $__weather ? $__weather['condition_name'] : 'Weather' ?>" class="flex items-center gap-1 shrink-0 hover:text-info transition-colors"><i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake text-info' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?>"></i> <?= temp($__currentTemp) ?></a>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <a href="/snowmaking" title="Snow base" class="flex items-center gap-1 shrink-0 hover:text-info transition-colors"><i class="fa-solid fa-layer-group text-info"></i> <?= snow($__snow) ?></a>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <span title="Season progress" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-calendar text-primary"></i> Day <?= $__gameDay ?>/<?= getSeasonLength() ?></span>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <span title="Daily visitors" class="flex items-center gap-1 shrink-0"><i class="fa-solid fa-people-group"></i> <span id="navVisitors"><?= number_format($__visitors) ?></span></span>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <a href="/genepis" title="Génépis balance" class="flex items-center gap-1 shrink-0 hover:text-success transition-colors"><i class="fa-solid fa-seedling text-success"></i> <?= number_format($__gbal) ?></a>
-            <span class="text-base-content/20 hidden md:inline">·</span>
-            <a href="/resort-analysis" title="Resort rating" class="flex items-center gap-0.5 shrink-0"><?php for ($__i = 1; $__i <= 5; $__i++) : ?><i class="fa-solid fa-star text-xs <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/20" ?>"></i><?php endfor ?></a>
+            <a href="/finances" title="Cash balance — Click for Finances" class="stat-pill text-success border-success/20 hover:border-success hover:bg-success/10">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                <span class="font-bold font-mono"><?= currency($__cash) ?></span>
+            </a>
+            <a href="/weather" title="<?= $__weather ? esc($__weather['condition_name']) : 'Weather' ?> — Click for Forecast" class="stat-pill text-info border-info/20 hover:border-info hover:bg-info/10">
+                <i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?>"></i>
+                <span class="font-bold"><?= temp($__currentTemp) ?></span>
+            </a>
+            <a href="/snowmaking" title="Snow Base — Click for Snowmaking" class="stat-pill text-info border-info/20 hover:border-info hover:bg-info/10">
+                <i class="fa-solid fa-layer-group"></i>
+                <span class="font-medium"><?= snow($__snow) ?></span>
+            </a>
+            <span title="Season Day <?= $__gameDay ?> of <?= getSeasonLength() ?>" class="stat-pill text-base-content/80 border-base-300">
+                <i class="fa-solid fa-calendar-day text-primary"></i>
+                <span>Day <b class="font-bold"><?= $__gameDay ?></b>/<?= getSeasonLength() ?></span>
+            </span>
+            <span title="Estimated daily visitors" class="stat-pill text-base-content/80 border-base-300">
+                <i class="fa-solid fa-people-group text-primary"></i>
+                <span id="navVisitors" class="font-bold"><?= number_format($__visitors) ?></span>
+            </span>
+            <a href="/genepis" title="Génépis balance — Click for Genepis Shop" class="stat-pill text-success border-success/20 hover:border-success hover:bg-success/10">
+                <i class="fa-solid fa-seedling"></i>
+                <span class="font-bold font-mono"><?= number_format($__gbal) ?></span>
+            </a>
+            <a href="/resort-analysis" title="Resort Rating: <?= $__rating['stars'] ?>/5 Stars" class="stat-pill text-warning border-warning/20 hover:border-warning hover:bg-warning/10 gap-0.5">
+                <?php for ($__i = 1; $__i <= 5; $__i++) : ?>
+                    <i class="fa-solid fa-star text-[10px] <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/20" ?>"></i>
+                <?php endfor ?>
+            </a>
         </div>
     </div>
     <?php endif ?>
@@ -466,18 +480,96 @@ document.getElementById("confirmYes").addEventListener("click",function(){
 });
 </script>
 <script>
-const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
+const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high",c:"Core",k:"D"},{n:"Resort Overview",u:"/resort",i:"fa-mountain-sun",c:"Core",k:"R"},{n:"Trail Map",u:"/map",i:"fa-map",c:"Core",k:"M"},{n:"Weather Forecast",u:"/weather",i:"fa-cloud-sun",c:"Operations",k:"W"},{n:"Staff Management",u:"/staff",i:"fa-users",c:"Operations",k:"S"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus",c:"Operations"},{n:"Finances & Profit",u:"/finances",i:"fa-coins",c:"Commerce",k:"F"},{n:"Bank & Loans",u:"/bank",i:"fa-landmark",c:"Commerce"},{n:"Ticket Pricing",u:"/tickets",i:"fa-ticket",c:"Commerce"},{n:"Hotels & Lodging",u:"/hotels",i:"fa-hotel",c:"Commerce"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils",c:"Commerce"},{n:"Ski Rentals",u:"/rentals",i:"fa-person-skiing",c:"Commerce"},{n:"Retail Shops",u:"/retail",i:"fa-shop",c:"Commerce"},{n:"Real Estate",u:"/real-estate",i:"fa-house",c:"Commerce"},{n:"Transportation",u:"/transportation",i:"fa-bus",c:"Operations"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved",c:"Operations"},{n:"Equipment & Groomers",u:"/equipment",i:"fa-toolbox",c:"Operations"},{n:"Snowmaking System",u:"/snowmaking",i:"fa-snowflake",c:"Operations"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon",c:"Operations"},{n:"Trail Grooming",u:"/grooming",i:"fa-tractor",c:"Operations"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding",c:"Operations"},{n:"Parking Facilities",u:"/parking",i:"fa-square-parking",c:"Operations"},{n:"Energy Grid",u:"/energy",i:"fa-bolt",c:"Operations"},{n:"Water Reservoir",u:"/water",i:"fa-droplet",c:"Operations"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera",c:"Operations"},{n:"Marketing Campaigns",u:"/marketing",i:"fa-bullhorn",c:"Commerce"},{n:"Resort Insurance",u:"/insurance",i:"fa-shield-halved",c:"Commerce"},{n:"Government Permits",u:"/government",i:"fa-building-columns",c:"Commerce"},{n:"Environmental Agency",u:"/environment",i:"fa-leaf",c:"Operations"},{n:"Emergency Services",u:"/emergency",i:"fa-truck-medical",c:"Operations"},{n:"Ski Lessons & School",u:"/ski-lessons",i:"fa-chalkboard-user",c:"Operations"},{n:"Achievements",u:"/achievements",i:"fa-trophy",c:"Community"},{n:"Global Leaderboard",u:"/leaderboard",i:"fa-ranking-star",c:"Community"},{n:"Tournaments",u:"/tournaments",i:"fa-medal",c:"Community"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift",c:"Community"},{n:"Génépis Shop",u:"/genepis",i:"fa-seedling",c:"Commerce"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star",c:"Community"},{n:"Resort Star Analysis",u:"/resort-analysis",i:"fa-clipboard-check",c:"Core"},{n:"Off-Season Summary",u:"/off-season",i:"fa-sun",c:"Core"},{n:"Staff Morale",u:"/morale",i:"fa-face-smile",c:"Operations"},{n:"Activity Audit Log",u:"/activity",i:"fa-clock-rotate-left",c:"Core"},{n:"Notifications",u:"/notifications",i:"fa-bell",c:"Core"},{n:"Settings",u:"/settings",i:"fa-gear",c:"Account"},{n:"Account Profile",u:"/account",i:"fa-user-gear",c:"Account"},{n:"About Ski Manager",u:"/about",i:"fa-circle-info",c:"Help"},{n:"Frequently Asked Questions",u:"/faq",i:"fa-circle-question",c:"Help"},{n:"Game Updates & Changelog",u:"/updates",i:"fa-newspaper",c:"Help"},{n:"Support & Contact",u:"/contact",i:"fa-envelope",c:"Help"}];
 const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
-if(si){si.addEventListener("input",function(){const q=this.value.toLowerCase().trim();if(!q){sr.innerHTML="";return;}const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):"<p class=\"text-xs text-base-content/40 text-center py-2\">No results</p>";});si.addEventListener("keydown",function(e){if(e.key==="Enter"){const first=sr.querySelector("a");if(first)window.location=first.href;}});
-document.addEventListener("keydown",function(e){if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault();si.focus();si.closest(".dropdown").querySelector("[tabindex]").focus();si.focus();}});
+let searchIdx = 0;
+
+function renderSearchResults(m) {
+    if (!m.length) {
+        sr.innerHTML = '<p class="text-xs text-base-content/40 text-center py-4"><i class="fa-solid fa-magnifying-glass mr-1"></i>No matching pages found</p>';
+        return;
+    }
+    searchIdx = 0;
+    sr.innerHTML = m.map((p, idx) => {
+        const kbd = p.k ? `<kbd class="kbd kbd-xs border-base-300 font-bold ml-auto">${p.k}</kbd>` : '';
+        const cat = p.c ? `<span class="badge badge-ghost badge-xs text-[10px] ml-auto mr-1">${p.c}</span>` : '';
+        return `<a href="${p.u}" data-idx="${idx}" class="search-item flex items-center gap-2.5 p-2 rounded-lg hover:bg-base-200 text-sm transition-colors ${idx === 0 ? 'bg-primary/10 text-primary font-medium' : ''}">
+            <div class="w-6 h-6 rounded-md bg-base-200 flex items-center justify-center shrink-0">
+                <i class="fa-solid ${p.i} text-xs text-primary/80"></i>
+            </div>
+            <span class="truncate">${p.n}</span>
+            ${cat}
+            ${kbd}
+        </a>`;
+    }).join("");
+}
+
+function updateSearchHighlight() {
+    const items = sr.querySelectorAll(".search-item");
+    items.forEach((item, idx) => {
+        if (idx === searchIdx) {
+            item.classList.add("bg-primary/10", "text-primary", "font-medium");
+            item.scrollIntoView({ block: "nearest" });
+        } else {
+            item.classList.remove("bg-primary/10", "text-primary", "font-medium");
+        }
+    });
+}
+
+if (si) {
+    si.addEventListener("input", function() {
+        const q = this.value.toLowerCase().trim();
+        const emptyEl = document.getElementById("searchEmpty");
+        if (!q) {
+            sr.innerHTML = "";
+            if (emptyEl) emptyEl.classList.remove("hidden");
+            return;
+        }
+        if (emptyEl) emptyEl.classList.add("hidden");
+        const m = searchPages.filter(p => p.n.toLowerCase().includes(q) || (p.c && p.c.toLowerCase().includes(q)));
+        renderSearchResults(m);
+    });
+
+    si.addEventListener("keydown", function(e) {
+        const items = sr.querySelectorAll(".search-item");
+        if (!items.length) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            searchIdx = (searchIdx + 1) % items.length;
+            updateSearchHighlight();
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            searchIdx = (searchIdx - 1 + items.length) % items.length;
+            updateSearchHighlight();
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (items[searchIdx]) window.location = items[searchIdx].href;
+        }
+    });
+}
+document.addEventListener("keydown", function(e){
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const sm = document.getElementById("searchModal");
+        if (sm) {
+            sm.showModal();
+            setTimeout(() => { const inp = document.getElementById("globalSearch"); if(inp) inp.focus(); }, 50);
+        }
+    }
+});
 }
 </script>
 <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.5rem;height:2.5rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up"></i></button>
 <script>window.addEventListener("scroll",function(){document.getElementById("backToTop").style.display=window.scrollY>300?"flex":"none";});</script>
 <script>
-document.querySelectorAll(".alert-success,.alert-error,.alert-warning").forEach(function(el){
-    if(el.closest(".card-body"))return;
-    setTimeout(function(){el.style.transition="opacity 0.5s";el.style.opacity="0";setTimeout(function(){el.remove();},500);},4000);
+document.querySelectorAll(".alert-success").forEach(function(el){
+    if (el.closest(".card-body") || el.closest("form")) return;
+    setTimeout(function(){
+        el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+        el.style.opacity = "0";
+        el.style.transform = "translateY(-8px)";
+        setTimeout(function(){ el.remove(); }, 500);
+    }, 4500);
 });
 </script>
 <script>
@@ -495,7 +587,34 @@ document.querySelectorAll("[data-count]").forEach(function(el){
 });
 </script>
 <script>
-document.addEventListener("keydown",function(e){
+document.addEventListener("keydown", function(e) {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    const openModal = document.querySelector('dialog[open]');
+    if (openModal) {
+        if (e.key === 'Escape') openModal.close();
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+    const routes = {
+        'd': '/dashboard',
+        'r': '/resort',
+        'm': '/map',
+        'w': '/weather',
+        's': '/staff',
+        'f': '/finances'
+    };
+
+    if (routes[key]) {
+        e.preventDefault();
+        window.location.href = routes[key];
+    } else if (e.key === '?') {
+        e.preventDefault();
+        const scModal = document.getElementById('shortcutModal');
+        if (scModal) scModal.showModal();
+    }
 });
 </script>
 <dialog id="shortcutModal" class="modal modal-bottom sm:modal-middle">
@@ -552,19 +671,7 @@ function acceptCookies(level){
 <?php if (function_exists("featureEnabled") && featureEnabled("tooltips")) : ?>
 <style>[data-tip]{position:relative;cursor:help}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1d232a;color:#a6adbb;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}[data-tip]:hover::before{content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1d232a;z-index:9999}</style>
 <?php endif ?>
-<?php if (function_exists("featureEnabled") && featureEnabled("beta_mobile_nav")) : ?>
-<nav class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 z-50 md:hidden" style="padding-bottom:env(safe-area-inset-bottom)">
-    <div class="flex justify-around items-center py-2">
-        <a href="/dashboard" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "dashboard" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-gauge-high text-lg"></i>Home</a>
-        <a href="/map" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "map" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-map text-lg"></i>Map</a>
-        <a href="/weather" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "weather" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-cloud-sun text-lg"></i>Weather</a>
-        <a href="/staff" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "staff" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-users text-lg"></i>Staff</a>
-        <a href="/finances" class="flex flex-col items-center gap-0.5 text-xs <?= uri_string() === "finances" ? "text-primary" : "text-base-content/50" ?>"><i class="fa-solid fa-coins text-lg"></i>Money</a>
-    </div>
-</nav>
-<style>.md\:hidden{padding-bottom:60px}</style>
-<?php endif ?>
-</script>
+
 <script>if("serviceWorker" in navigator && location.hostname === "ski-manager.net"){navigator.serviceWorker.register("/sw.js");}</script>
 
 <script>
@@ -596,7 +703,7 @@ function fetchLiveResortAlerts() {
                 // Build a modern, tactile DaisyUI Toast component
                 const toast = document.createElement("div");
                 
-                // Contextual neon glow mappings based on category profiles
+                const iconStr = (alert.icon || "").toLowerCase();
                 let glowLayer = "shadow-[0_0_20px_rgba(59,130,246,0.15)] border-primary/20";
                 if (iconStr.includes("snowflake")) glowLayer = "shadow-[0_0_20px_rgba(0,218,255,0.2)] border-info/30";
                 else if (iconStr.includes("trophy") || iconStr.includes("medal")) glowLayer = "shadow-[0_0_20px_rgba(217,70,239,0.2)] border-accent/30";
@@ -604,10 +711,7 @@ function fetchLiveResortAlerts() {
 
                 toast.className = `alert bg-base-100 p-3.5 flex gap-3 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 rounded-xl border ${glowLayer}`;
 
-                
-                // Color-code accent boundaries matching system classifications
                 let accentColor = "text-primary bg-primary/10";
-                const iconStr = (alert.icon || "").toLowerCase();
                 if (iconStr.includes("snowflake")) accentColor = "text-info bg-info/10";
                 else if (iconStr.includes("trophy") || iconStr.includes("medal")) accentColor = "text-accent bg-accent/10";
                 else if (iconStr.includes("exclamation") || iconStr.includes("triangle")) accentColor = "text-error bg-error/10";
@@ -643,18 +747,108 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-</body>
-<!-- Tutorial Widget -->
+
 <?php if (auth()->loggedIn()) : ?>
-<div id="tutorialWidget" class="hidden" style="position:fixed;bottom:1rem;right:1rem;z-index:9998;">
-    <div class="card bg-base-100 shadow-xl w-80 border border-base-300">
+<!-- Mobile Bottom Navigation Dock -->
+<nav class="mobile-bottom-dock md:hidden" aria-label="Mobile Navigation">
+    <div class="grid grid-cols-5 items-center text-center px-1 py-1">
+        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+            <i class="fa-solid fa-gauge-high text-lg"></i>
+            <span class="text-[10px] mt-0.5">Dashboard</span>
+        </a>
+        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+            <i class="fa-solid fa-mountain-sun text-lg"></i>
+            <span class="text-[10px] mt-0.5">Resort</span>
+        </a>
+        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+            <i class="fa-solid fa-map text-lg"></i>
+            <span class="text-[10px] mt-0.5">Map</span>
+        </a>
+        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+            <i class="fa-solid fa-coins text-lg"></i>
+            <span class="text-[10px] mt-0.5">Finances</span>
+        </a>
+        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/60 hover:text-base-content transition-colors" aria-label="More operations">
+            <div class="relative">
+                <i class="fa-solid fa-bars text-lg"></i>
+                <?php if ($__bonusDue) : ?>
+                    <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+                <?php endif ?>
+            </div>
+            <span class="text-[10px] mt-0.5">More</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile More Operations Sheet -->
+<dialog id="mobileMenuDrawer" class="modal modal-bottom md:modal-middle">
+    <div class="modal-box max-h-[85vh] p-4 bg-base-100 rounded-t-2xl md:rounded-2xl">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-base-200">
+            <div class="flex items-center gap-2 font-bold text-base">
+                <i class="fa-solid fa-mountain-sun text-primary"></i> Resort Menu
+            </div>
+            <form method="dialog"><button class="btn btn-sm btn-ghost btn-circle" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button></form>
+        </div>
+        <div class="space-y-4 overflow-y-auto max-h-[65vh] pr-1">
+            <?php foreach ($__nav as $__secName => $__sec) : ?>
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid <?= esc($__sec['icon']) ?> text-[11px]"></i> <?= esc($__secName) ?>
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                    <?php foreach ($__sec['items'] as $__it) : ?>
+                        <?php
+                            $locked = false;
+                            $href = $__it['url'];
+                            if (!empty($__it['feature'])) {
+                                $unlocked = $__isAdmin || isFeatureUnlocked($__it['feature']);
+                                if (!$unlocked) { $locked = true; $href = '/achievements'; }
+                            }
+                            $isAct = $__currentPath === $__it['url'];
+                            $bDue = !empty($__it['badge']) && $__it['badge'] === 'bonus' && $__bonusDue;
+                        ?>
+                        <a href="<?= esc($href) ?>" class="flex items-center gap-2 p-2 rounded-lg border border-base-200 hover:border-primary/40 hover:bg-base-200/50 text-xs transition-all <?= $isAct ? 'bg-primary/10 border-primary text-primary font-semibold' : ($locked ? 'opacity-40' : '') ?>">
+                            <i class="fa-solid <?= esc($__it['icon']) ?> w-4 text-center text-primary/80"></i>
+                            <span class="truncate"><?= esc($__it['label']) ?></span>
+                            <?php if ($bDue) : ?><span class="badge badge-warning badge-xs ml-auto">!</span><?php endif ?>
+                        </a>
+                    <?php endforeach ?>
+                </div>
+            </div>
+            <?php endforeach ?>
+            <?php if ($__isAdmin) : ?>
+            <div class="pt-2 border-t border-base-200">
+                <a href="/admin" class="btn btn-sm btn-outline btn-error w-full gap-2"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</a>
+            </div>
+            <?php endif ?>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+<?php endif ?>
+
+<!-- Tutorial Widget (Collapsible) -->
+<?php if (auth()->loggedIn()) : ?>
+<div id="tutorialWidgetContainer" style="position:fixed;bottom:4.5rem;right:1rem;z-index:9980;" class="hidden md:bottom-6 md:right-6">
+    <!-- Collapsed Pill Badge -->
+    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer badge badge-primary gap-2 p-3 shadow-2xl hover:scale-105 transition-transform flex items-center">
+        <i class="fa-solid fa-graduation-cap text-sm"></i>
+        <span class="font-bold text-xs" id="tutPillText">Tutorial</span>
+        <i class="fa-solid fa-chevron-up text-[10px] opacity-70"></i>
+    </div>
+
+    <!-- Expanded Card -->
+    <div id="tutorialWidget" class="card bg-base-100 shadow-2xl w-80 border border-base-300">
         <div class="card-body p-4">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                     <div class="badge badge-primary badge-sm" id="tutStep">1/10</div>
                     <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
                 </div>
-                <button onclick="skipTutorial()" class="btn btn-ghost btn-xs" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
+                <div class="flex items-center gap-1">
+                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/60 hover:text-base-content" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs text-base-content/40 hover:text-error" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
+                </div>
             </div>
             <div class="flex gap-3">
                 <i class="fa-solid fa-mountain-sun text-primary text-xl mt-0.5" id="tutIcon"></i>
@@ -686,20 +880,52 @@ const tutCsrf = '<?= csrf_hash() ?>';
 const tutCsrfName = '<?= csrf_token() ?>';
 let tutCurrentPage = window.location.pathname;
 
+let tutCollapsed = localStorage.getItem('tut_collapsed') === 'true';
+
+function toggleTutCollapse(collapse) {
+    tutCollapsed = collapse;
+    localStorage.setItem('tut_collapsed', collapse ? 'true' : 'false');
+    updateTutDisplay();
+}
+
+function updateTutDisplay() {
+    const container = document.getElementById('tutorialWidgetContainer');
+    const pill = document.getElementById('tutPill');
+    const widget = document.getElementById('tutorialWidget');
+    if (!container || !pill || !widget) return;
+
+    if (tutCollapsed) {
+        widget.classList.add('hidden');
+        pill.classList.remove('hidden');
+    } else {
+        widget.classList.remove('hidden');
+        pill.classList.add('hidden');
+    }
+}
+
 function loadTutorial() {
+    const container = document.getElementById('tutorialWidgetContainer');
     fetch('/tutorial/check?page=' + encodeURIComponent(tutCurrentPage), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(d => {
-            if (d.done) { tutWidget.classList.add('hidden'); return; }
-            tutWidget.classList.remove('hidden');
+            if (d.done) { 
+                if (container) container.classList.add('hidden'); 
+                return; 
+            }
+            if (container) container.classList.remove('hidden');
+            updateTutDisplay();
             renderTutStep(d);
         })
-        .catch(() => tutWidget.classList.add('hidden'));
+        .catch(() => {
+            if (container) container.classList.add('hidden');
+        });
 }
 
 function renderTutStep(d) {
     document.getElementById('tutStep').textContent = (d.step + 1) + '/' + d.total;
     document.getElementById('tutTitle').textContent = d.data.title;
+    const pillText = document.getElementById('tutPillText');
+    if (pillText) pillText.textContent = 'Tutorial: ' + (d.step + 1) + '/' + d.total;
     document.getElementById('tutText').textContent = d.data.text;
     document.getElementById('tutIcon').className = d.data.icon + ' text-primary text-xl mt-0.5';
     document.getElementById('tutProgress').value = d.step;
@@ -785,3 +1011,6 @@ document.querySelectorAll('.navbar details').forEach(function(det) {
     });
 });
 </script>
+
+</body>
+</html>
