@@ -447,9 +447,23 @@ document.querySelectorAll(".navbar details").forEach(function(det) {
     });
 });
 document.addEventListener("click", function(e) {
+    // Close navbar details menus if clicked outside
     if (!e.target.closest(".navbar details")) {
         document.querySelectorAll(".navbar details[open]").forEach(function(d) {
             d.removeAttribute("open");
+        });
+    }
+    // Dropdown open/close support for click and touch devices
+    const trigger = e.target.closest(".dropdown > [tabindex=\"0\"]");
+    const dropdown = trigger ? trigger.closest(".dropdown") : null;
+    document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
+        if (d !== dropdown) d.classList.remove("dropdown-open");
+    });
+    if (trigger && dropdown) {
+        dropdown.classList.toggle("dropdown-open");
+    } else if (!e.target.closest(".dropdown-content")) {
+        document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
+            d.classList.remove("dropdown-open");
         });
     }
 });
@@ -532,9 +546,6 @@ document.querySelectorAll("[data-count]").forEach(function(el){
     var target=parseInt(el.dataset.count),current=0,step=Math.max(1,Math.floor(target/30));
     var timer=setInterval(function(){current+=step;if(current>=target){current=target;clearInterval(timer);}el.textContent=current.toLocaleString();},20);
 });
-<script>
-
-
 </script>
 
 <!-- Cookie Consent Banner -->
@@ -897,18 +908,6 @@ loadTutorial();
 setInterval(loadTutorial, 10000);
 </script>
 <?php endif ?>
-
-<script>
-document.querySelectorAll('.navbar details').forEach(function(det) {
-    det.addEventListener('toggle', function() {
-        if (this.open) {
-            document.querySelectorAll('.navbar details').forEach(function(other) {
-                if (other !== det) other.removeAttribute('open');
-            });
-        }
-    });
-});
-</script>
 
 </body>
 </html>
