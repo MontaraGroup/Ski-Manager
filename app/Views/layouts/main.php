@@ -480,83 +480,27 @@ document.getElementById("confirmYes").addEventListener("click",function(){
 });
 </script>
 <script>
-const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high",c:"Core",k:"D"},{n:"Resort Overview",u:"/resort",i:"fa-mountain-sun",c:"Core",k:"R"},{n:"Trail Map",u:"/map",i:"fa-map",c:"Core",k:"M"},{n:"Weather Forecast",u:"/weather",i:"fa-cloud-sun",c:"Operations",k:"W"},{n:"Staff Management",u:"/staff",i:"fa-users",c:"Operations",k:"S"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus",c:"Operations"},{n:"Finances & Profit",u:"/finances",i:"fa-coins",c:"Commerce",k:"F"},{n:"Bank & Loans",u:"/bank",i:"fa-landmark",c:"Commerce"},{n:"Ticket Pricing",u:"/tickets",i:"fa-ticket",c:"Commerce"},{n:"Hotels & Lodging",u:"/hotels",i:"fa-hotel",c:"Commerce"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils",c:"Commerce"},{n:"Ski Rentals",u:"/rentals",i:"fa-person-skiing",c:"Commerce"},{n:"Retail Shops",u:"/retail",i:"fa-shop",c:"Commerce"},{n:"Real Estate",u:"/real-estate",i:"fa-house",c:"Commerce"},{n:"Transportation",u:"/transportation",i:"fa-bus",c:"Operations"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved",c:"Operations"},{n:"Equipment & Groomers",u:"/equipment",i:"fa-toolbox",c:"Operations"},{n:"Snowmaking System",u:"/snowmaking",i:"fa-snowflake",c:"Operations"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon",c:"Operations"},{n:"Trail Grooming",u:"/grooming",i:"fa-tractor",c:"Operations"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding",c:"Operations"},{n:"Parking Facilities",u:"/parking",i:"fa-square-parking",c:"Operations"},{n:"Energy Grid",u:"/energy",i:"fa-bolt",c:"Operations"},{n:"Water Reservoir",u:"/water",i:"fa-droplet",c:"Operations"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera",c:"Operations"},{n:"Marketing Campaigns",u:"/marketing",i:"fa-bullhorn",c:"Commerce"},{n:"Resort Insurance",u:"/insurance",i:"fa-shield-halved",c:"Commerce"},{n:"Government Permits",u:"/government",i:"fa-building-columns",c:"Commerce"},{n:"Environmental Agency",u:"/environment",i:"fa-leaf",c:"Operations"},{n:"Emergency Services",u:"/emergency",i:"fa-truck-medical",c:"Operations"},{n:"Ski Lessons & School",u:"/ski-lessons",i:"fa-chalkboard-user",c:"Operations"},{n:"Achievements",u:"/achievements",i:"fa-trophy",c:"Community"},{n:"Global Leaderboard",u:"/leaderboard",i:"fa-ranking-star",c:"Community"},{n:"Tournaments",u:"/tournaments",i:"fa-medal",c:"Community"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift",c:"Community"},{n:"Génépis Shop",u:"/genepis",i:"fa-seedling",c:"Commerce"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star",c:"Community"},{n:"Resort Star Analysis",u:"/resort-analysis",i:"fa-clipboard-check",c:"Core"},{n:"Off-Season Summary",u:"/off-season",i:"fa-sun",c:"Core"},{n:"Staff Morale",u:"/morale",i:"fa-face-smile",c:"Operations"},{n:"Activity Audit Log",u:"/activity",i:"fa-clock-rotate-left",c:"Core"},{n:"Notifications",u:"/notifications",i:"fa-bell",c:"Core"},{n:"Settings",u:"/settings",i:"fa-gear",c:"Account"},{n:"Account Profile",u:"/account",i:"fa-user-gear",c:"Account"},{n:"About Ski Manager",u:"/about",i:"fa-circle-info",c:"Help"},{n:"Frequently Asked Questions",u:"/faq",i:"fa-circle-question",c:"Help"},{n:"Game Updates & Changelog",u:"/updates",i:"fa-newspaper",c:"Help"},{n:"Support & Contact",u:"/contact",i:"fa-envelope",c:"Help"}];
+const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
 const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
-let searchIdx = 0;
-
-function renderSearchResults(m) {
-    if (!m.length) {
-        sr.innerHTML = '<p class="text-xs text-base-content/40 text-center py-4"><i class="fa-solid fa-magnifying-glass mr-1"></i>No matching pages found</p>';
-        return;
-    }
-    searchIdx = 0;
-    sr.innerHTML = m.map((p, idx) => {
-        const kbd = p.k ? `<kbd class="kbd kbd-xs border-base-300 font-bold ml-auto">${p.k}</kbd>` : '';
-        const cat = p.c ? `<span class="badge badge-ghost badge-xs text-[10px] ml-auto mr-1">${p.c}</span>` : '';
-        return `<a href="${p.u}" data-idx="${idx}" class="search-item flex items-center gap-2.5 p-2 rounded-lg hover:bg-base-200 text-sm transition-colors ${idx === 0 ? 'bg-primary/10 text-primary font-medium' : ''}">
-            <div class="w-6 h-6 rounded-md bg-base-200 flex items-center justify-center shrink-0">
-                <i class="fa-solid ${p.i} text-xs text-primary/80"></i>
-            </div>
-            <span class="truncate">${p.n}</span>
-            ${cat}
-            ${kbd}
-        </a>`;
-    }).join("");
-}
-
-function updateSearchHighlight() {
-    const items = sr.querySelectorAll(".search-item");
-    items.forEach((item, idx) => {
-        if (idx === searchIdx) {
-            item.classList.add("bg-primary/10", "text-primary", "font-medium");
-            item.scrollIntoView({ block: "nearest" });
-        } else {
-            item.classList.remove("bg-primary/10", "text-primary", "font-medium");
-        }
-    });
-}
-
-if (si) {
-    si.addEventListener("input", function() {
-        const q = this.value.toLowerCase().trim();
-        const emptyEl = document.getElementById("searchEmpty");
-        if (!q) {
-            sr.innerHTML = "";
-            if (emptyEl) emptyEl.classList.remove("hidden");
+if(si){
+    si.addEventListener("input",function(){
+        const q=this.value.toLowerCase().trim();
+        const emptyEl=document.getElementById("searchEmpty");
+        if(!q){
+            sr.innerHTML="";
+            if(emptyEl) emptyEl.classList.remove("hidden");
             return;
         }
-        if (emptyEl) emptyEl.classList.add("hidden");
-        const m = searchPages.filter(p => p.n.toLowerCase().includes(q) || (p.c && p.c.toLowerCase().includes(q)));
-        renderSearchResults(m);
+        if(emptyEl) emptyEl.classList.add("hidden");
+        const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));
+        sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):`<p class="text-xs text-base-content/40 text-center py-2">No results</p>`;
     });
-
-    si.addEventListener("keydown", function(e) {
-        const items = sr.querySelectorAll(".search-item");
-        if (!items.length) return;
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            searchIdx = (searchIdx + 1) % items.length;
-            updateSearchHighlight();
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            searchIdx = (searchIdx - 1 + items.length) % items.length;
-            updateSearchHighlight();
-        } else if (e.key === "Enter") {
-            e.preventDefault();
-            if (items[searchIdx]) window.location = items[searchIdx].href;
+    si.addEventListener("keydown",function(e){
+        if(e.key==="Enter"){
+            const first=sr.querySelector("a");
+            if(first)window.location=first.href;
         }
     });
-}
-document.addEventListener("keydown", function(e){
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        const sm = document.getElementById("searchModal");
-        if (sm) {
-            sm.showModal();
-            setTimeout(() => { const inp = document.getElementById("globalSearch"); if(inp) inp.focus(); }, 50);
-        }
-    }
-});
 }
 </script>
 <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.5rem;height:2.5rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up"></i></button>
@@ -585,55 +529,6 @@ document.querySelectorAll("[data-count]").forEach(function(el){
     var target=parseInt(el.dataset.count),current=0,step=Math.max(1,Math.floor(target/30));
     var timer=setInterval(function(){current+=step;if(current>=target){current=target;clearInterval(timer);}el.textContent=current.toLocaleString();},20);
 });
-</script>
-<script>
-document.addEventListener("keydown", function(e) {
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-    const openModal = document.querySelector('dialog[open]');
-    if (openModal) {
-        if (e.key === 'Escape') openModal.close();
-        return;
-    }
-
-    const key = e.key.toLowerCase();
-    const routes = {
-        'd': '/dashboard',
-        'r': '/resort',
-        'm': '/map',
-        'w': '/weather',
-        's': '/staff',
-        'f': '/finances'
-    };
-
-    if (routes[key]) {
-        e.preventDefault();
-        window.location.href = routes[key];
-    } else if (e.key === '?') {
-        e.preventDefault();
-        const scModal = document.getElementById('shortcutModal');
-        if (scModal) scModal.showModal();
-    }
-});
-</script>
-<dialog id="shortcutModal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box">
-        <h3 class="font-bold text-lg mb-3"><i class="fa-solid fa-keyboard mr-2"></i>Keyboard Shortcuts</h3>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-            <div><kbd class="kbd kbd-sm">D</kbd> Dashboard</div>
-            <div><kbd class="kbd kbd-sm">R</kbd> Resort</div>
-            <div><kbd class="kbd kbd-sm">M</kbd> Trail Map</div>
-            <div><kbd class="kbd kbd-sm">W</kbd> Weather</div>
-            <div><kbd class="kbd kbd-sm">S</kbd> Staff</div>
-            <div><kbd class="kbd kbd-sm">F</kbd> Finances</div>
-            <div><kbd class="kbd kbd-sm">Ctrl+K</kbd> Search</div>
-            <div><kbd class="kbd kbd-sm">?</kbd> This help</div>
-        </div>
-        <div class="modal-action"><form method="dialog"><button class="btn btn-sm">Close</button></form></div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
-</dialog>
 <script>
 
 
