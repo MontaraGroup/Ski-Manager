@@ -250,7 +250,7 @@ a.link:hover{opacity:0.8}
                             <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-base-100">
                                 <span class="font-bold text-xs uppercase tracking-wider text-base-content/50">Notifications</span>
                                 <?php if ($__notifCount > 0) : ?>
-                                    <a href="/notifications/read-all" class="link link-primary text-xs no-underline hover:underline">Mark all read</a>
+                                    <a href="/notifications/read-all" class="link link-primary text-xs no-underline ">Mark all read</a>
                                 <?php endif ?>
                             </div>
                             <div id="navbarNotifTargetList" class="space-y-1 max-h-64 overflow-y-auto">
@@ -317,27 +317,19 @@ a.link:hover{opacity:0.8}
                 $__db = db_connect();
                 $__fin = $__db->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray();
                 $__cash = $__fin ? (int)$__fin["cash"] : (int) (match(session("difficulty") ?? "standard") { "easy" => 1000000, "hard" => 200000, default => 500000 });
-                $__weather = $__db->table("weather")->orderBy("game_day", "DESC")->limit(1)->get()->getRowArray();
-                $__snow = $__weather ? (int)$__weather["snow_base"] : 0;
-                $__genepis = $__db->table("genepis")->where("user_id", auth()->id())->get()->getRowArray();
-                $__gbal = $__genepis ? (int)$__genepis["balance"] : 0;
-                $__gameDay = max(1, (int)((strtotime(date("Y-m-d")) - strtotime(getSeasonStartDate())) / 86400) + 1);
-                $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
-                $__rating = resortRating(auth()->id());
-                $__openLifts = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0;
-                $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
-                $__visitors = $__openLifts * 80 + $__openSlopes * 40;
-                $__currentTemp = function_exists('hourlyTemp') && $__weather ? hourlyTemp((int)$__weather['temp']) : ($__weather ? (int)$__weather['temp'] : 0);
+                $__weather = getCurrentWeather();
+                $__snow = $__weather['snow_base'];
+                $__currentTemp = $__weather['temp'];
             ?>
-            <a href="/finances" title="Cash balance — Click for Finances" class="stat-pill text-success border-success/20 hover:border-success hover:bg-success/10">
+            <a href="/finances" title="Cash balance — Click for Finances" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-money-bill-wave"></i>
                 <span class="font-bold font-mono"><?= currency($__cash) ?></span>
             </a>
-            <a href="/weather" title="<?= $__weather ? esc($__weather['condition_name']) : 'Weather' ?> — Click for Forecast" class="stat-pill text-info border-info/20 hover:border-info hover:bg-info/10">
+            <a href="/weather" title="<?= $__weather ? esc($__weather['condition_name']) : 'Weather' ?> — Click for Forecast" class="stat-pill text-info border-info/20 ">
                 <i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?>"></i>
                 <span class="font-bold"><?= temp($__currentTemp) ?></span>
             </a>
-            <a href="/snowmaking" title="Snow Base — Click for Snowmaking" class="stat-pill text-info border-info/20 hover:border-info hover:bg-info/10">
+            <a href="/snowmaking" title="Snow Base — Click for Snowmaking" class="stat-pill text-info border-info/20 ">
                 <i class="fa-solid fa-layer-group"></i>
                 <span class="font-medium"><?= snow($__snow) ?></span>
             </a>
@@ -349,11 +341,11 @@ a.link:hover{opacity:0.8}
                 <i class="fa-solid fa-people-group text-primary"></i>
                 <span id="navVisitors" class="font-bold"><?= number_format($__visitors) ?></span>
             </span>
-            <a href="/genepis" title="Génépis balance — Click for Genepis Shop" class="stat-pill text-success border-success/20 hover:border-success hover:bg-success/10">
+            <a href="/genepis" title="Génépis balance — Click for Genepis Shop" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-seedling"></i>
                 <span class="font-bold font-mono"><?= number_format($__gbal) ?></span>
             </a>
-            <a href="/resort-analysis" title="Resort Rating: <?= $__rating['stars'] ?>/5 Stars" class="stat-pill text-warning border-warning/20 hover:border-warning hover:bg-warning/10 gap-0.5">
+            <a href="/resort-analysis" title="Resort Rating: <?= $__rating['stars'] ?>/5 Stars" class="stat-pill text-warning border-warning/20  gap-0.5">
                 <?php for ($__i = 1; $__i <= 5; $__i++) : ?>
                     <i class="fa-solid fa-star text-[10px] <?= $__i <= $__rating["stars"] ? "text-warning" : "text-base-content/20" ?>"></i>
                 <?php endfor ?>
@@ -647,23 +639,23 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Mobile Bottom Navigation Dock -->
 <nav class="mobile-bottom-dock md:hidden" aria-label="Mobile Navigation">
     <div class="grid grid-cols-5 items-center text-center px-1 py-1">
-        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
             <i class="fa-solid fa-gauge-high text-lg"></i>
             <span class="text-[10px] mt-0.5">Dashboard</span>
         </a>
-        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
             <i class="fa-solid fa-mountain-sun text-lg"></i>
             <span class="text-[10px] mt-0.5">Resort</span>
         </a>
-        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
             <i class="fa-solid fa-map text-lg"></i>
             <span class="text-[10px] mt-0.5">Map</span>
         </a>
-        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/60 hover:text-base-content' ?>">
+        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
             <i class="fa-solid fa-coins text-lg"></i>
             <span class="text-[10px] mt-0.5">Finances</span>
         </a>
-        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/60 hover:text-base-content transition-colors" aria-label="More operations">
+        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/60  transition-colors" aria-label="More operations">
             <div class="relative">
                 <i class="fa-solid fa-bars text-lg"></i>
                 <?php if ($__bonusDue) : ?>
@@ -741,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/60 hover:text-base-content" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/60 " title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
                     <button onclick="skipTutorial()" class="btn btn-ghost btn-xs text-base-content/40 hover:text-error" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>

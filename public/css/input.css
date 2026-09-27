@@ -88,12 +88,6 @@ body {
 /* Professional card styling */
 .card {
     border: 1px solid oklch(var(--bc) / 0.06);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-.card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px oklch(var(--bc) / 0.08);
-    border-color: oklch(var(--bc) / 0.12);
 }
 
 /* Navbar refinement */
@@ -113,9 +107,7 @@ body {
 .btn-primary {
     box-shadow: 0 2px 8px oklch(var(--p) / 0.3);
 }
-.btn-primary:hover {
-    box-shadow: 0 4px 14px oklch(var(--p) / 0.4);
-}
+.btn-primary:hover {}
 
 /* Badge refinement */
 .badge {
@@ -244,14 +236,10 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
     background: oklch(var(--b1));
     font-size: 0.72rem;
     white-space: nowrap;
-    transition: all 0.15s ease;
     flex-shrink: 0;
     text-decoration: none !important;
 }
-.stat-pill:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px oklch(var(--bc) / 0.1);
-}
+
 
 /* Mobile Bottom Dock */
 .mobile-bottom-dock {
@@ -264,4 +252,32 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
     backdrop-filter: blur(12px);
     border-top: 1px solid oklch(var(--bc) / 0.1);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===================================================
+   REMOVE ALL HOVER EFFECTS ACROSS SITE
+   =================================================== */
+*, *::before, *::after {
+    transition: none !important;
+}
+
+:hover {
+    transform: none !important;
+    filter: none !important;
+}
+
+.card:hover, .card:hover *,
+.btn:hover, .btn:active, .btn-primary:hover, .btn-secondary:hover, .btn-accent:hover,
+.stat-pill:hover, .badge:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+.table tr:hover, .table-hover tr:hover, .table tbody tr:hover {
+    background-color: transparent !important;
+}
+
+a:hover {
+    text-decoration: none !important;
 }

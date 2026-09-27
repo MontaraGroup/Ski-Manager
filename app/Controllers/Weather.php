@@ -9,45 +9,30 @@ class Weather extends BaseController
     public function index(): string
     {
         helper('weather');
-        $model = new WeatherModel();
-
-        $startDate = getSeasonStartDate();
-        $today = date('Y-m-d');
-        $gameDay = max(1, (int) ((strtotime($today) - strtotime($startDate)) / 86400) + 1);
-
-        $current = $model->where('game_day', $gameDay)->first();
-
-        if (!$current) {
-            $resort = ['altitude' => 'medium', 'aspect' => 'north'];
-            $prev = $model->orderBy('game_day', 'DESC')->first();
-            $this->generateAndSave($model, $resort, $gameDay, $prev);
-            $current = $model->where('game_day', $gameDay)->first();
-        }
-
-        $baseTemp = (int) $current['temp'];
-        $currentTemp = hourlyTemp($baseTemp);
-        $hourly = getHourlyForecast($baseTemp, (int) $current['wind'], $current['condition_name']);
+        $weatherData = getCurrentWeather();
+        $baseTemp = (int) $weatherData['base_temp'];
+        $hourly = getHourlyForecast($baseTemp, (int) $weatherData['base_wind'], $weatherData['condition_name']);
         $snowWindow = snowmakingWindow($baseTemp);
 
         $weather = [
-            'temp' => $currentTemp,
+            'temp' => $weatherData['temp'],
             'base_temp' => $baseTemp,
-            'condition' => $current['condition_name'],
-            'wind' => $hourly[(int)date('G')]['wind'],
-            'snowfall' => (int) $current['snowfall'],
-            'visibility' => $current['visibility'],
-            'humidity' => (int) $current['humidity'],
-            'snow_base' => (int) $current['snow_base'],
+            'condition' => $weatherData['condition'],
+            'wind' => $weatherData['wind'],
+            'snowfall' => $weatherData['snowfall'],
+            'visibility' => $weatherData['visibility'],
+            'humidity' => $weatherData['humidity'],
+            'snow_base' => $weatherData['snow_base'],
         ];
 
-        $forecast = json_decode($current['forecast'], true) ?? [];
+        $forecast = is_array($weatherData['forecast']) ? $weatherData['forecast'] : (json_decode($weatherData['forecast'] ?? '[]', true) ?? []);
 
         return view('weather/index', [
             'weather' => $weather,
             'forecast' => $forecast,
             'hourly' => $hourly,
             'snowWindow' => $snowWindow,
-            'gameDay' => $gameDay,
+            'gameDay' => $weatherData['game_day'],
             'currentHour' => (int) date('G'),
         ]);
     }

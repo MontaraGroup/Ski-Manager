@@ -26,7 +26,7 @@ class Admin extends BaseController
         $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
-        $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
+        $weather = getCurrentWeather();
         $recentLogs = $db->query("SELECT al.*, u.username FROM activity_log al JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT 30")->getResultArray();
 
         $users = $db->table('users')->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();

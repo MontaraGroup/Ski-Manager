@@ -17,11 +17,10 @@ class Snowmaking extends BaseController
         $staffModel = new StaffModel();
         $snowmakers = $staffModel->where('user_id', $userId)->where('role', 'snowmaker')->where('status !=', 'fired')->findAll();
 
-        $weatherModel = new WeatherModel();
-        $weather = $weatherModel->orderBy('game_day', 'DESC')->first();
-        $temp = $weather ? (int) $weather['temp'] : -5;
-        $canMakeSnow = $temp <= -2;
-        $snowBase = (int) ($weather['snow_base'] ?? 0);
+        $weather = getCurrentWeather();
+        $temp = $weather['temp'];
+        $canMakeSnow = $weather['can_make_snow'];
+        $snowBase = $weather['snow_base'];
 
         $activeCannons = array_filter($cannons, fn($c) => $c['status'] === 'active');
         $totalOutput = array_sum(array_column($activeCannons, 'output_per_day'));

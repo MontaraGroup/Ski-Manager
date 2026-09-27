@@ -53,7 +53,7 @@
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-xs text-base-content/50">Weather</div>
-            <div class="text-lg font-bold"><?= $weather ? temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) : '-' ?></div>
+            <div class="text-lg font-bold"><?= $weather ? ($weather['temp_formatted'] ?? temp((int)($weather['temp'] ?? 0))) : '-' ?></div>
         </div></div>
     </div>
 
@@ -69,7 +69,7 @@
     $roles = []; foreach ($staffAll as $s) { $roles[$s['role']] = ($roles[$s['role']] ?? 0) + 1; }
     $avgMorale = count($staffAll) > 0 ? round(array_sum(array_column($staffAll, 'morale')) / count($staffAll)) : 0;
     $activeIns = array_filter($insurance, fn($i) => ($i['active'] ?? 0) == 1);
-    $forecast = $weather ? json_decode($weather['forecast'] ?? '[]', true) : [];
+    $forecast = $weather ? (is_array($weather['forecast'] ?? null) ? $weather['forecast'] : (json_decode($weather['forecast'] ?? '[]', true) ?? [])) : [];
     ?>
 
     <div id="widgetContainer" class="widget-grid">
@@ -146,12 +146,12 @@
             <?php if ($sz === 'small') : ?>
                 <div class="widget-center">
                     <i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i>
-                    <div class="text-xl font-bold mt-1"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div>
+                    <div class="text-xl font-bold mt-1"><?= $weather['temp_formatted'] ?></div>
                     <div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?></div>
                 </div>
             <?php elseif ($sz === 'medium') : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind</div></div></div>
+                    <div class="flex items-center gap-3"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-3xl"></i><div><div class="text-xl font-bold"><?= $weather['temp_formatted'] ?></div><div class="text-xs text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind</div></div></div>
                     <?php if (!empty($forecast)) : ?>
                     <div class="flex gap-2">
                         <?php foreach (array_slice($forecast, 0, 3) as $fc) : ?>
@@ -162,7 +162,7 @@
                 </div>
             <?php else : ?>
                 <div class="flex items-center justify-between h-full">
-                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= temp(function_exists('hourlyTemp') ? hourlyTemp((int)$weather['temp']) : (int)$weather['temp']) ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow · Base: <?= snow($weather['snow_base'] ?? 0) ?></div></div></div>
+                    <div class="flex items-center gap-4"><i class="fa-solid <?= $wIcons[$weather['condition_name']] ?? 'fa-cloud' ?> text-4xl"></i><div><div class="text-2xl font-bold"><?= $weather['temp_formatted'] ?></div><div class="text-sm text-base-content/50"><?= $weather['condition_name'] ?> · <?= speed((int)$weather['wind']) ?> wind · <?= snow($weather['snowfall'] ?? 0) ?> snow · Base: <?= snow($weather['snow_base'] ?? 0) ?></div></div></div>
                     <?php if (!empty($forecast)) : ?>
                     <div class="flex gap-3 items-end">
                         <?php foreach ($forecast as $i => $fc) : ?>

@@ -9,7 +9,7 @@
     $topPlayer = $db->query("SELECT u.username, pf.cash FROM player_finances pf JOIN users u ON u.id = pf.user_id WHERE u.id != 1 ORDER BY pf.cash DESC LIMIT 1")->getRowArray();
     $recentPlayer = $db->table('users')->where('id !=', 1)->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
     $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
-    $weather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray();
+    $weather = getCurrentWeather();
     $playersLabel = $playerCount >= 10 ? number_format($playerCount) . '+ active managers' : 'Be one of the first managers';
 
     $currentSeasonNum = (int) getSeasonNumber();
@@ -106,7 +106,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="text-xs text-base-content/50 font-medium">Current Weather</div>
-                            <div class="font-bold text-sm text-base-content truncate"><?= temp((int)$weather['temp']) ?> &bull; <?= $weather['condition_name'] ?></div>
+                            <div class="font-bold text-sm text-base-content truncate"><?= $weather['temp_formatted'] ?> &bull; <?= $weather['condition'] ?></div>
                         </div>
                     </div>
                     <?php endif ?>
