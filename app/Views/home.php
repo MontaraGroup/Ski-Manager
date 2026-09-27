@@ -56,9 +56,10 @@
                     <span>Day <?= getSeasonDay() ?></span>
                 </div>
 
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-base-content leading-[1.1]">
-                    Build the ski resort <br class="hidden sm:inline">
-                    <span class="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">everyone talks about.</span>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-base-content leading-[1.08] uppercase">
+                    Design Slopes.<br>
+                    Spin Chairlifts.<br>
+                    <span class="text-primary">Rule The Mountain.</span>
                 </h1>
 
                 <p class="text-base sm:text-lg text-base-content/70 max-w-xl leading-relaxed font-normal">
@@ -67,14 +68,14 @@
 
                 <div class="flex flex-wrap items-center gap-3 pt-2">
                     <?php if (!auth()->loggedIn()) : ?>
-                    <a href="/register" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm hover:shadow transition-all gap-2">
+                    <a href="/register" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm gap-2">
                         <i class="fa-solid fa-play text-xs"></i> Play Free
                     </a>
-                    <a href="/login" class="btn btn-outline rounded-xl font-semibold border-base-300 hover:bg-base-200 gap-2">
+                    <a href="/login" class="btn btn-outline rounded-xl font-semibold border-base-300 gap-2">
                         <i class="fa-solid fa-right-to-bracket text-xs"></i> Sign In
                     </a>
                     <?php else : ?>
-                    <a href="/dashboard" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm hover:shadow transition-all gap-2">
+                    <a href="/dashboard" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm gap-2">
                         <i class="fa-solid fa-gauge-high text-xs"></i> Open Resort Dashboard
                     </a>
                     <?php endif ?>
@@ -88,52 +89,147 @@
                 </div>
             </div>
 
-            <!-- Notion Callout Block / Live Status Box -->
+            <!-- Resort Director Accreditation Pass & Mountain Operations Board -->
             <div class="lg:col-span-5">
-                <div class="p-6 rounded-2xl bg-base-200/60 border border-base-300 shadow-sm space-y-4">
-                    <div class="flex items-center justify-between border-b border-base-300/80 pb-3">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-chart-simple text-primary text-sm"></i>
-                            <span class="font-bold text-sm text-base-content">Resort Telemetry</span>
-                        </div>
-                        <span class="badge badge-sm badge-success font-mono font-bold">Live Day <?= $gameDay ?></span>
+                <div class="relative bg-base-100 rounded-3xl border-2 border-base-300 shadow-md p-6 space-y-4">
+                    <!-- Lanyard Slot Cutout -->
+                    <div class="flex justify-center -mt-2 mb-1">
+                        <div class="w-16 h-2.5 bg-base-300 rounded-full border border-base-content/20 shadow-inner"></div>
                     </div>
 
-                    <?php if ($weather) : ?>
-                    <div class="flex items-center gap-3 p-3.5 bg-base-100 rounded-xl border border-base-300/80">
-                        <div class="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-<?= $weather['temp'] <= -5 ? 'snowflake text-info' : 'cloud-sun text-warning' ?> text-base"></i>
+                    <!-- Accreditation Authority Header -->
+                    <div class="bg-neutral text-neutral-content px-4 py-2.5 rounded-xl flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-id-badge text-warning text-sm"></i>
+                            <div>
+                                <div class="text-[9px] uppercase tracking-widest font-mono text-neutral-content/70 leading-none">Resort Operations Pass</div>
+                                <div class="text-xs font-bold font-mono tracking-tight leading-tight">ACCREDITED DIRECTOR &bull; CLASS A</div>
+                            </div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="text-xs text-base-content/50 font-medium">Current Weather</div>
-                            <div class="font-bold text-sm text-base-content truncate"><?= $weather['temp_formatted'] ?> &bull; <?= $weather['condition'] ?></div>
-                        </div>
+                        <span class="badge badge-success badge-sm font-mono text-[10px] font-bold">ACTIVE S<?= getSeasonNumber() ?></span>
                     </div>
-                    <?php endif ?>
 
-                    <?php if ($topPlayer) : ?>
-                    <div class="flex items-center gap-3 p-3.5 bg-base-100 rounded-xl border border-base-300/80">
-                        <div class="w-9 h-9 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-crown text-base"></i>
+                    <!-- Credential Holder Identity -->
+                    <div class="flex items-center gap-3.5 py-1">
+                        <div class="w-12 h-12 rounded-xl bg-base-200 border border-base-300 flex items-center justify-center shrink-0 relative overflow-hidden">
+                            <?php if (auth()->loggedIn()) : ?>
+                                <div class="w-full h-full bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+                                    <?= strtoupper(substr(auth()->user()->username, 0, 2)) ?>
+                                </div>
+                            <?php else : ?>
+                                <div class="w-full h-full bg-base-200 text-base-content/40 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                            <?php endif ?>
+                            <span class="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-100"></span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <div class="text-xs text-base-content/50 font-medium">Leading Resort</div>
-                            <div class="font-bold text-sm text-base-content truncate"><?= esc($topPlayer['username']) ?> <span class="text-xs font-mono text-base-content/60 font-normal">(<?= currency((int) $topPlayer['cash']) ?>)</span></div>
+                            <div class="text-[10px] font-mono text-base-content/50 uppercase tracking-wider">Credential Holder</div>
+                            <div class="font-black text-base text-base-content truncate tracking-tight">
+                                <?= auth()->loggedIn() ? esc(auth()->user()->username) : 'GUEST CANDIDATE' ?>
+                            </div>
+                            <div class="text-xs text-base-content/70 font-medium truncate">
+                                <?= auth()->loggedIn() ? 'Chief Operating Officer &bull; Park City Sector' : 'Awaiting Resort Commission &bull; Sector 1' ?>
+                            </div>
                         </div>
                     </div>
-                    <?php endif ?>
 
-                    <?php if ($recentPlayer) : ?>
-                    <div class="flex items-center gap-3 p-3.5 bg-base-100 rounded-xl border border-base-300/80">
-                        <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <i class="fa-solid fa-user-plus text-base"></i>
+                    <!-- Mountain Operations Telemetry Board -->
+                    <div class="border-y border-base-200 divide-y divide-base-200 text-xs">
+                        <!-- Summit Weather -->
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-base-content/60 font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-mountain-sun text-primary w-4 text-center"></i> Mountain Summit
+                            </span>
+                            <span class="font-mono font-semibold text-base-content">
+                                <?= $weather ? $weather['temp_formatted'] . ' &bull; ' . esc($weather['condition']) : '24°F &bull; Clear' ?>
+                            </span>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="text-xs text-base-content/50 font-medium">Newest Manager</div>
-                            <div class="font-bold text-sm text-base-content truncate"><?= esc($recentPlayer['username']) ?> <span class="text-xs text-base-content/50 font-normal">&bull; <?= timeAgo($recentPlayer['created_at']) ?></span></div>
+
+                        <!-- Snowpack Base -->
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-base-content/60 font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-snowflake text-info w-4 text-center"></i> Snowpack Depth
+                            </span>
+                            <span class="font-mono font-semibold text-base-content">
+                                <?= isset($weather['snow_base']) ? (int)$weather['snow_base'] . '" Base' : 'Compacted Base' ?>
+                                <?php if (isset($weather['snow_fall']) && $weather['snow_fall'] > 0) : ?>
+                                    <span class="text-success text-[11px] font-normal">(+<?= (int)$weather['snow_fall'] ?>" fresh)</span>
+                                <?php endif ?>
+                            </span>
+                        </div>
+
+                        <!-- Operational Term -->
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-base-content/60 font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-days text-secondary w-4 text-center"></i> Operational Term
+                            </span>
+                            <span class="font-mono font-semibold text-base-content">
+                                Day <?= getSeasonDay() ?> of <?= getSeasonLength() ?> (S<?= getSeasonNumber() ?>)
+                            </span>
+                        </div>
+
+                        <!-- Slope Network -->
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-base-content/60 font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-person-skiing text-accent w-4 text-center"></i> Slope Network
+                            </span>
+                            <span class="font-mono font-semibold text-base-content">
+                                <?= number_format($totalSlopes) ?> Active Runs
+                            </span>
+                        </div>
+
+                        <!-- Leading Mountain Empire -->
+                        <?php if ($topPlayer) : ?>
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-base-content/60 font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-trophy text-warning w-4 text-center"></i> Leading Operator
+                            </span>
+                            <span class="font-mono font-semibold text-base-content truncate max-w-[180px] text-right">
+                                <?= esc($topPlayer['username']) ?> <span class="text-base-content/50 font-normal">(<?= currency((int) $topPlayer['cash']) ?>)</span>
+                            </span>
+                        </div>
+                        <?php endif ?>
+                    </div>
+
+                    <!-- Barcode & Security Strip -->
+                    <div class="pt-1 flex items-end justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="font-mono text-[9px] text-base-content/40 tracking-wider">SECURE RFID &bull; OP-ID</div>
+                            <div class="h-6 flex items-center gap-[3px] text-base-content/70">
+                                <span class="w-[2px] h-full bg-current"></span>
+                                <span class="w-[3px] h-full bg-current"></span>
+                                <span class="w-[1px] h-full bg-current"></span>
+                                <span class="w-[4px] h-full bg-current"></span>
+                                <span class="w-[1px] h-full bg-current"></span>
+                                <span class="w-[2px] h-full bg-current"></span>
+                                <span class="w-[3px] h-full bg-current"></span>
+                                <span class="w-[1px] h-full bg-current"></span>
+                                <span class="w-[2px] h-full bg-current"></span>
+                                <span class="w-[4px] h-full bg-current"></span>
+                                <span class="w-[1px] h-full bg-current"></span>
+                                <span class="w-[3px] h-full bg-current"></span>
+                                <span class="w-[2px] h-full bg-current"></span>
+                                <span class="w-[1px] h-full bg-current"></span>
+                                <span class="w-[3px] h-full bg-current"></span>
+                                <span class="w-[2px] h-full bg-current"></span>
+                            </div>
+                            <div class="font-mono text-[9px] text-base-content/40 tracking-widest">
+                                SM-2024-<?= strtoupper(substr(md5('director_pass_' . getSeasonNumber()), 0, 8)) ?>
+                            </div>
+                        </div>
+                        <div>
+                            <?php if (!auth()->loggedIn()) : ?>
+                            <a href="/register" class="btn btn-sm btn-primary rounded-lg font-mono text-xs gap-1.5 shadow-sm">
+                                Claim Pass <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </a>
+                            <?php else : ?>
+                            <a href="/dashboard" class="btn btn-sm btn-primary rounded-lg font-mono text-xs gap-1.5 shadow-sm">
+                                Command Post <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </a>
+                            <?php endif ?>
                         </div>
                     </div>
-                    <?php endif ?>
                 </div>
             </div>
 
@@ -146,32 +242,72 @@
     <div class="max-w-6xl mx-auto px-4">
         <div class="mb-10">
             <h2 class="text-2xl font-bold tracking-tight text-base-content">Key Management Pillars</h2>
-            <p class="text-sm text-base-content/60 mt-1">Balancing infrastructure, income, and weather systems.</p>
+            <p class="text-sm text-base-content/60 mt-1">Balancing infrastructure, income, and alpine weather systems.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-base-200 flex items-center justify-center text-lg">🏔️</div>
-                <h3 class="font-bold text-base text-base-content">Slope & Lift Layouts</h3>
-                <p class="text-sm text-base-content/70 leading-relaxed font-normal">
-                    Draw runs directly on real terrain maps, assign difficulty ratings, and manage lift line capacities. <?= number_format($totalSlopes) ?> slopes built across all resorts.
-                </p>
+            <!-- Pillar 1: Trail Architecture & Lift Networks -->
+            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-base-200">
+                    <div class="flex items-center gap-1.5" title="Piste Difficulty Standards">
+                        <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block" title="Green Circle - Beginner"></span>
+                        <span class="w-3.5 h-3.5 rounded-sm bg-blue-600 inline-block" title="Blue Square - Intermediate"></span>
+                        <span class="w-3.5 h-3.5 rotate-45 bg-neutral inline-block" title="Black Diamond - Advanced"></span>
+                    </div>
+                    <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-base-content/50">Topography & Lifts</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-base-content">Slope & Lift Architecture</h3>
+                    <p class="text-sm text-base-content/70 leading-relaxed font-normal mt-2">
+                        Plot fall lines across authentic alpine terrain, grade slope difficulty, and configure high-capacity chairlifts and gondolas to prevent queue bottlenecks. Over <span class="font-semibold text-base-content"><?= number_format($totalSlopes) ?></span> runs mapped mountain-wide.
+                    </p>
+                </div>
+                <div class="pt-2 flex items-center gap-2 text-xs font-mono text-base-content/60">
+                    <i class="fa-solid fa-bezier-curve text-primary"></i>
+                    <span>Real-world contour mapping</span>
+                </div>
             </div>
 
-            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-base-200 flex items-center justify-center text-lg">💰</div>
-                <h3 class="font-bold text-base text-base-content">Financial Operations</h3>
-                <p class="text-sm text-base-content/70 leading-relaxed font-normal">
-                    Construct luxury lodges, mountain restaurants, ski rentals, and parking facilities. Set ticket pricing to rival top managers like <?= $topPlayer ? esc($topPlayer['username']) : 'the leaders' ?>.
-                </p>
+            <!-- Pillar 2: Commercial Operations & Yield Management -->
+            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-base-200">
+                    <div class="flex items-center gap-1.5 text-warning font-mono text-xs font-bold">
+                        <i class="fa-solid fa-coins"></i>
+                        <span>FISCAL ENGINE</span>
+                    </div>
+                    <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-base-content/50">Lodge & Retail</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-base-content">Commercial Operations</h3>
+                    <p class="text-sm text-base-content/70 leading-relaxed font-normal mt-2">
+                        Build luxury slope-side lodges, mountain restaurants, equipment rental centers, and parking lots. Calibrate ticket pricing to maximize revenue without exceeding lift capacity. Top resort: <span class="font-semibold text-base-content"><?= $topPlayer ? esc($topPlayer['username']) : 'Top Operator' ?></span>.
+                    </p>
+                </div>
+                <div class="pt-2 flex items-center gap-2 text-xs font-mono text-base-content/60">
+                    <i class="fa-solid fa-arrow-trend-up text-success"></i>
+                    <span>Dynamic pass yield pricing</span>
+                </div>
             </div>
 
-            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-base-200 flex items-center justify-center text-lg">❄️</div>
-                <h3 class="font-bold text-base text-base-content">Weather & Grooming</h3>
-                <p class="text-sm text-base-content/70 leading-relaxed font-normal">
-                    Currently <?= $weather ? temp((int)$weather['temp']) . ' and ' . strtolower($weather['condition_name']) : 'cold' ?>. Run snowmaking cannons during dry spells and dispatch snowcats to maintain slope quality.
-                </p>
+            <!-- Pillar 3: Industrial Snowmaking & Fleet Grooming -->
+            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-base-200">
+                    <div class="flex items-center gap-1.5 text-info font-mono text-xs font-bold">
+                        <i class="fa-solid fa-snowflake"></i>
+                        <span>SNOWPACK OPS</span>
+                    </div>
+                    <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-base-content/50"><?= $weather ? $weather['temp_formatted'] : '24°F' ?></span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-base-content">Snowmaking & Grooming</h3>
+                    <p class="text-sm text-base-content/70 leading-relaxed font-normal mt-2">
+                        Track wet-bulb temperature thresholds to trigger automated snow cannon banks during dry stretches. Dispatch snowcat grooming shifts at dusk to lay down corduroy and preserve surface ratings.
+                    </p>
+                </div>
+                <div class="pt-2 flex items-center gap-2 text-xs font-mono text-base-content/60">
+                    <i class="fa-solid fa-gauge-high text-info"></i>
+                    <span>Wet-bulb telemetry & fleet routing</span>
+                </div>
             </div>
         </div>
     </div>
@@ -205,9 +341,9 @@
             </div>
 
             <div class="lg:col-span-7">
-                <a href="<?= auth()->loggedIn() ? '/map' : '/register' ?>" class="block group relative rounded-2xl overflow-hidden border border-base-300 shadow-sm">
-                    <img src="/img/ParkCity_low.jpg" alt="Park City Trail Map" class="w-full h-auto object-cover group-hover:scale-[1.01] transition-transform duration-300" loading="lazy">
-                    <div class="absolute inset-0 bg-base-900/10 group-hover:bg-transparent transition-colors"></div>
+                <a href="<?= auth()->loggedIn() ? '/map' : '/register' ?>" class="block relative rounded-2xl overflow-hidden border border-base-300 shadow-sm">
+                    <img src="/img/ParkCity_low.jpg" alt="Park City Trail Map" class="w-full h-auto object-cover" loading="lazy">
+                    <div class="absolute inset-0 bg-base-900/5"></div>
                 </a>
             </div>
         </div>
