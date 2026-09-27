@@ -42,19 +42,28 @@ class Weather extends BaseController
         $seed = crc32('skimanager-weather-day-' . $day);
         mt_srand($seed);
 
-        $baseTemp = ['low' => -2, 'medium' => -8, 'high' => -14];
-        $temp = ($baseTemp[$resort['altitude']] ?? -8) + mt_rand(-5, 5);
+        $seasonLength = function_exists('getSeasonLength') ? getSeasonLength() : 135;
+        $winterDays = function_exists('getWinterDays') ? getWinterDays() : 100;
+        $seasonDay = (($day - 1) % $seasonLength) + 1;
+        $isSummer = $seasonDay > $winterDays;
+        $isDeepWinter = $seasonDay >= 30 && $seasonDay <= ($winterDays - 20);
 
-        if ($temp <= -5) {
+        if ($isSummer) {
+            $temp = mt_rand(18, 25);
+            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy'];
+            $weights = [50, 35, 15];
+        } elseif ($isDeepWinter) {
+            $baseTemp = ['low' => -4, 'medium' => -10, 'high' => -16];
+            $temp = ($baseTemp[$resort['altitude']] ?? -10) + mt_rand(-4, 4);
             $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Blizzard'];
             $weights = [10, 15, 15, 25, 20, 15];
-        } elseif ($temp <= 0) {
-            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Freezing Rain'];
-            $weights = [15, 20, 20, 25, 10, 10];
         } else {
-            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy'];
-            $weights = [35, 35, 30];
+            $baseTemp = ['low' => -1, 'medium' => -6, 'high' => -12];
+            $temp = ($baseTemp[$resort['altitude']] ?? -6) + mt_rand(-4, 4);
+            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Freezing Rain'];
+            $weights = [20, 25, 20, 20, 10, 5];
         }
+
         $roll = mt_rand(1, array_sum($weights));
         $cumulative = 0;
         $condition = $conditions[0];
@@ -63,32 +72,43 @@ class Weather extends BaseController
             if ($roll <= $cumulative) { $condition = $c; break; }
         }
 
-        $windSpeeds = ['north' => mt_rand(5, 25), 'east' => mt_rand(10, 40), 'south' => mt_rand(5, 20), 'west' => mt_rand(15, 50)];
-        $wind = $windSpeeds[$resort['aspect']] ?? mt_rand(10, 30);
+        $windSpeeds = ['north' => mt_rand(5, 20), 'east' => mt_rand(10, 30), 'south' => mt_rand(5, 15), 'west' => mt_rand(10, 35)];
+        $wind = $windSpeeds[$resort['aspect']] ?? mt_rand(8, 22);
 
         $snowfall = 0;
-        if (in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard'])) {
+        if (!$isSummer && in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard'])) {
             $snowfall = $condition === 'Light Snow' ? mt_rand(1, 5) : ($condition === 'Heavy Snow' ? mt_rand(5, 15) : mt_rand(15, 30));
         }
 
         $visibilityMap = ['Sunny' => 'Excellent', 'Partly Cloudy' => 'Good', 'Cloudy' => 'Good', 'Light Snow' => 'Moderate', 'Heavy Snow' => 'Poor', 'Blizzard' => 'Very Poor', 'Freezing Rain' => 'Poor'];
 
-        $prevBase = $prev ? (int) $prev['snow_base'] : 50;
-        $snowBase = max(0, $prevBase + $snowfall - ($condition === 'Sunny' ? mt_rand(1, 3) : 0));
+        $prevBase = $prev ? (int) $prev['snow_base'] : ($isSummer ? 0 : 50);
+        $snowBase = $isSummer ? max(0, $prevBase - mt_rand(30, 60)) : max(0, $prevBase + $snowfall - ($condition === 'Sunny' ? mt_rand(1, 3) : 0));
 
         $forecast = [];
         for ($d = 1; $d <= 5; $d++) {
-            mt_srand(crc32('skimanager-weather-day-' . ($day + $d)));
-            $fTemp = $temp + mt_rand(-3, 3);
-            if ($fTemp <= -5) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Heavy Snow','Blizzard']; }
-            elseif ($fTemp <= 0) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Freezing Rain']; }
-            else { $fConds = ['Sunny','Partly Cloudy','Cloudy']; }
-            $cond = $fConds[mt_rand(0, count($fConds) - 1)];
+            $fDay = $day + $d;
+            $fSeasonDay = (($fDay - 1) % $seasonLength) + 1;
+            $fIsSummer = $fSeasonDay > $winterDays;
+            mt_srand(crc32('skimanager-weather-day-' . $fDay));
+            if ($fIsSummer) {
+                $fTemp = mt_rand(18, 25);
+                $fConds = ['Sunny', 'Partly Cloudy', 'Cloudy'];
+                $cond = $fConds[mt_rand(0, count($fConds) - 1)];
+                $fSnow = 0;
+            } else {
+                $fTemp = $temp + mt_rand(-3, 3);
+                if ($fTemp <= -5) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Heavy Snow','Blizzard']; }
+                elseif ($fTemp <= 0) { $fConds = ['Sunny','Partly Cloudy','Cloudy','Light Snow','Freezing Rain']; }
+                else { $fConds = ['Sunny','Partly Cloudy','Cloudy']; }
+                $cond = $fConds[mt_rand(0, count($fConds) - 1)];
+                $fSnow = match($cond) { 'Light Snow' => mt_rand(1, 5), 'Heavy Snow' => mt_rand(6, 15), 'Blizzard' => mt_rand(15, 30), default => 0 };
+            }
             $forecast[] = [
                 'day' => $d,
-                'temp' => $temp + mt_rand(-3, 3),
+                'temp' => $fTemp,
                 'condition' => $cond,
-                'snowfall' => match($cond) { 'Light Snow' => mt_rand(1, 5), 'Heavy Snow' => mt_rand(6, 15), 'Blizzard' => mt_rand(15, 30), default => 0 },
+                'snowfall' => $fSnow,
             ];
         }
 
