@@ -170,6 +170,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $message = strip_tags(trim($this->request->getPost('message')));
+        $type = $this->request->getPost('type') ?: 'info';
         $icon = $this->request->getPost('icon') ?: 'fa-solid fa-bullhorn';
         if (empty($message)) return redirect()->back()->with('error', 'Message is empty.');
 
@@ -178,14 +179,36 @@ class Admin extends BaseController
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $users = $db->table('users')->get()->getResultArray();
+        $activityBatch = [];
+        $notifBatch = [];
+        $now = date('Y-m-d H:i:s');
         foreach ($users as $u) {
-            $db->table('activity_log')->insert([
-                'user_id' => $u['id'], 'game_day' => $gameDay,
-                'category' => 'System', 'message' => $message,
-                'icon' => $icon, 'created_at' => date('Y-m-d H:i:s'),
-            ]);
+            $activityBatch[] = [
+                'user_id' => $u['id'],
+                'game_day' => $gameDay,
+                'category' => 'System',
+                'message' => $message,
+                'icon' => $icon,
+                'created_at' => $now,
+            ];
+            $notifBatch[] = [
+                'user_id' => $u['id'],
+                'type' => $type,
+                'title' => 'Server Announcement',
+                'message' => $message,
+                'icon' => $icon,
+                'link' => '/activity',
+                'is_read' => 0,
+                'created_at' => $now,
+            ];
         }
-        return redirect()->to('/admin')->with('success', 'Broadcast sent to ' . count($users) . ' players.');
+        if (!empty($activityBatch)) {
+            $db->table('activity_log')->insertBatch($activityBatch);
+        }
+        if (!empty($notifBatch)) {
+            $db->table('notifications')->insertBatch($notifBatch);
+        }
+        return redirect()->to('/admin/broadcast')->with('success', 'Broadcast sent to ' . count($users) . ' players.');
     }
 
     public function triggerTick()
