@@ -341,7 +341,8 @@ class Roadmap extends BaseController
         if ($existingVote) {
             // Remove vote (toggle off)
             $this->db->table('roadmap_votes')
-                ->where('id', $existingVote['id'])
+                ->where('item_id', $itemId)
+                ->where('voter_hash', $voterHash)
                 ->delete();
 
             $newUpvotes = max(0, ((int)$item['upvotes']) - 1);
@@ -370,7 +371,12 @@ class Roadmap extends BaseController
         $this->db->transComplete();
 
         if ($this->db->transStatus() === false) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Database error'])->setStatusCode(500);
+            $dbError = $this->db->error();
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Database error: ' . ($dbError['message'] ?? 'unknown'),
+                'code'    => $dbError['code'] ?? null,
+            ])->setStatusCode(500);
         }
 
         return $this->response->setJSON([
