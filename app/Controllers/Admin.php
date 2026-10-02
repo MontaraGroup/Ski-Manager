@@ -411,16 +411,52 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $envFile = ROOTPATH . '.env';
-        $content = file_get_contents($envFile);
-        if (str_contains($content, "CI_ENVIRONMENT = production")) {
-            $content = str_replace("CI_ENVIRONMENT = production", "CI_ENVIRONMENT = development", $content);
-            $msg = 'Switched to DEVELOPMENT mode';
-        } else {
-            $content = str_replace("CI_ENVIRONMENT = development", "CI_ENVIRONMENT = production", $content);
-            $msg = 'Switched to PRODUCTION mode';
+
+        if (!file_exists($envFile)) {
+            return redirect()->to('/admin')->with('error', 'The .env configuration file was not found at ' . ROOTPATH);
         }
-        file_put_contents($envFile, $content);
-        return redirect()->to('/admin')->with('success', $msg);
+
+        if (!is_readable($envFile)) {
+            return redirect()->to('/admin')->with('error', 'Cannot read .env file: permission denied.');
+        }
+
+        if (!is_writable($envFile)) {
+            return redirect()->to('/admin')->with('error', 'Cannot toggle environment: .env file is read-only (permission denied for web server). To switch modes, update CI_ENVIRONMENT directly on the server or run: chmod 664 .env');
+        }
+
+        try {
+            $content = file_get_contents($envFile);
+            if ($content === false) {
+                return redirect()->to('/admin')->with('error', 'Failed to read .env file.');
+            }
+
+            if (preg_match('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)production([\'"]?)/m', $content)) {
+                $content = preg_replace('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)production([\'"]?)/m', 'CI_ENVIRONMENT = development', $content);
+                $msg = 'Switched to DEVELOPMENT mode';
+            } elseif (preg_match('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)development([\'"]?)/m', $content)) {
+                $content = preg_replace('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)development([\'"]?)/m', 'CI_ENVIRONMENT = production', $content);
+                $msg = 'Switched to PRODUCTION mode';
+            } else {
+                if (str_contains($content, 'CI_ENVIRONMENT = production')) {
+                    $content = str_replace('CI_ENVIRONMENT = production', 'CI_ENVIRONMENT = development', $content);
+                    $msg = 'Switched to DEVELOPMENT mode';
+                } else {
+                    $content = str_replace('CI_ENVIRONMENT = development', 'CI_ENVIRONMENT = production', $content);
+                    $msg = 'Switched to PRODUCTION mode';
+                }
+            }
+
+            $written = @file_put_contents($envFile, $content);
+            if ($written === false) {
+                return redirect()->to('/admin')->with('error', 'Failed to write to .env file (permission denied). Adjust server file permissions.');
+            }
+
+            $this->auditLog('toggle_environment', null, $msg);
+            return redirect()->to('/admin')->with('success', $msg);
+        } catch (\Throwable $e) {
+            log_message('error', 'toggleEnvironment error: ' . $e->getMessage());
+            return redirect()->to('/admin')->with('error', 'Could not toggle environment: ' . $e->getMessage());
+        }
     }
 
     private function auditLog(string $action, ?int $targetUserId = null, ?string $details = null): void

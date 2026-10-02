@@ -30,7 +30,14 @@
     <?php $__season = db_connect()->table("seasons")->where("active", 1)->get()->getRowArray(); ?>
     <div class="flex flex-wrap gap-2 mb-4">
         <form action="/admin/maintenance" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-sm <?= ($__season["maintenance"] ?? 0) ? "btn-error" : "btn-outline" ?> gap-1"><i class="fa-solid fa-wrench"></i><?= ($__season["maintenance"] ?? 0) ? "Maintenance ON" : "Maintenance Off" ?></button></form>
-        <form action="/admin/toggle-env" method="post" class="inline"><?= csrf_field() ?><button class="btn btn-sm <?= ENVIRONMENT === 'development' ? 'btn-warning' : 'btn-outline' ?> gap-1"><i class="fa-solid fa-code"></i><?= ENVIRONMENT === 'development' ? 'DEV Mode' : 'PROD Mode' ?></button></form>
+        <?php $__envWritable = is_writable(ROOTPATH . '.env'); ?>
+        <form action="/admin/toggle-env" method="post" class="inline">
+            <?= csrf_field() ?>
+            <button class="btn btn-sm <?= ENVIRONMENT === 'development' ? 'btn-warning' : 'btn-outline' ?> gap-1" title="<?= $__envWritable ? 'Toggle CI_ENVIRONMENT between development and production' : '.env file is read-only on server (update directly or chmod 664 .env)' ?>">
+                <i class="fa-solid fa-code"></i><?= ENVIRONMENT === 'development' ? 'DEV Mode' : 'PROD Mode' ?>
+                <?php if (!$__envWritable) : ?><i class="fa-solid fa-lock text-[10px] opacity-70 ml-0.5"></i><?php endif ?>
+            </button>
+        </form>
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-clock"></i> Day <?= $gameDay ?> / <?= $__season["duration_days"] ?? 135 ?></div>
         <div class="badge badge-outline gap-1 self-center"><i class="fa-solid fa-calendar"></i> Started <?= $__season["start_date"] ?? "N/A" ?></div>
     </div>
