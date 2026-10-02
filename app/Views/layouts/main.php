@@ -182,6 +182,25 @@ a.link:hover{opacity:0.8}
                 . '<i class="fa-solid ' . esc($it['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($it['label']) . $badge . '</a></li>';
         };
     ?>
+    <?php if (session()->get('is_demo')) : ?>
+    <div class="bg-primary text-primary-content px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
+        <div class="flex items-center gap-2">
+            <span class="badge badge-warning badge-sm font-bold font-mono text-neutral">DEMO SANDBOX</span>
+            <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="/demo/reset" class="btn btn-ghost btn-xs text-primary-content hover:bg-white/10" onclick="return confirm('Reset mountain to starting template?')">
+                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
+            </a>
+            <a href="/register?claim_demo=1" class="btn btn-warning btn-xs font-bold gap-1 shadow-sm text-neutral">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Save My Resort & Claim Capital
+            </a>
+            <a href="/demo/exit" class="btn btn-ghost btn-xs text-primary-content/80 hover:text-white" title="Exit Demo">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+        </div>
+    </div>
+    <?php endif ?>
     <nav aria-label="Main navigation"><div class="navbar bg-base-100 shadow-md" style="z-index:9999; position:sticky; top:0">
         <div class="navbar-start">
             <div class="dropdown">
