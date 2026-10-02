@@ -21,6 +21,28 @@ class Equipment extends BaseController
             $snowmakerCatalog[$s['model_key']] = ['brand' => $s['brand'], 'name' => $s['name'], 'desc' => $s['description'], 'capacity' => (int) $s['capacity'], 'fuel' => (int) $s['fuel_cost'], 'cost' => (int) $s['cost'], 'img' => $s['icon'], 'output_per_day' => (int) $s['output_per_day'], 'energy_kwh' => (int) $s['energy_kwh'], 'water_liters' => (int) $s['water_liters']];
         }
 
+        $discountPct = 0;
+        if ($db->tableExists('alliance_members')) {
+            $allianceMember = $db->table('alliance_members')->where('user_id', $userId)->get()->getRowArray();
+            if ($allianceMember) {
+                $bulkPerk = $db->table('alliance_unlocked_perks')
+                    ->where('alliance_id', $allianceMember['alliance_id'])
+                    ->where('perk_key', 'bulk_procurement')
+                    ->get()->getRowArray();
+                if ($bulkPerk) {
+                    $discountPct = match((int)$bulkPerk['perk_level']) { 1 => 10, 2 => 15, 3 => 20, default => 10 };
+                    foreach ($groomerCatalog as &$gc) {
+                        $gc['original_cost'] = $gc['cost'];
+                        $gc['cost'] = (int) round($gc['cost'] * (1 - $discountPct / 100));
+                    }
+                    foreach ($snowmakerCatalog as &$sc) {
+                        $sc['original_cost'] = $sc['cost'];
+                        $sc['cost'] = (int) round($sc['cost'] * (1 - $discountPct / 100));
+                    }
+                }
+            }
+        }
+
         $equipment = $db->table('equipment')->where('user_id', $userId)->get()->getResultArray();
         $ownedGroomers = array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer');
         $ownedSnowmakers = array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker');
@@ -33,6 +55,7 @@ class Equipment extends BaseController
             'ownedSnowmakers' => $ownedSnowmakers,
             'totalFuel' => $totalFuel,
             'equipment' => $equipment,
+            'allianceDiscountPct' => $discountPct,
         ]);
     }
 
@@ -55,6 +78,32 @@ class Equipment extends BaseController
         }
 
         $db = db_connect();
+        $cost = (int) $item['cost'];
+
+        // Apply Alliance Bulk Procurement discount
+        if ($db->tableExists('alliance_members')) {
+            $allianceMember = $db->table('alliance_members')->where('user_id', $userId)->get()->getRowArray();
+            if ($allianceMember) {
+                $bulkPerk = $db->table('alliance_unlocked_perks')
+                    ->where('alliance_id', $allianceMember['alliance_id'])
+                    ->where('perk_key', 'bulk_procurement')
+                    ->get()->getRowArray();
+                if ($bulkPerk) {
+                    $discountPct = match((int)$bulkPerk['perk_level']) { 1 => 10, 2 => 15, 3 => 20, default => 10 };
+                    $cost = (int) round($cost * (1 - $discountPct / 100));
+                }
+            }
+        }
+
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+        if ($cash < $cost) {
+            return redirect()->back()->with('error', 'Insufficient funds to purchase ' . $item['name'] . '.');
+        }
+
+        // Deduct purchase price
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$cost}", false)->update();
+
         $count = $db->table('equipment')->where('user_id', $userId)->where('model_key', $modelKey)->countAllResults();
 
         $db->table('equipment')->insert([

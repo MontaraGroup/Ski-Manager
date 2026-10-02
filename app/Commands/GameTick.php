@@ -273,7 +273,26 @@ class GameTick extends BaseCommand
             $patrolBoost = $countAssigned('ski_patrol') * 2;
 
             $snowQualityBonus = 0; foreach ($slopesForQuality as $sq) { $snowQualityBonus += match($sq["snow_quality"] ?? "packed") { "powder" => 3, "groomed" => 2, "packed" => 0, "icy" => -2, "bare" => -5, default => 0 }; }
-            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus;
+
+            // Alliance Multi-Pass & Sister Resort synergy
+            $allianceBonus = 0;
+            if ($db->tableExists('alliance_members')) {
+                $allMember = $db->table('alliance_members')->where('user_id', $userId)->get()->getRowArray();
+                if ($allMember) {
+                    $alliance = $db->table('alliances')->where('id', $allMember['alliance_id'])->get()->getRowArray();
+                    if ($alliance) {
+                        $passTierBoost = match((int)($alliance['pass_tier'] ?? 1)) {
+                            1 => 5, 2 => 10, 3 => 15, 4 => 20, default => 5
+                        };
+                        $sisterCount = max(0, $db->table('alliance_members')->where('alliance_id', $alliance['id'])->countAllResults() - 1);
+                        $synergyBoost = min(10, $sisterCount * 1);
+                        $allianceBonus = $passTierBoost + $synergyBoost;
+                        $db->table('alliance_members')->where('id', $allMember['id'])->set('cross_skiers_generated', 'cross_skiers_generated + ' . (int)round($baseVisitors * ($allianceBonus / 100)), false)->update();
+                    }
+                }
+            }
+
+            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus;
             $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult);
 
             // Summer reduction
