@@ -7,10 +7,82 @@ class Vote extends BaseController
     public static function ensureSchema(): void
     {
         $db = db_connect();
-        if (!$db->tableExists('resort_votes')) {
-            $migration = new \App\Database\Migrations\CreateResortVotesTable();
-            $migration->up();
+        $forge = \Config\Database::forge();
+
+        try {
+            if (!$db->tableExists('resort_votes')) {
+                $forge->addField([
+                    'id' => [
+                        'type'           => 'INT',
+                        'constraint'     => 11,
+                        'unsigned'       => true,
+                        'auto_increment' => true,
+                    ],
+                    'user_id' => [
+                        'type'       => 'INT',
+                        'constraint' => 11,
+                        'unsigned'   => true,
+                    ],
+                    'resort_key' => [
+                        'type'       => 'VARCHAR',
+                        'constraint' => 64,
+                    ],
+                    'created_at' => [
+                        'type' => 'DATETIME',
+                        'null' => true,
+                    ],
+                    'updated_at' => [
+                        'type' => 'DATETIME',
+                        'null' => true,
+                    ],
+                ]);
+                $forge->addKey('id', true);
+                $forge->addUniqueKey('user_id');
+                $forge->addKey('resort_key');
+                $forge->createTable('resort_votes', true);
+            } else {
+                // Table already exists: safely add missing columns if needed
+                if (!$db->fieldExists('updated_at', 'resort_votes')) {
+                    $forge->addColumn('resort_votes', [
+                        'updated_at' => [
+                            'type' => 'DATETIME',
+                            'null' => true,
+                        ],
+                    ]);
+                }
+                if (!$db->fieldExists('created_at', 'resort_votes')) {
+                    $forge->addColumn('resort_votes', [
+                        'created_at' => [
+                            'type' => 'DATETIME',
+                            'null' => true,
+                        ],
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'resort_votes ensureSchema error: ' . $e->getMessage());
         }
+    }
+
+    public static function resolveResortKey(string $key): ?string
+    {
+        $clean = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $key));
+        $map = [
+            'deervalley'     => 'DeerValley',
+            'deer'           => 'DeerValley',
+            'aspensnowmass'  => 'AspenSnowmass',
+            'aspen'          => 'AspenSnowmass',
+            'snowmass'       => 'AspenSnowmass',
+            'bigskycombo'    => 'BigSkyCombo',
+            'bigsky'         => 'BigSkyCombo',
+            'vail'           => 'Vail',
+            'palisadestahoe' => 'PalisadesTahoe',
+            'palisades'      => 'PalisadesTahoe',
+            'squaw'          => 'PalisadesTahoe',
+            'squawvalley'    => 'PalisadesTahoe',
+            'killington'     => 'Killington',
+        ];
+        return $map[$clean] ?? null;
     }
 
     public function getResortOptions(): array
@@ -198,11 +270,26 @@ class Vote extends BaseController
         self::ensureSchema();
         helper(['season', 'activity', 'time']);
 
-        $userId = auth()->id();
+        $userId = auth()->loggedIn() ? (int) auth()->id() : 0;
         $db = db_connect();
         $options = $this->getResortOptions();
 
-        $userVote = $db->table('resort_votes')->where('user_id', $userId)->get()->getRowArray();
+        $userVote = null;
+        if ($userId > 0) {
+            $userVote = $db->table('resort_votes')
+                ->where('user_id', $userId)
+                ->orderBy('id', 'DESC')
+                ->get()
+                ->getRowArray();
+
+            if ($userVote && isset($userVote['resort_key'])) {
+                $canonical = self::resolveResortKey($userVote['resort_key']);
+                if ($canonical) {
+                    $userVote['resort_key'] = $canonical;
+                }
+            }
+        }
+
         $results = $db->table('resort_votes')
             ->select('resort_key, COUNT(*) as votes')
             ->groupBy('resort_key')
@@ -221,25 +308,42 @@ class Vote extends BaseController
 
         foreach ($results as $r) {
             $cnt = (int) $r['votes'];
-            $k = $r['resort_key'];
-            if (isset($voteCounts[$k])) {
-                $voteCounts[$k] = $cnt;
+            $rawKey = $r['resort_key'];
+            $canonicalKey = self::resolveResortKey($rawKey) ?? $rawKey;
+
+            if (isset($voteCounts[$canonicalKey])) {
+                $voteCounts[$canonicalKey] += $cnt;
             }
             $totalVotes += $cnt;
+        }
+
+        foreach ($voteCounts as $k => $cnt) {
             if ($cnt > $maxVotes) {
                 $maxVotes = $cnt;
                 $leadingResort = $k;
             }
         }
 
-        // Live recent community votes
-        $recentVotes = $db->table('resort_votes')
-            ->select('resort_votes.resort_key, resort_votes.created_at, resort_votes.updated_at, users.username')
-            ->join('users', 'users.id = resort_votes.user_id', 'left')
-            ->orderBy('COALESCE(resort_votes.updated_at, resort_votes.created_at)', 'DESC')
-            ->limit(6)
-            ->get()
-            ->getResultArray();
+        // Live recent community votes (safely checking if updated_at exists)
+        $hasUpdatedAt = $db->fieldExists('updated_at', 'resort_votes');
+        $builder = $db->table('resort_votes')
+            ->select('resort_votes.resort_key, resort_votes.created_at, users.username')
+            ->join('users', 'users.id = resort_votes.user_id', 'left');
+
+        if ($hasUpdatedAt) {
+            $builder->select('resort_votes.updated_at')
+                    ->orderBy('COALESCE(resort_votes.updated_at, resort_votes.created_at)', 'DESC');
+        } else {
+            $builder->orderBy('resort_votes.created_at', 'DESC');
+        }
+
+        $rawRecent = $builder->limit(6)->get()->getResultArray();
+        $recentVotes = [];
+        foreach ($rawRecent as $rv) {
+            $canon = self::resolveResortKey($rv['resort_key']) ?? $rv['resort_key'];
+            $rv['resort_key'] = $canon;
+            $recentVotes[] = $rv;
+        }
 
         return view('vote/index', [
             'options'        => $options,
@@ -257,33 +361,39 @@ class Vote extends BaseController
     public function cast()
     {
         self::ensureSchema();
-        helper(['activity']);
+        helper(['activity', 'season']);
 
-        $userId = auth()->id();
+        if (!auth()->loggedIn()) {
+            return redirect()->to('/login')->with('error', 'Please log in to vote.');
+        }
+
+        $userId = (int) auth()->id();
         $db = db_connect();
-        $resort = (string) $this->request->getPost('resort');
+        $rawResort = trim((string) $this->request->getPost('resort'));
+        $resort = self::resolveResortKey($rawResort) ?? $rawResort;
         $options = $this->getResortOptions();
 
         if (!isset($options[$resort])) {
-            return redirect()->back()->with('error', 'Invalid resort candidate selected.');
+            return redirect()->back()->with('error', 'Invalid resort candidate selected: ' . esc($rawResort));
         }
 
         $now = date('Y-m-d H:i:s');
-        $existing = $db->table('resort_votes')->where('user_id', $userId)->get()->getRowArray();
-        
-        if ($existing) {
-            $db->table('resort_votes')->where('user_id', $userId)->update([
-                'resort_key' => $resort,
-                'updated_at' => $now,
-            ]);
-        } else {
-            $db->table('resort_votes')->insert([
-                'user_id'    => $userId,
-                'resort_key' => $resort,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+        $hasUpdatedAt = $db->fieldExists('updated_at', 'resort_votes');
+
+        // Always delete any existing votes for this user first
+        // This guarantees exactly ONE row per user and prevents duplicate rows
+        $db->table('resort_votes')->where('user_id', $userId)->delete();
+
+        $insertData = [
+            'user_id'    => $userId,
+            'resort_key' => $resort,
+            'created_at' => $now,
+        ];
+        if ($hasUpdatedAt) {
+            $insertData['updated_at'] = $now;
         }
+
+        $db->table('resort_votes')->insert($insertData);
 
         log_activity($userId, 'Vote', 'Voted for ' . $options[$resort]['name'] . ' as Season 4 resort', 'fa-solid fa-check-to-slot');
         return redirect()->to('/vote')->with('success', 'Your vote for ' . $options[$resort]['name'] . ' has been recorded!');
@@ -294,16 +404,21 @@ class Vote extends BaseController
         self::ensureSchema();
         helper(['activity']);
 
-        $userId = auth()->id();
+        if (!auth()->loggedIn()) {
+            return redirect()->to('/login')->with('error', 'Please log in.');
+        }
+
+        $userId = (int) auth()->id();
         $db = db_connect();
-        $existing = $db->table('resort_votes')->where('user_id', $userId)->get()->getRowArray();
+        $existing = $db->table('resort_votes')->where('user_id', $userId)->orderBy('id', 'DESC')->get()->getRowArray();
 
         if (!$existing) {
             return redirect()->to('/vote')->with('error', 'You do not have an active vote to retract.');
         }
 
         $options = $this->getResortOptions();
-        $resortName = $options[$existing['resort_key']]['name'] ?? 'resort';
+        $canonicalKey = self::resolveResortKey($existing['resort_key']) ?? $existing['resort_key'];
+        $resortName = $options[$canonicalKey]['name'] ?? 'resort';
 
         $db->table('resort_votes')->where('user_id', $userId)->delete();
         log_activity($userId, 'Vote Retracted', 'Retracted Season 4 vote for ' . $resortName, 'fa-solid fa-rotate-left');

@@ -38,6 +38,15 @@ class CreateResortVotesTable extends Migration
             $this->forge->addUniqueKey('user_id');
             $this->forge->addKey('resort_key');
             $this->forge->createTable('resort_votes', true);
+        } else {
+            if (!$this->db->fieldExists('updated_at', 'resort_votes')) {
+                $this->forge->addColumn('resort_votes', [
+                    'updated_at' => [
+                        'type' => 'DATETIME',
+                        'null' => true,
+                    ],
+                ]);
+            }
         }
     }
 
