@@ -1,18 +1,21 @@
 name: Production Release & Deploy
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
     types:
       - closed
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release-and-deploy:
-    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'staging'
     runs-on: ubuntu-latest
 
     steps:
@@ -22,6 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Update CHANGELOG.md
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'staging'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
