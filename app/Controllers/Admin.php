@@ -4,9 +4,11 @@ namespace App\Controllers;
 
 class Admin extends BaseController
 {
-    private function checkAdmin()
+    private function checkAdmin(): bool
     {
-        return auth()->loggedIn() && auth()->id() === 1;
+        if (!function_exists('auth') || !auth()->loggedIn()) return false;
+        $user = auth()->user();
+        return auth()->id() === 1 || ($user && $user->inGroup('admin', 'superadmin'));
     }
 
     public function index(): string
@@ -334,7 +336,7 @@ class Admin extends BaseController
 
     public function toggleMaintenance()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $season = $db->table('seasons')->where('active', 1)->get()->getRowArray();
         if ($season) {
@@ -348,7 +350,7 @@ class Admin extends BaseController
 
     public function updateSeason()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/settings')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         db_connect()->table('seasons')->where('active', 1)->update([
             'name' => $d['name'], 'start_date' => $d['start_date'],
@@ -359,16 +361,16 @@ class Admin extends BaseController
 
     public function toggleSectorRelease(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/settings')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $s = $db->table('resort_sectors')->where('id', $id)->get()->getRowArray();
         if ($s) $db->table('resort_sectors')->where('id', $id)->update(['released' => $s['released'] ? 0 : 1]);
         return redirect()->to('/admin/settings')->with('success', 'Sector updated.');
     }
 
-    public function errorLog(): string
+    public function errorLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $file = WRITEPATH . 'logs/log-' . date('Y-m-d') . '.log';
         $lines = [];
         if (file_exists($file)) {
@@ -381,7 +383,7 @@ class Admin extends BaseController
 
     public function impersonate(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $user = $db->table('users')->where('id', $id)->get()->getRowArray();
         if (!$user) return redirect()->to('/admin')->with('error', 'User not found.');
@@ -407,7 +409,7 @@ class Admin extends BaseController
 
     public function toggleEnvironment()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $envFile = ROOTPATH . '.env';
         $content = file_get_contents($envFile);
         if (str_contains($content, "CI_ENVIRONMENT = production")) {
@@ -431,9 +433,9 @@ class Admin extends BaseController
         ]);
     }
 
-    public function viewAuditLog(): string
+    public function viewAuditLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $logs = db_connect()->table('admin_audit_log a')
             ->select('a.*, u.username as admin_name, t.username as target_name')
             ->join('users u', 'u.id = a.admin_id', 'left')
@@ -442,9 +444,9 @@ class Admin extends BaseController
         return view('admin/audit', ['logs' => $logs]);
     }
 
-    public function playerComparison(): string
+    public function playerComparison(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $users = $db->table('users')->select('id, username')->orderBy('username')->get()->getResultArray();
         $a = $this->request->getGet('a');
@@ -469,7 +471,7 @@ class Admin extends BaseController
 
     public function exportPlayers()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $rows = $db->query("SELECT u.id, u.username, u.created_at, f.cash, f.difficulty, f.resort_map, f.units,
             (SELECT COUNT(*) FROM staff s WHERE s.user_id=u.id AND s.status!='fired') as staff,
@@ -485,16 +487,16 @@ class Admin extends BaseController
         exit;
     }
 
-    public function changelogManager(): string
+    public function changelogManager(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $entries = db_connect()->table('changelogs')->orderBy('created_at', 'DESC')->get()->getResultArray();
         return view('admin/changelogs', ['entries' => $entries]);
     }
 
     public function saveChangelog()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/changelogs')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         $db = db_connect();
         if (!empty($d['id'])) {
@@ -508,21 +510,21 @@ class Admin extends BaseController
 
     public function deleteChangelog(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/changelogs')->with('error', 'Unauthorized access.');
         db_connect()->table('changelogs')->where('id', $id)->delete();
         return redirect()->to('/admin/changelogs')->with('success', 'Deleted.');
     }
 
-    public function featureFlags(): string
+    public function featureFlags(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $flags = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
         return view('admin/features', ['flags' => $flags]);
     }
 
     public function toggleFlag(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if ($flag) {
@@ -534,9 +536,9 @@ class Admin extends BaseController
         return redirect()->to('/admin/features')->with('success', 'Flag updated.');
     }
 
-    public function suspiciousActivity(): string
+    public function suspiciousActivity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $suspects = $db->query("
             SELECT u.id, u.username, f.cash, f.difficulty,
@@ -571,7 +573,7 @@ class Admin extends BaseController
 
     public function createSeason()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/seasons')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         db_connect()->table('seasons')->insert([
             'season_number' => (int) $d['season_number'],
@@ -586,9 +588,9 @@ class Admin extends BaseController
         return redirect()->to('/admin/seasons')->with('success', 'Season planned.');
     }
 
-    public function seasonPlanner(): string
+    public function seasonPlanner(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $seasons = $db->table('seasons')->orderBy('season_number')->get()->getResultArray();
         return view('admin/seasons', ['seasons' => $seasons, 'resortMaps' => \App\Controllers\ResortMap::getResortMapNames()]);
@@ -596,7 +598,7 @@ class Admin extends BaseController
 
     public function activateSeason(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/seasons')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $db->table('seasons')->update(['active' => 0]);
         $db->table('seasons')->where('id', $id)->update(['active' => 1]);
@@ -606,7 +608,7 @@ class Admin extends BaseController
 
     public function enableAllFlags()
     {
-        if (auth()->id() !== 1) return redirect()->to('/');
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         db_connect()->table('feature_flags')->update(['enabled' => 2]);
         $this->auditLog('Enabled all feature flags');
         return redirect()->to('/admin/features')->with('success', 'All features enabled for everyone.');
@@ -614,16 +616,16 @@ class Admin extends BaseController
 
     public function disableAllBeta()
     {
-        if (auth()->id() !== 1) return redirect()->to('/');
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         db_connect()->table('feature_flags')->where('flag_key LIKE', 'beta_%')->update(['enabled' => 0]);
         $this->auditLog('Disabled all beta features');
         return redirect()->to('/admin/features')->with('success', 'All beta features disabled.');
     }
 
-    public function activity()
+    public function activity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        if (!session()->get("is_admin")) {
-            return redirect()->to("/dashboard");
+        if (!$this->checkAdmin()) {
+            return redirect()->to("/dashboard")->with('error', 'Unauthorized access.');
         }
 
         $db = \Config\Database::connect();

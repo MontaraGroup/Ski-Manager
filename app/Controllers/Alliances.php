@@ -209,14 +209,24 @@ class Alliances extends BaseController
         // Deduct creation fee
         $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$fee}", false)->update();
 
+        $crestColor = (string) $this->request->getPost('crest_color');
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $crestColor)) {
+            $crestColor = '#3b82f6';
+        }
+
+        $crestIcon = (string) $this->request->getPost('crest_icon');
+        if (!preg_match('/^fa-[a-z0-9\-]+$/', $crestIcon)) {
+            $crestIcon = 'fa-mountain-sun';
+        }
+
         // Create alliance record
         $allianceId = $this->allianceModel->insert([
             'name'           => $name,
             'tag'            => $tag,
             'motto'          => trim($this->request->getPost('motto') ?: 'Alpine excellence united.'),
             'description'    => trim($this->request->getPost('description') ?: 'A cooperative network of premier ski resorts.'),
-            'crest_icon'     => $this->request->getPost('crest_icon') ?: 'fa-mountain-sun',
-            'crest_color'    => $this->request->getPost('crest_color') ?: '#3b82f6',
+            'crest_icon'     => $crestIcon,
+            'crest_color'    => $crestColor,
             'founder_id'     => $userId,
             'level'          => 1,
             'xp'             => 0,
