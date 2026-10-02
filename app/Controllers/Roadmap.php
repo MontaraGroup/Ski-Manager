@@ -111,7 +111,7 @@ class Roadmap extends BaseController
                     ],
                     'voter_hash' => [
                         'type'       => 'VARCHAR',
-                        'constraint' => 64,
+                        'constraint' => 128,
                     ],
                     'created_at' => [
                         'type' => 'DATETIME',
@@ -122,6 +122,10 @@ class Roadmap extends BaseController
                 $forge->addUniqueKey(['item_id', 'voter_hash']);
                 $forge->addKey('item_id');
                 $forge->createTable('roadmap_votes', true);
+            } else {
+                try {
+                    $db->query("ALTER TABLE roadmap_votes MODIFY voter_hash VARCHAR(128) NOT NULL");
+                } catch (\Throwable $e) {}
             }
 
             // Seed default items if table is empty
@@ -249,7 +253,7 @@ class Roadmap extends BaseController
 
         $ip = $this->request->getIPAddress() ?? '127.0.0.1';
         $ua = $this->request->getUserAgent() ? $this->request->getUserAgent()->getAgentString() : 'guest';
-        return 'ip_' . hash('sha256', $ip . '|' . $ua);
+        return hash('sha256', 'guest_' . $ip . '|' . $ua);
     }
 
     public function index(): string
@@ -332,17 +336,18 @@ class Roadmap extends BaseController
 
         $existingVote = $this->db->table('roadmap_votes')
             ->where('item_id', $itemId)
-            ->where('voter_hash', $voterHash)
+            ->groupStart()
+                ->where('voter_hash', $voterHash)
+                ->orWhere('voter_hash', 'ip_' . substr($voterHash, 0, 61))
+                ->orLike('voter_hash', substr($voterHash, 0, 32))
+            ->groupEnd()
             ->get()
             ->getRowArray();
-
-        $this->db->transStart();
 
         if ($existingVote) {
             // Remove vote (toggle off)
             $this->db->table('roadmap_votes')
-                ->where('item_id', $itemId)
-                ->where('voter_hash', $voterHash)
+                ->where('id', (int) $existingVote['id'])
                 ->delete();
 
             $newUpvotes = max(0, ((int)$item['upvotes']) - 1);
@@ -366,17 +371,6 @@ class Roadmap extends BaseController
                 ->update(['upvotes' => $newUpvotes, 'updated_at' => date('Y-m-d H:i:s')]);
 
             $voted = true;
-        }
-
-        $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            $dbError = $this->db->error();
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Database error: ' . ($dbError['message'] ?? 'unknown'),
-                'code'    => $dbError['code'] ?? null,
-            ])->setStatusCode(500);
         }
 
         return $this->response->setJSON([

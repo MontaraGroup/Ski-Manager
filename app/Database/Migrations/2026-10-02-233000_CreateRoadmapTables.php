@@ -93,7 +93,7 @@ class CreateRoadmapTables extends Migration
                 ],
                 'voter_hash' => [
                     'type'       => 'VARCHAR',
-                    'constraint' => 64,
+                    'constraint' => 128,
                 ],
                 'created_at' => [
                     'type' => 'DATETIME',
