@@ -30,17 +30,18 @@ function getGameDay(): int
 function getSeasonDay(): int
 {
     $season = getCurrentSeason();
-    return (($gameDay = getGameDay()) - 1) % (int)$season['duration_days'] + 1;
+    $duration = max(1, (int)($season['duration_days'] ?? 135));
+    return (($gameDay = getGameDay()) - 1) % $duration + 1;
 }
 
 function getSeasonStartDate(): string
 {
-    return getCurrentSeason()['start_date'];
+    return getCurrentSeason()['start_date'] ?? '2026-06-06';
 }
 
 function getSeasonLength(): int
 {
-    return (int)getCurrentSeason()['duration_days'];
+    return max(1, (int)(getCurrentSeason()['duration_days'] ?? 135));
 }
 
 function getWinterDays(): int

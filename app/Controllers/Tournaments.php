@@ -81,6 +81,24 @@ class Tournaments extends BaseController
 
         $t = $types[$type];
 
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if (($finance['cash'] ?? 0) < $t['cost']) {
+            return redirect()->back()->with('error', 'Not enough cash to host ' . $t['name'] . ' (' . currency($t['cost']) . ' required).');
+        }
+
+        // Deduct cash
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$t['cost']}", false)->update();
+
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId,
+            'game_day' => $gameDay,
+            'category' => 'Tournaments',
+            'description' => 'Hosted ' . $t['name'],
+            'amount' => $t['cost'],
+            'type' => 'expense',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
         $db->table('tournaments')->insert([
             'name' => $t['name'],
             'description' => 'Hosted by ' . auth()->user()->username,
@@ -95,7 +113,7 @@ class Tournaments extends BaseController
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        log_activity($userId, 'Tournament', 'Hosting ' . $t['name'] . ' (starts tomorrow)', 'fa-solid fa-trophy');
+        log_activity($userId, 'Tournament', 'Hosting ' . $t['name'] . ' (starts tomorrow for ' . currency($t['cost']) . ')', 'fa-solid fa-trophy');
 
         return redirect()->to('/tournaments')->with('success', $t['name'] . ' scheduled! Starts tomorrow. Cost: ' . currency($t['cost']));
     }
@@ -107,9 +125,30 @@ class Tournaments extends BaseController
         $t = $db->table('tournaments')->where('id', $id)->where('host_id', $userId)->get()->getRowArray();
         if (!$t) return redirect()->back()->with('error', 'Tournament not found.');
 
+        $wasUpcoming = ($t['status'] ?? '') === 'upcoming';
         $db->table('tournaments')->where('id', $id)->update(['status' => 'ended']);
-        log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'], 'fa-solid fa-xmark');
 
+        if ($wasUpcoming && !empty($t['prize_pool'])) {
+            $refund = (int) round($t['prize_pool'] * 0.8);
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash + {$refund}", false)->update();
+
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId,
+                'game_day' => $gameDay,
+                'category' => 'Tournaments',
+                'description' => 'Tournament Cancellation Refund (80%)',
+                'amount' => $refund,
+                'type' => 'income',
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'] . ' (received ' . currency($refund) . ' refund)', 'fa-solid fa-xmark');
+            return redirect()->to('/tournaments')->with('success', $t['name'] . ' cancelled. 80% refund of ' . currency($refund) . ' credited.');
+        }
+
+        log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'], 'fa-solid fa-xmark');
         return redirect()->to('/tournaments')->with('success', $t['name'] . ' cancelled.');
     }
 }

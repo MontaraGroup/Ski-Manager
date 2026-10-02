@@ -67,14 +67,17 @@
 
                 <div class="flex flex-wrap items-center gap-3 pt-2">
                     <?php if (!auth()->loggedIn()) : ?>
-                    <a href="/register" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm hover:shadow transition-all gap-2">
+                    <a href="/register" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm gap-2">
                         <i class="fa-solid fa-play text-xs"></i> Play Free
                     </a>
-                    <a href="/login" class="btn btn-outline rounded-xl font-semibold border-base-300 hover:bg-base-200 gap-2">
+                    <a href="/demo" class="btn btn-secondary rounded-xl font-semibold px-5 shadow-sm gap-2">
+                        <i class="fa-solid fa-compass text-xs"></i> Try Demo Mountain
+                    </a>
+                    <a href="/login" class="btn btn-outline rounded-xl font-semibold border-base-300 gap-2">
                         <i class="fa-solid fa-right-to-bracket text-xs"></i> Sign In
                     </a>
                     <?php else : ?>
-                    <a href="/dashboard" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm hover:shadow transition-all gap-2">
+                    <a href="/dashboard" class="btn btn-primary rounded-xl font-semibold px-6 shadow-sm gap-2">
                         <i class="fa-solid fa-gauge-high text-xs"></i> Open Resort Dashboard
                     </a>
                     <?php endif ?>

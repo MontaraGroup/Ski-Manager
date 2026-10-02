@@ -60,11 +60,11 @@ class NightSkiing extends BaseController
         $type = $this->request->getPost('type');
 
         $types = [
-            'basic_flood' => ['name' => 'Basic Floodlight', 'coverage' => 5, 'energy' => 200],
-            'led_tower' => ['name' => 'LED Tower', 'coverage' => 12, 'energy' => 350],
-            'stadium_light' => ['name' => 'Stadium Light', 'coverage' => 20, 'energy' => 600],
-            'smart_led' => ['name' => 'Smart LED System', 'coverage' => 25, 'energy' => 400],
-            'aurora_system' => ['name' => 'Aurora Display System', 'coverage' => 30, 'energy' => 800],
+            'basic_flood'   => ['name' => 'Basic Floodlight',       'coverage' => 5,  'energy' => 200, 'cost' => 8000],
+            'led_tower'     => ['name' => 'LED Tower',             'coverage' => 12, 'energy' => 350, 'cost' => 22000],
+            'stadium_light' => ['name' => 'Stadium Light',         'coverage' => 20, 'energy' => 600, 'cost' => 45000],
+            'smart_led'     => ['name' => 'Smart LED System',      'coverage' => 25, 'energy' => 400, 'cost' => 65000],
+            'aurora_system' => ['name' => 'Aurora Display System', 'coverage' => 30, 'energy' => 800, 'cost' => 120000],
         ];
 
         if (!isset($types[$type])) {
@@ -72,7 +72,27 @@ class NightSkiing extends BaseController
         }
 
         $t = $types[$type];
+        $cost = (int) $t['cost'];
+        $db = db_connect();
+
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int) ($finance['cash'] ?? 0) < $cost) {
+            return redirect()->back()->with('error', 'Not enough cash to install ' . $t['name'] . ' (' . currency($cost) . ' required).');
+        }
+
         $count = $this->lightModel->where('user_id', $userId)->countAllResults();
+
+        $db->transStart();
+        if ($cost > 0) {
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$cost}", false)->update();
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => $gameDay,
+                'category' => 'Night Skiing', 'description' => 'Installed ' . $t['name'],
+                'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
 
         $this->lightModel->insert([
             'user_id' => $userId,
@@ -84,8 +104,10 @@ class NightSkiing extends BaseController
             'status' => 'off',
             'condition_pct' => 100,
         ]);
+        $db->transComplete();
 
-        return redirect()->to('/night-skiing')->with('success', $t['name'] . ' installed!');
+        log_activity($userId, 'Night Skiing', 'Installed ' . $t['name'] . ' for ' . currency($cost), 'fa-solid fa-lightbulb');
+        return redirect()->to('/night-skiing')->with('success', $t['name'] . ' installed for ' . currency($cost) . '!');
     }
 
     public function toggle(int $id)
@@ -118,8 +140,18 @@ class NightSkiing extends BaseController
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
         if ((int)($finance['cash'] ?? 0) < $cost) return redirect()->back()->with('error', 'Not enough cash for repair.');
 
+        $db->transStart();
         $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cost, false)->update();
         $this->lightModel->update($id, ['condition_pct' => 100, 'status' => 'off']);
+        $startDate = getSeasonStartDate();
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId, 'game_day' => $gameDay,
+            'category' => 'Night Skiing', 'description' => 'Repaired ' . $light['light_name'],
+            'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $db->transComplete();
+
         log_activity($userId, 'Night Skiing', 'Repaired ' . $light['light_name'] . ' for ' . currency($cost), 'fa-solid fa-wrench');
         return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' repaired for ' . currency($cost) . '.');
     }
@@ -131,9 +163,33 @@ class NightSkiing extends BaseController
 
         if (!$light) return redirect()->back()->with('error', 'Light not found.');
 
+        $types = [
+            'basic_flood'   => 8000,
+            'led_tower'     => 22000,
+            'stadium_light' => 45000,
+            'smart_led'     => 65000,
+            'aurora_system' => 120000,
+        ];
+        $origCost = $types[$light['light_type']] ?? 8000;
+        $refund = (int) round($origCost * 0.25);
+        $db = db_connect();
+
+        $db->transStart();
         $this->lightModel->delete($id);
-        log_activity($userId, 'Night Skiing', 'Removed ' . $light['light_name'], 'fa-solid fa-trash');
-        return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' removed.');
+        if ($refund > 0) {
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash + {$refund}", false)->update();
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => $gameDay,
+                'category' => 'Night Skiing', 'description' => 'Removed ' . $light['light_name'] . ' (Salvage Refund)',
+                'amount' => $refund, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        $db->transComplete();
+
+        log_activity($userId, 'Night Skiing', 'Removed ' . $light['light_name'] . ' for ' . currency($refund) . ' salvage', 'fa-solid fa-trash');
+        return redirect()->to('/night-skiing')->with('success', $light['light_name'] . ' removed. ' . currency($refund) . ' refunded (25% salvage).');
     }
 
     public function toggleAll()

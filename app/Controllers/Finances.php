@@ -6,7 +6,6 @@ use App\Models\FinanceModel;
 use App\Models\TransactionModel;
 use App\Models\StaffModel;
 use App\Models\MarketingModel;
-use App\Models\SnowCannonModel;
 use App\Models\NightSkiingModel;
 
 class Finances extends BaseController
@@ -27,12 +26,12 @@ class Finances extends BaseController
 
         $staffModel = new StaffModel();
         $marketingModel = new MarketingModel();
-        $cannonModel = new SnowCannonModel();
         $lightModel = new NightSkiingModel();
+        $db = db_connect();
 
         $staff = $staffModel->where('user_id', $userId)->where('status', 'active')->findAll();
         $campaigns = $marketingModel->where('user_id', $userId)->where('status', 'active')->findAll();
-        $cannons = $cannonModel->where('user_id', $userId)->where('status', 'active')->findAll();
+        $cannons = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray();
         $lights = $lightModel->where('user_id', $userId)->where('status', 'active')->findAll();
 
         $dailySalaries = array_sum(array_column($staff, 'salary'));

@@ -15,7 +15,7 @@
     <?php if (session('error')) : ?><div class="alert alert-error mb-4" role="alert"><span><?= session('error') ?></span></div><?php endif ?>
 
     <?php
-        $satisfied = array_filter($pastVips, fn($v) => $v['status'] === 'satisfied');
+        $satisfied = array_filter($pastVips, fn($v) => in_array($v['status'], ['satisfied', 'departed']));
         $totalEarned = array_sum(array_map(fn($v) => (int) $v['reward_amount'], $satisfied));
     ?>
 
@@ -103,7 +103,7 @@
             elseif ($rarity >= 5) { $rLabel = 'Rare'; $rClass = 'badge-warning'; }
             else { $rLabel = 'Legendary'; $rClass = 'badge-error'; }
         ?>
-        <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4">
+        <div class="card bg-base-100 shadow-sm border border-base-200"><div class="card-body p-4">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                     <div class="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center">
@@ -133,11 +133,11 @@
             <thead><tr><th>Guest</th><th>Type</th><th>Result</th><th>Reward</th><th>Rep</th><th>Day</th></tr></thead>
             <tbody>
             <?php foreach ($pastVips as $vip) : ?>
-                <?php $type = $vipTypes[$vip['vip_type']] ?? null; $ok = $vip['status'] === 'satisfied'; ?>
+                <?php $type = $vipTypes[$vip['vip_type']] ?? null; $ok = in_array($vip['status'], ['satisfied', 'departed']); ?>
                 <tr>
                     <td class="font-semibold"><i class="<?= $type['icon'] ?? 'fa-solid fa-star' ?> <?= $type['color'] ?? 'text-warning' ?> mr-1"></i><?= esc($vip['name']) ?></td>
                     <td class="text-xs"><?= ucwords(str_replace('_', ' ', $vip['vip_type'])) ?></td>
-                    <td><span class="badge badge-xs <?= $ok ? 'badge-success' : 'badge-error' ?>"><?= ucfirst($vip['status']) ?></span></td>
+                    <td><span class="badge badge-xs <?= $ok ? 'badge-success' : 'badge-error' ?>"><?= $vip['status'] === 'departed' ? 'Satisfied' : ucfirst($vip['status']) ?></span></td>
                     <td class="font-mono text-xs"><?= $ok ? currency((int) $vip['reward_amount']) : '-' ?></td>
                     <td class="text-xs"><?= $ok ? '+' . (int) $vip['reputation_bonus'] : '0' ?></td>
                     <td class="text-xs text-base-content/50">D<?= $vip['game_day_arrived'] ?></td>

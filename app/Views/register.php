@@ -27,8 +27,19 @@
                 <div class="lg:hidden flex items-center justify-center gap-2 text-lg font-extrabold text-primary mb-4">
                     <i class="fa-solid fa-mountain-sun"></i> Ski Manager
                 </div>
-                <h2 class="text-2xl font-bold mb-1">Create your account</h2>
-                <p class="text-sm text-base-content/50 mb-6">Build your resort in minutes.</p>
+                <h2 class="text-2xl font-bold mb-1"><?= session()->get('is_demo') ? 'Claim Your Resort' : 'Create your account' ?></h2>
+                <p class="text-sm text-base-content/50 mb-6"><?= session()->get('is_demo') ? 'Save your mountain progress to a permanent account.' : 'Build your resort in minutes.' ?></p>
+
+                <?php if (session()->get('is_demo')) : ?>
+                    <div class="alert alert-warning mb-4 shadow-sm border border-warning/30 flex items-start gap-3 text-neutral">
+                        <i class="fa-solid fa-cloud-arrow-up text-lg mt-0.5"></i>
+                        <div class="text-xs">
+                            <span class="font-bold text-sm block">Save Your Demo Mountain</span>
+                            Your 4 lifts, 8 slopes, equipment fleet, and treasury will be preserved directly in your new permanent account.
+                        </div>
+                    </div>
+                <?php endif ?>
+
                 <?php if (session('error')) : ?>
                     <div class="alert alert-error mb-4" role="alert"><span><?= session('error') ?></span></div>
                 <?php endif ?>
@@ -37,7 +48,7 @@
                         <div><?php foreach (session('errors') as $error) : ?><p><?= $error ?></p><?php endforeach ?></div>
                     </div>
                 <?php endif ?>
-                <form action="<?= url_to('register') ?>" method="post" class="space-y-4">
+                <form action="<?= session()->get('is_demo') ? '/demo/claim' : url_to('register') ?>" method="post" class="space-y-4">
                     <?= csrf_field() ?>
                     <div class="form-control">
                         <label class="label py-1" for="username"><span class="label-text font-medium">Username</span></label>

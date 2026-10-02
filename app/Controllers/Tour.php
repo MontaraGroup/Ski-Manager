@@ -42,8 +42,20 @@ class Tour extends BaseController
         helper('rating');
         $rating = function_exists('resortRating') ? resortRating($userId) : ['stars' => 0, 'score' => 0, 'max' => 200];
 
+        $alliance = null;
+        if ($db->tableExists('alliance_members')) {
+            $membership = $db->table('alliance_members')->where('user_id', $userId)->get()->getRowArray();
+            if ($membership) {
+                $alliance = $db->table('alliances')->where('id', $membership['alliance_id'])->get()->getRowArray();
+                if ($alliance) {
+                    $alliance['member_role'] = $membership['role'];
+                }
+            }
+        }
+
         return view('tour/index', [
             'owner' => $owner,
+            'alliance' => $alliance,
             'finance' => $finance,
             'slopes' => $slopes,
             'lifts' => $lifts,

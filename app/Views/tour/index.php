@@ -9,9 +9,14 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'black' => 'b
 <div class="max-w-5xl mx-auto p-4 lg:p-8">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-            <div class="flex items-center gap-2 mb-1">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
                 <a href="/leaderboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-arrow-left"></i></a>
                 <h1 class="text-2xl md:text-3xl font-bold"><i class="fa-solid fa-binoculars mr-2 text-primary"></i><?= esc($owner['username']) ?>'s Resort</h1>
+                <?php if (!empty($alliance)) : ?>
+                    <a href="/alliances/view/<?= (int)$alliance['id'] ?>" class="badge badge-sm font-bold font-mono text-white gap-1" style="background-color: <?= esc($alliance['crest_color']) ?>;">
+                        <i class="fa-solid <?= esc($alliance['crest_icon']) ?>"></i>[<?= esc($alliance['tag']) ?>] <?= esc($alliance['name']) ?>
+                    </a>
+                <?php endif ?>
             </div>
             <p class="text-base-content/60 text-sm ml-10">
                 <?php for ($i = 0; $i < 5; $i++) : ?>

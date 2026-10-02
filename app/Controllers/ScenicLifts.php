@@ -106,4 +106,69 @@ class ScenicLifts extends BaseController
         log_activity($userId, 'Scenic', 'Removed scenic designation', 'fa-solid fa-xmark');
         return redirect()->to('/scenic-lifts')->with('success', 'Scenic designation removed.');
     }
+
+    public function upgrade()
+    {
+        $userId = auth()->id();
+        $upgradeKey = $this->request->getPost('upgrade');
+        $itemId = (int) $this->request->getPost('item_id');
+
+        if (!isset(self::SCENIC_UPGRADES[$upgradeKey])) {
+            return redirect()->to('/scenic-lifts')->with('error', 'Invalid upgrade type.');
+        }
+
+        $up = self::SCENIC_UPGRADES[$upgradeKey];
+        $db = db_connect();
+
+        $query = $db->table('scenic_lifts')->where('user_id', $userId);
+        if ($itemId > 0) {
+            $query->where('item_id', $itemId);
+        }
+        $scenicLift = $query->get()->getRowArray();
+
+        if (!$scenicLift) {
+            return redirect()->to('/scenic-lifts')->with('error', 'You need at least one scenic lift to install upgrades.');
+        }
+
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if (($finance['cash'] ?? 0) < $up['cost']) {
+            return redirect()->to('/scenic-lifts')->with('error', 'Not enough cash to purchase ' . $up['name'] . ' (' . currency($up['cost']) . ' required).');
+        }
+
+        // Deduct cash
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$up['cost']}", false)->update();
+
+        // Financial transaction
+        $startDate = getSeasonStartDate();
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId,
+            'game_day' => $gameDay,
+            'category' => 'Scenic Upgrades',
+            'description' => 'Installed ' . $up['name'],
+            'amount' => $up['cost'],
+            'type' => 'expense',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // Increase revenue per day
+        $newRev = (int) ($scenicLift['revenue_per_day'] ?? 1500) + (int) $up['revenue_boost'];
+        $updateData = ['revenue_per_day' => $newRev];
+
+        if ($db->fieldExists('upgrades', 'scenic_lifts')) {
+            $existingUpgrades = !empty($scenicLift['upgrades']) ? json_decode($scenicLift['upgrades'], true) : [];
+            if (!is_array($existingUpgrades)) $existingUpgrades = [];
+            $existingUpgrades[] = $upgradeKey;
+            $updateData['upgrades'] = json_encode(array_values(array_unique($existingUpgrades)));
+        }
+
+        $db->table('scenic_lifts')->where('id', $scenicLift['id'])->update($updateData);
+
+        $liftItem = $db->table('player_items')->where('id', $scenicLift['item_id'])->get()->getRowArray();
+        $liftName = $liftItem['name'] ?? 'Scenic Lift';
+
+        log_activity($userId, 'Scenic', 'Installed ' . $up['name'] . ' on ' . $liftName . ' (+' . currency($up['revenue_boost']) . '/day)', 'fa-solid fa-arrow-up');
+
+        return redirect()->to('/scenic-lifts')->with('success', $up['name'] . ' installed on ' . $liftName . '! Daily revenue increased by ' . currency($up['revenue_boost']) . '.');
+    }
 }

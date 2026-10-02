@@ -147,6 +147,7 @@ a.link:hover{opacity:0.8}
                 ['url' => '/ski-lessons',   'label' => 'Ski School',    'icon' => 'fa-chalkboard-user'],
                 ['url' => '/compliance',    'label' => 'Compliance',    'icon' => 'fa-scale-balanced'],
                 ['url' => '/equipment',     'label' => 'Equipment Shop','icon' => 'fa-shop'],
+                ['url' => '/alliances',     'label' => 'Alliances',     'icon' => 'fa-handshake'],
             ]],
             'More' => ['icon' => 'fa-star', 'items' => [
                 ['url' => '/weather',       'label' => 'Weather',       'icon' => 'fa-cloud-sun'],
@@ -182,6 +183,25 @@ a.link:hover{opacity:0.8}
                 . '<i class="fa-solid ' . esc($it['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($it['label']) . $badge . '</a></li>';
         };
     ?>
+    <?php if (session()->get('is_demo')) : ?>
+    <div class="bg-primary text-primary-content px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
+        <div class="flex items-center gap-2">
+            <span class="badge badge-warning badge-sm font-bold font-mono text-neutral">DEMO SANDBOX</span>
+            <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="/demo/reset" class="btn btn-ghost btn-xs text-primary-content hover:bg-white/10" onclick="return confirm('Reset mountain to starting template?')">
+                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
+            </a>
+            <a href="/register?claim_demo=1" class="btn btn-warning btn-xs font-bold gap-1 shadow-sm text-neutral">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Save My Resort & Claim Capital
+            </a>
+            <a href="/demo/exit" class="btn btn-ghost btn-xs text-primary-content/80 hover:text-white" title="Exit Demo">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+        </div>
+    </div>
+    <?php endif ?>
     <nav aria-label="Main navigation"><div class="navbar bg-base-100 shadow-md" style="z-index:9999; position:sticky; top:0">
         <div class="navbar-start">
             <div class="dropdown">
@@ -347,6 +367,52 @@ a.link:hover{opacity:0.8}
         </div>
     </div>
     <?php endif ?>
+
+    <?php
+        $__flashError = session('error');
+        $__flashErrors = session('errors');
+        $__flashSuccess = session('success');
+        $__flashWarning = session('warning');
+
+        if ($__flashError) session()->remove('error');
+        if ($__flashErrors) session()->remove('errors');
+        if ($__flashSuccess) session()->remove('success');
+        if ($__flashWarning) session()->remove('warning');
+    ?>
+
+    <?php if ($__flashError || $__flashErrors || $__flashSuccess || $__flashWarning) : ?>
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-1">
+        <?php if ($__flashError) : ?>
+            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashError) ?></span>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashErrors && is_array($__flashErrors)) : ?>
+            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
+                <div class="text-sm space-y-1">
+                    <?php foreach ($__flashErrors as $__err) : ?>
+                        <div><?= esc($__err) ?></div>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashSuccess) : ?>
+            <div class="alert alert-success shadow-sm mb-3 border border-success/30" role="status">
+                <i class="fa-solid fa-circle-check text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashSuccess) ?></span>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashWarning) : ?>
+            <div class="alert alert-warning shadow-sm mb-3 border border-warning/30" role="alert">
+                <i class="fa-solid fa-triangle-exclamation text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashWarning) ?></span>
+            </div>
+        <?php endif ?>
+    </div>
+    <?php endif ?>
+
         <?= $this->renderSection('content') ?>
     </main>
     <div id="liveAppAlertToastStack" class="toast toast-bottom toast-end z-[9999] space-y-2 pointer-events-none max-w-sm w-full"></div>
@@ -371,6 +437,7 @@ a.link:hover{opacity:0.8}
                         <li><a href="/register" class="link link-hover text-base-content/60">Play Now</a></li>
                         <li><a href="/leaderboard" class="link link-hover text-base-content/60">Leaderboard</a></li>
                         <li><a href="/updates" class="link link-hover text-base-content/60">Updates</a></li>
+                        <li><a href="/roadmap" class="link link-hover text-base-content/60">Roadmap</a></li>
                         <li><a href="https://wiki.ski-manager.net" target="_blank" class="link link-hover text-base-content/60">Wiki</a></li>
                         <li><a href="/genepis" class="link link-hover text-base-content/60">Genepis</a></li>
                     </ul>
@@ -466,7 +533,7 @@ document.getElementById("confirmYes").addEventListener("click",function(){
 });
 </script>
 <script>
-const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
+const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Alliances",u:"/alliances",i:"fa-handshake"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Roadmap",u:"/roadmap",i:"fa-map-location-dot"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
 const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
 if(si){si.addEventListener("input",function(){const q=this.value.toLowerCase().trim();if(!q){sr.innerHTML="";return;}const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):"<p class=\"text-xs text-base-content/40 text-center py-2\">No results</p>";});si.addEventListener("keydown",function(e){if(e.key==="Enter"){const first=sr.querySelector("a");if(first)window.location=first.href;}});
 document.addEventListener("keydown",function(e){if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault();si.focus();si.closest(".dropdown").querySelector("[tabindex]").focus();si.focus();}});

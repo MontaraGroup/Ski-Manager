@@ -4,9 +4,11 @@ namespace App\Controllers;
 
 class Admin extends BaseController
 {
-    private function checkAdmin()
+    private function checkAdmin(): bool
     {
-        return auth()->loggedIn() && auth()->id() === 1;
+        if (!function_exists('auth') || !auth()->loggedIn()) return false;
+        $user = auth()->user();
+        return auth()->id() === 1 || ($user && $user->inGroup('admin', 'superadmin'));
     }
 
     public function index(): string
@@ -19,7 +21,8 @@ class Admin extends BaseController
         $totalBuildings = $db->table('buildings')->countAllResults();
         $totalItems = $db->table('player_items')->countAllResults();
         $totalLoans = $db->table('loans')->where('status', 'active')->countAllResults();
-        $totalCash = $db->table('player_finances')->selectSum('cash')->get()->getRowArray()['cash'] ?? 0;
+        $totalCashRow = $db->table('player_finances')->selectSum('cash')->get()->getRowArray();
+        $totalCash = $totalCashRow['cash'] ?? 0;
         $totalParking = $db->table('parking')->countAllResults();
         $totalParks = $db->table('terrain_parks')->countAllResults();
 
@@ -30,18 +33,59 @@ class Admin extends BaseController
         $recentLogs = $db->query("SELECT al.*, u.username FROM activity_log al JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT 30")->getResultArray();
 
         $users = $db->table('users')->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();
-        foreach ($users as &$u) {
-            $fin = $db->table('player_finances')->where('user_id', $u['id'])->get()->getRowArray();
-            $u['cash'] = $fin ? (int) $fin['cash'] : 0;
-            $u['last_active'] = $fin['last_active'] ?? null;
-            $u['reputation'] = $fin ? (int) ($fin['reputation'] ?? 0) : 0;
-            $u['staff_count'] = $db->table('staff')->where('user_id', $u['id'])->where('status !=', 'fired')->countAllResults();
-            $u['building_count'] = $db->table('buildings')->where('user_id', $u['id'])->countAllResults();
-            $u['item_count'] = $db->table('player_items')->where('user_id', $u['id'])->countAllResults();
-            $u['last_activity'] = $db->table('activity_log')->where('user_id', $u['id'])->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
+        if (!empty($users)) {
+            $userIds = array_column($users, 'id');
+
+            // 1. Batch fetch finances
+            $finRows = $db->table('player_finances')->whereIn('user_id', $userIds)->get()->getResultArray();
+            $finMap = [];
+            foreach ($finRows as $f) {
+                $finMap[$f['user_id']] = $f;
+            }
+
+            // 2. Batch fetch active staff counts
+            $staffRows = $db->table('staff')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->where('status !=', 'fired')->groupBy('user_id')->get()->getResultArray();
+            $staffMap = array_column($staffRows, 'cnt', 'user_id');
+
+            // 3. Batch fetch building counts
+            $bldRows = $db->table('buildings')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->groupBy('user_id')->get()->getResultArray();
+            $bldMap = array_column($bldRows, 'cnt', 'user_id');
+
+            // 4. Batch fetch player item counts
+            $itemRows = $db->table('player_items')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->groupBy('user_id')->get()->getResultArray();
+            $itemMap = array_column($itemRows, 'cnt', 'user_id');
+
+            // 5. Batch fetch latest activity for each user
+            $latestLogs = $db->query("
+                SELECT al1.* 
+                FROM activity_log al1
+                INNER JOIN (
+                    SELECT user_id, MAX(id) as max_id 
+                    FROM activity_log 
+                    WHERE user_id IN (" . implode(',', array_map('intval', $userIds)) . ")
+                    GROUP BY user_id
+                ) al2 ON al1.id = al2.max_id
+            ")->getResultArray();
+            $actMap = [];
+            foreach ($latestLogs as $log) {
+                $actMap[$log['user_id']] = $log;
+            }
+
+            foreach ($users as &$u) {
+                $uid = $u['id'];
+                $fin = $finMap[$uid] ?? null;
+                $u['cash'] = $fin ? (int) ($fin['cash'] ?? 0) : 0;
+                $u['last_active'] = $fin['last_active'] ?? null;
+                $u['reputation'] = $fin ? (int) ($fin['reputation'] ?? 0) : 0;
+                $u['staff_count'] = (int) ($staffMap[$uid] ?? 0);
+                $u['building_count'] = (int) ($bldMap[$uid] ?? 0);
+                $u['item_count'] = (int) ($itemMap[$uid] ?? 0);
+                $u['last_activity'] = $actMap[$uid] ?? null;
+            }
         }
 
-        $onlineRecent = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray()['cnt'] ?? 0;
+        $onlineRecentRow = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray();
+        $onlineRecent = $onlineRecentRow['cnt'] ?? 0;
 
         return view('admin/index', [
             'totalUsers' => $totalUsers, 'totalStaff' => $totalStaff,
@@ -228,9 +272,9 @@ class Admin extends BaseController
     public function grantAchievement()
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
-        $userId = (int) $this->request->getPost('user_id');
-        $achievementId = (int) $this->request->getPost('achievement_id');
-        db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray()['target'] ?? 100]);
+        $achRow = db_connect()->table('achievement_defs')->where('id', $achievementId)->get()->getRowArray() ?: db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray();
+        $target = $achRow['target'] ?? 100;
+        db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => $target]);
         log_activity($userId, 'admin_achievement', 'Achievement granted by admin');
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Achievement granted.');
     }
@@ -334,7 +378,7 @@ class Admin extends BaseController
 
     public function toggleMaintenance()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $season = $db->table('seasons')->where('active', 1)->get()->getRowArray();
         if ($season) {
@@ -348,7 +392,7 @@ class Admin extends BaseController
 
     public function updateSeason()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/settings')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         db_connect()->table('seasons')->where('active', 1)->update([
             'name' => $d['name'], 'start_date' => $d['start_date'],
@@ -359,16 +403,16 @@ class Admin extends BaseController
 
     public function toggleSectorRelease(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/settings')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $s = $db->table('resort_sectors')->where('id', $id)->get()->getRowArray();
         if ($s) $db->table('resort_sectors')->where('id', $id)->update(['released' => $s['released'] ? 0 : 1]);
         return redirect()->to('/admin/settings')->with('success', 'Sector updated.');
     }
 
-    public function errorLog(): string
+    public function errorLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $file = WRITEPATH . 'logs/log-' . date('Y-m-d') . '.log';
         $lines = [];
         if (file_exists($file)) {
@@ -381,7 +425,7 @@ class Admin extends BaseController
 
     public function impersonate(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $user = $db->table('users')->where('id', $id)->get()->getRowArray();
         if (!$user) return redirect()->to('/admin')->with('error', 'User not found.');
@@ -407,18 +451,54 @@ class Admin extends BaseController
 
     public function toggleEnvironment()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin')->with('error', 'Unauthorized access.');
         $envFile = ROOTPATH . '.env';
-        $content = file_get_contents($envFile);
-        if (str_contains($content, "CI_ENVIRONMENT = production")) {
-            $content = str_replace("CI_ENVIRONMENT = production", "CI_ENVIRONMENT = development", $content);
-            $msg = 'Switched to DEVELOPMENT mode';
-        } else {
-            $content = str_replace("CI_ENVIRONMENT = development", "CI_ENVIRONMENT = production", $content);
-            $msg = 'Switched to PRODUCTION mode';
+
+        if (!file_exists($envFile)) {
+            return redirect()->to('/admin')->with('error', 'The .env configuration file was not found at ' . ROOTPATH);
         }
-        file_put_contents($envFile, $content);
-        return redirect()->to('/admin')->with('success', $msg);
+
+        if (!is_readable($envFile)) {
+            return redirect()->to('/admin')->with('error', 'Cannot read .env file: permission denied.');
+        }
+
+        if (!is_writable($envFile)) {
+            return redirect()->to('/admin')->with('error', 'Cannot toggle environment: .env file is read-only (permission denied for web server). To switch modes, update CI_ENVIRONMENT directly on the server or run: chmod 664 .env');
+        }
+
+        try {
+            $content = file_get_contents($envFile);
+            if ($content === false) {
+                return redirect()->to('/admin')->with('error', 'Failed to read .env file.');
+            }
+
+            if (preg_match('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)production([\'"]?)/m', $content)) {
+                $content = preg_replace('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)production([\'"]?)/m', 'CI_ENVIRONMENT = development', $content);
+                $msg = 'Switched to DEVELOPMENT mode';
+            } elseif (preg_match('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)development([\'"]?)/m', $content)) {
+                $content = preg_replace('/^(\s*#?\s*CI_ENVIRONMENT\s*=\s*[\'"]?)development([\'"]?)/m', 'CI_ENVIRONMENT = production', $content);
+                $msg = 'Switched to PRODUCTION mode';
+            } else {
+                if (str_contains($content, 'CI_ENVIRONMENT = production')) {
+                    $content = str_replace('CI_ENVIRONMENT = production', 'CI_ENVIRONMENT = development', $content);
+                    $msg = 'Switched to DEVELOPMENT mode';
+                } else {
+                    $content = str_replace('CI_ENVIRONMENT = development', 'CI_ENVIRONMENT = production', $content);
+                    $msg = 'Switched to PRODUCTION mode';
+                }
+            }
+
+            $written = @file_put_contents($envFile, $content);
+            if ($written === false) {
+                return redirect()->to('/admin')->with('error', 'Failed to write to .env file (permission denied). Adjust server file permissions.');
+            }
+
+            $this->auditLog('toggle_environment', null, $msg);
+            return redirect()->to('/admin')->with('success', $msg);
+        } catch (\Throwable $e) {
+            log_message('error', 'toggleEnvironment error: ' . $e->getMessage());
+            return redirect()->to('/admin')->with('error', 'Could not toggle environment: ' . $e->getMessage());
+        }
     }
 
     private function auditLog(string $action, ?int $targetUserId = null, ?string $details = null): void
@@ -431,9 +511,9 @@ class Admin extends BaseController
         ]);
     }
 
-    public function viewAuditLog(): string
+    public function viewAuditLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $logs = db_connect()->table('admin_audit_log a')
             ->select('a.*, u.username as admin_name, t.username as target_name')
             ->join('users u', 'u.id = a.admin_id', 'left')
@@ -442,24 +522,26 @@ class Admin extends BaseController
         return view('admin/audit', ['logs' => $logs]);
     }
 
-    public function playerComparison(): string
+    public function playerComparison(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $users = $db->table('users')->select('id, username')->orderBy('username')->get()->getResultArray();
         $a = $this->request->getGet('a');
         $b = $this->request->getGet('b');
         $dataA = $dataB = null;
         if ($a) {
-            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray();
-            $dataA['username'] = $db->table('users')->where('id', $a)->get()->getRowArray()['username'] ?? '';
+            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray() ?: [];
+            $userA = $db->table('users')->where('id', $a)->get()->getRowArray();
+            $dataA['username'] = $userA['username'] ?? '';
             $dataA['staff'] = $db->table('staff')->where('user_id', $a)->where('status !=', 'fired')->countAllResults();
             $dataA['buildings'] = $db->table('buildings')->where('user_id', $a)->countAllResults();
             $dataA['items'] = $db->table('player_items')->where('user_id', $a)->countAllResults();
         }
         if ($b) {
-            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray();
-            $dataB['username'] = $db->table('users')->where('id', $b)->get()->getRowArray()['username'] ?? '';
+            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray() ?: [];
+            $userB = $db->table('users')->where('id', $b)->get()->getRowArray();
+            $dataB['username'] = $userB['username'] ?? '';
             $dataB['staff'] = $db->table('staff')->where('user_id', $b)->where('status !=', 'fired')->countAllResults();
             $dataB['buildings'] = $db->table('buildings')->where('user_id', $b)->countAllResults();
             $dataB['items'] = $db->table('player_items')->where('user_id', $b)->countAllResults();
@@ -469,7 +551,7 @@ class Admin extends BaseController
 
     public function exportPlayers()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $rows = $db->query("SELECT u.id, u.username, u.created_at, f.cash, f.difficulty, f.resort_map, f.units,
             (SELECT COUNT(*) FROM staff s WHERE s.user_id=u.id AND s.status!='fired') as staff,
@@ -485,16 +567,16 @@ class Admin extends BaseController
         exit;
     }
 
-    public function changelogManager(): string
+    public function changelogManager(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $entries = db_connect()->table('changelogs')->orderBy('created_at', 'DESC')->get()->getResultArray();
         return view('admin/changelogs', ['entries' => $entries]);
     }
 
     public function saveChangelog()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/changelogs')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         $db = db_connect();
         if (!empty($d['id'])) {
@@ -508,21 +590,21 @@ class Admin extends BaseController
 
     public function deleteChangelog(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/changelogs')->with('error', 'Unauthorized access.');
         db_connect()->table('changelogs')->where('id', $id)->delete();
         return redirect()->to('/admin/changelogs')->with('success', 'Deleted.');
     }
 
-    public function featureFlags(): string
+    public function featureFlags(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $flags = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
         return view('admin/features', ['flags' => $flags]);
     }
 
     public function toggleFlag(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if ($flag) {
@@ -534,9 +616,9 @@ class Admin extends BaseController
         return redirect()->to('/admin/features')->with('success', 'Flag updated.');
     }
 
-    public function suspiciousActivity(): string
+    public function suspiciousActivity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $suspects = $db->query("
             SELECT u.id, u.username, f.cash, f.difficulty,
@@ -571,7 +653,7 @@ class Admin extends BaseController
 
     public function createSeason()
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/seasons')->with('error', 'Unauthorized access.');
         $d = $this->request->getPost();
         db_connect()->table('seasons')->insert([
             'season_number' => (int) $d['season_number'],
@@ -586,9 +668,9 @@ class Admin extends BaseController
         return redirect()->to('/admin/seasons')->with('success', 'Season planned.');
     }
 
-    public function seasonPlanner(): string
+    public function seasonPlanner(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $seasons = $db->table('seasons')->orderBy('season_number')->get()->getResultArray();
         return view('admin/seasons', ['seasons' => $seasons, 'resortMaps' => \App\Controllers\ResortMap::getResortMapNames()]);
@@ -596,7 +678,7 @@ class Admin extends BaseController
 
     public function activateSeason(int $id)
     {
-        $this->checkAdmin();
+        if (!$this->checkAdmin()) return redirect()->to('/admin/seasons')->with('error', 'Unauthorized access.');
         $db = db_connect();
         $db->table('seasons')->update(['active' => 0]);
         $db->table('seasons')->where('id', $id)->update(['active' => 1]);
@@ -606,7 +688,7 @@ class Admin extends BaseController
 
     public function enableAllFlags()
     {
-        if (auth()->id() !== 1) return redirect()->to('/');
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         db_connect()->table('feature_flags')->update(['enabled' => 2]);
         $this->auditLog('Enabled all feature flags');
         return redirect()->to('/admin/features')->with('success', 'All features enabled for everyone.');
@@ -614,16 +696,16 @@ class Admin extends BaseController
 
     public function disableAllBeta()
     {
-        if (auth()->id() !== 1) return redirect()->to('/');
+        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         db_connect()->table('feature_flags')->where('flag_key LIKE', 'beta_%')->update(['enabled' => 0]);
         $this->auditLog('Disabled all beta features');
         return redirect()->to('/admin/features')->with('success', 'All beta features disabled.');
     }
 
-    public function activity()
+    public function activity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
-        if (!session()->get("is_admin")) {
-            return redirect()->to("/dashboard");
+        if (!$this->checkAdmin()) {
+            return redirect()->to("/dashboard")->with('error', 'Unauthorized access.');
         }
 
         $db = \Config\Database::connect();
@@ -635,5 +717,38 @@ class Admin extends BaseController
                            ->getResultArray();
 
         return view("admin/activity", $data);
+    }
+
+    public function optimizeStorage()
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/admin');
+        $db = \Config\Database::connect();
+
+        // 1. Prune stale activity logs older than 90 days
+        $prunedLogs = $db->table('activity_log')->where('created_at <', date('Y-m-d H:i:s', strtotime('-90 days')))->delete();
+
+        // 2. Prune old financial transactions older than 180 days
+        $prunedTrans = $db->table('financial_transactions')->where('created_at <', date('Y-m-d H:i:s', strtotime('-180 days')))->delete();
+
+        // 3. Clear temporary files in WRITEPATH
+        $tempFiles = glob(WRITEPATH . 'tmp_*.pdf') ?: [];
+        $deletedFiles = 0;
+        foreach ($tempFiles as $file) {
+            if (is_file($file) && (time() - filemtime($file)) > 3600) {
+                @unlink($file);
+                $deletedFiles++;
+            }
+        }
+
+        // 4. Optimize core database tables
+        $tables = ['activity_log', 'financial_transactions', 'player_items', 'equipment', 'staff', 'buildings'];
+        foreach ($tables as $t) {
+            try {
+                $db->query("OPTIMIZE TABLE `{$t}`");
+            } catch (\Throwable $e) {}
+        }
+
+        $this->auditLog('optimize_storage', null, "Cleaned {$deletedFiles} temp files and optimized tables.");
+        return redirect()->to('/admin')->with('success', "Storage maintenance complete: optimized tables and cleaned {$deletedFiles} orphaned temporary files.");
     }
 }

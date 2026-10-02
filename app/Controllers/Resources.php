@@ -38,7 +38,11 @@ class Resources extends BaseController
             }
         }
 
-        $snowmakingDraw = $db->table('snow_cannons')->where('user_id', $userId)->where('status', 'active')->countAllResults(false) * 50;
+        $activeSnowmakers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray();
+        $snowmakingDraw = array_sum(array_column($activeSnowmakers, 'energy_kwh'));
+        if ($snowmakingDraw === 0 && !empty($activeSnowmakers)) {
+            $snowmakingDraw = count($activeSnowmakers) * 50;
+        }
         $nightSkiDraw = $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults(false) * 80;
         $liftDraw = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults(false) * 30;
         $buildingDraw = $db->table('buildings')->where('user_id', $userId)->countAllResults(false) * 20;
@@ -71,7 +75,11 @@ class Resources extends BaseController
             }
         }
 
-        $snowmakingDraw = $db->table('snow_cannons')->where('user_id', $userId)->where('status', 'active')->countAllResults(false) * 5000;
+        $activeSnowmakers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray();
+        $snowmakingDraw = array_sum(array_column($activeSnowmakers, 'water_liters'));
+        if ($snowmakingDraw === 0 && !empty($activeSnowmakers)) {
+            $snowmakingDraw = count($activeSnowmakers) * 5000;
+        }
         $totalDemand = $snowmakingDraw;
 
         return view('resources/water', [

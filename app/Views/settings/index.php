@@ -227,11 +227,14 @@
     <div class="card bg-error/10 border border-error/30 shadow-sm mb-4"><div class="card-body p-4">
         <h2 class="font-bold text-sm text-error mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Delete Account</h2>
         <p class="text-xs text-base-content/60 mb-3">Permanently deletes your account, resort, and all game data.</p>
-        <form action="/account/delete" method="post" data-confirm="This will permanently delete your account. Type DELETE to confirm." data-confirm-title="Delete Account">
+        <form action="/account/delete" method="post" data-confirm="This will permanently delete your account. Are you sure?" data-confirm-title="Delete Account">
             <?= csrf_field() ?>
-            <div class="flex gap-2">
-                <input type="text" name="confirm_delete" class="input input-bordered input-sm input-error flex-1" placeholder="Type DELETE" autocomplete="off">
-                <button type="submit" class="btn btn-error btn-sm">Delete</button>
+            <div class="space-y-2">
+                <input type="password" name="password" class="input input-bordered input-sm input-error w-full text-sm" placeholder="Enter your current password" required autocomplete="current-password">
+                <div class="flex gap-2">
+                    <input type="text" name="confirm_delete" class="input input-bordered input-sm input-error flex-1 text-sm" placeholder="Type DELETE to confirm" autocomplete="off" required>
+                    <button type="submit" class="btn btn-error btn-sm">Delete Account</button>
+                </div>
             </div>
         </form>
     </div></div>

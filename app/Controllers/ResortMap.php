@@ -36,6 +36,33 @@ class ResortMap extends BaseController
         return auth()->id() === 1;
     }
 
+    public function changeMap()
+    {
+        $userId = auth()->id();
+        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map');
+
+        if (!$map || !isset(self::RESORT_MAPS[$map])) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid map selected.']);
+            }
+            return redirect()->to('/map')->with('error', 'Invalid map selected.');
+        }
+
+        if ($userId) {
+            $db = db_connect();
+            $db->table('player_finances')->where('user_id', $userId)->update([
+                'resort_map' => $map,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true, 'map' => $map, 'mapName' => self::RESORT_MAPS[$map]['name']]);
+        }
+
+        return redirect()->to('/map')->with('success', 'Switched trail map to ' . self::RESORT_MAPS[$map]['name'] . '.');
+    }
+
     public function index()
     {
         $resortMap  = $this->getSelectedMap();

@@ -10,7 +10,7 @@ class Throttle implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        if ($request->getMethod() !== 'POST') {
+        if (strtolower($request->getMethod()) !== 'post') {
             return;
         }
 

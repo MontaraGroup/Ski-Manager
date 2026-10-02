@@ -44,22 +44,31 @@ class DailyBonus extends BaseController
         $db = db_connect();
         $today = date('Y-m-d');
         $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
-        if ($bonus && $bonus['last_claim_date'] === $today) {
+        if (!$bonus) {
+            $db->table('daily_bonus')->insert(['user_id' => $userId, 'last_claim_day' => 0, 'last_claim_date' => null, 'streak' => 0, 'total_claimed' => 0]);
+            $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray() ?: ['streak' => 0, 'total_claimed' => 0, 'last_claim_date' => null];
+        }
+        if (!empty($bonus['last_claim_date']) && $bonus['last_claim_date'] === $today) {
             return redirect()->back()->with('error', 'Already claimed today. Come back tomorrow!');
         }
         $rewards = $this->getRewards();
         $maxDay = !empty($rewards) ? max(array_keys($rewards)) : 7;
         $lastDate = $bonus['last_claim_date'] ?? null;
         $claimedYesterday = ($lastDate !== null) && ($lastDate === date('Y-m-d', strtotime('-1 day')));
-        $newStreak = $claimedYesterday ? min($maxDay, (int) $bonus['streak'] + 1) : 1;
+        $newStreak = $claimedYesterday ? min($maxDay, (int) ($bonus['streak'] ?? 0) + 1) : 1;
         $reward = $rewards[$newStreak] ?? 1000;
         $db->table('daily_bonus')->where('user_id', $userId)->update([
             'last_claim_date' => $today,
             'streak' => $newStreak,
-            'total_claimed' => (int) $bonus['total_claimed'] + $reward,
+            'total_claimed' => (int) ($bonus['total_claimed'] ?? 0) + $reward,
         ]);
-        $finance = (new FinanceModel())->where('user_id', $userId)->first();
-        if ($finance) (new FinanceModel())->update($finance['id'], ['cash' => (int) $finance['cash'] + $reward]);
+        $finModel = new FinanceModel();
+        $finance = $finModel->where('user_id', $userId)->first();
+        if (!$finance) {
+            $finModel->insert(['user_id' => $userId, 'cash' => 500000 + $reward]);
+        } else {
+            $finModel->update($finance['id'], ['cash' => (int) $finance['cash'] + $reward]);
+        }
         log_activity($userId, 'Daily Bonus', 'Claimed day ' . $newStreak . ' bonus: ' . currency($reward), 'fa-solid fa-gift');
         return redirect()->to('/daily-bonus')->with('success', 'Day ' . $newStreak . ' bonus claimed: ' . currency($reward) . '!');
     }

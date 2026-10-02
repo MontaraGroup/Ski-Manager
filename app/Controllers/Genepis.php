@@ -146,7 +146,7 @@ class Genepis extends BaseController
                 break;
 
             case 'reputation_boost':
-                $db->table('player_finances')->where('user_id', $userId)->set('daily_visitors', 'daily_visitors + 500', false)->update();
+                $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + 25', false)->update();
                 break;
 
             case 'groom_all':
