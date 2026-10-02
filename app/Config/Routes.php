@@ -113,7 +113,7 @@ $routes->get('/tickets', 'Tickets::index');
 $routes->get('/tournaments', 'Tournaments::index');
 $routes->get('/transportation', 'Buildings::show/transportation');
 $routes->get('/updates', 'Updates::index');
-$routes->get('/roadmap', 'Roadmap::index');
+$routes->match(['get', 'head'], '/roadmap', 'Roadmap::index');
 $routes->post('/roadmap/vote/(:num)', 'Roadmap::vote/$1');
 $routes->post('/roadmap/suggest', 'Roadmap::suggest');
 $routes->post('/roadmap/admin/status', 'Roadmap::updateStatus');
