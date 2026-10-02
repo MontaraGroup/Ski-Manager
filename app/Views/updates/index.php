@@ -8,11 +8,11 @@
             <p class="text-base-content/60">What's new in Ski Manager. Follow our progress and see what's shipped.</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-            <a href="https://roadmap.ski-manager.net" target="_blank" class="btn btn-sm btn-outline gap-1.5">
-                <i class="fa-solid fa-map text-primary"></i> Roadmap <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-60"></i>
+            <a href="/roadmap" class="btn btn-sm btn-outline gap-1.5">
+                <i class="fa-solid fa-compass text-primary"></i> Roadmap
             </a>
-            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" class="btn btn-sm btn-primary btn-outline gap-1.5">
-                <i class="fa-solid fa-bullhorn"></i> Changelog <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-60"></i>
+            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" class="btn btn-sm btn-ghost gap-1.5 text-xs text-base-content/60">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> External Changelog
             </a>
         </div>
     </div>
