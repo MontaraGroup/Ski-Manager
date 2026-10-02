@@ -367,6 +367,52 @@ a.link:hover{opacity:0.8}
         </div>
     </div>
     <?php endif ?>
+
+    <?php
+        $__flashError = session('error');
+        $__flashErrors = session('errors');
+        $__flashSuccess = session('success');
+        $__flashWarning = session('warning');
+
+        if ($__flashError) session()->remove('error');
+        if ($__flashErrors) session()->remove('errors');
+        if ($__flashSuccess) session()->remove('success');
+        if ($__flashWarning) session()->remove('warning');
+    ?>
+
+    <?php if ($__flashError || $__flashErrors || $__flashSuccess || $__flashWarning) : ?>
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-1">
+        <?php if ($__flashError) : ?>
+            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashError) ?></span>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashErrors && is_array($__flashErrors)) : ?>
+            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
+                <div class="text-sm space-y-1">
+                    <?php foreach ($__flashErrors as $__err) : ?>
+                        <div><?= esc($__err) ?></div>
+                    <?php endforeach ?>
+                </div>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashSuccess) : ?>
+            <div class="alert alert-success shadow-sm mb-3 border border-success/30" role="status">
+                <i class="fa-solid fa-circle-check text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashSuccess) ?></span>
+            </div>
+        <?php endif ?>
+        <?php if ($__flashWarning) : ?>
+            <div class="alert alert-warning shadow-sm mb-3 border border-warning/30" role="alert">
+                <i class="fa-solid fa-triangle-exclamation text-lg shrink-0"></i>
+                <span class="text-sm font-medium"><?= esc($__flashWarning) ?></span>
+            </div>
+        <?php endif ?>
+    </div>
+    <?php endif ?>
+
         <?= $this->renderSection('content') ?>
     </main>
     <div id="liveAppAlertToastStack" class="toast toast-bottom toast-end z-[9999] space-y-2 pointer-events-none max-w-sm w-full"></div>

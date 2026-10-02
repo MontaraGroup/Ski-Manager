@@ -44,4 +44,31 @@ abstract class BaseController extends Controller
             db_connect()->table('player_finances')->where('user_id', auth()->id())->update(['last_active' => date('Y-m-d H:i:s')]);
         }
     }
+
+    /**
+     * Executes a database operation within a transaction safely.
+     * Automatically rolls back on exception or failure status.
+     *
+     * @param callable $callback function(\CodeIgniter\Database\BaseConnection $db): mixed
+     * @param string $fallbackErrorMessage
+     * @return mixed Returns callback result on success, or false on failure
+     */
+    protected function executeTransaction(callable $callback, string $fallbackErrorMessage = 'Transaction failed. Please try again.')
+    {
+        $db = db_connect();
+        $db->transBegin();
+        try {
+            $result = $callback($db);
+            if ($result === false || $db->transStatus() === false) {
+                $db->transRollback();
+                return false;
+            }
+            $db->transCommit();
+            return $result ?? true;
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Transaction aborted: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

@@ -27,8 +27,9 @@ class GameTick extends BaseCommand
             $userId = (int) $user['id'];
             CLI::write("Processing user {$userId}...", 'yellow');
             try {
+                $db->transBegin();
 
-            $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+                $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
             if (!$finance) {
                 $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
                 $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
@@ -694,7 +695,15 @@ class GameTick extends BaseCommand
             log_activity($userId, 'Daily Report', "Day {$gameDay}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
 
             CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses} | Visitors: {$visitors} | Cash: {$newCash}", "white");
+                if ($db->transStatus() === false) {
+                    $db->transRollback();
+                    CLI::write("  Transaction failed for user {$userId}, rolled back.", "red");
+                    log_message("error", "GameTick user {$userId} transaction status failed and was rolled back.");
+                } else {
+                    $db->transCommit();
+                }
             } catch (\Throwable $e) {
+                $db->transRollback();
                 CLI::write("  ERROR processing user {$userId}: " . $e->getMessage(), "red");
                 log_message("error", "GameTick user {$userId} failed: " . $e->getMessage());
             }
