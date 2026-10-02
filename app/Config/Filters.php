@@ -36,6 +36,7 @@ class Filters extends BaseFilters
         'seasongate' => \App\Filters\SeasonGate::class,
         'featuregate' => \App\Filters\FeatureGate::class,
         'admin'         => \App\Filters\AdminFilter::class,
+        'markdown'      => \App\Filters\MarkdownNegotiationFilter::class,
         'cors'          => Cors::class,
 
         'forcehttps'    => ForceHTTPS::class,
@@ -86,6 +87,7 @@ class Filters extends BaseFilters
         'after' => [
             // 'honeypot',
             'secureheaders',
+            'markdown',
         ],
     ];
 
