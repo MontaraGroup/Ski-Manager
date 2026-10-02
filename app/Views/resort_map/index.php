@@ -447,11 +447,25 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         });
     }
 
-    function postJSON(url,data,cb){
-        data[CSRF_NAME]=CSRF_HASH;
-        fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(data)})
-        .then(function(r){return r.json();}).then(function(d){cb(d);})
-        .catch(function(e){console.error(e);alert('Request failed');});
+    var resortSelect = document.getElementById('resortSelect');
+    if (resortSelect) {
+        resortSelect.addEventListener('change', function() {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/map/change-map';
+            var csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = CSRF_NAME;
+            csrfInput.value = CSRF_HASH;
+            form.appendChild(csrfInput);
+            var mapInput = document.createElement('input');
+            mapInput.type = 'hidden';
+            mapInput.name = 'map';
+            mapInput.value = this.value;
+            form.appendChild(mapInput);
+            document.body.appendChild(form);
+            form.submit();
+        });
     }
 })();
 </script>

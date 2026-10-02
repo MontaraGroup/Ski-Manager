@@ -126,6 +126,7 @@ $routes->post("/admin/reset-tutorial/(:num)", "Admin::resetTutorial/$1");
 $routes->post("/admin/reset/(:num)", "Admin::resetUser/$1");
 $routes->post("/admin/set-weather", "Admin::setWeather");
 $routes->post("/admin/trigger-tick", "Admin::triggerTick");
+$routes->post("/admin/optimize-storage", "Admin::optimizeStorage");
 $routes->post("/dashboard/reorder-widgets", "Dashboard::reorderWidgets");
 $routes->post("/dashboard/resize-widget", "Dashboard::resizeWidget");
 $routes->post("/map/build", "ResortMap::buildItem");
@@ -259,7 +260,7 @@ $routes->group('admin/support', ['filter' => 'group:admin'], function($routes) {
     $routes->post('message/(:num)/delete', 'Support::deleteMessage/$1');
 });
 
-$routes->get("api/notifications/live", "\App\Controllers\Notifications::getLatestAsync");
+$routes->get("api/notifications/live", "Notifications::getLatestAsync");
 
 
 // Custom Bulletproof Identity Verification Processor

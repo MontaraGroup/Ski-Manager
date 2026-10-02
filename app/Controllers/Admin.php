@@ -21,7 +21,8 @@ class Admin extends BaseController
         $totalBuildings = $db->table('buildings')->countAllResults();
         $totalItems = $db->table('player_items')->countAllResults();
         $totalLoans = $db->table('loans')->where('status', 'active')->countAllResults();
-        $totalCash = $db->table('player_finances')->selectSum('cash')->get()->getRowArray()['cash'] ?? 0;
+        $totalCashRow = $db->table('player_finances')->selectSum('cash')->get()->getRowArray();
+        $totalCash = $totalCashRow['cash'] ?? 0;
         $totalParking = $db->table('parking')->countAllResults();
         $totalParks = $db->table('terrain_parks')->countAllResults();
 
@@ -32,18 +33,59 @@ class Admin extends BaseController
         $recentLogs = $db->query("SELECT al.*, u.username FROM activity_log al JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT 30")->getResultArray();
 
         $users = $db->table('users')->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();
-        foreach ($users as &$u) {
-            $fin = $db->table('player_finances')->where('user_id', $u['id'])->get()->getRowArray();
-            $u['cash'] = $fin ? (int) $fin['cash'] : 0;
-            $u['last_active'] = $fin['last_active'] ?? null;
-            $u['reputation'] = $fin ? (int) ($fin['reputation'] ?? 0) : 0;
-            $u['staff_count'] = $db->table('staff')->where('user_id', $u['id'])->where('status !=', 'fired')->countAllResults();
-            $u['building_count'] = $db->table('buildings')->where('user_id', $u['id'])->countAllResults();
-            $u['item_count'] = $db->table('player_items')->where('user_id', $u['id'])->countAllResults();
-            $u['last_activity'] = $db->table('activity_log')->where('user_id', $u['id'])->orderBy('created_at', 'DESC')->limit(1)->get()->getRowArray();
+        if (!empty($users)) {
+            $userIds = array_column($users, 'id');
+
+            // 1. Batch fetch finances
+            $finRows = $db->table('player_finances')->whereIn('user_id', $userIds)->get()->getResultArray();
+            $finMap = [];
+            foreach ($finRows as $f) {
+                $finMap[$f['user_id']] = $f;
+            }
+
+            // 2. Batch fetch active staff counts
+            $staffRows = $db->table('staff')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->where('status !=', 'fired')->groupBy('user_id')->get()->getResultArray();
+            $staffMap = array_column($staffRows, 'cnt', 'user_id');
+
+            // 3. Batch fetch building counts
+            $bldRows = $db->table('buildings')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->groupBy('user_id')->get()->getResultArray();
+            $bldMap = array_column($bldRows, 'cnt', 'user_id');
+
+            // 4. Batch fetch player item counts
+            $itemRows = $db->table('player_items')->select('user_id, COUNT(*) as cnt')->whereIn('user_id', $userIds)->groupBy('user_id')->get()->getResultArray();
+            $itemMap = array_column($itemRows, 'cnt', 'user_id');
+
+            // 5. Batch fetch latest activity for each user
+            $latestLogs = $db->query("
+                SELECT al1.* 
+                FROM activity_log al1
+                INNER JOIN (
+                    SELECT user_id, MAX(id) as max_id 
+                    FROM activity_log 
+                    WHERE user_id IN (" . implode(',', array_map('intval', $userIds)) . ")
+                    GROUP BY user_id
+                ) al2 ON al1.id = al2.max_id
+            ")->getResultArray();
+            $actMap = [];
+            foreach ($latestLogs as $log) {
+                $actMap[$log['user_id']] = $log;
+            }
+
+            foreach ($users as &$u) {
+                $uid = $u['id'];
+                $fin = $finMap[$uid] ?? null;
+                $u['cash'] = $fin ? (int) ($fin['cash'] ?? 0) : 0;
+                $u['last_active'] = $fin['last_active'] ?? null;
+                $u['reputation'] = $fin ? (int) ($fin['reputation'] ?? 0) : 0;
+                $u['staff_count'] = (int) ($staffMap[$uid] ?? 0);
+                $u['building_count'] = (int) ($bldMap[$uid] ?? 0);
+                $u['item_count'] = (int) ($itemMap[$uid] ?? 0);
+                $u['last_activity'] = $actMap[$uid] ?? null;
+            }
         }
 
-        $onlineRecent = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray()['cnt'] ?? 0;
+        $onlineRecentRow = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray();
+        $onlineRecent = $onlineRecentRow['cnt'] ?? 0;
 
         return view('admin/index', [
             'totalUsers' => $totalUsers, 'totalStaff' => $totalStaff,
@@ -230,9 +272,9 @@ class Admin extends BaseController
     public function grantAchievement()
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
-        $userId = (int) $this->request->getPost('user_id');
-        $achievementId = (int) $this->request->getPost('achievement_id');
-        db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray()['target'] ?? 100]);
+        $achRow = db_connect()->table('achievement_defs')->where('id', $achievementId)->get()->getRowArray() ?: db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray();
+        $target = $achRow['target'] ?? 100;
+        db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => $target]);
         log_activity($userId, 'admin_achievement', 'Achievement granted by admin');
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Achievement granted.');
     }
@@ -489,15 +531,17 @@ class Admin extends BaseController
         $b = $this->request->getGet('b');
         $dataA = $dataB = null;
         if ($a) {
-            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray();
-            $dataA['username'] = $db->table('users')->where('id', $a)->get()->getRowArray()['username'] ?? '';
+            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray() ?: [];
+            $userA = $db->table('users')->where('id', $a)->get()->getRowArray();
+            $dataA['username'] = $userA['username'] ?? '';
             $dataA['staff'] = $db->table('staff')->where('user_id', $a)->where('status !=', 'fired')->countAllResults();
             $dataA['buildings'] = $db->table('buildings')->where('user_id', $a)->countAllResults();
             $dataA['items'] = $db->table('player_items')->where('user_id', $a)->countAllResults();
         }
         if ($b) {
-            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray();
-            $dataB['username'] = $db->table('users')->where('id', $b)->get()->getRowArray()['username'] ?? '';
+            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray() ?: [];
+            $userB = $db->table('users')->where('id', $b)->get()->getRowArray();
+            $dataB['username'] = $userB['username'] ?? '';
             $dataB['staff'] = $db->table('staff')->where('user_id', $b)->where('status !=', 'fired')->countAllResults();
             $dataB['buildings'] = $db->table('buildings')->where('user_id', $b)->countAllResults();
             $dataB['items'] = $db->table('player_items')->where('user_id', $b)->countAllResults();
@@ -673,5 +717,38 @@ class Admin extends BaseController
                            ->getResultArray();
 
         return view("admin/activity", $data);
+    }
+
+    public function optimizeStorage()
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/admin');
+        $db = \Config\Database::connect();
+
+        // 1. Prune stale activity logs older than 90 days
+        $prunedLogs = $db->table('activity_log')->where('created_at <', date('Y-m-d H:i:s', strtotime('-90 days')))->delete();
+
+        // 2. Prune old financial transactions older than 180 days
+        $prunedTrans = $db->table('financial_transactions')->where('created_at <', date('Y-m-d H:i:s', strtotime('-180 days')))->delete();
+
+        // 3. Clear temporary files in WRITEPATH
+        $tempFiles = glob(WRITEPATH . 'tmp_*.pdf') ?: [];
+        $deletedFiles = 0;
+        foreach ($tempFiles as $file) {
+            if (is_file($file) && (time() - filemtime($file)) > 3600) {
+                @unlink($file);
+                $deletedFiles++;
+            }
+        }
+
+        // 4. Optimize core database tables
+        $tables = ['activity_log', 'financial_transactions', 'player_items', 'equipment', 'staff', 'buildings'];
+        foreach ($tables as $t) {
+            try {
+                $db->query("OPTIMIZE TABLE `{$t}`");
+            } catch (\Throwable $e) {}
+        }
+
+        $this->auditLog('optimize_storage', null, "Cleaned {$deletedFiles} temp files and optimized tables.");
+        return redirect()->to('/admin')->with('success', "Storage maintenance complete: optimized tables and cleaned {$deletedFiles} orphaned temporary files.");
     }
 }

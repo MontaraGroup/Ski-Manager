@@ -75,7 +75,27 @@ class Buildings extends BaseController
 
         $def = $defs[$type];
         $lvl = $def['levels'][$level];
+        $cost = (int) ($lvl['cost'] ?? 0);
+        $db = db_connect();
+
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int) ($fin['cash'] ?? 0) < $cost) {
+            return redirect()->back()->with('error', 'Not enough cash to construct ' . $lvl['name'] . ' (' . currency($cost) . ' required).');
+        }
+
         $count = $this->model->where('user_id', $userId)->where('building_type', $type)->countAllResults();
+
+        $db->transStart();
+        if ($cost > 0) {
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$cost}", false)->update();
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => $gameDay,
+                'category' => 'Buildings', 'description' => 'Constructed ' . $lvl['name'],
+                'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
 
         $this->model->insert([
             'user_id' => $userId, 'building_type' => $type,
@@ -83,7 +103,9 @@ class Buildings extends BaseController
             'capacity' => $lvl['capacity'], 'revenue_per_day' => $lvl['revenue'],
             'upkeep_per_day' => $lvl['upkeep'], 'condition_pct' => 100, 'status' => 'open',
         ]);
+        $db->transComplete();
 
+        log_activity($userId, 'Building', 'Constructed ' . $lvl['name'] . ' for ' . currency($cost), 'fa-solid fa-hotel');
         return redirect()->to('/' . $def['route'])->with('success', $lvl['name'] . ' built!');
     }
 
@@ -117,13 +139,34 @@ class Buildings extends BaseController
         }
 
         $next = $defs[$type]['levels'][$nextLevel];
+        $cost = (int) ($next['cost'] ?? 0);
+        $db = db_connect();
+
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ((int) ($fin['cash'] ?? 0) < $cost) {
+            return redirect()->back()->with('error', 'Not enough cash to upgrade ' . $building['name'] . ' (' . currency($cost) . ' required).');
+        }
+
+        $db->transStart();
+        if ($cost > 0) {
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$cost}", false)->update();
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => $gameDay,
+                'category' => 'Buildings', 'description' => 'Upgraded ' . $building['name'] . ' to Lv.' . $nextLevel,
+                'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
         $this->model->update($id, [
             'level' => $nextLevel, 'capacity' => $next['capacity'],
             'revenue_per_day' => $next['revenue'], 'upkeep_per_day' => $next['upkeep'],
             'name' => $next['name'] . ' #' . substr($building['name'], -2),
         ]);
-        log_activity($userId, 'Building', 'Upgraded ' . $building['name'] . ' to Lv.' . $nextLevel, 'fa-solid fa-arrow-up');
+        $db->transComplete();
 
+        log_activity($userId, 'Building', 'Upgraded ' . $building['name'] . ' to Lv.' . $nextLevel . ' for ' . currency($cost), 'fa-solid fa-arrow-up');
         return redirect()->to('/' . $defs[$type]['route'])->with('success', 'Upgraded to ' . $next['name'] . '!');
     }
 
@@ -134,11 +177,29 @@ class Buildings extends BaseController
         if (!$building) return redirect()->back()->with('error', 'Building not found.');
 
         $defs = $this->getBuildingDefs();
-        $def = $defs[$building['building_type']] ?? null;
+        $type = $building['building_type'];
+        $level = (int) $building['level'];
+        $lvlCost = (int) ($defs[$type]['levels'][$level]['cost'] ?? 10000);
+        $refund = (int) round($lvlCost * 0.25);
+        $def = $defs[$type] ?? null;
         $route = $def ? $def['route'] : 'dashboard';
+        $db = db_connect();
 
+        $db->transStart();
         $this->model->delete($id);
-        log_activity($userId, 'Building', 'Sold ' . $building['name'], 'fa-solid fa-money-bill-wave');
-        return redirect()->to('/' . $route)->with('success', $building['name'] . ' sold.');
+        if ($refund > 0) {
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash + {$refund}", false)->update();
+            $startDate = getSeasonStartDate();
+            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => $gameDay,
+                'category' => 'Buildings', 'description' => 'Demolished ' . $building['name'] . ' (Salvage Refund)',
+                'amount' => $refund, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        $db->transComplete();
+
+        log_activity($userId, 'Building', 'Demolished ' . $building['name'] . ' for ' . currency($refund) . ' salvage', 'fa-solid fa-money-bill-wave');
+        return redirect()->to('/' . $route)->with('success', $building['name'] . ' demolished. ' . currency($refund) . ' refunded (25% salvage).');
     }
 }

@@ -99,10 +99,20 @@ class Snowmaking extends BaseController
 
         $cost = 5000;
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if ((int)$finance['cash'] < $cost) return redirect()->back()->with('error', 'Not enough cash for repair.');
+        if ((int) ($finance['cash'] ?? 0) < $cost) return redirect()->back()->with('error', 'Not enough cash for repair.');
 
+        $db->transStart();
         $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cost, false)->update();
         $db->table('equipment')->where('id', $id)->update(['condition_pct' => 100, 'status' => 'off', 'updated_at' => date('Y-m-d H:i:s')]);
+        $startDate = getSeasonStartDate();
+        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId, 'game_day' => $gameDay,
+            'category' => 'Snowmaking', 'description' => 'Repaired ' . $eq['name'],
+            'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $db->transComplete();
+
         log_activity($userId, 'Snowmaking', 'Repaired ' . $eq['name'] . ' for ' . $cost, 'fa-solid fa-wrench');
         return redirect()->to('/snowmaking')->with('success', $eq['name'] . ' repaired for ' . currency($cost) . '.');
     }

@@ -198,12 +198,6 @@ class ResortAnalysis extends BaseController
         $dompdf = new \Dompdf\Dompdf(["defaultFont" => "Helvetica"]);
         $dompdf->loadHtml($html);
         $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
-        $dompdf->render();
-        $dompdf->addInfo("Title", "Ski Manager Resort Analysis - Day " . $report["game_day"]);
-        $dompdf->addInfo("Author", "Ski Manager - ski-manager.net");
-        $dompdf->addInfo("Subject", "Resort Analysis Report");
-        $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
-        $dompdf->addInfo("Creator", "Ski Manager v2");
         $dompdf->addInfo("Author", "Ski Manager - ski-manager.net");
         $dompdf->addInfo("Subject", "Resort Analysis Report");
         $dompdf->addInfo("Keywords", "ski resort, analysis, management, report");
@@ -213,19 +207,22 @@ class ResortAnalysis extends BaseController
         $filename = "Resort_Analysis_Day_" . $report["game_day"] . ".pdf";
         $tmpFile = WRITEPATH . "tmp_" . uniqid() . ".pdf";
         $outFile = WRITEPATH . "tmp_" . uniqid() . "_v2.pdf";
-        file_put_contents($tmpFile, $dompdf->output());
-        exec("qpdf --force-version=2.0 --linearize --object-streams=generate --linearize --object-streams=generate " . escapeshellarg($tmpFile) . " " . escapeshellarg($outFile) . " 2>&1", $qpdfOut, $qpdfCode);
-        if ($qpdfCode === 0 && file_exists($outFile)) {
-            header("Content-Type: application/pdf");
-            header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
-            readfile($outFile);
-            unlink($tmpFile);
-            unlink($outFile);
-        } else {
-            header("Content-Type: application/pdf");
-            header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
-            readfile($tmpFile);
-            unlink($tmpFile);
+
+        try {
+            file_put_contents($tmpFile, $dompdf->output());
+            exec("qpdf --force-version=2.0 --linearize --object-streams=generate " . escapeshellarg($tmpFile) . " " . escapeshellarg($outFile) . " 2>&1", $qpdfOut, $qpdfCode);
+            if ($qpdfCode === 0 && file_exists($outFile)) {
+                header("Content-Type: application/pdf");
+                header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+                readfile($outFile);
+            } else {
+                header("Content-Type: application/pdf");
+                header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+                readfile($tmpFile);
+            }
+        } finally {
+            if (file_exists($tmpFile)) @unlink($tmpFile);
+            if (file_exists($outFile)) @unlink($outFile);
         }
         exit;
     }

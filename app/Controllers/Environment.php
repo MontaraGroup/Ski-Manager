@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Models\SnowCannonModel;
 use App\Models\NightSkiingModel;
 use App\Models\BuildingModel;
 
@@ -19,7 +18,6 @@ class Environment extends BaseController
             $env = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
         }
 
-        $cannonModel = new SnowCannonModel();
         $lightModel = new NightSkiingModel();
         $buildingModel = new BuildingModel();
 

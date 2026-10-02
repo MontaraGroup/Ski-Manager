@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="max-w-6xl mx-auto p-4 lg:p-8">
 
-    <?php $__maxLoans = 3; $__hasExtraSlot = db_connect()->table('player_boosts')->where('user_id', auth()->id())->where('boost_type', 'extra_loan')->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults() > 0; if ($__hasExtraSlot) $__maxLoans = 4; ?>
+    <?php $__maxLoans = $maxLoans ?? 3; $__hasExtraSlot = $hasExtraSlot ?? false; ?>
     <div class="flex items-center gap-3 mb-6">
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>

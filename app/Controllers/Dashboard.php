@@ -42,15 +42,17 @@ class Dashboard extends BaseController
 
         $existingKeys = array_column($widgets, 'widget_key');
         $maxOrder = max(array_column($widgets, 'sort_order') ?: [0]);
+        $toInsert = [];
         foreach ($this->availableWidgets as $key => $w) {
             if (!in_array($key, $existingKeys)) {
                 $maxOrder++;
-                $db->table('dashboard_widgets')->insert([
+                $toInsert[] = [
                     'user_id' => $userId, 'widget_key' => $key, 'visible' => 0, 'size' => $w['size'], 'sort_order' => $maxOrder,
-                ]);
+                ];
             }
         }
-        if (count($existingKeys) < count($this->availableWidgets)) {
+        if (!empty($toInsert)) {
+            $db->table('dashboard_widgets')->insertBatch($toInsert);
             $widgets = $db->table('dashboard_widgets')->where('user_id', $userId)->orderBy('sort_order')->get()->getResultArray();
         }
 
@@ -86,8 +88,8 @@ class Dashboard extends BaseController
             'parkingFacilities' => $parkingFacilities, 'terrainParks' => $terrainParks,
             'staffAll' => $staffAll, 'equipment' => $equipment, 'insurance' => $insurance, 'loans' => $loans, 'marketing' => $marketing,
             'dailyVisitors' => $dailyVisitors, 'netProfit' => $netProfit,
-            'dailyProfit' => $this->calcDailyProfit($userId),
-            'alerts' => $this->getAlerts($userId),
+            'dailyProfit' => $this->calcDailyProfit($userId, $staffAll, $equipment, $loans),
+            'alerts' => $this->getAlerts($userId, $finance, $equipment, $staffAll),
         ]);
     }
 
@@ -178,38 +180,56 @@ class Dashboard extends BaseController
         return $this->response->setJSON($logs);
     }
 
-    private function calcDailyProfit(int $userId): int
+    private function calcDailyProfit(int $userId, ?array $staff = null, ?array $equip = null, ?array $loans = null): int
     {
         $db = db_connect();
-        $staff = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        if ($staff === null) {
+            $staff = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        }
         $salaries = array_sum(array_column($staff, 'salary'));
-        $equip = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+
+        if ($equip === null) {
+            $equip = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        }
         $equipCost = array_sum(array_map(fn($e) => (int)($e['fuel_cost'] ?? $e['daily_cost'] ?? 0), $equip));
-        $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+
+        if ($loans === null) {
+            $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        }
         $loanPay = array_sum(array_map(fn($l) => (int)($l['daily_payment'] ?? 0), $loans));
+
         $tickets = $db->table('lift_tickets')->where('user_id', $userId)->where('active', 1)->where('ticket_type', 'full_day')->get()->getRowArray();
         $ticketIncome = $tickets ? (int)$tickets['price'] * 84 : 0;
         return $ticketIncome - $salaries - $equipCost - $loanPay;
     }
 
-    private function getAlerts(int $userId): array
+    private function getAlerts(int $userId, ?array $finance = null, ?array $equipment = null, ?array $staff = null): array
     {
         $alerts = [];
         $db = db_connect();
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if ($finance === null) {
+            $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        }
         if ($finance && (int)$finance['cash'] < 50000) {
             $alerts[] = ['type' => 'error', 'icon' => 'fa-solid fa-money-bill-wave', 'msg' => 'Cash critically low! Consider taking a loan.', 'link' => '/bank'];
         }
-        $broken = $db->table('equipment')->where('user_id', $userId)->where('status', 'broken')->countAllResults();
+
+        if ($equipment !== null) {
+            $broken = count(array_filter($equipment, fn($e) => ($e['status'] ?? '') === 'broken'));
+        } else {
+            $broken = $db->table('equipment')->where('user_id', $userId)->where('status', 'broken')->countAllResults();
+        }
         if ($broken > 0) {
             $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-wrench', 'msg' => $broken . ' equipment broken. Repair needed.', 'link' => '/equipment'];
         }
+
         $critical = $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope','downhill','crosscountry','snowpark','luge'])->where('condition_pct <', 40)->countAllResults();
         if ($critical > 0) {
             $alerts[] = ['type' => 'error', 'icon' => 'fa-solid fa-mountain', 'msg' => $critical . ' slope(s) in critical condition!', 'link' => '/grooming'];
         }
-        $noStaff = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults();
-        if ($noStaff === 0) {
+
+        $noStaff = $staff !== null ? count($staff) === 0 : ($db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults() === 0);
+        if ($noStaff) {
             $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-users', 'msg' => 'No staff hired yet.', 'link' => '/staff/hire'];
         }
         return $alerts;

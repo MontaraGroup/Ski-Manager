@@ -727,7 +727,7 @@ class GameTick extends BaseCommand
                 $cumulative += $weights[$i];
                 if ($roll <= $cumulative) { $condition = $c; break; }
             }
-            $tomorrowSeasonDay = (($tomorrow - 1) % getSeasonLength()) + 1;
+            $tomorrowSeasonDay = (($tomorrow - 1) % max(1, getSeasonLength())) + 1;
             $winterDays = getWinterDays(); $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= ($winterDays - 20);
             $isTomorrowSummer = $tomorrowSeasonDay > getWinterDays();
             if ($isTomorrowSummer) { $temp = mt_rand(12, 28); } elseif ($isDeepWinter) { $temp = mt_rand(-10, 0); } else { $temp = mt_rand(-5, 8); }
@@ -751,6 +751,14 @@ class GameTick extends BaseCommand
                 'humidity' => mt_rand(40, 95), 'snow_base' => $snowBase,
                 'forecast' => json_encode($forecast), 'created_at' => date('Y-m-d H:i:s'),
             ]);
+        }
+
+        // Storage Maintenance: Prune old activity logs & financial records to keep storage bounded
+        try {
+            $db->table('activity_log')->where('created_at <', date('Y-m-d H:i:s', strtotime('-90 days')))->delete();
+            $db->table('financial_transactions')->where('created_at <', date('Y-m-d H:i:s', strtotime('-180 days')))->delete();
+        } catch (\Throwable $e) {
+            // Non-blocking maintenance cleanup
         }
 
         CLI::write('Game tick complete!', 'green');
