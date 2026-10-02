@@ -56,7 +56,11 @@ jobs:
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
+            set -e
             cd ${{ secrets.PROD_PATH }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             php spark migrate
-            docker exec $(docker ps --format "{{.Names}}" | grep -iE "openresty|nginx" | head -n 1) openresty -s reload
+            php spark cache:clear || true
+            docker exec $(docker ps --format "{{.Names}}" | grep -iE "openresty|nginx" | head -n 1) openresty -s reload || true
+            docker exec $(docker ps --format "{{.Names}}" | grep -iE "php" | head -n 1) kill -USR2 1 || true
