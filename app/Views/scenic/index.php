@@ -89,6 +89,18 @@
                         <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['condition_pct'] ?>%</div><div class="text-xs text-base-content/50">Condition</div></div>
                         <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['status'] === 'open' ? '✓' : '✗' ?></div><div class="text-xs text-base-content/50">Status</div></div>
                     </div>
+
+                    <?php
+                        $installed = !empty($lift['scenic']['upgrades']) ? json_decode($lift['scenic']['upgrades'], true) : [];
+                        if (!empty($installed) && is_array($installed)) :
+                    ?>
+                    <div class="flex flex-wrap gap-1 mt-2 pt-2 border-t border-base-200">
+                        <?php foreach ($installed as $uKey) :
+                            if (isset($upgrades[$uKey])) : ?>
+                            <span class="badge badge-warning badge-xs gap-1"><i class="<?= $upgrades[$uKey]['icon'] ?>"></i><?= esc($upgrades[$uKey]['name']) ?></span>
+                        <?php endif; endforeach ?>
+                    </div>
+                    <?php endif ?>
                 </div>
             </div>
         <?php endforeach ?>
@@ -133,7 +145,7 @@
     <p class="text-sm text-base-content/60 mb-3">Enhance your scenic lifts with premium experiences to boost revenue.</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <?php foreach ($upgrades as $key => $up) : ?>
-        <div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3">
+        <div class="card bg-base-100 shadow-sm border border-base-200"><div class="card-body p-3">
             <div class="flex items-center gap-2 mb-2">
                 <i class="<?= $up['icon'] ?> text-warning"></i>
                 <span class="font-semibold text-sm"><?= $up['name'] ?></span>
@@ -143,6 +155,15 @@
             <?php if (!empty($scenicLifts)) : ?>
             <form action="/scenic-lifts/upgrade" method="post" data-confirm="Buy <?= $up['name'] ?> for <?= currency($up['cost']) ?>?"><?= csrf_field() ?>
                 <input type="hidden" name="upgrade" value="<?= $key ?>">
+                <?php if (count($scenicLifts) > 1) : ?>
+                <select name="item_id" class="select select-bordered select-xs w-full mt-2">
+                    <?php foreach ($scenicLifts as $sl) : ?>
+                    <option value="<?= $sl['id'] ?>"><?= esc($sl['name']) ?></option>
+                    <?php endforeach ?>
+                </select>
+                <?php else : ?>
+                <input type="hidden" name="item_id" value="<?= $scenicLifts[0]['id'] ?>">
+                <?php endif ?>
                 <button class="btn btn-warning btn-xs w-full mt-2 gap-1"><i class="fa-solid fa-arrow-up"></i>Buy <?= currency($up['cost']) ?></button>
             </form>
             <?php else : ?>

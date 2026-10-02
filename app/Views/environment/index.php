@@ -65,6 +65,7 @@
             <div class="space-y-2">
             <?php foreach ($upgrades as $up) : ?>
                 <form action="/environment/upgrade" method="post"><?= csrf_field() ?>
+                    <input type="hidden" name="name" value="<?= esc($up['name']) ?>">
                     <input type="hidden" name="field" value="<?= $up['field'] ?>">
                     <input type="hidden" name="boost" value="<?= $up['boost'] ?>">
                     <button type="submit" class="flex items-center gap-3 w-full bg-base-200 rounded-lg p-3 hover:bg-base-300 transition-colors text-left">

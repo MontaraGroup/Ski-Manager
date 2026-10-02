@@ -206,6 +206,7 @@ $routes->post("/resort/open-all", "Resort::openAll");
 $routes->post("/resort/close-all", "Resort::closeAll");
 $routes->post('/scenic-lifts/designate', 'ScenicLifts::designate');
 $routes->post('/scenic-lifts/remove/(:num)', 'ScenicLifts::remove/$1');
+$routes->post('/scenic-lifts/upgrade', 'ScenicLifts::upgrade');
 $routes->post('/settings', 'Settings::save');
 $routes->post("/settings/resort-name", "Settings::updateResortName");
 $routes->post("/settings/reset-tutorial", "Settings::resetTutorial");

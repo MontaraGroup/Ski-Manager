@@ -226,9 +226,16 @@ class GameTick extends BaseCommand
 
             // ==============================
             $activeGroomers = count(array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer' && $e['status'] === 'active'));
-            // AUTO-GROOM (Génépis perk)
+            // ACTIVE TIMED BOOSTS (Génépis perks)
             // ==============================
-            $hasAutoGroom = $db->table('player_boosts')->where('user_id', $userId)->where('boost_type', 'auto_groom')->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults() > 0;
+            $activeBoostRows = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
+            $activeBoostTypes = array_column($activeBoostRows, 'boost_type');
+
+            $hasAutoGroom = in_array('auto_groom', $activeBoostTypes);
+            if (in_array('revenue_boost', $activeBoostTypes)) {
+                $revMult *= 1.25;
+            }
+
             if ($hasAutoGroom && $activeGroomers > 0) {
                 $lowSlopes = $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark', 'luge'])->where('condition_pct <', 50)->get()->getResultArray();
                 foreach ($lowSlopes as $ls) {
@@ -256,7 +263,7 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
-            // VISITOR CALCULATION (with staff bonuses)
+            // VISITOR CALCULATION (with staff bonuses, eco, tournaments & boosts)
             // ==============================
             $openSlopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults();
             $openLifts = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults();
@@ -292,14 +299,103 @@ class GameTick extends BaseCommand
                 }
             }
 
-            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus;
-            $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult);
+            // Eco Score Bonus & Environmental Compliance
+            $env = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
+            $ecoBonus = 0;
+            if ($env) {
+                $ecoScore = (int) ($env['eco_score'] ?? 50);
+                if ($ecoScore >= 80) {
+                    $ecoBonus = 5; // +5% visitor boost for eco-friendly resort
+                    // Award 2 Genepis daily (matches promise in UI and Genepis catalog)
+                    $db->table('genepis')->where('user_id', $userId)->set('balance', 'balance + 2', false)->set('total_earned', 'total_earned + 2', false)->update();
+                    $db->table('genepis_log')->insert([
+                        'user_id' => $userId,
+                        'amount' => 2,
+                        'type' => 'earned',
+                        'description' => 'Daily Eco Score reward (Score: ' . $ecoScore . ')',
+                        'created_at' => date('Y-m-d H:i:s'),
+                    ]);
+                } elseif ($ecoScore < 30) {
+                    $ecoFine = 2500;
+                    $dayExpenses += $ecoFine;
+                    log_activity($userId, 'Government', 'Environmental fine: ' . currency($ecoFine) . ' due to critically low Eco Score (' . $ecoScore . '/100)', 'fa-solid fa-leaf');
+                }
+            }
+
+            // Tournaments visitor impact
+            $activeTournaments = $db->table('tournaments')
+                ->where('host_id', $userId)
+                ->where('start_day <=', $gameDay)
+                ->where('end_day >=', $gameDay)
+                ->where('status !=', 'ended')
+                ->get()->getResultArray();
+
+            $tournamentVisitors = 0;
+            foreach ($activeTournaments as $trn) {
+                $tVisitors = (int) ($trn['visitors_boost'] ?? 0);
+                $tournamentVisitors += $tVisitors;
+                log_activity($userId, 'Tournament', $trn['name'] . ' in progress: +' . number_format($tVisitors) . ' event visitors today', 'fa-solid fa-trophy');
+            }
+
+            // Conclude ended tournaments
+            $endedTournaments = $db->table('tournaments')
+                ->where('host_id', $userId)
+                ->where('end_day <', $gameDay)
+                ->where('status !=', 'ended')
+                ->get()->getResultArray();
+            foreach ($endedTournaments as $et) {
+                $db->table('tournaments')->where('id', $et['id'])->update(['status' => 'ended']);
+                log_activity($userId, 'Tournament', $et['name'] . ' has concluded successfully!', 'fa-solid fa-medal');
+            }
+
+            $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;
+            $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult) + $tournamentVisitors;
+
+            // Apply Génépi visitor boost perk
+            if (in_array('visitor_boost', $activeBoostTypes)) {
+                $visitors = (int) round($visitors * 1.5);
+            }
 
             // Summer reduction
             if (!$isWinter) $visitors = (int) round($visitors * 0.15);
 
             $ticketRevenue = (int) round($visitors * $avgPrice * 0.6);
-            $dayIncome += $ticketRevenue;
+            $dayIncome += (int) round($ticketRevenue * $revMult);
+
+            // ==============================
+            // SKI LESSONS / SKI SCHOOL REVENUE
+            // ==============================
+            $instructorCount = $countAssigned('instructor');
+            if ($instructorCount > 0 && $visitors > 0 && $openSlopes > 0) {
+                $lessonCapacity = $instructorCount * 10;
+                $lessonDemand = (int) round($visitors * 0.08);
+                $studentsTaught = min($lessonCapacity, $lessonDemand);
+                if ($studentsTaught > 0) {
+                    $avgLessonFee = 50;
+                    $lessonRevenue = (int) round($studentsTaught * $avgLessonFee * $revMult);
+                    $dayIncome += $lessonRevenue;
+                    $classesTaught = (int) ceil($studentsTaught / 5);
+                    log_activity($userId, 'ski_school', 'Ski School: ' . $instructorCount . ' instructor(s) taught ' . $studentsTaught . ' students in ' . $classesTaught . ' classes (+' . currency($lessonRevenue) . ')', 'fa-solid fa-chalkboard-user');
+                }
+            }
+
+            // ==============================
+            // SCENIC LIFTS REVENUE
+            // ==============================
+            $scenicLifts = $db->table('scenic_lifts')->where('user_id', $userId)->get()->getResultArray();
+            $scenicTotalIncome = 0;
+            foreach ($scenicLifts as $sl) {
+                $liftItem = $db->table('player_items')->where('id', $sl['item_id'])->where('user_id', $userId)->where('status', 'open')->get()->getRowArray();
+                if (!$liftItem) continue;
+
+                $baseRev = (int) ($sl['revenue_per_day'] ?? 1500);
+                // In summer, tourists pay 100% full rate. In winter, sightseeing tourists earn 30% of normal rate.
+                $liftRev = !$isWinter ? $baseRev : (int) round($baseRev * 0.3);
+                $scenicTotalIncome += (int) round($liftRev * $revMult);
+            }
+            if ($scenicTotalIncome > 0) {
+                $dayIncome += $scenicTotalIncome;
+            }
 
             // ==============================
             // TERRAIN PARKS
@@ -394,8 +490,20 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
-            // ENERGY & WATER CONSTRUCTION + DECAY
+            // ENERGY & WATER CONSTRUCTION + DECAY + GRID TARIFFS
             // ==============================
+            $energyConfig = [
+                'solar' => ['upkeep' => 20], 'wind' => ['upkeep' => 40], 'hydro' => ['upkeep' => 150],
+                'geothermal' => ['upkeep' => 300], 'biomass' => ['upkeep' => 100], 'substation' => ['upkeep' => 50],
+            ];
+            $waterConfig = [
+                'snow_melt' => ['upkeep' => 15], 'reservoir' => ['upkeep' => 50], 'well' => ['upkeep' => 80],
+                'lake_intake' => ['upkeep' => 120], 'recycle' => ['upkeep' => 70], 'tank' => ['upkeep' => 30],
+            ];
+
+            $totalEnergyOutput = 0;
+            $totalWaterOutput = 0;
+
             foreach (['energy_management' => 'energy', 'water_management' => 'water'] as $resTable => $resType) {
                 $resSources = $db->table($resTable)->where('user_id', $userId)->get()->getResultArray();
                 foreach ($resSources as $res) {
@@ -411,6 +519,15 @@ class GameTick extends BaseCommand
                         continue;
                     }
                     if ($res['status'] !== 'active') continue;
+
+                    // Bill facility upkeep
+                    $upkeepCfg = $resType === 'energy' ? ($energyConfig[$res['source_type']]['upkeep'] ?? 25) : ($waterConfig[$res['source_type']]['upkeep'] ?? 25);
+                    $dayExpenses += $upkeepCfg;
+
+                    // Track active generation
+                    if ($resType === 'energy') $totalEnergyOutput += (int) ($res['output_kwh'] ?? 0);
+                    if ($resType === 'water') $totalWaterOutput += (int) ($res['output_liters'] ?? 0);
+
                     $resDecay = $resType === 'energy' ? 0.3 : 0.2;
                     $resNewCond = max(0, $res['condition_pct'] - $resDecay);
                     if ($resNewCond <= 0) {
@@ -422,12 +539,31 @@ class GameTick extends BaseCommand
                 }
             }
 
+            // Energy demand vs output: grid import if deficit
+            $totalEnergyDemand = $snowmakingEnergy + (count($lights) * 80) + ($openLifts * 30) + (count($buildings) * 20);
+            if ($totalEnergyDemand > $totalEnergyOutput && $totalEnergyOutput >= 0) {
+                $energyDeficit = $totalEnergyDemand - $totalEnergyOutput;
+                $gridTariff = (int) round($energyDeficit * 0.15); // €0.15 / kWh
+                $dayExpenses += $gridTariff;
+                if ($gridTariff >= 250) {
+                    log_activity($userId, 'energy_grid', 'Grid Import: Drew ' . number_format($energyDeficit) . ' kWh from municipal grid (' . currency($gridTariff) . ')', 'fa-solid fa-bolt');
+                }
+            }
+
+            // Water demand vs output: municipal reservoir import if deficit
+            if ($snowmakingWater > $totalWaterOutput && $totalWaterOutput >= 0) {
+                $waterDeficit = $snowmakingWater - $totalWaterOutput;
+                $waterTariff = (int) round($waterDeficit * 0.002); // €0.002 / Liter
+                $dayExpenses += $waterTariff;
+            }
+
             // ==============================
             // VIP GUEST ARRIVALS
             // ==============================
             $ratingData = function_exists('resortRating') ? resortRating($userId) : ['score' => 2];
             $resortRating = (int) ($ratingData['score'] ?? $ratingData['stars'] ?? 2);
-            $vipChance = min(50, ($resortRating * 8) + $vipBonus + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3));
+            $vipMagnetBonus = in_array('vip_magnet', $activeBoostTypes) ? 100 : 0;
+            $vipChance = min(100, ($resortRating * 8) + $vipBonus + $vipMagnetBonus + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3));
             if (rand(1, 100) <= $vipChance) {
                 $vipTypes = [
                     ['type' => 'celebrity', 'name' => 'Celebrity Guest', 'icon' => 'fa-solid fa-star', 'cash_min' => 5000, 'cash_max' => 20000, 'rep' => 5],
@@ -466,15 +602,59 @@ class GameTick extends BaseCommand
                 notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/dashboard');
             }
 
-            // Process departing VIPs
+            // Process departing VIPs with satisfaction check
             $departingVips = $db->table('vip_guests')->where('user_id', $userId)->where('status', 'visiting')->get()->getResultArray();
             foreach ($departingVips as $vg) {
                 $newDays = (int) $vg['days_remaining'] - 1;
                 if ($newDays <= 0) {
-                    $db->table('vip_guests')->where('id', $vg['id'])->update(['status' => 'departed', 'days_remaining' => 0]);
-                    log_activity($userId, 'vip_departure', $vg['name'] . ' has departed. Thanks for visiting!', 'fa-solid fa-plane-departure');
+                    $vType = $vg['vip_type'];
+                    $vReqs = \App\Controllers\VipGuests::VIP_TYPES[$vType]['requirements'] ?? [];
+                    $satisfied = true;
+                    if (!empty($vReqs['min_slopes']) && $openSlopes < $vReqs['min_slopes']) $satisfied = false;
+                    if (!empty($vReqs['min_staff']) && count($staff) < $vReqs['min_staff']) $satisfied = false;
+                    if (!empty($vReqs['min_buildings']) && count($buildings) < $vReqs['min_buildings']) $satisfied = false;
+                    if (!empty($vReqs['min_lifts']) && $openLifts < $vReqs['min_lifts']) $satisfied = false;
+
+                    $finalStatus = $satisfied ? 'satisfied' : 'disappointed';
+                    $db->table('vip_guests')->where('id', $vg['id'])->update(['status' => $finalStatus, 'days_remaining' => 0]);
+                    if ($satisfied) {
+                        log_activity($userId, 'vip_satisfied', $vg['name'] . ' departed thoroughly satisfied with your resort! +' . (int)$vg['reputation_bonus'] . ' Reputation', 'fa-solid fa-star');
+                    } else {
+                        log_activity($userId, 'vip_departure', $vg['name'] . ' departed disappointed — resort lacked requested amenities.', 'fa-solid fa-plane-departure');
+                    }
                 } else {
                     $db->table('vip_guests')->where('id', $vg['id'])->update(['days_remaining' => $newDays]);
+                }
+            }
+
+            // ==============================
+            // SAFETY, PATROL & ACCIDENTS
+            // ==============================
+            $patrolStations = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'ski_patrol')->where('status', 'open')->get()->getResultArray();
+            $patrolStaffCount = $countAssigned('ski_patrol');
+            $medicCount = $countAssigned('medic');
+
+            $patrolCapacity = array_sum(array_column($patrolStations, 'capacity'));
+            $coverageRatio = $openSlopes > 0 ? min(100, round($patrolCapacity / $openSlopes * 100)) : 100;
+            $safetyScore = min(100, round($coverageRatio * 0.4 + $patrolStaffCount * 8 + $medicCount * 12 + count($patrolStations) * 10));
+
+            $accidentRisk = max(1, min(14, (int) round(12 - ($safetyScore / 10))));
+            if ($visitors > 50 && $isWinter && rand(1, 100) <= $accidentRisk) {
+                $isMinor = rand(1, 100) <= 65;
+                if ($isMinor && ($medicCount > 0 || $patrolStaffCount > 0)) {
+                    log_activity($userId, 'rescue', 'Ski patrol & medics promptly treated an injured skier on Slope #' . rand(1, max(1, $openSlopes)) . '. Fast response prevented liability.', 'fa-solid fa-kit-medical');
+                } else {
+                    $accidentCost = rand(2500, 8000);
+                    $liabilityPolicy = $db->table('insurance')->where('user_id', $userId)->where('active', 1)->where('insurance_type', 'liability')->get()->getRowArray();
+                    if ($liabilityPolicy) {
+                        $claimPayout = (int) round($accidentCost * 0.85);
+                        $netExpense = $accidentCost - $claimPayout;
+                        $dayExpenses += $netExpense;
+                        log_activity($userId, 'accident', 'Slope accident occurred (' . currency($accidentCost) . ' damage). Liability Insurance paid out ' . currency($claimPayout) . ' claim (net cost: ' . currency($netExpense) . ')', 'fa-solid fa-shield-halved');
+                    } else {
+                        $dayExpenses += $accidentCost;
+                        log_activity($userId, 'accident', 'Slope accident on under-patrolled slope! Liability & medical damages: ' . currency($accidentCost) . ' (no insurance coverage)', 'fa-solid fa-triangle-exclamation');
+                    }
                 }
             }
 
@@ -496,14 +676,14 @@ class GameTick extends BaseCommand
             if ($dayIncome > 0) {
                 $db->table('financial_transactions')->insert([
                     'user_id' => $userId, 'game_day' => $gameDay,
-                    'category' => 'Daily Income', 'description' => 'Tickets, buildings, parking, VIP guests',
+                    'category' => 'Daily Income', 'description' => 'Tickets, buildings, parking, ski school, scenic lifts, VIP guests',
                     'amount' => $dayIncome, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
                 ]);
             }
             if ($dayExpenses > 0) {
                 $db->table('financial_transactions')->insert([
                     'user_id' => $userId, 'game_day' => $gameDay,
-                    'category' => 'Daily Expenses', 'description' => 'Staff, equipment, upkeep, loans, insurance, compliance',
+                    'category' => 'Daily Expenses', 'description' => 'Staff, equipment, upkeep, utilities, loans, insurance, compliance',
                     'amount' => $dayExpenses, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
                 ]);
             }
