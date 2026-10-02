@@ -2,20 +2,105 @@
 
 <?= $this->section('content') ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold mb-1">Game Updates</h1>
-        <p class="text-base-content/60">What's new in Ski Manager. Follow our progress and see what's shipped.</p>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold mb-1">Game Updates</h1>
+            <p class="text-base-content/60">What's new in Ski Manager. Follow our progress and see what's shipped.</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="https://roadmap.ski-manager.net" target="_blank" class="btn btn-sm btn-outline gap-1.5">
+                <i class="fa-solid fa-map text-primary"></i> Roadmap <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-60"></i>
+            </a>
+            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" class="btn btn-sm btn-primary btn-outline gap-1.5">
+                <i class="fa-solid fa-bullhorn"></i> Changelog <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-60"></i>
+            </a>
+        </div>
     </div>
 
     <div class="relative border-l-2 border-base-300 ml-3 space-y-8">
         
+        <!-- v1.4.0 Release -->
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>
             <div class="card bg-base-100 shadow-sm border border-primary">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
-                        <span class="badge badge-primary font-mono">v1.3.6</span>
+                        <span class="badge badge-primary font-mono">v1.4.0</span>
                         <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i>Latest</span>
+                        <span class="badge badge-outline badge-sm">Major</span>
+                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 2, 2026</span>
+                    </div>
+                    <h2 class="text-lg font-bold">Season 4 Mountain Vote, Engine Optimization &amp; AI Integration</h2>
+                    <p class="text-sm text-base-content/70 mt-1">Launched the official Season 4 Mountain Selection Vote with live telemetry, overhauled database performance and automated storage maintenance, and deployed AI Agent content negotiation.</p>
+                    
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
+                                <span class="text-xs text-base-content/40">3</span>
+                            </div>
+                            <ul class="space-y-1.5 ml-1">
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                    <span><strong>Season 4 Mountain Vote:</strong> Community voting for Season 4 with 6 authentic candidate resorts, live mountain telemetry, and custom in-game perks.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                    <span><strong>AI Content Negotiation:</strong> Native HTTP <code>Accept: text/markdown</code> negotiation delivering clean, high-density Markdown for AI agents.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0"></span>
+                                    <span><strong>RFC 9309 Bot Governance:</strong> Explicit crawl and Content-Signal policy directives for 20 AI search and training crawlers.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
+                                <span class="text-xs text-base-content/40">2</span>
+                            </div>
+                            <ul class="space-y-1.5 ml-1">
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                    <span><strong>98% DB Query Reduction:</strong> Eliminated 50-user N+1 loops in the Admin dashboard with batch lookups and composite indexing.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span>
+                                    <span><strong>Automated Storage Pruning:</strong> Automated background pruning for historical activity and transaction logs keeps database size optimal.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
+                                <span class="text-xs text-base-content/40">3</span>
+                            </div>
+                            <ul class="space-y-1.5 ml-1">
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                    <span>Fixed vote modification error by adding self-healing schema migration for <code>updated_at</code> on <code>resort_votes</code>.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                    <span>Guarded division by zero in seasonal helpers and protected nullable offsets in admin and gameplay views.</span>
+                                </li>
+                                <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-error mt-1.5 shrink-0"></span>
+                                    <span>Enforced atomic financial transactions and funds verification across buildings, loans, and night skiing.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative pl-6">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
+            <div class="card bg-base-100 shadow-sm border border-base-300">
+                <div class="card-body p-5">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="badge badge-ghost font-mono">v1.3.6</span>
                         <span class="badge badge-outline badge-sm">Major</span>
                         <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 22, 2026</span>
                     </div>
