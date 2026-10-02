@@ -255,12 +255,13 @@ async function upvoteItem(itemId, btn) {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
             }
         });
         const data = await res.json();
         if (data.success) {
-            countSpan.textContent = data.upvotes;
+            countSpan.textContent = data.upvotes ?? data.votes ?? prevCount;
             if (data.voted) {
                 btn.classList.add('btn-primary', 'text-primary-content');
                 btn.classList.remove('btn-outline');
@@ -285,12 +286,14 @@ async function updateItemStatus(itemId, newStatus) {
         const formData = new FormData();
         formData.append('id', itemId);
         formData.append('status', newStatus);
+        formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
 
         const res = await fetch('/roadmap/admin/status', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
             }
         });
         const data = await res.json();
