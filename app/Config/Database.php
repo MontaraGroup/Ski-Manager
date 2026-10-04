@@ -69,9 +69,13 @@ class Database extends BaseConfig
     {
         parent::__construct();
 
+        if (defined('ENVIRONMENT') && ENVIRONMENT === 'production') {
+            $this->default['DBDebug'] = false;
+        }
+
         // Automatically route CLI/terminal commands (php spark) to 127.0.0.1
         // while leaving web browser requests on the internal Docker container name.
-        if (is_cli()) {
+        if (is_cli() && !file_exists('/.dockerenv')) {
             $this->default['hostname'] = '127.0.0.1';
         }
     }

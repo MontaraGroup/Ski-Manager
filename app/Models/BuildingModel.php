@@ -8,7 +8,7 @@ class BuildingModel extends Model
 {
     protected $table = 'buildings';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['user_id', 'building_type', 'name', 'level', 'capacity', 'revenue_per_day', 'upkeep_per_day', 'condition_pct', 'status'];
+    protected $allowedFields = ['user_id', 'building_type', 'name', 'level', 'capacity', 'revenue_per_day', 'upkeep_per_day', 'condition_pct', 'status', 'price_rate', 'satisfaction', 'specialty'];
     protected $useTimestamps = true;
     protected $returnType = 'array';
 }

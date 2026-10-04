@@ -45,10 +45,10 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
     <!-- Conditions & Revenue -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <?php
+            $__w = getCurrentWeather();
+            $__currentTemp = $__w['temp'];
+            $__snowBase = $__w['snow_base'];
             $__wdb = db_connect();
-            $__w = $__wdb->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
-            $__currentTemp = function_exists('hourlyTemp') && $__w ? hourlyTemp((int)$__w['temp']) : ($__w ? (int)$__w['temp'] : 0);
-            $__snowBase = $__w ? (int)$__w['snow_base'] : 0;
             $__avgCond = 0; $__condCount = 0;
             foreach (($sectors ?? []) as $sec) {
                 foreach (array_merge($sec['slopes'] ?? [], $sec['lifts'] ?? []) as $itm) {

@@ -23,9 +23,10 @@ class Dashboard extends BaseController
         'marketing_mini' => ['name' => 'Marketing', 'icon' => 'fa-solid fa-bullhorn', 'default' => false, 'size' => 'small'],
     ];
 
-    public function index(): string
+    public function index()
     {
         $userId = auth()->id();
+        if (!$userId) return redirect()->to('/login');
         $db = db_connect();
 
         $widgets = $db->table('dashboard_widgets')->where('user_id', $userId)->orderBy('sort_order')->get()->getResultArray();
@@ -58,7 +59,7 @@ class Dashboard extends BaseController
 
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $weather = $db->table("weather")->where("game_day", $gameDay)->get()->getRowArray() ?: $db->table("weather")->orderBy("game_day", "DESC")->limit(1)->get()->getRowArray();
+        $weather = getCurrentWeather();
         $genepis = $db->table('genepis')->where('user_id', $userId)->get()->getRowArray();
         $slopeCount = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults(false);
         $liftCount = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults(false);

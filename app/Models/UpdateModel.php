@@ -8,6 +8,6 @@ class UpdateModel extends Model
 {
     protected $table            = 'updates';
     protected $primaryKey       = 'id';
-    protected $allowedFields    = ['version', 'title', 'description', 'release_date', 'type', 'is_latest', 'content_json'];
+    protected $allowedFields    = ['version', 'title', 'description', 'type', 'released_at'];
     protected $useTimestamps    = true;
 }

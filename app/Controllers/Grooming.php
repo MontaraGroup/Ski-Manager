@@ -58,12 +58,9 @@ class Grooming extends BaseController
         $dailyFuelCost = array_sum(array_map(fn($e) => $e['status'] === 'active' ? (int)($e['daily_cost'] ?? 0) : 0, $equipment));
         $crewSalaryCost = array_sum(array_column($groomers, 'salary'));
 
-        $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
-        $weatherTemp = (int) ($weather['temp'] ?? -2);
-        $weatherDesc = $weather['condition_name'] ?? 'Clear';
-        if (function_exists('isImperial') && isImperial()) {
-            $weatherTemp = round($weatherTemp * 9 / 5 + 32);
-        }
+        $weather = getCurrentWeather();
+        $weatherTemp = $weather['temp_formatted'];
+        $weatherDesc = $weather['condition'];
 
         return view('grooming/index', [
             'groomers' => $groomers,
@@ -81,6 +78,7 @@ class Grooming extends BaseController
             'dailyDecay' => $dailyDecay,
             'dailyFuelCost' => $dailyFuelCost,
             'crewSalaryCost' => $crewSalaryCost,
+            'weather' => $weather,
             'weatherTemp' => $weatherTemp,
             'weatherDesc' => $weatherDesc,
         ]);

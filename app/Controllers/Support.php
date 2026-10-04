@@ -86,7 +86,7 @@ class Support extends BaseController
 
     public function editMessage($id)
     {
-        if (!auth()->user() || !auth()->user()->inGroup('admin')) {
+        if (!auth()->user() || (!auth()->user()->inGroup('admin') && (int)auth()->id() !== 1)) {
             return $this->response->setJSON(['success' => false, 'error' => 'Unauthorized access.']);
         }
 
@@ -109,7 +109,7 @@ class Support extends BaseController
 
     public function deleteMessage($id)
     {
-        if (!auth()->user() || !auth()->user()->inGroup('admin')) {
+        if (!auth()->user() || (!auth()->user()->inGroup('admin') && (int)auth()->id() !== 1)) {
             return $this->response->setJSON(['success' => false, 'error' => 'Unauthorized access.']);
         }
 

@@ -39,28 +39,40 @@ class ResortMap extends BaseController
     public function changeMap()
     {
         $userId = auth()->id();
+        if (!$userId) return redirect()->to('/login');
         $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map');
 
-        if (!$map || !isset(self::RESORT_MAPS[$map])) {
+        // Check either key or name
+        $foundKey = null;
+        if ($map && isset(self::RESORT_MAPS[$map])) {
+            $foundKey = $map;
+        } else {
+            foreach (self::RESORT_MAPS as $k => $info) {
+                if ($info['name'] === $map) {
+                    $foundKey = $k;
+                    break;
+                }
+            }
+        }
+
+        if (!$foundKey) {
             if ($this->request->isAJAX()) {
                 return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid map selected.']);
             }
             return redirect()->to('/map')->with('error', 'Invalid map selected.');
         }
 
-        if ($userId) {
-            $db = db_connect();
-            $db->table('player_finances')->where('user_id', $userId)->update([
-                'resort_map' => $map,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-        }
+        $db = db_connect();
+        $db->table('player_finances')->where('user_id', $userId)->update([
+            'resort_map' => $foundKey,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
 
         if ($this->request->isAJAX()) {
-            return $this->response->setJSON(['success' => true, 'map' => $map, 'mapName' => self::RESORT_MAPS[$map]['name']]);
+            return $this->response->setJSON(['success' => true, 'map' => $foundKey, 'mapName' => self::RESORT_MAPS[$foundKey]['name']]);
         }
 
-        return redirect()->to('/map')->with('success', 'Switched trail map to ' . self::RESORT_MAPS[$map]['name'] . '.');
+        return redirect()->to('/map')->with('success', 'Switched trail map to ' . self::RESORT_MAPS[$foundKey]['name'] . '.');
     }
 
     public function index()

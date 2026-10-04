@@ -19,6 +19,13 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 .map-legend-item{display:flex;align-items:center;gap:6px}
 .map-legend-item span{width:20px;height:3px;border-radius:2px;display:inline-block}
 .build-fab{position:fixed;bottom:24px;right:24px;z-index:900}
+/* Ensure tutorial widget does not cover the build button on the map page */
+#tutorialWidget {
+    bottom: 5.5rem !important;
+}
+.leaflet-interactive {
+    cursor: pointer !important;
+}
 </style>
 
 <div class="flex items-center justify-between px-4 py-3 border-b border-base-300">
@@ -27,6 +34,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         <h1 class="text-lg font-bold">Trail Map</h1>
     </div>
     <div class="flex items-center gap-2">
+        <button id="headerBuildBtn" class="btn btn-primary btn-sm gap-1.5 shadow-sm"><i class="fa-solid fa-hammer"></i> Build Runs</button>
         <?php if ($isAdmin): ?>
         <select id="resortSelect" class="select select-sm select-bordered">
             <?php foreach ($resortMaps as $key => $rm): ?>
@@ -72,11 +80,11 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         <button class="build-tab btn btn-sm btn-ghost" data-tab="slope"><i class="fa-solid fa-person-skiing mr-1"></i> Build Slope</button>
     </div>
 
-    <div id="segmentList" class="flex flex-col gap-2 mb-4">
+    <div id="segmentList" class="flex flex-col gap-1 mb-4">
         <p class="text-sm text-base-content/50 text-center py-4">Select a purple line to build</p>
     </div>
 
-    <div id="segmentDetail">
+    <div id="segmentDetail" style="display:none">
         <div class="border border-base-300 rounded-lg p-3 mb-4 bg-base-200/50">
             <p class="font-semibold text-sm mb-2" id="selSegName">-</p>
             <div class="grid grid-cols-2 gap-2 text-xs text-base-content/70 mb-3">
@@ -215,6 +223,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 
     var map, segmentLayers={}, selectedSegId=null;
     var drawingMode=false, drawType=null, drawPoints=[], drawLine=null;
+    var buildMode=null, activeTab='lift';
 
     document.addEventListener('DOMContentLoaded', init);
 
@@ -257,9 +266,24 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         var ld=document.getElementById('mapLoader');if(ld)ld.remove();
         renderSegments();
         bindUI();if(IS_ADMIN) bindAdmin();
+
+        // If user has no built slopes or lifts, auto-open the slope build drawer so options are immediately obvious
+        if(BUILT_IDS.length === 0 && !IS_ADMIN) {
+            setTimeout(function(){ openDrawer('slope'); }, 300);
+        }
     }
 
-    var buildMode=null;
+    function isSegmentReleased(seg) {
+        if (IS_ADMIN) return true;
+        if (!RELEASED_IDS || RELEASED_IDS.length === 0) return true;
+        var secStr = String(seg.sector !== null && typeof seg.sector !== 'undefined' ? seg.sector : '');
+        var secNum = Number(seg.sector);
+        var isRel = RELEASED_IDS.some(function(r){ return String(r) === secStr || Number(r) === secNum; });
+        if (isRel) return true;
+        // Unassigned segments (sector 0 / empty) are accessible by default
+        return seg.sector === 0 || seg.sector === '0' || seg.sector === '' || seg.sector === null || typeof seg.sector === 'undefined';
+    }
+
     function renderSegments(mode){
         buildMode=mode||null;
         Object.values(segmentLayers).forEach(function(l){map.removeLayer(l);});
@@ -273,15 +297,35 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             if(buildMode&&!built){
                 if(buildMode==='lift'&&seg.type!=='lift') return;
                 if(buildMode==='slope'&&seg.type==='lift') return;
-            if(!IS_ADMIN&&RELEASED_IDS.indexOf(String(seg.sector))===-1) return;
+                if(!isSegmentReleased(seg)) return;
             }
             var c=(built||!buildMode)?segColor(seg):'#a855f7';
-            var line=L.polyline(ll,{color:c,weight:built?5:4,opacity:built?1:0.7,dashArray:built?null:'6,4'}).addTo(map);
-            if(built){line.bindPopup("<div style=\"text-align:center;min-width:120px\"><b>"+seg.name+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"opacity:.6\">"+seg.type+"</span></div>");line.bindTooltip(seg.name||seg.type,{sticky:true});}
-            if(!built){line.bindTooltip("<div style=\"text-align:center\"><b>"+seg.name+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><small>"+seg.type+"</small></div>");line.on("click",function(){if(!drawingMode) selectSegment(seg);});}
+            var line=L.polyline(ll,{color:c,weight:built?5:6,opacity:built?1:0.85,dashArray:built?null:'6,4'}).addTo(map);
+            if(built){
+                line.bindPopup("<div style=\"text-align:center;min-width:120px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"opacity:.6\">"+seg.type+"</span></div>");
+                line.bindTooltip(seg.name||seg.type,{sticky:true});
+            }
+            if(!built){
+                line.bindTooltip("<div style=\"text-align:center;padding:2px 4px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"color:#a855f7;font-weight:600\">Click to select</span></div>");
+                line.on("mouseover", function(){
+                    if(!selectedSegId || selectedSegId !== seg.id){
+                        line.setStyle({weight:8, opacity:1});
+                    }
+                });
+                line.on("mouseout", function(){
+                    if(!selectedSegId || selectedSegId !== seg.id){
+                        line.setStyle({weight:6, opacity:0.85});
+                    }
+                });
+                line.on("click",function(e){
+                    if (L.DomEvent) L.DomEvent.stopPropagation(e);
+                    if(!drawingMode) selectSegment(seg);
+                });
+            }
             segmentLayers[seg.id]=line;
         });
     }
+
     function segColor(s){
         if(s.type==='lift') return COLORS.lift;
         var d=s.difficulty||'';
@@ -293,37 +337,73 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         return COLORS['default'];
     }
 
-    function bindUI(){
+    function openDrawer(tab){
         var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
-        fab.addEventListener('click',function(){drawer.style.display='block';fab.style.display='none';renderSegments('lift');});
-        document.getElementById('closeDrawer').addEventListener('click',function(){drawer.style.display='none';fab.style.display='';deselectSeg();renderSegments();var ld=document.getElementById('mapLoader');if(ld)ld.remove();});
+        drawer.style.display='block';
+        if(fab) fab.style.display='none';
+        var targetTab = tab || 'lift';
+        document.querySelectorAll('.build-tab').forEach(function(b){
+            if (b.dataset.tab === targetTab) {
+                b.classList.add('btn-primary');
+                b.classList.remove('btn-ghost');
+            } else {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-ghost');
+            }
+        });
+        renderSegments(targetTab);
+        populateList(targetTab);
+        deselectSeg();
+    }
+
+    function closeDrawer(){
+        var drawer=document.getElementById('buildDrawer'),fab=document.getElementById('buildFab');
+        drawer.style.display='none';
+        if(fab) fab.style.display='';
+        deselectSeg();
+        renderSegments();
+        var ld=document.getElementById('mapLoader');if(ld)ld.remove();
+    }
+
+    function bindUI(){
+        var fab=document.getElementById('buildFab');
+        var headerBtn=document.getElementById('headerBuildBtn');
+        if(fab) fab.addEventListener('click',function(){ openDrawer('lift'); });
+        if(headerBtn) headerBtn.addEventListener('click',function(){ openDrawer('lift'); });
+        document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
         document.querySelectorAll('.build-tab').forEach(function(t){
             t.addEventListener('click',function(){
-                document.querySelectorAll('.build-tab').forEach(function(b){b.classList.remove('btn-primary');b.classList.add('btn-ghost');});
-                t.classList.add('btn-primary');t.classList.remove('btn-ghost');renderSegments(t.dataset.tab);
-                deselectSeg();
+                openDrawer(t.dataset.tab);
             });
         });
-        document.querySelectorAll('input[name="liftType"],input[name="seats"]').forEach(function(el){el.addEventListener('change',function(){if(el.name==='liftType')updateSeats();else updateCost();});});
+        document.querySelectorAll('input[name="liftType"],input[name="seats"]').forEach(function(el){
+            el.addEventListener('change',function(){if(el.name==='liftType')updateSeats();else updateCost();});
+        });
         document.getElementById('btnBuild').addEventListener('click',doBuild);
     }
 
-    var activeTab='lift';
     function populateList(type){
         activeTab=type;
         var list=document.getElementById('segmentList');
+        if(!list) return;
         var avail=SEGMENTS.filter(function(s){
             if(type==='lift'&&s.type!=='lift') return false;
             if(type==='slope'&&s.type==='lift') return false;
+            if(!isSegmentReleased(s)) return false;
             return BUILT_IDS.indexOf(String(s.id))===-1&&BUILT_IDS.indexOf(Number(s.id))===-1;
         });
-        if(!avail.length){list.innerHTML='<p class="text-sm text-base-content/50 text-center py-4">No '+type+'s available</p>';return;}
-        list.innerHTML='';
+        if(!avail.length){
+            list.innerHTML='<p class="text-sm text-base-content/50 text-center py-4">No available '+type+'s found</p>';
+            return;
+        }
+        list.innerHTML='<p class="text-xs text-base-content/60 font-medium mb-1">Click a run below or on the map:</p>';
         avail.forEach(function(seg){
             var btn=document.createElement('button');
-            btn.className='btn btn-sm btn-ghost justify-start text-left w-full';
+            btn.type='button';
+            btn.className='btn btn-sm btn-ghost justify-start text-left w-full gap-2 border border-base-300/60 hover:border-primary hover:bg-base-200 transition-all py-1.5 h-auto mb-1';
             var c=segColor(seg);
-            btn.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:'+c+';flex-shrink:0"></span> <span class="truncate">'+(seg.name||'Unnamed')+'</span><span class="ml-auto text-base-content/40 text-xs">'+Math.round(seg.length_meters||0)+' <?= distanceUnit() ?></span>';
+            var diffBadge = seg.difficulty ? '<span class="badge badge-xs text-[10px] uppercase font-bold" style="background:'+c+';color:#fff">'+seg.difficulty+'</span> ' : '';
+            btn.innerHTML='<span style="width:10px;height:10px;border-radius:50%;background:'+c+';flex-shrink:0"></span> <span class="truncate font-medium">'+(seg.name||'Unnamed')+'</span> '+diffBadge+'<span class="ml-auto text-base-content/50 text-xs font-mono">'+Math.round(seg.length_meters||0)+' <?= distanceUnit() ?></span>';
             btn.addEventListener('click',function(){selectSegment(seg);});
             list.appendChild(btn);
         });
@@ -331,23 +411,31 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 
     function selectSegment(seg){
         deselectSeg();selectedSegId=seg.id;
-        if(segmentLayers[seg.id]) segmentLayers[seg.id].setStyle({weight:6,opacity:1,color:'#fff'});
+        if(segmentLayers[seg.id]) {
+            segmentLayers[seg.id].setStyle({weight:8,opacity:1,color:'#fff'});
+            try {
+                if(typeof segmentLayers[seg.id].getBounds === 'function') {
+                    map.panTo(segmentLayers[seg.id].getBounds().getCenter(), {animate: true});
+                }
+            } catch(e){}
+        }
         document.getElementById('segmentDetail').style.display='block';
         document.getElementById('selSegName').textContent=seg.name||'Unnamed';
         document.getElementById('selSegLength').textContent=Math.round(seg.length_meters||0)+' <?= distanceUnit() ?>';
         var days=(seg.length_meters||0)<200?1:((seg.length_meters||0)<500?2:3);
         document.getElementById('selSegTime').textContent=days+' day'+(days>1?'s':'');
         document.getElementById('liftOptions').style.display=seg.type==='lift'?'block':'none';
-        document.getElementById('slopeOptions').style.display=seg.type==='lift'?'none':'block';if(seg.type!=='lift'){var sr=document.querySelector('input[name="slopeType"][value="'+seg.type+'"]');if(sr)sr.checked=true;}
+        document.getElementById('slopeOptions').style.display=seg.type==='lift'?'none':'block';
+        if(seg.type!=='lift'){var sr=document.querySelector('input[name="slopeType"][value="'+seg.type+'"]');if(sr)sr.checked=true;}
         document.getElementById('buildDrawer').style.display='block';
-        document.getElementById('buildFab').style.display='none';
+        var fab=document.getElementById('buildFab');if(fab)fab.style.display='none';
         if(seg.type==='lift')updateSeats();else updateCost();
     }
 
     function deselectSeg(){
         if(selectedSegId&&segmentLayers[selectedSegId]){
             var s=SEGMENTS.find(function(x){return x.id==selectedSegId;});
-            if(s){var b=BUILT_IDS.indexOf(String(s.id))!==-1||BUILT_IDS.indexOf(Number(s.id))!==-1;segmentLayers[selectedSegId].setStyle({color:(b||!buildMode)?segColor(s):'#a855f7',weight:b?4:3,opacity:b?1:0.7});}
+            if(s){var b=BUILT_IDS.indexOf(String(s.id))!==-1||BUILT_IDS.indexOf(Number(s.id))!==-1;segmentLayers[selectedSegId].setStyle({color:(b||!buildMode)?segColor(s):'#a855f7',weight:b?5:6,opacity:b?1:0.85});}
         }
         selectedSegId=null;document.getElementById('segmentDetail').style.display='none';
     }
@@ -364,6 +452,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     }
 
     function updateSeats(){var lt=document.querySelector('input[name="liftType"]:checked');var type=lt?lt.value:'chair_fixed';var opts=SEAT_OPTIONS[type]||[2,4,6,8];var grid=document.getElementById('seatGrid');grid.innerHTML='';opts.forEach(function(n,i){var label=document.createElement('label');label.className='cursor-pointer flex-1';label.innerHTML='<input type="radio" name="seats" value="'+n+'" class="peer hidden"'+(i===0?' checked':'')+'><div class="border border-base-300 rounded-lg p-2 text-center peer-checked:border-success peer-checked:bg-success/10 text-xs font-semibold">'+n+'</div>';grid.appendChild(label);});grid.querySelectorAll('input[name="seats"]').forEach(function(el){el.addEventListener('change',updateCost);});updateCost();}
+    
     function doBuild(){
         if(!selectedSegId) return;
         var seg=SEGMENTS.find(function(s){return s.id==selectedSegId;});if(!seg) return;
@@ -376,7 +465,13 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             body.slope_type=sl?sl.value:'downhill';
         }
         postJSON('/map/build',body,function(res){
-            if(res.success){BUILT_IDS.push(String(seg.id));deselectSeg();renderSegments(buildMode);}
+            if(res.success){
+                BUILT_IDS.push(String(seg.id));
+                deselectSeg();
+                renderSegments(buildMode);
+                populateList(activeTab);
+                if (typeof loadTutorial === 'function') loadTutorial();
+            }
             else{alert(res.error||'Build failed');}
         });
     }

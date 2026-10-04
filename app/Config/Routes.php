@@ -70,6 +70,7 @@ $routes->get('/achievements', 'Achievements::index');
 $routes->get('/activity', 'ActivityLog::index');
 $routes->get('/admin', 'Admin::index');
 $routes->get('/admin/broadcast', 'Admin::broadcast');
+$routes->get('/admin/sendBroadcast', 'Admin::broadcast');
 $routes->get('/admin/settings', 'Admin::gameSettings');
 $routes->get('/admin/user/(:num)', 'Admin::editUser/$1');
 $routes->get('/bank', 'Bank::index');
@@ -172,6 +173,7 @@ $routes->post('/account/username', 'Account::changeUsername');
 $routes->post('/achievements/claim/(:num)', 'Achievements::claim/$1');
 $routes->post('/admin/ban/(:num)', 'Admin::banUser/$1');
 $routes->post('/admin/broadcast', 'Admin::sendBroadcast');
+$routes->post('/admin/sendBroadcast', 'Admin::sendBroadcast');
 $routes->post('/admin/cash', 'Admin::updateCash');
 $routes->post('/admin/delete/(:num)', 'Admin::deleteUser/$1');
 $routes->post('/admin/genepis', 'Admin::updateGenepis');
@@ -260,8 +262,7 @@ $routes->post('/admin/support/(:num)/reply', 'Support::adminReply/$1');
 // Support Admin Chat Action Modifiers
 $routes->group('admin/support', ['filter' => 'group:admin'], function($routes) {
     $routes->post('message/(:num)/edit', 'Support::editMessage/$1');
-    $routes->post('message Suspend/(:num)/delete', 'Support::deleteMessage/$1');
-    // Direct fallbacks if layout routes do not use standard group prefixes
+        // Direct fallbacks if layout routes do not use standard group prefixes
     $routes->post('message/(:num)/delete', 'Support::deleteMessage/$1');
 });
 

@@ -718,31 +718,57 @@ class GameTick extends BaseCommand
             CLI::write("Generating weather for day {$tomorrow}...", 'cyan');
             $seed = crc32('skimanager-weather-day-' . $tomorrow);
             mt_srand($seed);
-            $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Blizzard', 'Freezing Rain'];
-            $weights = [15, 20, 20, 25, 10, 5, 5];
-            $roll = mt_rand(1, 100);
+
+            $tomorrowSeasonDay = (($tomorrow - 1) % getSeasonLength()) + 1;
+            $winterDays = getWinterDays();
+            $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= ($winterDays - 20);
+            $isTomorrowSummer = $tomorrowSeasonDay > getWinterDays();
+
+            if ($isTomorrowSummer) {
+                $temp = mt_rand(18, 25);
+                $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy'];
+                $weights = [50, 35, 15];
+            } elseif ($isDeepWinter) {
+                $temp = mt_rand(-10, 0);
+                $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Blizzard'];
+                $weights = [10, 15, 15, 25, 20, 15];
+            } else {
+                $temp = mt_rand(-5, 8);
+                $conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Snow', 'Heavy Snow', 'Freezing Rain'];
+                $weights = [20, 25, 20, 20, 10, 5];
+            }
+
+            $roll = mt_rand(1, array_sum($weights));
             $cumulative = 0;
-            $condition = 'Cloudy';
+            $condition = $conditions[0];
             foreach ($conditions as $i => $c) {
                 $cumulative += $weights[$i];
                 if ($roll <= $cumulative) { $condition = $c; break; }
             }
-            $tomorrowSeasonDay = (($tomorrow - 1) % max(1, getSeasonLength())) + 1;
-            $winterDays = getWinterDays(); $isDeepWinter = $tomorrowSeasonDay >= 30 && $tomorrowSeasonDay <= ($winterDays - 20);
-            $isTomorrowSummer = $tomorrowSeasonDay > getWinterDays();
-            if ($isTomorrowSummer) { $temp = mt_rand(12, 28); } elseif ($isDeepWinter) { $temp = mt_rand(-10, 0); } else { $temp = mt_rand(-5, 8); }
             $wind = mt_rand(5, 30);
-            $snowfall = in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0;
+            $snowfall = (!$isTomorrowSummer && in_array($condition, ['Light Snow', 'Heavy Snow', 'Blizzard'])) ? mt_rand(1, 20) : 0;
             $prev = $db->table('weather')->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray();
-            $prevBase = $prev ? (int) $prev['snow_base'] : 50;
-            $snowBase = max(0, $prevBase + $snowfall - ($condition === 'Sunny' ? mt_rand(1, 3) : 0));
+            $prevBase = $prev ? (int) $prev['snow_base'] : ($isTomorrowSummer ? 0 : 50);
+            $snowBase = $isTomorrowSummer ? max(0, $prevBase - mt_rand(30, 60)) : max(0, $prevBase + $snowfall - ($condition === 'Sunny' ? mt_rand(1, 3) : 0));
             $visMap = ['Sunny' => 'Excellent', 'Partly Cloudy' => 'Good', 'Cloudy' => 'Good', 'Light Snow' => 'Moderate', 'Heavy Snow' => 'Poor', 'Blizzard' => 'Very Poor', 'Freezing Rain' => 'Poor'];
 
             $forecast = [];
             for ($d = 1; $d <= 5; $d++) {
-                mt_srand(crc32('skimanager-weather-day-' . ($tomorrow + $d)));
-                $fc = $conditions[mt_rand(0, count($conditions) - 1)];
-                $forecast[] = ['day' => $d, 'temp' => $temp + mt_rand(-3, 3), 'condition' => $fc, 'snowfall' => in_array($fc, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0];
+                $fDay = $tomorrow + $d;
+                $fSeasonDay = (($fDay - 1) % getSeasonLength()) + 1;
+                $fIsSummer = $fSeasonDay > getWinterDays();
+                mt_srand(crc32('skimanager-weather-day-' . $fDay));
+                if ($fIsSummer) {
+                    $fTemp = mt_rand(18, 25);
+                    $fConds = ['Sunny', 'Partly Cloudy', 'Cloudy'];
+                    $fc = $fConds[mt_rand(0, count($fConds) - 1)];
+                    $fSnow = 0;
+                } else {
+                    $fTemp = $temp + mt_rand(-3, 3);
+                    $fc = $conditions[mt_rand(0, count($conditions) - 1)];
+                    $fSnow = in_array($fc, ['Light Snow', 'Heavy Snow', 'Blizzard']) ? mt_rand(1, 20) : 0;
+                }
+                $forecast[] = ['day' => $d, 'temp' => $fTemp, 'condition' => $fc, 'snowfall' => $fSnow];
             }
 
             $db->table('weather')->insert([

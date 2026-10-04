@@ -52,12 +52,12 @@
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-cloud-sun mr-1"></i> Weather Impact</h3>
-            <div class="text-2xl font-bold mb-1"><?= $weatherTemp ?>°<?= isImperial() ? 'F' : 'C' ?></div>
+            <div class="text-2xl font-bold mb-1"><?= $weatherTemp ?></div>
             <p class="text-xs text-base-content/60 mb-2"><?= $weatherDesc ?></p>
             <div class="space-y-1 text-xs">
-                <?php if ($weatherTemp > 32) : ?>
+                <?php if (isset($weather['temp_celsius']) && $weather['temp_celsius'] > 0) : ?>
                 <div class="flex items-center gap-1 text-warning"><i class="fa-solid fa-sun"></i> Warm temps accelerate snow melt (-2% extra/day)</div>
-                <?php elseif ($weatherTemp < 15) : ?>
+                <?php elseif (isset($weather['temp_celsius']) && $weather['temp_celsius'] < -8) : ?>
                 <div class="flex items-center gap-1 text-info"><i class="fa-solid fa-snowflake"></i> Cold temps preserve conditions (+1% slower decay)</div>
                 <?php else : ?>
                 <div class="flex items-center gap-1 text-success"><i class="fa-solid fa-check"></i> Ideal grooming temperatures</div>
