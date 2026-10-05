@@ -185,11 +185,23 @@ class ResortMap extends BaseController
 
         if (!empty($data['id'])) {
             $model->update($data['id'], $row);
-            return $this->response->setJSON(['success' => true, 'id' => $data['id']]);
+            return $this->response->setJSON([
+                'success'    => true,
+                'id'         => (int) $data['id'],
+                'segment'    => array_merge(['id' => (int) $data['id']], $row),
+                'csrf_token' => csrf_token(),
+                'csrf_hash'  => csrf_hash(),
+            ]);
         }
 
         $id = $model->insert($row);
-        return $this->response->setJSON(['success' => true, 'id' => $id]);
+        return $this->response->setJSON([
+            'success'    => true,
+            'id'         => (int) $id,
+            'segment'    => array_merge(['id' => (int) $id], $row),
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
     }
 
     public function deleteSegment($id = null)
@@ -198,13 +210,17 @@ class ResortMap extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
         }
 
-        
         if (!$id) {
             return $this->response->setStatusCode(400)->setJSON(['error' => 'Missing ID']);
         }
 
         (new MapSegmentModel())->delete($id);
-        return $this->response->setJSON(['success' => true]);
+        return $this->response->setJSON([
+            'success'    => true,
+            'id'         => (int) $id,
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
     }
 
     public function buildItem()

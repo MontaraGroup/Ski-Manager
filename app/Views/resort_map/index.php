@@ -14,7 +14,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 <link rel="stylesheet" href="/css/leaflet.css" />
     <link rel="preload" href="<?= esc($mapConfig['image']) ?>" as="image">
 <style>
-#map{height:calc(100vh - 160px);width:100%;background:#1a1a2e;position:relative;z-index:0}
+#map{height:100%;width:100%;background:#1a1a2e;position:relative;z-index:0}
 .map-legend{position:absolute;bottom:12px;left:12px;z-index:800;background:rgba(30,30,46,.9);border-radius:8px;padding:10px 14px;font-size:12px;color:#ccc;display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(6px)}
 .map-legend-item{display:flex;align-items:center;gap:6px}
 .map-legend-item span{width:20px;height:3px;border-radius:2px;display:inline-block}
@@ -25,6 +25,78 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 }
 .leaflet-interactive {
     cursor: pointer !important;
+}
+
+/* Admin Floating Top Editor Toolbar */
+.admin-editor-toolbar {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 850;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(22, 27, 34, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0,0,0,0.4);
+    padding: 6px 12px;
+    max-width: 95vw;
+}
+
+/* Custom Vertex Handle */
+.custom-vertex-wrap {
+    background: transparent;
+    border: none;
+}
+.custom-vertex-handle {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #f59e0b;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    cursor: grab;
+    transition: transform 0.1s ease;
+}
+.custom-vertex-handle:hover {
+    transform: scale(1.35);
+}
+.custom-vertex-handle:active {
+    cursor: grabbing;
+}
+
+/* Custom Midpoint Handle */
+.custom-midpoint-wrap {
+    background: transparent;
+    border: none;
+}
+.custom-midpoint-handle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    cursor: copy;
+    opacity: 0.85;
+    transition: all 0.15s ease;
+}
+.custom-midpoint-handle:hover {
+    transform: scale(1.5);
+    opacity: 1;
+}
+
+/* Admin Popover */
+.admin-leaflet-popup .leaflet-popup-content-wrapper {
+    background: #1d232a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6) !important;
+    padding: 4px;
+}
+.admin-leaflet-popup .leaflet-popup-tip {
+    background: #1d232a !important;
 }
 </style>
 
@@ -53,8 +125,108 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     <span class="flex items-center gap-1"><i class="fa-solid fa-route text-info"></i> <?= $segmentCount ?> Segments</span>
 </div>
 
-<div id="map" data-image="<?= $isAdmin ? esc(str_replace(".jpg", "-Big.jpg", $mapConfig["image"])) : esc($mapConfig["image"]) ?>"></div>
+<div class="relative w-full overflow-hidden" style="height:calc(100vh - 160px)">
+    <div id="map" data-image="<?= $isAdmin ? esc(str_replace(".jpg", "-Big.jpg", $mapConfig["image"])) : esc($mapConfig["image"]) ?>"></div>
     <div id="mapLoader" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;text-align:center"><span class="loading loading-spinner loading-lg text-primary"></span><p class="text-sm text-base-content/50 mt-2">Loading trail map...</p></div>
+
+    <?php if ($isAdmin): ?>
+    <div id="adminEditorToolbar" class="admin-editor-toolbar shadow-2xl">
+        <!-- Idle Mode View -->
+        <div id="toolIdleView" class="flex items-center gap-2 flex-wrap">
+            <span class="badge badge-primary font-bold text-xs gap-1 py-2.5 px-3">
+                <i class="fa-solid fa-compass-drafting text-[11px]"></i> Map Editor
+            </span>
+            <div class="flex items-center gap-1.5 bg-base-300/60 rounded-lg px-2 py-0.5 border border-white/5">
+                <span class="text-[11px] font-semibold text-base-content/60">Sector:</span>
+                <select id="toolActiveSector" class="select select-xs select-bordered bg-base-200/90 text-xs py-0 h-6 min-h-0">
+                    <option value="">Default (0)</option>
+                    <?php foreach ($sectors as $sec): ?>
+                    <option value="<?= esc($sec['id']) ?>"><?= esc($sec['name']) ?> (ID: <?= esc($sec['id']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="h-4 w-px bg-white/10 mx-1 hidden sm:block"></div>
+            <button id="btnNewLift" class="btn btn-xs btn-warning font-semibold gap-1.5 shadow-sm hover:scale-105 transition-all">
+                <i class="fa-solid fa-elevator"></i> + New Lift
+            </button>
+            <button id="btnNewSlope" class="btn btn-xs btn-success font-semibold gap-1.5 shadow-sm hover:scale-105 transition-all">
+                <i class="fa-solid fa-person-skiing"></i> + New Slope
+            </button>
+            <span class="text-[11px] text-base-content/40 hidden md:inline ml-1">
+                <i class="fa-solid fa-circle-info mr-1"></i>Click line to edit/delete
+            </span>
+        </div>
+
+        <!-- Active Draw / Edit Mode View -->
+        <div id="toolActiveView" class="items-center gap-2 flex-wrap" style="display:none">
+            <span id="toolModeBadge" class="badge badge-warning text-xs font-bold gap-1 py-2.5 px-2.5">
+                <i class="fa-solid fa-pen-nib text-[10px]"></i> <span id="toolModeText">New Lift</span>
+            </span>
+            
+            <!-- Live HUD metrics -->
+            <div class="flex items-center gap-2 bg-base-300/80 px-2.5 py-0.5 rounded-lg text-xs font-mono border border-primary/20 shadow-inner">
+                <span class="flex items-center gap-1 text-primary font-bold">
+                    <i class="fa-solid fa-ruler text-[11px]"></i>
+                    <span id="toolLiveLength">0</span> m
+                </span>
+                <span class="opacity-30">•</span>
+                <span class="flex items-center gap-1 text-info">
+                    <i class="fa-solid fa-location-dot text-[11px]"></i>
+                    <span id="toolPointCount">0</span> pts
+                </span>
+            </div>
+
+            <!-- Inline Name -->
+            <input type="text" id="toolSegName" class="input input-xs input-bordered w-32 md:w-44 text-xs font-medium" placeholder="Segment name">
+
+            <!-- Inline Sector -->
+            <select id="toolSegSector" class="select select-xs select-bordered text-xs py-0 h-6 min-h-0">
+                <option value="">No Sector (0)</option>
+                <?php foreach ($sectors as $sec): ?>
+                <option value="<?= esc($sec['id']) ?>"><?= esc($sec['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <!-- Inline Slope Type (hidden for lifts) -->
+            <select id="toolSlopeType" class="select select-xs select-bordered text-xs py-0 h-6 min-h-0" style="display:none">
+                <option value="downhill">Downhill</option>
+                <option value="crosscountry">Cross-Country</option>
+                <option value="snowpark">Snow Park</option>
+                <option value="luge">Luge</option>
+            </select>
+
+            <!-- Inline Difficulty (hidden for lifts) -->
+            <select id="toolSegDiff" class="select select-xs select-bordered text-xs py-0 h-6 min-h-0">
+                <option value="">Difficulty (None)</option>
+                <option value="green">Green (Easy)</option>
+                <option value="blue">Blue (Intermediate)</option>
+                <option value="black">Black (Advanced)</option>
+                <option value="double_black">Double Black (Expert)</option>
+            </select>
+
+            <div class="h-4 w-px bg-white/10 mx-1 hidden sm:block"></div>
+
+            <!-- Actions -->
+            <button id="toolBtnSave" class="btn btn-xs btn-success font-bold gap-1 shadow-sm">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+            <button id="toolBtnUndo" class="btn btn-xs btn-warning btn-outline gap-1" title="Undo point (Z)">
+                <i class="fa-solid fa-rotate-left"></i> Undo
+            </button>
+            <button id="toolBtnCancel" class="btn btn-xs btn-ghost text-error gap-1" title="Cancel (Esc)">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Toast Notification -->
+    <div id="adminToast" class="toast toast-top toast-end z-[999] pointer-events-none transition-all duration-300 opacity-0 translate-y-[-10px]">
+        <div id="adminToastAlert" class="alert alert-success py-2 px-3 text-xs shadow-lg font-medium">
+            <span id="adminToastMsg">Success</span>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
 
 <div class="map-legend" id="mapLegend">
     <div class="map-legend-item"><span style="background:#f59e0b"></span> Lift</div>
@@ -133,44 +305,10 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
 
     <?php if ($isAdmin): ?>
     <div class="border-t border-base-300 pt-4 mt-4">
-        <p class="text-xs font-semibold text-base-content/50 mb-3 uppercase tracking-wider">Admin: Draw New Path</p>
-        <div class="flex gap-2 mb-3">
-            <button id="drawLift" class="btn btn-sm btn-outline btn-warning flex-1"><i class="fa-solid fa-elevator mr-1"></i> Lift Line</button>
-            <button id="drawSlope" class="btn btn-sm btn-outline btn-success flex-1"><i class="fa-solid fa-person-skiing mr-1"></i> Slope</button>
+        <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wider">Sectors Management</p>
+            <span class="badge badge-primary badge-xs">Admin</span>
         </div>
-        <div id="drawControls">
-            <p class="text-xs text-base-content/60 mb-2">Click on the map to place points. Double-click or press Finish to complete.</p>
-            <div class="flex flex-col gap-1 mb-3">
-                <input type="text" id="drawName" class="input input-sm input-bordered w-full" placeholder="Segment name">
-                <select id="drawSlopeType" class="select select-sm select-bordered w-full" style="display:none">
-                    <option value="downhill">Downhill</option>
-                    <option value="crosscountry">Cross-Country</option>
-                    <option value="snowpark">Snow Park</option>
-                    <option value="luge">Luge</option>
-                </select>
-                <select id="drawDifficulty" class="select select-sm select-bordered w-full">
-                    <option value="">No difficulty</option>
-                    <option value="green">Green</option>
-                    <option value="blue">Blue</option>
-                    <option value="black">Black</option>
-                    <option value="double_black">Double Black</option>
-                </select>
-                <select id="drawSector" class="select select-sm select-bordered w-full">
-                    <option value="">No Sector</option>
-                    <?php foreach ($sectors as $sec): ?>
-                    <option value="<?= esc($sec['name']) ?>"><?= esc($sec['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="flex gap-2">
-                <button id="drawFinish" class="btn btn-sm btn-success flex-1">Finish</button>
-                <button id="drawUndo" class="btn btn-sm btn-warning flex-1">Undo</button>
-                <button id="drawCancel" class="btn btn-sm btn-error flex-1">Cancel</button>
-            </div>
-        </div>
-
-        <div class="border-t border-base-300 pt-4 mt-4">
-            <p class="text-xs font-semibold text-base-content/50 mb-3 uppercase tracking-wider">Sectors</p>
             <div id="sectorList" class="flex flex-col gap-1 mb-3">
                 <?php foreach ($sectors as $sec): ?>
                 <div class="flex items-center justify-between p-2 rounded bg-base-200/50 text-sm" data-sector-id="<?= $sec['id'] ?>">
@@ -222,8 +360,16 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
     var SEAT_OPTIONS = {button:[1,2],chair_fixed:[2,3,4],chair_detach:[4,6,8],gondola:[6,8,10],cable_car:[20,30]};
 
     var map, segmentLayers={}, selectedSegId=null;
-    var drawingMode=false, drawType=null, drawPoints=[], drawLine=null;
     var buildMode=null, activeTab='lift';
+
+    // Admin Editor State
+    var editorMode = null; // null | 'draw' | 'edit'
+    var editorType = 'lift'; // 'lift' | 'slope'
+    var editingSegId = null;
+    var editorPoints = [];
+    var editorLine = null;
+    var vertexMarkers = [];
+    var midpointMarkers = [];
 
     document.addEventListener('DOMContentLoaded', init);
 
@@ -289,6 +435,7 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         Object.values(segmentLayers).forEach(function(l){map.removeLayer(l);});
         segmentLayers={};
         SEGMENTS.forEach(function(seg){
+            if (editingSegId && seg.id == editingSegId) return;
             var pts=typeof seg.points==='string'?JSON.parse(seg.points):seg.points;
             if(!pts||pts.length<2) return;
             var ll=pts.map(function(p){return[p[0]||p.lat||0,p[1]||p.lng||0];});
@@ -302,11 +449,19 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
             var c=(built||!buildMode)?segColor(seg):'#a855f7';
             var line=L.polyline(ll,{color:c,weight:built?5:6,opacity:built?1:0.85,dashArray:built?null:'6,4'}).addTo(map);
             if(built){
-                line.bindPopup("<div style=\"text-align:center;min-width:120px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"opacity:.6\">"+seg.type+"</span></div>");
                 line.bindTooltip(seg.name||seg.type,{sticky:true});
+                if(IS_ADMIN){
+                    line.on("click", function(e){
+                        if (L.DomEvent) L.DomEvent.stopPropagation(e);
+                        if (editorMode) return;
+                        openAdminSegmentPopup(seg, e.latlng);
+                    });
+                } else {
+                    line.bindPopup("<div style=\"text-align:center;min-width:120px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"opacity:.6\">"+seg.type+"</span></div>");
+                }
             }
             if(!built){
-                line.bindTooltip("<div style=\"text-align:center;padding:2px 4px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"color:#a855f7;font-weight:600\">Click to select</span></div>");
+                line.bindTooltip("<div style=\"text-align:center;padding:2px 4px\"><b>"+(seg.name||seg.type)+"</b><br>"+Math.round(seg.length_meters||0)+" <?= distanceUnit() ?><br><span style=\"color:#a855f7;font-weight:600\">" + (IS_ADMIN ? "Click for options" : "Click to select") + "</span></div>");
                 line.on("mouseover", function(){
                     if(!selectedSegId || selectedSegId !== seg.id){
                         line.setStyle({weight:8, opacity:1});
@@ -319,7 +474,12 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
                 });
                 line.on("click",function(e){
                     if (L.DomEvent) L.DomEvent.stopPropagation(e);
-                    if(!drawingMode) selectSegment(seg);
+                    if (editorMode) return;
+                    if (IS_ADMIN) {
+                        openAdminSegmentPopup(seg, e.latlng);
+                    } else {
+                        selectSegment(seg);
+                    }
                 });
             }
             segmentLayers[seg.id]=line;
@@ -476,69 +636,516 @@ $resortMapsJson    = json_encode($resortMaps ?? []);
         });
     }
 
-    function bindAdmin(){
-        document.getElementById('drawLift').addEventListener('click',function(){startDraw('lift');});
-        document.getElementById('drawSlope').addEventListener('click',function(){startDraw('slope');});
-        document.getElementById('drawFinish').addEventListener('click',finishDraw);
-        document.getElementById('drawUndo').addEventListener('click',function(){drawPoints.pop();updateDrawLine();});
-        document.getElementById('drawCancel').addEventListener('click',cancelDraw);
-        document.getElementById('newSector').addEventListener('click',function(){
-            var n=prompt('Sector name:');if(!n) return;
-            postJSON('/map/sector/create',{name:n},function(){location.reload();});
+    function postJSON(url, data, callback) {
+        var payload = Object.assign({}, data || {});
+        payload[CSRF_NAME] = CSRF_HASH;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) {
+            return res.json().catch(function() {
+                throw new Error('Server returned invalid response');
+            });
+        })
+        .then(function(json) {
+            if (json && json.csrf_hash) {
+                CSRF_HASH = json.csrf_hash;
+            }
+            if (callback) callback(json);
+        })
+        .catch(function(err) {
+            console.error('API Error:', err);
+            showToast(err.message || 'Request failed', 'error');
         });
-        document.getElementById('autoAssign').addEventListener('click',function(){
-            postJSON('/map/sector/auto-assign',{},function(r){alert('Assigned '+(r.assigned||0)+' segments');});
-        });
-        document.querySelectorAll('.toggle-sector').forEach(function(b){
-            b.addEventListener('click',function(){postJSON('/map/sector/toggle/'+b.dataset.id,{},function(){location.reload();});});
-        });
-        document.querySelectorAll('.delete-sector').forEach(function(b){
-            b.addEventListener('click',function(){if(!confirm('Delete this sector?')) return;postJSON('/map/sector/delete/'+b.dataset.id,{},function(){location.reload();});});
-        });
-        map.on('click',function(e){if(!drawingMode) return;drawPoints.push([e.latlng.lat,e.latlng.lng]);updateDrawLine();});
-        map.on('dblclick',function(e){if(!drawingMode) return;L.DomEvent.stopPropagation(e);finishDraw();});
     }
 
-    function startDraw(type){
-        drawingMode=true;drawType=type;drawPoints=[];
-        if(drawLine){map.removeLayer(drawLine);drawLine=null;}
-        map.getContainer().style.cursor='crosshair';
+    function calcLengthMeters(points) {
+        if (!points || points.length < 2) return 0;
+        var total = 0;
+        for (var i = 1; i < points.length; i++) {
+            var dy = points[i][0] - points[i-1][0];
+            var dx = points[i][1] - points[i-1][1];
+            total += Math.sqrt(dy * dy + dx * dx);
+        }
+        return Math.round(total * 15.0);
+    }
+
+    function getSectorName(secId) {
+        if (!secId || secId === '0' || secId === 0) return 'Default (0)';
+        var sec = SECTORS.find(function(s) { return String(s.id) === String(secId) || s.name === String(secId); });
+        return sec ? sec.name : 'Sector ' + secId;
+    }
+
+    function showToast(msg, type) {
+        var toast = document.getElementById('adminToast');
+        var alertEl = document.getElementById('adminToastAlert');
+        var msgEl = document.getElementById('adminToastMsg');
+        if (!toast || !alertEl || !msgEl) {
+            if (type === 'error') alert(msg);
+            return;
+        }
+        msgEl.textContent = msg;
+        alertEl.className = 'alert py-2 px-3 text-xs shadow-lg font-medium ' +
+            (type === 'error' ? 'alert-error' : (type === 'warning' ? 'alert-warning' : (type === 'info' ? 'alert-info' : 'alert-success')));
+        toast.classList.remove('opacity-0', 'translate-y-[-10px]');
+        toast.classList.add('opacity-100', 'translate-y-0');
+        if (window._toastTimeout) clearTimeout(window._toastTimeout);
+        window._toastTimeout = setTimeout(function() {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'translate-y-[-10px]');
+        }, 2800);
+    }
+
+    function clearEditorMarkers() {
+        vertexMarkers.forEach(function(m) { map.removeLayer(m); });
+        vertexMarkers = [];
+        midpointMarkers.forEach(function(m) { map.removeLayer(m); });
+        midpointMarkers = [];
+    }
+
+    function createVertexMarker(latlng, index, accentColor) {
+        var icon = L.divIcon({
+            className: 'custom-vertex-wrap',
+            html: '<div class="custom-vertex-handle" style="border-color:' + accentColor + '"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+        var marker = L.marker(latlng, {
+            icon: icon,
+            draggable: true,
+            zIndexOffset: 1000
+        });
+        marker.on('drag', function() {
+            var ll = marker.getLatLng();
+            editorPoints[index] = [ll.lat, ll.lng];
+            updateEditorDisplay(false);
+        });
+        marker.on('dragend', function() {
+            updateEditorDisplay(true);
+        });
+        marker.on('contextmenu', function(e) {
+            if (L.DomEvent) L.DomEvent.stopPropagation(e);
+            if (editorPoints.length > 2) {
+                editorPoints.splice(index, 1);
+                updateEditorDisplay(true);
+            } else {
+                showToast('A line requires at least 2 points', 'warning');
+            }
+        });
+        return marker;
+    }
+
+    function createMidpointMarker(index, accentColor) {
+        var p1 = editorPoints[index];
+        var p2 = editorPoints[index + 1];
+        var midLat = (p1[0] + p2[0]) / 2;
+        var midLng = (p1[1] + p2[1]) / 2;
+
+        var icon = L.divIcon({
+            className: 'custom-midpoint-wrap',
+            html: '<div class="custom-midpoint-handle" style="background:' + accentColor + '"></div>',
+            iconSize: [10, 10],
+            iconAnchor: [5, 5]
+        });
+
+        var marker = L.marker([midLat, midLng], {
+            icon: icon,
+            draggable: true,
+            zIndexOffset: 900
+        });
+
+        var insertedIndex = -1;
+
+        marker.on('dragstart', function() {
+            insertedIndex = index + 1;
+            var ll = marker.getLatLng();
+            editorPoints.splice(insertedIndex, 0, [ll.lat, ll.lng]);
+        });
+
+        marker.on('drag', function() {
+            if (insertedIndex !== -1) {
+                var ll = marker.getLatLng();
+                editorPoints[insertedIndex] = [ll.lat, ll.lng];
+                updateEditorDisplay(false);
+            }
+        });
+
+        marker.on('dragend', function() {
+            insertedIndex = -1;
+            updateEditorDisplay(true);
+        });
+
+        return marker;
+    }
+
+    function updateEditorDisplay(rebuildMarkers) {
+        var diff = document.getElementById('toolSegDiff') ? document.getElementById('toolSegDiff').value : '';
+        var accentColor = editorType === 'lift' ? COLORS.lift : (COLORS[diff] || COLORS.green);
+
+        if (editorLine) {
+            map.removeLayer(editorLine);
+            editorLine = null;
+        }
+        if (editorPoints.length > 0) {
+            editorLine = L.polyline(editorPoints, {
+                color: accentColor,
+                weight: 5,
+                opacity: 0.95,
+                dashArray: '6, 6'
+            }).addTo(map);
+        }
+
+        var lengthM = calcLengthMeters(editorPoints);
+        var lenEl = document.getElementById('toolLiveLength');
+        var ptsEl = document.getElementById('toolPointCount');
+        if (lenEl) lenEl.textContent = lengthM.toLocaleString();
+        if (ptsEl) ptsEl.textContent = editorPoints.length;
+
+        if (rebuildMarkers) {
+            clearEditorMarkers();
+            editorPoints.forEach(function(pt, idx) {
+                var vm = createVertexMarker(pt, idx, accentColor);
+                vm.addTo(map);
+                vertexMarkers.push(vm);
+            });
+            if (editorPoints.length >= 2) {
+                for (var i = 0; i < editorPoints.length - 1; i++) {
+                    var mm = createMidpointMarker(i, accentColor);
+                    mm.addTo(map);
+                    midpointMarkers.push(mm);
+                }
+            }
+        }
+    }
+
+    function startDraw(type) {
+        if (editorMode) cancelEditor(true);
+        editorMode = 'draw';
+        editingSegId = null;
+        editorType = type;
+        editorPoints = [];
+
+        document.getElementById('toolIdleView').style.display = 'none';
+        var activeView = document.getElementById('toolActiveView');
+        activeView.style.display = 'flex';
+
+        var modeBadge = document.getElementById('toolModeBadge');
+        modeBadge.className = 'badge text-xs font-bold gap-1 py-2.5 px-2.5 ' + (type === 'lift' ? 'badge-warning' : 'badge-success');
+        document.getElementById('toolModeText').textContent = 'New ' + (type === 'lift' ? 'Lift' : 'Slope');
+
+        var typeCount = SEGMENTS.filter(function(s) { return type === 'lift' ? s.type === 'lift' : s.type !== 'lift'; }).length + 1;
+        document.getElementById('toolSegName').value = type === 'lift' ? 'Lift Line ' + typeCount : 'Slope Path ' + typeCount;
+
+        var activeSec = document.getElementById('toolActiveSector') ? document.getElementById('toolActiveSector').value : '';
+        document.getElementById('toolSegSector').value = activeSec;
+
+        var slopeTypeEl = document.getElementById('toolSlopeType');
+        var diffEl = document.getElementById('toolSegDiff');
+        if (type !== 'lift') {
+            slopeTypeEl.style.display = 'inline-block';
+            slopeTypeEl.value = 'downhill';
+            diffEl.style.display = 'inline-block';
+            diffEl.value = 'blue';
+        } else {
+            slopeTypeEl.style.display = 'none';
+            diffEl.style.display = 'none';
+        }
+
+        map.getContainer().style.cursor = 'crosshair';
         map.doubleClickZoom.disable();
-        document.getElementById('drawControls').style.display='block';
-        document.getElementById('drawName').value='';document.getElementById('drawSlopeType').style.display=type==='slope'?'block':'none';
-        document.getElementById('drawDifficulty').value='';
+
+        updateEditorDisplay(true);
+        showToast('Click anywhere on the mountain to add points', 'info');
     }
 
-    function updateDrawLine(){
-        if(drawLine) map.removeLayer(drawLine);
-        if(drawPoints.length>0){
-            drawLine=L.polyline(drawPoints,{color:drawType==='lift'?COLORS.lift:COLORS.green,weight:3,dashArray:'4,4'}).addTo(map);
+    function startEditSegment(seg) {
+        if (editorMode) cancelEditor(true);
+        editorMode = 'edit';
+        editingSegId = seg.id;
+        editorType = seg.type;
+
+        var pts = typeof seg.points === 'string' ? JSON.parse(seg.points) : seg.points;
+        editorPoints = (pts || []).map(function(p) { return [p[0] || p.lat || 0, p[1] || p.lng || 0]; });
+
+        // Hide static layer
+        if (segmentLayers[seg.id]) {
+            map.removeLayer(segmentLayers[seg.id]);
         }
+
+        document.getElementById('toolIdleView').style.display = 'none';
+        var activeView = document.getElementById('toolActiveView');
+        activeView.style.display = 'flex';
+
+        var modeBadge = document.getElementById('toolModeBadge');
+        modeBadge.className = 'badge text-xs font-bold gap-1 py-2.5 px-2.5 ' + (seg.type === 'lift' ? 'badge-warning' : 'badge-success');
+        document.getElementById('toolModeText').textContent = 'Editing ' + (seg.type === 'lift' ? 'Lift' : 'Slope');
+
+        document.getElementById('toolSegName').value = seg.name || '';
+        document.getElementById('toolSegSector').value = seg.sector || '';
+
+        var slopeTypeEl = document.getElementById('toolSlopeType');
+        var diffEl = document.getElementById('toolSegDiff');
+        if (seg.type !== 'lift') {
+            slopeTypeEl.style.display = 'inline-block';
+            slopeTypeEl.value = seg.type || 'downhill';
+            diffEl.style.display = 'inline-block';
+            diffEl.value = seg.difficulty || '';
+        } else {
+            slopeTypeEl.style.display = 'none';
+            diffEl.style.display = 'none';
+        }
+
+        map.getContainer().style.cursor = 'crosshair';
+        map.doubleClickZoom.disable();
+
+        updateEditorDisplay(true);
+        showToast('Editing path: drag handles to adjust or drag midpoints to bend', 'info');
     }
 
-    function cancelDraw(){
-        drawingMode=false;drawPoints=[];
-        if(drawLine){map.removeLayer(drawLine);drawLine=null;}
-        map.getContainer().style.cursor='';
+    function cancelEditor(skipRender) {
+        editorMode = null;
+        editingSegId = null;
+        editorPoints = [];
+
+        if (editorLine) {
+            map.removeLayer(editorLine);
+            editorLine = null;
+        }
+        clearEditorMarkers();
+
+        map.getContainer().style.cursor = '';
         map.doubleClickZoom.enable();
-        document.getElementById('drawControls').style.display='none';
+
+        var activeView = document.getElementById('toolActiveView');
+        var idleView = document.getElementById('toolIdleView');
+        if (activeView) activeView.style.display = 'none';
+        if (idleView) idleView.style.display = 'flex';
+
+        if (!skipRender) {
+            renderSegments(buildMode);
+        }
     }
 
-    function finishDraw(){
-        if(drawPoints.length<2){alert('Need at least 2 points');return;}
-        drawingMode=false;map.getContainer().style.cursor='';map.doubleClickZoom.enable();
-        var nameInput=document.getElementById('drawName').value;var segType=drawType==='slope'?(document.getElementById('drawSlopeType')?document.getElementById('drawSlopeType').value:'downhill'):drawType;var typeCount=SEGMENTS.filter(function(s){return drawType==='lift'?s.type==='lift':s.type!=='lift';}).length+1;var name=nameInput||(drawType==='lift'?'Lift Line '+typeCount:'Slope Path '+typeCount);
-        var diff=document.getElementById('drawDifficulty').value;
-        var sector=document.getElementById('drawSector')?document.getElementById('drawSector').value:'';
-        var totalM=0;
-        for(var i=1;i<drawPoints.length;i++){
-            var a=map.latLngToContainerPoint(L.latLng(drawPoints[i-1][0],drawPoints[i-1][1]));
-            var b=map.latLngToContainerPoint(L.latLng(drawPoints[i][0],drawPoints[i][1]));
-            totalM+=a.distanceTo(b);
+    function saveEditor() {
+        if (editorPoints.length < 2) {
+            showToast('Please place at least 2 points for a line', 'warning');
+            return;
         }
-        totalM=Math.round(totalM*4.38);
-        postJSON('/map/segment',{type:(drawType==="slope"?(document.getElementById("drawSlopeType").value||"downhill"):drawType),name:name,points:drawPoints,length_meters:Math.round(totalM),difficulty:diff,sector:sector},function(res){
-            if(res.success){var newSeg={id:res.id,type:drawType==="slope"?(document.getElementById("drawSlopeType")?document.getElementById("drawSlopeType").value:"downhill"):drawType,name:document.getElementById("drawName").value||"Unnamed",points:JSON.stringify(drawPoints),length_meters:Math.round(totalM),difficulty:document.getElementById("drawDifficulty").value,sector:document.getElementById("drawSector")?document.getElementById("drawSector").value:""};SEGMENTS.push(newSeg);if(drawLine){map.removeLayer(drawLine);drawLine=null;}renderSegments(buildMode);document.getElementById("drawControls").style.display="none";}else{alert(res.error||"Save failed");}
+
+        var name = document.getElementById('toolSegName').value.trim();
+        if (!name) {
+            var typeCount = SEGMENTS.filter(function(s) { return editorType === 'lift' ? s.type === 'lift' : s.type !== 'lift'; }).length + 1;
+            name = editorType === 'lift' ? 'Lift Line ' + typeCount : 'Slope Path ' + typeCount;
+        }
+
+        var sector = document.getElementById('toolSegSector').value;
+        var slopeType = editorType === 'slope' ? (document.getElementById('toolSlopeType').value || 'downhill') : editorType;
+        var difficulty = editorType === 'slope' ? (document.getElementById('toolSegDiff').value || '') : '';
+        var lengthM = calcLengthMeters(editorPoints);
+
+        var payload = {
+            name: name,
+            type: slopeType,
+            sector: sector,
+            difficulty: difficulty,
+            length_meters: lengthM,
+            points: editorPoints
+        };
+        if (editingSegId) {
+            payload.id = editingSegId;
+        }
+
+        var btnSave = document.getElementById('toolBtnSave');
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Saving...';
+        }
+
+        postJSON('/map/segment', payload, function(res) {
+            if (btnSave) {
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i class="fa-solid fa-check"></i> Save';
+            }
+
+            if (res && res.success) {
+                var savedId = res.id || editingSegId;
+                var updatedSeg = {
+                    id: savedId,
+                    name: name,
+                    type: slopeType,
+                    sector: sector,
+                    difficulty: difficulty,
+                    length_meters: lengthM,
+                    points: JSON.stringify(editorPoints),
+                    active: 1
+                };
+
+                if (editingSegId) {
+                    var idx = SEGMENTS.findIndex(function(s) { return s.id == editingSegId; });
+                    if (idx !== -1) {
+                        SEGMENTS[idx] = updatedSeg;
+                    }
+                    showToast('Segment "' + name + '" updated!', 'success');
+                } else {
+                    SEGMENTS.push(updatedSeg);
+                    showToast('New segment "' + name + '" created!', 'success');
+                }
+
+                cancelEditor(false);
+            } else {
+                showToast((res && res.error) ? res.error : 'Failed to save segment', 'error');
+            }
+        });
+    }
+
+    function undoLastPoint() {
+        if (!editorMode || editorPoints.length === 0) return;
+        editorPoints.pop();
+        updateEditorDisplay(true);
+    }
+
+    function openAdminSegmentPopup(seg, latlng) {
+        var c = segColor(seg);
+        var secName = getSectorName(seg.sector);
+        var diffBadge = seg.difficulty ? '<span class="badge badge-xs text-[10px] font-bold uppercase" style="background:'+c+';color:#fff">'+seg.difficulty+'</span>' : '';
+        var popupContent = document.createElement('div');
+        popupContent.className = 'admin-segment-popover p-1 text-xs';
+        popupContent.innerHTML = 
+            '<div class="flex items-center justify-between gap-2 mb-2 pb-1 border-b border-base-content/10">' +
+                '<div class="font-bold text-sm flex items-center gap-1.5">' +
+                    (seg.type === 'lift' ? '<i class="fa-solid fa-elevator text-warning"></i>' : '<i class="fa-solid fa-person-skiing text-success"></i>') +
+                    ' <span class="truncate max-w-[140px]">' + (seg.name || 'Unnamed') + '</span>' +
+                '</div>' +
+                diffBadge +
+            '</div>' +
+            '<div class="space-y-1 mb-3 text-base-content/80 text-[11px]">' +
+                '<div class="flex items-center justify-between"><span>Length:</span> <span class="font-mono font-bold">' + Math.round(seg.length_meters || 0) + ' <?= distanceUnit() ?></span></div>' +
+                '<div class="flex items-center justify-between"><span>Type:</span> <span class="badge badge-ghost badge-xs capitalize">' + seg.type + '</span></div>' +
+                '<div class="flex items-center justify-between"><span>Sector:</span> <span class="badge badge-outline badge-xs">' + secName + '</span></div>' +
+            '</div>' +
+            '<div class="grid grid-cols-2 gap-1.5 mb-1.5">' +
+                '<button class="btn btn-xs btn-primary font-bold edit-path-btn gap-1"><i class="fa-solid fa-pen-to-square"></i> Edit Path</button>' +
+                '<button class="btn btn-xs btn-error btn-outline font-bold delete-seg-btn gap-1"><i class="fa-solid fa-trash"></i> Delete</button>' +
+            '</div>' +
+            '<button class="btn btn-xs btn-ghost border border-base-300 w-full font-semibold build-as-player-btn gap-1"><i class="fa-solid fa-hammer text-[10px]"></i> Open in Build Drawer</button>';
+
+        popupContent.querySelector('.edit-path-btn').addEventListener('click', function() {
+            map.closePopup();
+            startEditSegment(seg);
+        });
+        popupContent.querySelector('.delete-seg-btn').addEventListener('click', function() {
+            map.closePopup();
+            confirmDeleteSegment(seg);
+        });
+        popupContent.querySelector('.build-as-player-btn').addEventListener('click', function() {
+            map.closePopup();
+            selectSegment(seg);
+        });
+
+        L.popup({ minWidth: 210, maxWidth: 280, className: 'admin-leaflet-popup' })
+            .setLatLng(latlng)
+            .setContent(popupContent)
+            .openOn(map);
+    }
+
+    function confirmDeleteSegment(seg) {
+        if (!confirm('Are you sure you want to delete "' + (seg.name || 'Segment #' + seg.id) + '"? This cannot be undone.')) {
+            return;
+        }
+        postJSON('/map/segment/delete/' + seg.id, {}, function(res) {
+            if (res && res.success) {
+                SEGMENTS = SEGMENTS.filter(function(s) { return s.id != seg.id; });
+                if (segmentLayers[seg.id]) {
+                    map.removeLayer(segmentLayers[seg.id]);
+                    delete segmentLayers[seg.id];
+                }
+                renderSegments(buildMode);
+                showToast('Segment deleted', 'success');
+            } else {
+                showToast((res && res.error) ? res.error : 'Failed to delete segment', 'error');
+            }
+        });
+    }
+
+    function bindAdmin() {
+        var btnLift = document.getElementById('btnNewLift');
+        var btnSlope = document.getElementById('btnNewSlope');
+        var btnSave = document.getElementById('toolBtnSave');
+        var btnUndo = document.getElementById('toolBtnUndo');
+        var btnCancel = document.getElementById('toolBtnCancel');
+
+        if (btnLift) btnLift.addEventListener('click', function() { startDraw('lift'); });
+        if (btnSlope) btnSlope.addEventListener('click', function() { startDraw('slope'); });
+        if (btnSave) btnSave.addEventListener('click', saveEditor);
+        if (btnUndo) btnUndo.addEventListener('click', undoLastPoint);
+        if (btnCancel) btnCancel.addEventListener('click', function() { cancelEditor(false); });
+
+        var diffEl = document.getElementById('toolSegDiff');
+        if (diffEl) {
+            diffEl.addEventListener('change', function() {
+                if (editorMode) updateEditorDisplay(true);
+            });
+        }
+
+        var newSecBtn = document.getElementById('newSector');
+        if (newSecBtn) {
+            newSecBtn.addEventListener('click', function() {
+                var n = prompt('Sector name:'); if (!n) return;
+                postJSON('/map/sector/create', {name: n}, function() { location.reload(); });
+            });
+        }
+
+        var autoAssignBtn = document.getElementById('autoAssign');
+        if (autoAssignBtn) {
+            autoAssignBtn.addEventListener('click', function() {
+                postJSON('/map/sector/auto-assign', {}, function(r) { alert('Assigned ' + (r.assigned || 0) + ' segments'); });
+            });
+        }
+
+        document.querySelectorAll('.toggle-sector').forEach(function(b) {
+            b.addEventListener('click', function() { postJSON('/map/sector/toggle/' + b.dataset.id, {}, function() { location.reload(); }); });
+        });
+
+        document.querySelectorAll('.delete-sector').forEach(function(b) {
+            b.addEventListener('click', function() {
+                if (!confirm('Delete this sector?')) return;
+                postJSON('/map/sector/delete/' + b.dataset.id, {}, function() { location.reload(); });
+            });
+        });
+
+        map.on('click', function(e) {
+            if (!editorMode) return;
+            editorPoints.push([e.latlng.lat, e.latlng.lng]);
+            updateEditorDisplay(true);
+        });
+
+        map.on('dblclick', function(e) {
+            if (!editorMode) return;
+            if (L.DomEvent) L.DomEvent.stopPropagation(e);
+            saveEditor();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            var tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'select' || tag === 'textarea') {
+                if (e.key === 'Enter' && editorMode) saveEditor();
+                else if (e.key === 'Escape' && editorMode) cancelEditor(false);
+                return;
+            }
+
+            if (editorMode) {
+                if (e.key === 'Enter') { e.preventDefault(); saveEditor(); }
+                else if (e.key === 'Escape') { e.preventDefault(); cancelEditor(false); }
+                else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); undoLastPoint(); }
+            } else if (IS_ADMIN) {
+                if (e.key === 'l' || e.key === 'L') { e.preventDefault(); startDraw('lift'); }
+                else if (e.key === 's' || e.key === 'S') { e.preventDefault(); startDraw('slope'); }
+            }
         });
     }
 
