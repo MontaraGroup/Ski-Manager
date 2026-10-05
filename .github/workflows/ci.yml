@@ -1,0 +1,81 @@
+name: CI & Code Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Syntax & Integrity Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, json, curl, mysqli
+          coverage: none
+
+      - name: Validate PHP Syntax (Lint)
+        run: |
+          echo "Scanning all PHP files for syntax errors..."
+          ERRORS=0
+          
+          # Check app/ directory
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "Syntax Error detected in: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find app -type f -name "*.php")
+
+          # Check public/ directory
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "Syntax Error detected in: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find public -type f -name "*.php")
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "FAILED: $ERRORS syntax error(s) found."
+            exit 1
+          fi
+          echo "All PHP files passed syntax linting."
+
+      - name: Validate Robots.txt & Sitemaps
+        run: |
+          if [ ! -f "public/robots.txt" ]; then
+            echo "ERROR: public/robots.txt is missing!"
+            exit 1
+          fi
+
+          if [ ! -f "public/sitemap.xml" ]; then
+            echo "ERROR: public/sitemap.xml is missing!"
+            exit 1
+          fi
+
+          # Verify sitemap is well-formed XML
+          python3 -c "import xml.etree.ElementTree as ET; ET.parse('public/sitemap.xml'); print('sitemap.xml is valid XML')"
+          if [ -f "public/sitemap_index.xml" ]; then
+            python3 -c "import xml.etree.ElementTree as ET; ET.parse('public/sitemap_index.xml'); print('sitemap_index.xml is valid XML')"
+          fi
+
+      - name: Validate Script Executables
+        run: |
+          test -x scripts/deploy.sh || chmod +x scripts/deploy.sh
+          test -x scripts/update_changelog_view.py || chmod +x scripts/update_changelog_view.py
+          echo "Automation scripts verified."

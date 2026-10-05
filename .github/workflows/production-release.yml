@@ -15,7 +15,35 @@ permissions:
   contents: write
 
 jobs:
+  validate:
+    name: Lint & Pre-Deploy Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, json, curl, mysqli
+          coverage: none
+
+      - name: Validate PHP Syntax
+        run: |
+          ERRORS=0
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "Syntax Error in: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find app -type f -name "*.php")
+          if [ "$ERRORS" -gt 0 ]; then exit 1; fi
+
   release-and-deploy:
+    name: Release & Production Deployment
+    needs: validate
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +88,12 @@ jobs:
             cd ${{ secrets.PROD_PATH }}
             git fetch origin main
             git reset --hard origin/main
-            php spark migrate
-            php spark cache:clear || true
-            docker exec $(docker ps --format "{{.Names}}" | grep -iE "openresty|nginx" | head -n 1) openresty -s reload || true
-            docker exec $(docker ps --format "{{.Names}}" | grep -iE "php" | head -n 1) kill -USR2 1 || true
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh production
+
+      - name: Verify Live Production Health
+        run: |
+          echo "Verifying production health check..."
+          sleep 3
+          curl -k -f -s -o /dev/null -w "%{http_code}\n" https://ski-manager.net/health || curl -k -f -s -o /dev/null -w "%{http_code}\n" https://ski-manager.net/
+          echo "Production environment is healthy and operational."

@@ -1,0 +1,73 @@
+name: Promote Staging to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_note:
+        description: 'Optional release summary / note'
+        required: false
+        default: 'Promote verified staging features to stable production'
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    name: Promote Staging to Stable (Main)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, json, curl, mysqli
+          coverage: none
+
+      - name: Pre-Promotion Validation Gate
+        run: |
+          echo "Validating staging branch health before promotion..."
+          git checkout staging
+          ERRORS=0
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "Syntax Error detected in staging file: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find app -type f -name "*.php")
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "Promotion blocked: Staging has syntax errors."
+            exit 1
+          fi
+          echo "Staging branch passed all syntax checks."
+
+      - name: Merge Staging into Main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Switching to main branch..."
+          git checkout main
+          git pull origin main
+
+          RELEASE_NOTE="${{ github.event.inputs.release_note }}"
+          echo "Merging staging into main with note: ${RELEASE_NOTE}"
+
+          git merge staging --no-ff -m "chore(release): promote staging to stable - ${RELEASE_NOTE}"
+          git push origin main
+          echo "Main branch updated successfully. Production release workflow will automatically execute."
+
+      - name: Synchronize Staging with Main
+        run: |
+          echo "Keeping staging synchronized with main..."
+          git checkout staging
+          git merge main -m "chore(sync): synchronize staging with latest stable release [skip ci]"
+          git push origin staging
+          echo "Staging and Main branches are fully synchronized."

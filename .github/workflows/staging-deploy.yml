@@ -1,0 +1,74 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint & Pre-Deploy Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, json, curl, mysqli
+          coverage: none
+
+      - name: Validate PHP Syntax
+        run: |
+          ERRORS=0
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "Syntax Error in: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find app -type f -name "*.php")
+          if [ "$ERRORS" -gt 0 ]; then exit 1; fi
+
+  deploy-staging:
+    name: Deploy to Staging Server
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Staging Deployment via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e
+            TARGET_DIR="/opt/1panel/www/sites/skiv2-staging/ci4"
+            if [ -n "${{ secrets.STAGING_PATH }}" ]; then
+              TARGET_DIR="${{ secrets.STAGING_PATH }}"
+            fi
+
+            echo "Navigating to staging directory: ${TARGET_DIR}"
+            cd "${TARGET_DIR}"
+
+            git fetch origin staging
+            git reset --hard origin/staging
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh staging
+
+      - name: Verify Staging Smoke Test
+        run: |
+          echo "Verifying live staging endpoint..."
+          sleep 3
+          curl -k -f -s -o /dev/null -w "%{http_code}\n" https://staging.ski-manager.net/health || curl -k -f -s -o /dev/null -w "%{http_code}\n" https://staging.ski-manager.net/
+          echo "Staging environment is healthy and operational."
