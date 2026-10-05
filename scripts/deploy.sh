@@ -131,6 +131,24 @@ if [ "${HEALTH_CHECK_PASSED}" = "false" ]; then
     exit 1
 fi
 
+# 9. Update Node / npm on the VPS
+echo "Checking and updating npm on VPS..."
+if command -v npm &>/dev/null; then
+    echo "Current host npm version: $(npm -v)"
+    npm install -g npm@latest || true
+    echo "Updated host npm version:  $(npm -v)"
+else
+    echo "Notice: npm not found in host PATH, checking containers..."
+fi
+
+if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
+    if docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
+        echo "Updating npm inside ${PHP_CONTAINER}..."
+        docker exec "${PHP_CONTAINER}" npm install -g npm@latest || true
+        echo "Container npm version: $(docker exec "${PHP_CONTAINER}" npm -v)"
+    fi
+fi
+
 echo "=========================================================="
 echo " Deployment to [${ENV}] completed successfully!"
 echo " Commit: $(git rev-parse --short HEAD)"
