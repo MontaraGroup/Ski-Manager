@@ -79,7 +79,27 @@ echo "Syncing code with origin/${BRANCH}..."
 git fetch origin "${BRANCH}"
 git reset --hard "origin/${BRANCH}"
 
-# 5. Run Database Migrations Inside PHP Container
+# 5. Project NPM Dependencies & Asset Compilation
+if [ -f "package.json" ]; then
+    echo "Updating project npm dependencies in $(pwd)..."
+    if command -v npm &>/dev/null; then
+        echo "Running 'npm update' on host in $(pwd)..."
+        npm update || true
+        if grep -q '"build":' package.json; then
+            echo "Rebuilding project assets ('npm run build')..."
+            npm run build || true
+        fi
+    elif docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}" && docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
+        echo "Running 'npm update' inside container ${PHP_CONTAINER}..."
+        docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm update || true
+        if grep -q '"build":' package.json; then
+            echo "Building frontend assets inside ${PHP_CONTAINER}..."
+            docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm run build || true
+        fi
+    fi
+fi
+
+# 6. Run Database Migrations Inside PHP Container
 echo "Executing database migrations..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
     docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" php spark migrate || {
@@ -90,7 +110,7 @@ else
     php spark migrate || true
 fi
 
-# 6. Clear Application, Route & View Caches
+# 7. Clear Application, Route & View Caches
 echo "Clearing application cache..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
     docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" php spark cache:clear || true
@@ -98,7 +118,7 @@ else
     php spark cache:clear || true
 fi
 
-# 7. Reload Bytecode Cache (PHP-FPM) and Reverse Proxy (OpenResty)
+# 8. Reload Bytecode Cache (PHP-FPM) and Reverse Proxy (OpenResty)
 echo "Reloading runtime workers..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
     docker exec "${PHP_CONTAINER}" kill -USR2 1 2>/dev/null || true
@@ -108,7 +128,7 @@ if docker ps --format '{{.Names}}' | grep -q "${OPENRESTY_CONTAINER}"; then
     docker exec "${OPENRESTY_CONTAINER}" openresty -s reload 2>/dev/null || true
 fi
 
-# 8. Post-Deploy Smoke Test & Health Check
+# 9. Post-Deploy Smoke Test & Health Check
 echo "Running post-deploy health check on ${DOMAIN}..."
 sleep 2
 
@@ -131,21 +151,16 @@ if [ "${HEALTH_CHECK_PASSED}" = "false" ]; then
     exit 1
 fi
 
-# 9. Update Node / npm on the VPS
-echo "Checking and updating npm on VPS..."
+# 10. Global npm CLI tool check / update on VPS
+echo "Checking and maintaining global npm CLI on VPS..."
 if command -v npm &>/dev/null; then
-    echo "Current host npm version: $(npm -v)"
+    echo "Host npm version: $(npm -v)"
     npm install -g npm@latest || true
-    echo "Updated host npm version:  $(npm -v)"
-else
-    echo "Notice: npm not found in host PATH, checking containers..."
 fi
 
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
     if docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
-        echo "Updating npm inside ${PHP_CONTAINER}..."
         docker exec "${PHP_CONTAINER}" npm install -g npm@latest || true
-        echo "Container npm version: $(docker exec "${PHP_CONTAINER}" npm -v)"
     fi
 fi
 
