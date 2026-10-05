@@ -137,6 +137,14 @@
                             <progress class="progress progress-warning w-full" value="<?= max(0, $seasonProgress - 100) ?>" max="35"></progress>
                         </div>
                     </div>
+                    <?php if ($seasonLength - $seasonProgress <= 14): ?>
+                    <div class="mt-2.5 p-2 rounded-lg bg-warning/10 border border-warning/30 flex items-center justify-between text-[11px]">
+                        <span class="text-warning font-semibold flex items-center gap-1.5">
+                            <i class="fa-solid fa-hourglass-half text-[10px]"></i> Season 2 Expansion: <?= max(0, $seasonLength - $seasonProgress) ?> Days Left
+                        </span>
+                        <span class="text-base-content/60 font-medium">Sector 2 Unlocks Oct 19</span>
+                    </div>
+                    <?php endif; ?>
                 </div>
             <?php endif ?>
         <?php endif ?>

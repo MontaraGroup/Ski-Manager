@@ -19,6 +19,40 @@
 
     <div class="relative border-l-2 border-base-300 ml-3 space-y-8">
         
+        <!-- Season 2 Preview -->
+        <div class="relative pl-6">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-warning"></span>
+            <div class="card bg-base-100 shadow-sm border border-warning/60">
+                <div class="card-body p-5">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <span class="badge badge-warning font-mono font-bold">Season 2 Preview</span>
+                        <span class="badge badge-outline badge-sm text-warning font-semibold gap-1"><i class="fa-solid fa-clock text-[10px]"></i>Oct 19, 2026</span>
+                        <span class="badge badge-outline badge-sm">Expansion</span>
+                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-hourglass-half mr-1"></i>14 Days Remaining</span>
+                    </div>
+                    <h2 class="text-lg font-bold">Season 2: Park City Expansion (Sector 2 - Advanced Peaks)</h2>
+                    <p class="text-sm text-base-content/70 mt-1">Season 1 enters its final 14-day stretch. On October 19, 2026, Season 2 will automatically launch with full player progress carryover, unlocking Sector 2 on Park City Mountain.</p>
+                    
+                    <div class="mt-4 space-y-3">
+                        <ul class="space-y-1.5 ml-1">
+                            <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                <span class="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0"></span>
+                                <span><strong>Sector 2 Unlocked:</strong> Expands mountain boundaries into high-altitude ridges and Black Diamond bowls (King Con, Thaynes, Crescent Ridge).</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                <span class="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0"></span>
+                                <span><strong>100% Progress Carryover:</strong> All resort treasury, buildings, staff, and existing lifts carry forward directly into Season 2.</span>
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-base-content/80">
+                                <span class="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0"></span>
+                                <span><strong>Season 1 Pioneer Rewards:</strong> Every active Season 1 manager receives the "Season 1 Pioneer" achievement badge; top 10 leaderboard finishers earn podium trophies and 50 Genepis bonus.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- v1.4.0 Release -->
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-primary"></span>

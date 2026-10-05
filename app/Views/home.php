@@ -22,11 +22,17 @@
 <!-- Minimalist Announcement Banner -->
 <div class="bg-base-200/80 border-b border-base-300 py-2.5 px-4 text-xs font-medium">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div class="flex items-center gap-2 text-base-content/80">
+        <div class="flex items-center gap-2 text-base-content/80 flex-wrap">
             <span class="inline-block w-2 h-2 rounded-full bg-success"></span>
             <span class="font-semibold text-base-content">Season <?= getSeasonNumber() ?> Active</span>
             <span class="text-base-content/40">&bull;</span>
             <span>Day <?= getSeasonDay() ?> of <?= getSeasonLength() ?> (Park City Mountain)</span>
+            <?php if ($daysRemaining <= 14): ?>
+                <span class="text-base-content/40">&bull;</span>
+                <span class="badge badge-warning badge-xs font-bold gap-1"><i class="fa-solid fa-clock text-[9px]"></i> Final Push: <?= $daysRemaining ?> Days Left</span>
+                <span class="text-base-content/40">&bull;</span>
+                <span class="text-primary font-bold">Season 2 Expansion Arrives Oct 19</span>
+            <?php endif; ?>
         </div>
         <div>
             <?php if (!auth()->loggedIn()) : ?>
@@ -408,11 +414,21 @@
             </div>
 
             <!-- Season 2 -->
-            <div class="p-6 bg-base-100 rounded-2xl border border-base-300 shadow-sm space-y-4 flex flex-col justify-between">
+            <div class="p-6 bg-base-100 rounded-2xl border-2 <?= $daysRemaining <= 14 ? 'border-warning/80 shadow-md' : 'border-base-300 shadow-sm' ?> space-y-4 flex flex-col justify-between">
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="badge badge-neutral font-mono text-xs font-bold">Season 2</span>
-                        <span class="text-xs font-medium text-base-content/50 flex items-center gap-1"><i class="fa-solid fa-lock text-[10px]"></i> Locked</span>
+                        <span class="badge <?= $daysRemaining <= 14 ? 'badge-warning font-bold' : 'badge-neutral font-medium' ?> font-mono text-xs">Season 2</span>
+                        <?php if ($daysRemaining <= 14): ?>
+                            <span class="text-xs font-bold text-warning flex items-center gap-1.5">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-warning"></span>
+                                </span>
+                                Launching Oct 19
+                            </span>
+                        <?php else: ?>
+                            <span class="text-xs font-medium text-base-content/50 flex items-center gap-1"><i class="fa-solid fa-lock text-[10px]"></i> Locked</span>
+                        <?php endif; ?>
                     </div>
 
                     <h3 class="font-bold text-lg text-base-content">Sector 2 &bull; Advanced Peaks</h3>
@@ -420,20 +436,27 @@
                         Expands terrain into steep bowls and high-altitude ridges. Introduce express gondolas and handle storm emergency operations.
                     </p>
 
-                    <div class="p-3.5 bg-base-200/50 rounded-xl border border-base-300/80 text-center">
-                        <span class="text-xs font-semibold text-base-content/70"><i class="fa-solid fa-hourglass-half text-warning mr-1"></i> Unlocks after Season 1</span>
-                        <div class="text-[11px] text-base-content/50 mt-0.5">Full resort cash & assets carry forward</div>
+                    <div class="p-3.5 bg-base-200/80 rounded-xl border border-warning/30 space-y-1.5">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-warning flex items-center gap-1"><i class="fa-solid fa-hourglass-half text-[10px]"></i> Unlocks in <?= $daysRemaining ?> Days</span>
+                            <span class="text-xs text-base-content/50 font-mono">Oct 19, 2026</span>
+                        </div>
+                        <div class="text-[11px] text-base-content/70">100% Progress Carryover: Cash & assets carry forward into Season 2!</div>
                     </div>
 
                     <ul class="space-y-2 text-xs text-base-content/80 pt-2 border-t border-base-200">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-mountain text-info text-xs"></i> Black Diamond & Expert Bowls</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-cable-car text-info text-xs"></i> High-Speed Express Lifts</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-arrow-right-rotate text-info text-xs"></i> Full Progress Carryover</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-mountain text-warning text-xs"></i> Black Diamond & Expert Bowls</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-cable-car text-warning text-xs"></i> High-Speed Express Gondolas</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-arrow-right-rotate text-success text-xs"></i> Full Progress & Cash Carryover</li>
                     </ul>
                 </div>
 
                 <div class="pt-2">
-                    <button class="btn btn-sm btn-ghost btn-disabled rounded-xl w-full text-xs font-medium cursor-not-allowed">Season 1 In Progress</button>
+                    <?php if (!auth()->loggedIn()): ?>
+                    <a href="/register" class="btn btn-warning btn-sm rounded-xl w-full font-bold shadow-xs">Join & Prepare for Season 2</a>
+                    <?php else: ?>
+                    <a href="/dashboard" class="btn btn-warning btn-sm rounded-xl w-full font-bold shadow-xs">Prepare Your Resort <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+                    <?php endif; ?>
                 </div>
             </div>
 

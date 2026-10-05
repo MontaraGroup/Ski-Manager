@@ -28,7 +28,7 @@
             <?= csrf_field() ?>
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div><label class="label text-xs">Season #</label><input type="number" name="season_number" value="<?= count($seasons) + 1 ?>" class="input input-sm input-bordered w-full" required></div>
-                <div><label class="label text-xs">Name</label><input type="text" name="name" placeholder="Season 2: Deer Valley" class="input input-sm input-bordered w-full" required></div>
+                <div><label class="label text-xs">Name</label><input type="text" name="name" placeholder="Season 2: Park City Expansion" class="input input-sm input-bordered w-full" required></div>
                 <div><label class="label text-xs">Resort</label><select name="resort_map" class="select select-sm select-bordered w-full"><?php foreach ($resortMaps as $key => $name) : ?><option value="<?= $key ?>"><?= esc($name) ?></option><?php endforeach ?></select></div>
                 <div><label class="label text-xs">Start Date</label><input type="date" name="start_date" class="input input-sm input-bordered w-full" required></div>
                 <div><label class="label text-xs">Total Days</label><input type="number" name="duration_days" value="135" class="input input-sm input-bordered w-full" required></div>
