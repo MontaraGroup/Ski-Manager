@@ -8,12 +8,21 @@ class GoogleAuth extends BaseController
 {
     private function getClientId(): string { return env('GOOGLE_CLIENT_ID', ''); }
     private function getClientSecret(): string { return env('GOOGLE_CLIENT_SECRET', ''); }
-    private function getRedirectUri(): string { return env('GOOGLE_REDIRECT_URI', ''); }
+    private function getRedirectUri(): string {
+        $uri = env('GOOGLE_REDIRECT_URI', '');
+        return !empty($uri) ? $uri : site_url('auth/google/callback');
+    }
 
     public function redirect()
     {
+        $clientId = $this->getClientId();
+        if (empty($clientId)) {
+            log_message('error', 'Google OAuth client_id is not configured.');
+            return redirect()->to('/login')->with('error', 'Google sign-in is temporarily unavailable. Please log in with email and password.');
+        }
+
         $params = http_build_query([
-            'client_id' => $this->getClientId(),
+            'client_id' => $clientId,
             'redirect_uri' => $this->getRedirectUri(),
             'response_type' => 'code',
             'scope' => 'openid email profile',

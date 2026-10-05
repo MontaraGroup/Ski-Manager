@@ -9,15 +9,20 @@ class DiscordAuth extends BaseController
     private function getConfig(): array
     {
         return [
-            'client_id' => env('DISCORD_CLIENT_ID'),
-            'client_secret' => env('DISCORD_CLIENT_SECRET'),
-            'redirect_uri' => env('DISCORD_REDIRECT_URI'),
+            'client_id' => env('DISCORD_CLIENT_ID', ''),
+            'client_secret' => env('DISCORD_CLIENT_SECRET', ''),
+            'redirect_uri' => env('DISCORD_REDIRECT_URI') ?: site_url('auth/discord/callback'),
         ];
     }
 
     public function redirect()
     {
         $config = $this->getConfig();
+        if (empty($config['client_id'])) {
+            log_message('error', 'Discord OAuth client_id is not configured.');
+            return redirect()->to('/login')->with('error', 'Discord sign-in is temporarily unavailable. Please log in with email and password.');
+        }
+
         $params = http_build_query([
             'client_id' => $config['client_id'],
             'redirect_uri' => $config['redirect_uri'],
