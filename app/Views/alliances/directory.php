@@ -178,9 +178,9 @@
                                         <button onclick="document.getElementById('applyModal_<?= (int)$a['id'] ?>').showModal()" class="btn btn-xs btn-outline">Apply</button>
 
                                         <!-- Application Dialog -->
-                                        <dialog id="applyModal_<?= (int)$a['id'] ?>" class="modal modal-middle">
+                                        <dialog id="applyModal_<?= (int)$a['id'] ?>" class="modal modal-middle" closedby="any" aria-labelledby="applyModalTitle_<?= (int)$a['id'] ?>">
                                             <div class="modal-box text-left">
-                                                <h3 class="font-bold text-lg mb-2">Apply to <?= esc($a['name']) ?></h3>
+                                                <h3 id="applyModalTitle_<?= (int)$a['id'] ?>" class="font-bold text-lg mb-2">Apply to <?= esc($a['name']) ?></h3>
                                                 <p class="text-xs text-base-content/60 mb-4">Leadership will review your application before admitting your mountain to the syndicate.</p>
                                                 <form action="/alliances/join/<?= (int)$a['id'] ?>" method="post" class="space-y-3">
                                                     <?= csrf_field() ?>
@@ -209,14 +209,14 @@
 </div>
 
 <!-- Found Alliance Modal -->
-<dialog id="foundModal" class="modal modal-middle">
+<dialog id="foundModal" class="modal modal-middle" closedby="any" aria-labelledby="foundModalTitle">
     <div class="modal-box max-w-lg">
         <div class="flex items-center gap-2 border-b border-base-300 pb-3 mb-4">
             <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                <i class="fa-solid fa-plus"></i>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </div>
             <div>
-                <h3 class="font-bold text-lg text-base-content">Charter a New Alliance</h3>
+                <h3 id="foundModalTitle" class="font-bold text-lg text-base-content">Charter a New Alliance</h3>
                 <div class="text-xs text-base-content/50">Creation Fee: 50,000 € (Your Cash: <?= currency($userCash) ?>)</div>
             </div>
         </div>

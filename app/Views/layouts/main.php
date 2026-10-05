@@ -36,6 +36,7 @@
     <link rel="canonical" href="https://ski-manager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
     <meta name="description" content="Ski Manager - Free online ski resort management game. Build slopes, hire staff, manage finances, and compete with players worldwide.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -57,6 +58,10 @@
     <script>
         var saved = localStorage.getItem('theme') || 'carboncloud';
         document.documentElement.setAttribute('data-theme', saved);
+        var metaScheme = document.querySelector('meta[name="color-scheme"]');
+        if (metaScheme) {
+            metaScheme.content = (saved === 'winter' || saved === 'light') ? 'light dark' : 'dark light';
+        }
     </script>
     <script type="application/ld+json">
     {
@@ -73,6 +78,39 @@
     </script>
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
 <style>
+:root {
+    color-scheme: dark light;
+    accent-color: #3b82f6;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+
+/* Modern Typography: Balance short headings and prevent orphans in paragraphs */
+h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+}
+p, blockquote, .pretty-text {
+    text-wrap: pretty;
+}
+
+/* Form UX: Post-interaction validation styling */
+input:user-invalid, select:user-invalid, textarea:user-invalid {
+    border-color: var(--fallback-er, oklch(var(--er) / 1));
+}
+
+/* Native Dialog Backdrop Styling */
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Off-screen Content Deferral (defer-rendering-heavy-content) */
+.content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
+}
+
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
@@ -95,6 +133,28 @@
 a.link{transition:opacity 0.15s ease}
 a.link:hover{opacity:0.8}
 .dropdown-content{animation:scaleIn 0.15s ease-out both}
+
+/* Accessible Motion: Respect user preference for reduced motion without breaking functional UI */
+@media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+        scroll-behavior: auto;
+    }
+    .animate-fade-in-up,
+    .animate-fade-in,
+    .animate-slide-in-right,
+    .animate-scale-in,
+    .animate-pulse-soft,
+    .dropdown-content,
+    .alert {
+        animation: none !important;
+    }
+    .card:hover, .btn:active {
+        transform: none !important;
+    }
+    .card, .btn, .badge, .progress, a.link {
+        transition-duration: 0.01ms !important;
+    }
+}
 </style>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5636695863753930" crossorigin="anonymous"></script>
     <script async src="https://fundingchoicesmessages.google.com/i/pub-5636695863753930?ers=1"></script><script>(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();</script>
@@ -240,16 +300,16 @@ a.link:hover{opacity:0.8}
         <div class="navbar-end gap-2">
             <?php if (auth()->loggedIn()) : ?>
             <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle" aria-label="Search"><i class="fa-solid fa-search" aria-hidden="true"></i></button>
-            <dialog id="searchModal" class="modal modal-top">
+            <dialog id="searchModal" class="modal modal-top" closedby="any" aria-label="Quick Search">
                 <div class="modal-box max-w-lg mx-auto mt-20 p-0">
-                    <div class="flex items-center gap-2 p-3 border-b border-base-300">
-                        <i class="fa-solid fa-search text-base-content/30"></i>
-                        <input type="text" id="globalSearch" placeholder="Search pages, features, settings..." class="input input-ghost input-sm flex-1 focus:outline-none" autocomplete="off" autofocus />
+                    <search class="flex items-center gap-2 p-3 border-b border-base-300">
+                        <i class="fa-solid fa-search text-base-content/30" aria-hidden="true"></i>
+                        <input type="search" id="globalSearch" placeholder="Search pages, features, settings..." class="input input-ghost input-sm flex-1 focus:outline-none" autocomplete="off" autofocus />
                         <kbd class="kbd kbd-xs">Esc</kbd>
-                    </div>
+                    </search>
                     <div id="searchResults" class="max-h-80 overflow-y-auto p-2"></div>
                     <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/40">
-                        <i class="fa-solid fa-compass text-2xl mb-2"></i>
+                        <i class="fa-solid fa-compass text-2xl mb-2" aria-hidden="true"></i>
                         <p>Type to search pages and features</p>
                     </div>
                 </div>
@@ -455,7 +515,7 @@ a.link:hover{opacity:0.8}
                         <li><a href="/leaderboard" class="link link-hover text-base-content/60">Leaderboard</a></li>
                         <li><a href="/updates" class="link link-hover text-base-content/60">Updates</a></li>
                         <li><a href="/roadmap" class="link link-hover text-base-content/60">Roadmap</a></li>
-                        <li><a href="https://wiki.ski-manager.net" target="_blank" class="link link-hover text-base-content/60">Wiki</a></li>
+                        <li><a href="https://wiki.ski-manager.net" target="_blank" rel="noopener noreferrer" class="link link-hover text-base-content/60">Wiki</a></li>
                         <li><a href="/genepis" class="link link-hover text-base-content/60">Genepis</a></li>
                     </ul>
                 </div>
@@ -535,7 +595,7 @@ document.addEventListener("click", function(e) {
     }
 });
 </script>
-<dialog id="confirmModal" class="modal modal-bottom sm:modal-middle">
+<dialog id="confirmModal" class="modal modal-bottom sm:modal-middle" closedby="any" aria-labelledby="confirmTitle">
     <div class="modal-box">
         <h3 class="text-lg font-bold" id="confirmTitle">Confirm</h3>
         <p class="py-4 text-sm text-base-content/70" id="confirmMessage"></p>
@@ -757,7 +817,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </nav>
 
 <!-- Mobile More Operations Sheet -->
-<dialog id="mobileMenuDrawer" class="modal modal-bottom md:modal-middle">
+<dialog id="mobileMenuDrawer" class="modal modal-bottom md:modal-middle" closedby="any" aria-label="Resort Menu">
     <div class="modal-box max-h-[85vh] p-4 bg-base-100 rounded-t-2xl md:rounded-2xl">
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-base-200">
             <div class="flex items-center gap-2 font-bold text-base">
@@ -975,6 +1035,24 @@ loadTutorial();
 setInterval(loadTutorial, 10000);
 </script>
 <?php endif ?>
-
+<script>
+// Modern Web Guidance: Cross-browser light-dismiss fallback for <dialog closedby="any">
+if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)) {
+    document.addEventListener('click', function(event) {
+        if (event.target && event.target.tagName === 'DIALOG' && event.target.getAttribute('closedby') === 'any') {
+            var rect = event.target.getBoundingClientRect();
+            var isInDialog = (
+                rect.top <= event.clientY &&
+                event.clientY <= rect.top + rect.height &&
+                rect.left <= event.clientX &&
+                event.clientX <= rect.left + rect.width
+            );
+            if (!isInDialog && typeof event.target.close === 'function') {
+                event.target.close();
+            }
+        }
+    });
+}
+</script>
 </body>
 </html>

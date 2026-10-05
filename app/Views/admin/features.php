@@ -47,9 +47,9 @@ $offCount = count(array_filter($flags, fn($f) => (int)$f['enabled'] === 0));
     </div>
 
     <!-- Search -->
-    <div class="mb-4">
-        <input type="text" id="flagSearch" placeholder="Search features..." class="input input-bordered input-sm w-full" oninput="filterFlags(this.value)">
-    </div>
+    <search class="mb-4">
+        <input type="search" id="flagSearch" placeholder="Search features..." aria-label="Search features" class="input input-bordered input-sm w-full" oninput="filterFlags(this.value)">
+    </search>
 
     <!-- Live Features -->
     <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-circle-check mr-1 text-success"></i>Live Features <span class="badge badge-ghost badge-sm"><?= count($live) ?></span></h2>

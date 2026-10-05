@@ -351,7 +351,7 @@
 
             <div class="lg:col-span-7">
                 <a href="<?= auth()->loggedIn() ? '/map' : '/register' ?>" class="block relative rounded-2xl overflow-hidden border border-base-300 shadow-sm">
-                    <img src="/img/ParkCity_low.jpg" alt="Park City Trail Map" class="w-full h-auto object-cover" loading="lazy">
+                    <img src="/img/ParkCity_low.jpg" alt="Park City Trail Map" class="w-full h-auto object-cover" width="600" height="340" loading="lazy" decoding="async">
                     <div class="absolute inset-0 bg-base-900/5"></div>
                 </a>
             </div>

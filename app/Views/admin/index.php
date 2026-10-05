@@ -92,7 +92,9 @@
         <div class="lg:col-span-2">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-lg font-bold"><i class="fa-solid fa-users mr-1"></i>Players <span class="badge badge-ghost badge-sm"><?= count($users) ?></span></h2>
-                <input type="text" id="playerSearch" placeholder="Search players..." class="input input-bordered input-xs w-48">
+                <search>
+                    <input type="search" id="playerSearch" placeholder="Search players..." aria-label="Search players" class="input input-bordered input-xs w-48">
+                </search>
             </div>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-0"><div class="overflow-auto max-h-[600px]">
                 <table class="table table-sm table-pin-rows">

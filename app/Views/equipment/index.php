@@ -237,9 +237,9 @@
 </div>
 
 <!-- Compare Modal -->
-<dialog id="compareModal" class="modal modal-bottom sm:modal-middle">
+<dialog id="compareModal" class="modal modal-bottom sm:modal-middle" closedby="any" aria-labelledby="compareModalTitle">
     <div class="modal-box max-w-4xl w-full">
-        <h3 class="font-bold text-lg mb-4"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>Equipment Comparison</h3>
+        <h3 class="font-bold text-lg mb-4" id="compareModalTitle"><i class="fa-solid fa-scale-balanced mr-2 text-primary" aria-hidden="true"></i>Equipment Comparison</h3>
         <div class="overflow-x-auto">
             <table class="table table-sm" id="compareTable">
                 <thead><tr><th>Spec</th></tr></thead>

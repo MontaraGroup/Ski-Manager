@@ -232,7 +232,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <a href="/map" class="block text-center group">
                 <h3 class="font-semibold text-sm mb-2">Trail Map</h3>
-                <img src="/img/<?= esc($resort['resort_map'] ?? 'ParkCity') ?>_low.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="340" loading="lazy">
+                <img src="/img/<?= esc($resort['resort_map'] ?? 'ParkCity') ?>_low.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="340" loading="lazy" decoding="async">
                 <p class="text-xs text-base-content/50 mt-2">Click to build slopes & lifts</p>
             </a>
         </div></div>

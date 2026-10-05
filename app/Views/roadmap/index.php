@@ -107,22 +107,24 @@
             </div>
 
             <!-- Instant Search Input -->
-            <div class="flex items-center gap-2 w-full lg:w-72">
+            <search class="flex items-center gap-2 w-full lg:w-72">
                 <div class="relative w-full">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-base-content/40"></i>
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-base-content/40" aria-hidden="true"></i>
                     <input type="search" 
                            id="roadmapSearch" 
                            placeholder="Search features..." 
+                           aria-label="Search features"
                            oninput="handleSearch(this.value)"
                            class="input input-sm input-bordered w-full pl-8 pr-7 text-xs rounded-lg" />
                     <button type="button" 
                             id="clearSearchBtn" 
                             onclick="clearSearch()" 
+                            aria-label="Clear search"
                             class="hidden absolute right-2.5 top-2 text-xs text-base-content/40 hover:text-base-content">
-                        <i class="fa-solid fa-xmark"></i>
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
-            </div>
+            </search>
 
         </div>
 
@@ -306,10 +308,10 @@
 </div>
 
 <!-- Feature Detail Modal -->
-<dialog id="detail_modal" class="modal">
+<dialog id="detail_modal" class="modal" closedby="any" aria-labelledby="detail_title">
     <div class="modal-box max-w-lg p-6 space-y-4">
         <form method="dialog">
-            <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3">✕</button>
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3" aria-label="Close dialog">✕</button>
         </form>
 
         <div class="flex items-center gap-2 flex-wrap pt-1">
@@ -342,13 +344,13 @@
 </dialog>
 
 <!-- Suggest Feature Modal -->
-<dialog id="suggest_modal" class="modal">
+<dialog id="suggest_modal" class="modal" closedby="any" aria-labelledby="suggest_modal_title">
     <div class="modal-box max-w-md">
         <form method="dialog">
-            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="Close dialog">✕</button>
         </form>
-        <h3 class="font-bold text-lg flex items-center gap-2">
-            <i class="fa-solid fa-lightbulb text-warning"></i> Suggest a Feature
+        <h3 class="font-bold text-lg flex items-center gap-2" id="suggest_modal_title">
+            <i class="fa-solid fa-lightbulb text-warning" aria-hidden="true"></i> Suggest a Feature
         </h3>
         <p class="text-xs text-base-content/60 mt-1">
             Share your idea for upcoming seasons. Approved suggestions are added directly to the community roadmap.

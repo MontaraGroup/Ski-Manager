@@ -11,7 +11,7 @@
             <a href="/roadmap" class="btn btn-sm btn-outline gap-1.5">
                 <i class="fa-solid fa-compass text-primary"></i> Roadmap
             </a>
-            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" class="btn btn-sm btn-ghost gap-1.5 text-xs text-base-content/60">
+            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost gap-1.5 text-xs text-base-content/60">
                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> External Changelog
             </a>
         </div>
@@ -132,7 +132,7 @@
         <!-- v1.3.7 Release -->
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.7</span>
@@ -147,7 +147,7 @@
         </div>
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">Release</span>
@@ -164,7 +164,7 @@
         
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.6</span>
@@ -239,7 +239,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.6</span>
@@ -293,7 +293,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.5</span>
@@ -359,7 +359,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.1</span>
@@ -374,7 +374,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3</span>
@@ -389,7 +389,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.2</span>
@@ -404,7 +404,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.1</span>
@@ -419,7 +419,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.0</span>
@@ -434,7 +434,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.5</span>
@@ -449,7 +449,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.4</span>
@@ -464,7 +464,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.3</span>
@@ -479,7 +479,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.2</span>
@@ -494,7 +494,7 @@
 
         <div class="relative pl-6">
             <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-2 border-base-100 bg-base-300"></span>
-            <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card bg-base-100 shadow-sm border border-base-300 content-visibility-auto">
                 <div class="card-body p-5">
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.1</span>
