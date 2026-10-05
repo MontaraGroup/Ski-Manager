@@ -83,15 +83,16 @@ git reset --hard "origin/${BRANCH}"
 if [ -f "package.json" ]; then
     echo "Updating project npm dependencies in $(pwd)..."
     if command -v npm &>/dev/null; then
-        echo "Running 'npm update' on host in $(pwd)..."
-        npm update || true
+        echo "Running 'npm install' on host in $(pwd)..."
+        npm install --no-audit --no-fund || npm update || true
+        echo "Active DaisyUI package: $(npm list --depth=0 2>/dev/null | grep daisyui || true)"
         if grep -q '"build":' package.json; then
             echo "Rebuilding project assets ('npm run build')..."
             npm run build || true
         fi
     elif docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}" && docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
-        echo "Running 'npm update' inside container ${PHP_CONTAINER}..."
-        docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm update || true
+        echo "Running 'npm install' inside container ${PHP_CONTAINER}..."
+        docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm install --no-audit --no-fund || docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm update || true
         if grep -q '"build":' package.json; then
             echo "Building frontend assets inside ${PHP_CONTAINER}..."
             docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm run build || true
