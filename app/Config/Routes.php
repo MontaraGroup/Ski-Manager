@@ -119,7 +119,7 @@ $routes->match(['get', 'head'], '/roadmap', 'Roadmap::index');
 $routes->post('/roadmap/vote/(:num)', 'Roadmap::vote/$1');
 $routes->post('/roadmap/suggest', 'Roadmap::suggest');
 $routes->post('/roadmap/admin/status', 'Roadmap::updateStatus');
-$routes->get('/roadmap/delete/(:num)', 'Roadmap::deleteItem/$1');
+$routes->match(['get', 'post'], '/roadmap/delete/(:num)', 'Roadmap::deleteItem/$1');
 $routes->get('/weather', 'Weather::index');
 $routes->match(['GET','POST'], '/resort/edit', 'Resort::edit');
 $routes->get("/tour/(:num)", "Tour::view/$1");

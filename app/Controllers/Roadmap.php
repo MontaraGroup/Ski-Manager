@@ -139,7 +139,7 @@ class Roadmap extends BaseController
                         'description' => 'Introduces the community voting system for 6 candidate mountains, real-time mountain telemetry (elevation, weather, trail layouts), and Season 4 gameplay perks.',
                         'status'      => 'completed',
                         'category'    => 'gameplay',
-                        'upvotes'     => 56,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -149,7 +149,7 @@ class Roadmap extends BaseController
                         'description' => 'Optimized dashboard performance with a 98% database query reduction, multi-column composite indexing, and automated log retention cleanup.',
                         'status'      => 'completed',
                         'category'    => 'quality_of_life',
-                        'upvotes'     => 38,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -159,7 +159,7 @@ class Roadmap extends BaseController
                         'description' => 'Native Accept: text/markdown support for AI agents, RFC 9309 crawler directives, and Content-Signals governance headers.',
                         'status'      => 'completed',
                         'category'    => 'quality_of_life',
-                        'upvotes'     => 24,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -169,7 +169,7 @@ class Roadmap extends BaseController
                         'description' => 'Balanced wear and tear rates during heavy blizzard weather conditions so lifts maintain realistic durability.',
                         'status'      => 'completed',
                         'category'    => 'gameplay',
-                        'upvotes'     => 18,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -180,7 +180,7 @@ class Roadmap extends BaseController
                         'description' => 'Real-time topographical slope fall-line rendering, grooming routes, and lift congestion visualization for resort operations.',
                         'status'      => 'in_progress',
                         'category'    => 'gameplay',
-                        'upvotes'     => 42,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -190,7 +190,7 @@ class Roadmap extends BaseController
                         'description' => 'Alliance tournaments, shared equipment leasing pools, and collaborative seasonal marketing campaigns between ski resorts.',
                         'status'      => 'in_progress',
                         'category'    => 'gameplay',
-                        'upvotes'     => 31,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -201,7 +201,7 @@ class Roadmap extends BaseController
                         'description' => 'Push alerts for sudden blizzards, equipment breakdown alerts, and quick daily management check-ins.',
                         'status'      => 'planned',
                         'category'    => 'mobile',
-                        'upvotes'     => 35,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -211,7 +211,7 @@ class Roadmap extends BaseController
                         'description' => 'Multi-day snowstorm forecasts, snowpack accumulation dynamics, and ski patrol avalanche bombing operations.',
                         'status'      => 'planned',
                         'category'    => 'gameplay',
-                        'upvotes'     => 27,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -221,7 +221,7 @@ class Roadmap extends BaseController
                         'description' => 'High-end luxury lodgings, fine dining Michelin-star reservations, and VIP guest reputation mechanics.',
                         'status'      => 'planned',
                         'category'    => 'economy',
-                        'upvotes'     => 19,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -231,7 +231,7 @@ class Roadmap extends BaseController
                         'description' => 'Adjust the electrical operating costs of high-powered trail floodlights during non-peak night skiing hours.',
                         'status'      => 'planned',
                         'category'    => 'economy',
-                        'upvotes'     => 14,
+                        'upvotes'     => 0,
                         'author_name' => 'Ski Manager Team',
                         'created_at'  => $now,
                         'updated_at'  => $now,
@@ -240,6 +240,16 @@ class Roadmap extends BaseController
 
                 $db->table('roadmap_items')->insertBatch($defaultItems);
             }
+
+            // Sync denormalized upvotes with actual count from roadmap_votes table so no fake or drifting counts exist
+            $db->query("
+                UPDATE roadmap_items i 
+                SET upvotes = (
+                    SELECT COUNT(*) 
+                    FROM roadmap_votes v 
+                    WHERE v.item_id = i.id
+                )
+            ");
         } catch (\Throwable $e) {
             log_message('error', 'Roadmap ensureSchema error: ' . $e->getMessage());
         }
@@ -261,6 +271,7 @@ class Roadmap extends BaseController
         self::ensureSchema();
 
         $voterHash = $this->getVoterHash();
+        $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
 
         $items = $this->db->table('roadmap_items')
             ->orderBy('upvotes', 'DESC')
@@ -270,10 +281,16 @@ class Roadmap extends BaseController
 
         // Get all items this voter has upvoted
         $votedItemIds = [];
-        $votes = $this->db->table('roadmap_votes')
-            ->where('voter_hash', $voterHash)
-            ->get()
-            ->getResultArray();
+        $voteBuilder = $this->db->table('roadmap_votes');
+        if ($userId !== null) {
+            $voteBuilder->groupStart()
+                ->where('user_id', $userId)
+                ->orWhere('voter_hash', $voterHash)
+            ->groupEnd();
+        } else {
+            $voteBuilder->where('voter_hash', $voterHash);
+        }
+        $votes = $voteBuilder->get()->getResultArray();
         foreach ($votes as $v) {
             $votedItemIds[(int)$v['item_id']] = true;
         }
@@ -315,10 +332,14 @@ class Roadmap extends BaseController
             $columns[$status]['items'][] = $item;
         }
 
+        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+
         return view('roadmap/index', [
-            'columns'   => $columns,
-            'isAdmin'   => self::checkAdmin(),
-            'totalItems'=> count($items),
+            'columns'    => $columns,
+            'isAdmin'    => self::checkAdmin(),
+            'totalItems' => count($items),
+            'totalVotes' => $totalVotes,
+            'allItems'   => $items,
         ]);
     }
 
@@ -334,26 +355,23 @@ class Roadmap extends BaseController
         $voterHash = $this->getVoterHash();
         $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
 
-        $existingVote = $this->db->table('roadmap_votes')
-            ->where('item_id', $itemId)
-            ->groupStart()
-                ->where('voter_hash', $voterHash)
-                ->orWhere('voter_hash', 'ip_' . substr($voterHash, 0, 61))
-                ->orLike('voter_hash', substr($voterHash, 0, 32))
-            ->groupEnd()
-            ->get()
-            ->getRowArray();
+        // Check if vote already exists for this voter
+        $voteBuilder = $this->db->table('roadmap_votes')->where('item_id', $itemId);
+        if ($userId !== null) {
+            $voteBuilder->groupStart()
+                ->where('user_id', $userId)
+                ->orWhere('voter_hash', $voterHash)
+            ->groupEnd();
+        } else {
+            $voteBuilder->where('voter_hash', $voterHash);
+        }
+        $existingVote = $voteBuilder->get()->getRowArray();
 
         if ($existingVote) {
             // Remove vote (toggle off)
             $this->db->table('roadmap_votes')
                 ->where('id', (int) $existingVote['id'])
                 ->delete();
-
-            $newUpvotes = max(0, ((int)$item['upvotes']) - 1);
-            $this->db->table('roadmap_items')
-                ->where('id', $itemId)
-                ->update(['upvotes' => $newUpvotes, 'updated_at' => date('Y-m-d H:i:s')]);
 
             $voted = false;
         } else {
@@ -365,18 +383,28 @@ class Roadmap extends BaseController
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
 
-            $newUpvotes = ((int)$item['upvotes']) + 1;
-            $this->db->table('roadmap_items')
-                ->where('id', $itemId)
-                ->update(['upvotes' => $newUpvotes, 'updated_at' => date('Y-m-d H:i:s')]);
-
             $voted = true;
         }
 
+        // Calculate REAL upvote count from roadmap_votes table (zero fake numbers)
+        $newUpvotes = $this->db->table('roadmap_votes')
+            ->where('item_id', $itemId)
+            ->countAllResults();
+
+        $this->db->table('roadmap_items')
+            ->where('id', $itemId)
+            ->update([
+                'upvotes'    => $newUpvotes,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+
         return $this->response->setJSON([
-            'success' => true,
-            'voted'   => $voted,
-            'upvotes' => $newUpvotes,
+            'success'    => true,
+            'voted'      => $voted,
+            'upvotes'    => $newUpvotes,
+            'totalVotes' => $totalVotes,
         ]);
     }
 
@@ -393,16 +421,34 @@ class Roadmap extends BaseController
             $category = 'gameplay';
         }
 
-        if (mb_strlen($title) < 3 || mb_strlen($title) > 255) {
-            return redirect()->back()->with('error', 'Please provide a feature title between 3 and 255 characters.');
+        if (mb_strlen($title) < 5 || mb_strlen($title) > 100) {
+            return redirect()->back()->with('error', 'Please provide a feature title between 5 and 100 characters.');
         }
 
-        $authorName = 'Community Manager';
+        if (mb_strlen($description) < 10 || mb_strlen($description) > 1000) {
+            return redirect()->back()->with('error', 'Please provide a feature description between 10 and 1000 characters.');
+        }
+
+        $authorName = 'Community Player';
         $authorId = null;
         if (function_exists('auth') && auth()->loggedIn()) {
             $user = auth()->user();
             $authorName = $user ? ($user->username ?? 'Player') : 'Player';
             $authorId = (int) auth()->id();
+        }
+
+        $voterHash = $this->getVoterHash();
+
+        // Anti-spam check: prevent multiple submissions within 60 seconds
+        $recentTime = date('Y-m-d H:i:s', time() - 60);
+        $recentQuery = $this->db->table('roadmap_items')->where('created_at >', $recentTime);
+        if ($authorId !== null) {
+            $recentQuery->where('author_id', $authorId);
+        } else {
+            $recentQuery->where('author_name', $authorName);
+        }
+        if ($recentQuery->countAllResults() > 0) {
+            return redirect()->to('/roadmap')->with('error', 'Please wait a moment before submitting another feature idea.');
         }
 
         $now = date('Y-m-d H:i:s');
@@ -421,7 +467,6 @@ class Roadmap extends BaseController
         ]);
 
         $itemId = $this->db->insertID();
-        $voterHash = $this->getVoterHash();
 
         $this->db->table('roadmap_votes')->insert([
             'item_id'    => $itemId,
@@ -462,6 +507,9 @@ class Roadmap extends BaseController
     public function deleteItem(int $itemId)
     {
         if (!self::checkAdmin()) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized'])->setStatusCode(403);
+            }
             return redirect()->to('/roadmap')->with('error', 'Unauthorized.');
         }
 
@@ -469,6 +517,10 @@ class Roadmap extends BaseController
         $this->db->table('roadmap_votes')->where('item_id', $itemId)->delete();
         $this->db->table('roadmap_items')->where('id', $itemId)->delete();
         $this->db->transComplete();
+
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true]);
+        }
 
         return redirect()->to('/roadmap')->with('success', 'Roadmap item removed.');
     }
