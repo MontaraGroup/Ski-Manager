@@ -184,6 +184,8 @@ $routes->post("terrain-parks/demolish/(:num)", "TerrainParks::demolish/$1");
 $routes->post("terrain-parks/hire-crew", "TerrainParks::hireCrew");
 $routes->post("terrain-parks/repair/(:num)", "TerrainParks::repair/$1");
 $routes->post("terrain-parks/toggle/(:num)", "TerrainParks::toggle/$1");
+$routes->post("terrain-parks/upgrade/(:num)", "TerrainParks::upgrade/$1");
+$routes->post("terrain-parks/host-event/(:num)", "TerrainParks::hostEvent/$1");
 $routes->post("water/build", "Resources::buildWater");
 $routes->post("water/repair/(:num)", "Resources::repairWater/$1");
 $routes->post("water/toggle/(:num)", "Resources::toggleWater/$1");
