@@ -824,7 +824,32 @@ function acceptCookies(level){
 <style>[data-tip]{position:relative;cursor:help}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1d232a;color:#a6adbb;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none}[data-tip]:hover::before{content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1d232a;z-index:9999}</style>
 <?php endif ?>
 
-<script>if("serviceWorker" in navigator && location.hostname === "ski-manager.net"){navigator.serviceWorker.register("/sw.js");}</script>
+<script>
+if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function (err) {
+      var name = (err && err.name) || "Error";
+      var message = (err && err.message) || String(err);
+      console.warn("Service worker registration failed", err);
+      if (window.Sentry) {
+        try {
+          window.Sentry.addBreadcrumb({
+            category: "service-worker",
+            level: "warning",
+            message: "Service worker registration failed",
+            data: { name: name, message: message }
+          });
+          window.Sentry.captureMessage("Service worker registration failed: " + name + ": " + message, {
+            level: "warning",
+            tags: { "sw.registration": "failed" },
+            extra: { errorName: name, errorMessage: message }
+          });
+        } catch (e) {}
+      }
+    });
+  });
+}
+</script>
 
 <script>
 let processedAlertIds = new Set();
