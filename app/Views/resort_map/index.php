@@ -909,6 +909,10 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
             console.error('Leaflet not loaded or #map missing');
             return;
         }
+        // Guard against double invocation (e.g. Cloudflare Rocket Loader re-dispatches
+        // a simulated DOMContentLoaded after the real one), which would make Leaflet
+        // throw "Map container is already initialized."
+        if (map) return;
 
         mapBounds = [[0, 0], [MAP_HEIGHT, MAP_WIDTH]];
         map = L.map('map', {
