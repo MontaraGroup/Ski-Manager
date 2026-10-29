@@ -35,6 +35,8 @@ if (! function_exists('initSentry')) {
                 'send_default_pii'     => false,
                 'ignore_exceptions'    => [
                     \CodeIgniter\Exceptions\PageNotFoundException::class,
+                    // Malformed client URIs (e.g. "/&") are rejected with a 400 by the router; expected, not an app error.
+                    \CodeIgniter\HTTP\Exceptions\BadRequestException::class,
                 ],
             ]);
         }
