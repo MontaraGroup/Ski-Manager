@@ -24,6 +24,24 @@
           tracesSampleRate: 1.0,
           replaysSessionSampleRate: 0.1,
           replaysOnErrorSampleRate: 1.0,
+          beforeSend: function (event) {
+            // Third-party scripts (Google Funding Choices, Hotjar, AdSense) reject
+            // promises with `undefined` when their in-flight requests are aborted
+            // (e.g. on page navigation). These carry no stack trace, are harmless,
+            // and are not actionable. Drop only that exact stackless case so that
+            // rejections originating from our own code are still reported.
+            var ex = event && event.exception && event.exception.values && event.exception.values[0];
+            if (
+              ex &&
+              ex.mechanism && ex.mechanism.type === 'onunhandledrejection' &&
+              typeof ex.value === 'string' &&
+              ex.value.indexOf('captured with value: undefined') !== -1 &&
+              !(ex.stacktrace && ex.stacktrace.frames && ex.stacktrace.frames.length)
+            ) {
+              return null;
+            }
+            return event;
+          },
         });
         <?php if (function_exists('auth') && auth()->loggedIn()) : ?>
         Sentry.setUser({
