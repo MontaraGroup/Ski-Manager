@@ -24,19 +24,40 @@
           tracesSampleRate: 1.0,
           replaysSessionSampleRate: 0.1,
           replaysOnErrorSampleRate: 1.0,
-          beforeSend: function (event) {
-            // Third-party scripts (Google Funding Choices, Hotjar, AdSense) reject
-            // promises with `undefined` when their in-flight requests are aborted
-            // (e.g. on page navigation). These carry no stack trace, are harmless,
-            // and are not actionable. Drop only that exact stackless case so that
-            // rejections originating from our own code are still reported.
+          beforeSend: function (event, hint) {
+            // Third-party scripts (Google Funding Choices, Hotjar) reject promises
+            // with `undefined` when their in-flight requests are aborted (e.g. on
+            // page navigation). These carry no stack trace and are not actionable.
+            // Drop an event only when ALL of the following hold, so rejections from
+            // our own code (including string reasons) are still reported:
+            //  - it came from the global onunhandledrejection handler
+            //  - the actual rejection reason is `undefined` (not a string)
+            //  - there is no stack trace
+            //  - a failed/aborted fetch/XHR breadcrumb to a known vendor URL exists
+            var VENDOR_URL_PATTERNS = [
+              /^https:\/\/fundingchoicesmessages\.google\.com\//,
+              /^https:\/\/content\.hotjar\.io\//,
+            ];
             var ex = event && event.exception && event.exception.values && event.exception.values[0];
+            var isUndefinedRejection =
+              !!hint &&
+              Object.prototype.hasOwnProperty.call(hint, 'originalException') &&
+              hint.originalException === undefined;
+            var isStackless = !(ex && ex.stacktrace && ex.stacktrace.frames && ex.stacktrace.frames.length);
+            var hasFailedVendorRequest = (event.breadcrumbs || []).some(function (crumb) {
+              if (!crumb || (crumb.category !== 'xhr' && crumb.category !== 'fetch')) return false;
+              var data = crumb.data || {};
+              var failed = crumb.level === 'error' || data.status_code === 0;
+              return failed && typeof data.url === 'string' && VENDOR_URL_PATTERNS.some(function (re) {
+                return re.test(data.url);
+              });
+            });
             if (
               ex &&
               ex.mechanism && ex.mechanism.type === 'onunhandledrejection' &&
-              typeof ex.value === 'string' &&
-              ex.value.indexOf('captured with value: undefined') !== -1 &&
-              !(ex.stacktrace && ex.stacktrace.frames && ex.stacktrace.frames.length)
+              isUndefinedRejection &&
+              isStackless &&
+              hasFailedVendorRequest
             ) {
               return null;
             }
