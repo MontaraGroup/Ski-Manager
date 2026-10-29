@@ -570,20 +570,25 @@ class GameTick extends BaseCommand
             // ==============================
             $terrainParkModel = new \App\Models\TerrainParkModel();
             $userParks = $terrainParkModel->where('user_id', $userId)->findAll();
+            $terrainParkTotalIncome = 0;
+            $terrainParkTotalRiders = 0;
 
             foreach ($userParks as $park) {
                 if ($park['status'] === 'under_construction') {
                     $daysLeft = $park['build_days_left'] - 1;
                     if ($daysLeft <= 0) {
                         $terrainParkModel->update($park['id'], ['build_days_left' => 0, 'status' => 'open']);
-                        log_activity($userId, 'terrain_park_complete', $park['name'] . ' construction complete!');
-                        notify($userId, 'terrain_park', $park['name'] . ' is ready!', 'Your terrain park feature has finished construction.', 'fa-solid fa-person-snowboarding', '/terrain-parks');
+                        log_activity($userId, 'terrain_park_complete', $park['name'] . ' construction complete!', 'fa-solid fa-person-snowboarding');
+                        notify($userId, 'terrain_park', $park['name'] . ' is ready!', 'Your terrain park feature has finished construction and is now open.', 'fa-solid fa-person-snowboarding', '/terrain-parks');
                     } else {
                         $terrainParkModel->update($park['id'], ['build_days_left' => $daysLeft]);
                     }
                     continue;
                 }
-                if ($park['status'] !== 'open') continue;
+                if ($park['status'] !== 'open') {
+                    $terrainParkModel->update($park['id'], ['daily_visitors' => 0, 'daily_revenue' => 0]);
+                    continue;
+                }
 
                 $tpConfig = \App\Models\TerrainParkModel::getConfig($park['park_type'], $park['size']);
                 $tpUpkeep = $tpConfig['upkeep'] ?? 0;
@@ -593,21 +598,39 @@ class GameTick extends BaseCommand
                 $tpBaseDecay = 2.0;
                 $tpCrewReduction = min($parkCrewCount * 0.4, 1.5);
                 $tpDecay = max(0.3, $tpBaseDecay - $tpCrewReduction);
-                $tpNewCondition = max(0, $park['condition_pct'] - $tpDecay);
+                $tpNewCondition = max(0, (float) $park['condition_pct'] - $tpDecay);
 
                 $tpConditionMult = $tpNewCondition / 100;
-                $tpDailyVisitors = round(($tpConfig['popularity_base'] ?? 0) * $tpConditionMult * (1 + ($park['popularity'] ?? 0) / 100));
+                $tpCapacity = $tpConfig['capacity'] ?? 100;
+                $tpRawVisitors = round(($tpConfig['popularity_base'] ?? 0) * $tpConditionMult * (1 + ($park['popularity'] ?? 0) / 100));
+                $tpDailyVisitors = (int) min($tpCapacity, $tpRawVisitors);
+
+                // Revenue calculation: $25 base ticket in winter, $15 in summer, scaled by quality & condition
+                $tpDailyRevenue = 0;
+                if ($resortOpen && $tpDailyVisitors > 0) {
+                    $ticketRate = $isWinter ? 25 : 15;
+                    $tpDailyRevenue = (int) round($tpDailyVisitors * $ticketRate * (0.8 + ($tpNewCondition / 250)));
+                    $terrainParkTotalIncome += $tpDailyRevenue;
+                    $terrainParkTotalRiders += $tpDailyVisitors;
+                }
 
                 $tpNewStatus = $tpNewCondition < 30 ? 'maintenance' : 'open';
                 if ($tpNewStatus === 'maintenance' && $park['status'] === 'open') {
-                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance — condition too low.');
+                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance — condition fell below 30%.', 'fa-solid fa-wrench');
+                    notify($userId, 'terrain_park', $park['name'] . ' needs repair', 'Condition has fallen below 30%. Dispatch maintenance to reopen.', 'fa-solid fa-wrench', '/terrain-parks');
                 }
 
                 $terrainParkModel->update($park['id'], [
-                    'condition_pct' => $tpNewCondition,
+                    'condition_pct'  => $tpNewCondition,
                     'daily_visitors' => $tpDailyVisitors,
-                    'status' => $tpNewStatus,
+                    'daily_revenue'  => $tpDailyRevenue,
+                    'status'         => $tpNewStatus,
                 ]);
+            }
+
+            if ($terrainParkTotalIncome > 0 && $resortOpen) {
+                $dayIncome += $terrainParkTotalIncome;
+                log_activity($userId, 'terrain_park_revenue', "Terrain Parks: {$terrainParkTotalRiders} freestyle riders generated " . currency($terrainParkTotalIncome) . ' in park admissions', 'fa-solid fa-person-snowboarding');
             }
 
             // ==============================
@@ -855,7 +878,7 @@ class GameTick extends BaseCommand
             if ($dayIncome > 0) {
                 $db->table('financial_transactions')->insert([
                     'user_id' => $userId, 'game_day' => $gameDay,
-                    'category' => 'Daily Income', 'description' => 'Tickets, buildings, parking, ski school, scenic lifts, VIP guests',
+                    'category' => 'Daily Income', 'description' => 'Tickets, buildings, parking, ski school, scenic lifts, terrain parks, VIP guests',
                     'amount' => $dayIncome, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
                 ]);
             }
