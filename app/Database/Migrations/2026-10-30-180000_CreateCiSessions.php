@@ -50,6 +50,42 @@ class CreateCiSessions extends Migration
             throw new \RuntimeException('Existing ci_sessions table is missing required columns: ' . implode(', ', $missing));
         }
 
+        // MySQLi runs with strict mode off here, so undersized columns would silently
+        // truncate session data instead of failing; reject them up front.
+        $fieldData = [];
+        foreach ($this->db->getFieldData('ci_sessions') as $field) {
+            $fieldData[$field->name] = $field;
+        }
+
+        // MySQLi reports SHOW COLUMNS base types (e.g. "mediumblob", not "medium_blob").
+        $expectedTypes = [
+            'id'         => ['char', 'varchar'],
+            'ip_address' => ['char', 'varchar'],
+            'timestamp'  => ['timestamp', 'datetime'],
+            'data'       => ['blob', 'mediumblob', 'longblob'],
+        ];
+        $minimumLengths = ['id' => 128, 'ip_address' => 45];
+        $incompatible   = [];
+
+        foreach ($expectedTypes as $name => $types) {
+            $field = $fieldData[$name];
+            $type  = strtolower((string) $field->type);
+
+            if (
+                ! in_array($type, $types, true)
+                || (isset($minimumLengths[$name]) && (int) $field->max_length < $minimumLengths[$name])
+            ) {
+                $incompatible[$name] = [
+                    'type'       => $field->type,
+                    'max_length' => $field->max_length,
+                ];
+            }
+        }
+
+        if ($incompatible !== []) {
+            throw new \RuntimeException('Existing ci_sessions table has incompatible column definitions: ' . json_encode($incompatible));
+        }
+
         $primaryFields = null;
         foreach ($this->db->getIndexData('ci_sessions') as $index) {
             if (strtoupper((string) $index->type) === 'PRIMARY') {
@@ -58,11 +94,9 @@ class CreateCiSessions extends Migration
             }
         }
 
-        // Session::$matchIP is false, so the primary key must be (id); (id, ip_address) is
-        // also accepted so the table keeps working if matchIP is ever enabled.
-        $valid = [['id'], ['id', 'ip_address']];
-        if ($primaryFields === null || ! in_array(array_values($primaryFields), $valid, true)) {
-            throw new \RuntimeException('Existing ci_sessions table has an incompatible primary key: ' . json_encode($primaryFields) . '; expected (id) or (id, ip_address).');
+        // Session::$matchIP is false, so DatabaseHandler queries by id alone and id must be unique.
+        if ($primaryFields === null || array_values($primaryFields) !== ['id']) {
+            throw new \RuntimeException('Existing ci_sessions table has an incompatible primary key: ' . json_encode($primaryFields) . '; expected (id).');
         }
     }
 
