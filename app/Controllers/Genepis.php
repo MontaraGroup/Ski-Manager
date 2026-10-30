@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Models\FinanceModel;
 
 class Genepis extends BaseController
@@ -123,7 +124,7 @@ class Genepis extends BaseController
 
         switch ($item) {
             case 'cash_injection':
-                $this->creditCash($userId, 100000, 'Cash injection (Génépis)');
+                Ledger::credit($userId, 100000, 'Génépis', 'Cash injection (Génépis)');
                 break;
 
             case 'snow_dump':
@@ -187,7 +188,7 @@ class Genepis extends BaseController
                 $db->transRollback();
                 return redirect()->back()->with('error', 'Not enough Génépis.');
             }
-            $this->creditCash($userId, $cashValue, 'Exchanged ' . $amount . ' Génépis');
+            Ledger::credit($userId, $cashValue, 'Génépis', 'Exchanged ' . $amount . ' Génépis');
             $db->transComplete();
             log_activity($userId, 'Génépis', 'Exchanged ' . $amount . ' Génépis for ' . currency($cashValue), 'fa-solid fa-seedling');
             return redirect()->to('/genepis')->with('success', 'Exchanged ' . $amount . ' Génépis for ' . currency($cashValue) . '!');
@@ -209,16 +210,5 @@ class Genepis extends BaseController
         if ($db->affectedRows() !== 1) return false;
         $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'spent', 'reason' => $reason, 'created_at' => date('Y-m-d H:i:s')]);
         return true;
-    }
-
-    /** Adds cash bought with Génépis and records it in the finances ledger */
-    private function creditCash(int $userId, int $amount, string $description): void
-    {
-        $db = db_connect();
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $amount, false)->set('total_income', 'total_income + ' . $amount, false)->update();
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Génépis', 'description' => $description,
-            'amount' => $amount, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
     }
 }

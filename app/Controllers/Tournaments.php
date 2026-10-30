@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
+
 class Tournaments extends BaseController
 {
     public function index(): string
@@ -82,22 +84,10 @@ class Tournaments extends BaseController
         $t = $types[$type];
 
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $t['cost'])
-            ->set('cash', 'cash - ' . (int) $t['cost'], false)->set('total_expenses', 'total_expenses + ' . (int) $t['cost'], false)->update();
-        if ($db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, (int) $t['cost'], 'Tournaments', 'Hosted ' . $t['name'])) {
             $db->transRollback();
             return redirect()->back()->with('error', 'Not enough cash to host ' . $t['name'] . ' (' . currency($t['cost']) . ' required).');
         }
-
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId,
-            'game_day' => $gameDay,
-            'category' => 'Tournaments',
-            'description' => 'Hosted ' . $t['name'],
-            'amount' => $t['cost'],
-            'type' => 'expense',
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
 
         $db->table('tournaments')->insert([
             'name' => $t['name'],
@@ -137,11 +127,7 @@ class Tournaments extends BaseController
 
         if ($refundable && !empty($t['prize_pool'])) {
             $refund = (int) round($t['prize_pool'] * 0.8);
-            $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $refund, false)->set('total_income', 'total_income + ' . $refund, false)->update();
-            $db->table('financial_transactions')->insert([
-                'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Tournaments',
-                'description' => 'Tournament Cancellation Refund (80%)', 'amount' => $refund, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
-            ]);
+            Ledger::credit($userId, $refund, 'Tournaments', 'Tournament Cancellation Refund (80%)');
             $db->transComplete();
 
             log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'] . ' (received ' . currency($refund) . ' refund)', 'fa-solid fa-xmark');

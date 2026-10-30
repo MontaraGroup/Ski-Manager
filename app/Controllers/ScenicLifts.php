@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Libraries\Scenic;
 use App\Models\PlayerItemModel;
 
@@ -143,18 +144,18 @@ class ScenicLifts extends BaseController
         }
 
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $up['cost'])
-            ->set('cash', 'cash - ' . (int) $up['cost'], false)->set('total_expenses', 'total_expenses + ' . (int) $up['cost'], false)->update();
-        if ($db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, (int) $up['cost'], 'Scenic Upgrades', 'Installed ' . $up['name'])) {
             $db->transRollback();
             return redirect()->to('/scenic-lifts')->with('error', 'Not enough cash to purchase ' . $up['name'] . ' (' . currency($up['cost']) . ' required).');
         }
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Scenic Upgrades', 'description' => 'Installed ' . $up['name'],
-            'amount' => $up['cost'], 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
+        // Write only over the upgrades we read: if a parallel purchase changed them, this one is undone
         $installed[] = $upgradeKey;
-        $db->table('scenic_lifts')->where('id', $scenicLift['id'])->update(['upgrades' => json_encode(array_values(array_unique($installed)))]);
+        $db->table('scenic_lifts')->where('id', $scenicLift['id'])->where('upgrades', $scenicLift['upgrades'])
+            ->update(['upgrades' => json_encode(array_values(array_unique($installed)))]);
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return redirect()->to('/scenic-lifts')->with('error', 'That lift\'s upgrades just changed. Check them and try again.');
+        }
         $db->transComplete();
 
         $liftItem = $db->table('player_items')->where('id', $scenicLift['item_id'])->get()->getRowArray();

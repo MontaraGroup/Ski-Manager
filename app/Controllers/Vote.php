@@ -374,7 +374,7 @@ class Vote extends BaseController
         $options = $this->getResortOptions();
 
         if (!isset($options[$resort])) {
-            return redirect()->back()->with('error', 'Invalid resort candidate selected: ' . esc($rawResort));
+            return redirect()->back()->with('error', 'Invalid resort candidate selected: ' . $rawResort);
         }
 
         $now = date('Y-m-d H:i:s');

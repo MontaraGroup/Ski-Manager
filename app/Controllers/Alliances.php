@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Models\AllianceModel;
 use App\Models\AllianceMemberModel;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -198,19 +199,7 @@ class Alliances extends BaseController
             return redirect()->back()->withInput()->with('error', 'An alliance with that tag ticker already exists.');
         }
 
-        // Check funds (50,000 € creation fee)
-        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $cash = (int) ($fin['cash'] ?? 0);
         $fee = 50000;
-        if ($cash < $fee) {
-            return redirect()->back()->withInput()->with('error', 'Insufficient capital. Founding an alliance requires 50,000 €.');
-        }
-
-        // Deduct creation fee
-        if (!$this->pay($userId, $fee, 'Alliance founding fee: ' . $name)) {
-            return redirect()->back()->withInput()->with('error', 'Insufficient capital. Founding an alliance requires 50,000 €.');
-        }
-
         $crestColor = (string) $this->request->getPost('crest_color');
         if (!preg_match('/^#[0-9a-fA-F]{6}$/', $crestColor)) {
             $crestColor = '#3b82f6';
@@ -219,6 +208,14 @@ class Alliances extends BaseController
         $crestIcon = (string) $this->request->getPost('crest_icon');
         if (!preg_match('/^fa-[a-z0-9\-]+$/', $crestIcon)) {
             $crestIcon = 'fa-mountain-sun';
+        }
+
+        // The fee, the alliance and the founder's membership succeed or fail together: a founding that
+        // loses a race (membership is unique per player) must not keep the 50,000 €
+        $db->transStart();
+        if (!Ledger::charge($userId, $fee, 'Alliance', 'Alliance founding fee: ' . $name)) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', 'Insufficient capital. Founding an alliance requires 50,000 €.');
         }
 
         // Create alliance record
@@ -242,16 +239,24 @@ class Alliances extends BaseController
             'updated_at'     => date('Y-m-d H:i:s'),
         ]);
 
-        // Enroll founder
-        $this->memberModel->insert([
-            'alliance_id'   => $allianceId,
-            'user_id'       => $userId,
-            'role'          => 'founder',
-            'donated_cash'  => 0,
-            'joined_at'     => date('Y-m-d H:i:s'),
-            'created_at'    => date('Y-m-d H:i:s'),
-            'updated_at'    => date('Y-m-d H:i:s'),
-        ]);
+        // Enroll founder (a duplicate membership fails the insert, or throws when DBDebug is on)
+        try {
+            $enrolled = $allianceId && $this->memberModel->insert([
+                'alliance_id'   => $allianceId,
+                'user_id'       => $userId,
+                'role'          => 'founder',
+                'donated_cash'  => 0,
+                'joined_at'     => date('Y-m-d H:i:s'),
+                'created_at'    => date('Y-m-d H:i:s'),
+                'updated_at'    => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $enrolled = false;
+        }
+        if (!$enrolled) {
+            $db->transRollback();
+            return redirect()->to('/alliances')->with('error', 'You are already a member of an alliance.');
+        }
 
         // Log alliance activity
         $db->table('alliance_activity_log')->insert([
@@ -261,6 +266,7 @@ class Alliances extends BaseController
             'message'     => "Founded the {$name} [{$tag}] alliance.",
             'created_at'  => date('Y-m-d H:i:s'),
         ]);
+        $db->transComplete();
 
         if (function_exists('log_activity')) {
             log_activity($userId, 'Alliance', "Founded the {$name} [{$tag}] alliance for " . currency($fee), 'fa-solid fa-handshake');
@@ -401,14 +407,10 @@ class Alliances extends BaseController
         }
 
         $db = db_connect();
-        $userFinance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        $cash = (int) ($userFinance['cash'] ?? 0);
-        if ($cash < $amount) {
-            return redirect()->to('/alliances')->with('error', 'Insufficient funds in your resort treasury.');
-        }
-
         // Deduct from player
-        if (!$this->pay($userId, $amount, 'Alliance donation')) {
+        $db->transStart();
+        if (!Ledger::charge($userId, $amount, 'Alliance', 'Alliance donation')) {
+            $db->transRollback();
             return redirect()->to('/alliances')->with('error', 'Insufficient funds in your resort treasury.');
         }
 
@@ -421,6 +423,7 @@ class Alliances extends BaseController
             ->set('treasury_cash', "treasury_cash + {$amount}", false)
             ->set('xp', "xp + {$xpEarned}", false)
             ->update();
+        $db->transComplete();
 
         // Check Level-Up threshold
         $alliance = $this->allianceModel->find($allianceId);
@@ -808,27 +811,5 @@ class Alliances extends BaseController
             'passTiers'     => AllianceModel::PASS_TIERS,
             'myMembership'  => $myMembership,
         ]);
-    }
-
-    /**
-     * Takes $amount from the player's cash in one statement, only if the cash covers it, and records it
-     * in the finances ledger. Checking cash first and deducting later let two quick requests overspend.
-     */
-    private function pay(int $userId, int $amount, string $description): bool
-    {
-        $db = db_connect();
-        $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $amount)
-            ->set('cash', 'cash - ' . $amount, false)->set('total_expenses', 'total_expenses + ' . $amount, false)->update();
-        if ($db->affectedRows() !== 1) {
-            $db->transRollback();
-            return false;
-        }
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Alliance', 'description' => $description,
-            'amount' => $amount, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        $db->transComplete();
-        return true;
     }
 }

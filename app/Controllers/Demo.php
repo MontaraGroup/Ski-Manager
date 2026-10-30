@@ -372,6 +372,6 @@ class Demo extends BaseController
             log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
         }
 
-        return redirect()->to('/dashboard')->with('success', '🎉 Welcome Director ' . esc($username) . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
+        return redirect()->to('/dashboard')->with('success', '🎉 Welcome Director ' . $username . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
     }
 }

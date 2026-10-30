@@ -31,22 +31,11 @@
         </div>
     </div>
 
-    <?php if (session('success')) : ?>
-        <div class="alert alert-success shadow-sm">
-            <i class="fa-solid fa-circle-check"></i>
-            <span><?= session('success') ?></span>
-        </div>
-    <?php endif ?>
-    <?php if (session('error')) : ?>
-        <div class="alert alert-error shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <span><?= session('error') ?></span>
-        </div>
-    <?php endif ?>
+    <?php // success and error messages are shown by the layout ?>
     <?php if (session('info')) : ?>
         <div class="alert alert-info shadow-sm">
             <i class="fa-solid fa-circle-info"></i>
-            <span><?= session('info') ?></span>
+            <span><?= esc(session('info')) ?></span>
         </div>
     <?php endif ?>
 

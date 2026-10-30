@@ -110,7 +110,7 @@ class Equipment extends BaseController
             ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
         if ($db->affectedRows() !== 1) {
             $db->transRollback();
-            return redirect()->to('/equipment')->with('error', 'Not enough cash: ' . esc($item['name']) . ' costs ' . currency($cost) . '.');
+            return redirect()->to('/equipment')->with('error', 'Not enough cash: ' . $item['name'] . ' costs ' . currency($cost) . '.');
         }
         $db->table('equipment')->insert([
             'user_id' => $userId, 'equipment_type' => $item['equipment_type'], 'model_key' => $item['model_key'], 'name' => $name,
@@ -126,30 +126,30 @@ class Equipment extends BaseController
 
         log_activity($userId, 'Equipment', 'Bought ' . $name . ' for ' . currency($cost), $item['icon'] ?: 'fa-solid fa-cart-plus');
         $next = $item['equipment_type'] === 'groomer' ? 'Switch it on and make sure you have an operator for it.' : 'Switch it on to start covering slopes.';
-        return redirect()->to('/equipment')->with('success', esc($name) . ' bought for ' . currency($cost) . '. ' . $next);
+        return redirect()->to('/equipment')->with('success', $name . ' bought for ' . currency($cost) . '. ' . $next);
     }
 
     public function toggle(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
         if (!$eq) return redirect()->to('/equipment')->with('error', 'Not found.');
-        if ((int) $eq['condition_pct'] <= 0 || $eq['status'] === 'broken') return redirect()->to('/equipment')->with('error', esc($eq['name']) . ' is broken: repair it first.');
+        if ((int) $eq['condition_pct'] <= 0 || $eq['status'] === 'broken') return redirect()->to('/equipment')->with('error', $eq['name'] . ' is broken: repair it first.');
 
         $on = $eq['status'] !== 'active';
         db_connect()->table('equipment')->where('id', $id)->update(['status' => $on ? 'active' : 'off', 'updated_at' => date('Y-m-d H:i:s')]);
         log_activity(auth()->id(), 'Equipment', $eq['name'] . ($on ? ' switched on' : ' switched off'), 'fa-solid fa-power-off');
-        return redirect()->to('/equipment')->with('success', esc($eq['name']) . ($on ? ' switched on.' : ' switched off.'));
+        return redirect()->to('/equipment')->with('success', $eq['name'] . ($on ? ' switched on.' : ' switched off.'));
     }
 
     public function repair(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
         if (!$eq) return redirect()->back()->with('error', 'Not found.');
-        if ((int) $eq['condition_pct'] >= 100) return redirect()->to('/equipment')->with('error', esc($eq['name']) . ' is already in perfect condition.');
+        if ((int) $eq['condition_pct'] >= 100) return redirect()->to('/equipment')->with('error', $eq['name'] . ' is already in perfect condition.');
 
         $cost = Fleet::repair(auth()->id(), $eq);
-        if ($cost === null) return redirect()->to('/equipment')->with('error', 'Not enough cash: repairing ' . esc($eq['name']) . ' costs ' . currency(Fleet::repairCost($eq)) . '.');
-        return redirect()->to('/equipment')->with('success', esc($eq['name']) . ' repaired for ' . currency($cost) . '.');
+        if ($cost === null) return redirect()->to('/equipment')->with('error', 'Not enough cash: repairing ' . $eq['name'] . ' costs ' . currency(Fleet::repairCost($eq)) . '.');
+        return redirect()->to('/equipment')->with('success', $eq['name'] . ' repaired for ' . currency($cost) . '.');
     }
 
     public function sell(int $id)
@@ -157,6 +157,6 @@ class Equipment extends BaseController
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
         if (!$eq) return redirect()->back()->with('error', 'Not found.');
         $refund = Fleet::sell(auth()->id(), $eq);
-        return redirect()->to('/equipment')->with('success', esc($eq['name']) . ' sold for ' . currency($refund) . '.');
+        return redirect()->to('/equipment')->with('success', $eq['name'] . ' sold for ' . currency($refund) . '.');
     }
 }

@@ -1,5 +1,8 @@
 <?php
 namespace App\Controllers;
+
+use App\Libraries\Ledger;
+
 class OffSeason extends BaseController
 {
     private function getActivityConfig(): array
@@ -94,19 +97,13 @@ class OffSeason extends BaseController
 
         // Pay first, in one statement, and only then repair: repairs used to happen before the cash check
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $totalCost)
-            ->set('cash', 'cash - ' . $totalCost, false)->set('total_expenses', 'total_expenses + ' . $totalCost, false)->update();
-        if ($db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, $totalCost, 'Maintenance', $taskConfig['name'] . ' (' . $count . ' items)')) {
             $db->transRollback();
             return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($totalCost) . '.');
         }
         // Items keep their on/off state; broken ones (and parks closed for low condition) come back
         $db->table($table)->whereIn('id', $ids)->whereIn('status', ['broken', 'maintenance'])->update(['status' => $repairedStatus]);
         $db->table($table)->whereIn('id', $ids)->update(['condition_pct' => 100]);
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Maintenance',
-            'description' => $taskConfig['name'] . ' (' . $count . ' items)', 'amount' => $totalCost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
         $db->transComplete();
 
         log_activity($userId, 'maintenance', $taskConfig['name'] . ": {$count} items serviced for " . currency($totalCost));
@@ -128,16 +125,10 @@ class OffSeason extends BaseController
 
         $cfg = $config[$activityKey];
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cfg['cost'])
-            ->set('cash', 'cash - ' . $cfg['cost'], false)->set('total_expenses', 'total_expenses + ' . $cfg['cost'], false)->update();
-        if ($db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, (int) $cfg['cost'], 'Off-Season', 'Built ' . $cfg['name'])) {
             $db->transRollback();
             return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($cfg['cost']) . '.');
         }
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Off-Season', 'description' => 'Built ' . $cfg['name'],
-            'amount' => $cfg['cost'], 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
         $db->table('buildings')->insert([
             'user_id' => $userId,
             'building_type' => 'off_season',

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Models\ParkingModel;
 
 class Parking extends BaseController
@@ -43,7 +44,10 @@ class Parking extends BaseController
             return redirect()->to('/parking')->with('error', 'Invalid parking type.');
         }
 
-        if (!$this->pay($userId, (int) $config['cost'], 'Built ' . $config['label'])) {
+        $db = db_connect();
+        $db->transStart();
+        if (!Ledger::charge($userId, (int) $config['cost'], 'Parking', 'Built ' . $config['label'])) {
+            $db->transRollback();
             return redirect()->to('/parking')->with('error', 'Not enough cash: ' . $config['label'] . ' costs ' . currency($config['cost']) . '.');
         }
 
@@ -57,6 +61,7 @@ class Parking extends BaseController
             'status' => 'under_construction',
             'build_days_left' => $config['build_days'],
         ]);
+        $db->transComplete();
 
         log_activity($userId, 'parking_build', "Started building " . $config['label'] . " for " . currency($config['cost']));
 
@@ -118,10 +123,14 @@ class Parking extends BaseController
         $repairCost = (int) round($config['cost'] * 0.10 * (1 - $facility['condition_pct'] / 100));
         if ($repairCost <= 0) return redirect()->to('/parking')->with('error', $facility['name'] . ' is already in perfect condition.');
 
-        if (!$this->pay($userId, $repairCost, 'Repaired ' . $facility['name'])) {
+        $db = db_connect();
+        $db->transStart();
+        if (!Ledger::charge($userId, $repairCost, 'Parking', 'Repaired ' . $facility['name'])) {
+            $db->transRollback();
             return redirect()->to('/parking')->with('error', 'Not enough cash: repairs cost ' . currency($repairCost) . '.');
         }
         $parkingModel->update($id, ['condition_pct' => 100.00]);
+        $db->transComplete();
 
         log_activity($userId, 'parking_repair', "Repaired " . $facility['name'] . " for " . currency($repairCost));
 
@@ -144,36 +153,13 @@ class Parking extends BaseController
         $db = db_connect();
         $db->transStart();
         $parkingModel->delete($id);
-        if ($db->affectedRows() === 1 && $refund > 0) {
-            $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $refund, false)->set('total_income', 'total_income + ' . $refund, false)->update();
-            $db->table('financial_transactions')->insert([
-                'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Parking', 'description' => 'Demolished ' . $facility['name'],
-                'amount' => $refund, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
-            ]);
+        if ($db->affectedRows() === 1) {
+            Ledger::credit($userId, $refund, 'Parking', 'Demolished ' . $facility['name']);
         }
         $db->transComplete();
 
         log_activity($userId, 'parking_demolish', "Demolished " . $facility['name'] . ", refunded " . currency($refund));
 
         return redirect()->to('/parking')->with('success', $facility['name'] . ' demolished. ' . currency($refund) . ' refunded.');
-    }
-
-    /** Takes $cost from the player's cash only if they have it, and records it; false when they can't pay */
-    private function pay(int $userId, int $cost, string $description): bool
-    {
-        $db = db_connect();
-        $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cost)
-            ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
-        if ($db->affectedRows() !== 1) {
-            $db->transRollback();
-            return false;
-        }
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Parking', 'description' => $description,
-            'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        $db->transComplete();
-        return true;
     }
 }
