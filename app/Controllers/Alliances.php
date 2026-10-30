@@ -207,7 +207,9 @@ class Alliances extends BaseController
         }
 
         // Deduct creation fee
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$fee}", false)->update();
+        if (!$this->pay($userId, $fee, 'Alliance founding fee: ' . $name)) {
+            return redirect()->back()->withInput()->with('error', 'Insufficient capital. Founding an alliance requires 50,000 €.');
+        }
 
         $crestColor = (string) $this->request->getPost('crest_color');
         if (!preg_match('/^#[0-9a-fA-F]{6}$/', $crestColor)) {
@@ -406,7 +408,9 @@ class Alliances extends BaseController
         }
 
         // Deduct from player
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$amount}", false)->update();
+        if (!$this->pay($userId, $amount, 'Alliance donation')) {
+            return redirect()->to('/alliances')->with('error', 'Insufficient funds in your resort treasury.');
+        }
 
         // Add to alliance treasury & member lifetime donation
         $allianceId = (int) $membership['alliance_id'];
@@ -804,5 +808,27 @@ class Alliances extends BaseController
             'passTiers'     => AllianceModel::PASS_TIERS,
             'myMembership'  => $myMembership,
         ]);
+    }
+
+    /**
+     * Takes $amount from the player's cash in one statement, only if the cash covers it, and records it
+     * in the finances ledger. Checking cash first and deducting later let two quick requests overspend.
+     */
+    private function pay(int $userId, int $amount, string $description): bool
+    {
+        $db = db_connect();
+        $db->transStart();
+        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $amount)
+            ->set('cash', 'cash - ' . $amount, false)->set('total_expenses', 'total_expenses + ' . $amount, false)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return false;
+        }
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Alliance', 'description' => $description,
+            'amount' => $amount, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $db->transComplete();
+        return true;
     }
 }

@@ -96,20 +96,13 @@ class Genepis extends BaseController
             }
         }
 
-        // Deduct genepis
-        $db->table('genepis')->where('user_id', $userId)->update([
-            'balance' => (int) $genepis['balance'] - $cost,
-            'total_spent' => (int) $genepis['total_spent'] + $cost,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
-
-        $db->table('genepis_log')->insert([
-            'user_id' => $userId, 'amount' => $cost, 'type' => 'spent',
-            'reason' => 'Purchased: ' . $cfg['name'], 'created_at' => date('Y-m-d H:i:s'),
-        ]);
-
-        // Apply effect
+        $db->transStart();
+        if (!$this->spend($userId, $cost, 'Purchased: ' . $cfg['name'])) {
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Not enough Génépis. Need ' . $cost . '.');
+        }
         $this->applyEffect($userId, $item, $cfg);
+        $db->transComplete();
 
         log_activity($userId, 'Génépis', 'Used ' . $cost . ' Génépis for ' . $cfg['name'], 'fa-solid fa-seedling');
         return redirect()->to('/genepis')->with('success', $cfg['name'] . ' activated! (-' . $cost . ' Génépis)');
@@ -130,7 +123,7 @@ class Genepis extends BaseController
 
         switch ($item) {
             case 'cash_injection':
-                $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + 100000', false)->update();
+                $this->creditCash($userId, 100000, 'Cash injection (Génépis)');
                 break;
 
             case 'snow_dump':
@@ -139,9 +132,12 @@ class Genepis extends BaseController
                 break;
 
             case 'repair_all':
+                // Slopes, lifts and buildings that broke reopen; broken machines come back switched off, as a fleet repair does
+                $db->table('player_items')->where('user_id', $userId)->where('status', 'broken')->update(['status' => 'open']);
                 $db->table('player_items')->where('user_id', $userId)->update(['condition_pct' => 100]);
-                $db->table('equipment')->where('user_id', $userId)->where('status', 'broken')->update(['status' => 'off', 'condition_pct' => 100]);
-                $db->table('equipment')->where('user_id', $userId)->where('status !=', 'broken')->update(['condition_pct' => 100]);
+                $db->table('equipment')->where('user_id', $userId)->where('status', 'broken')->update(['status' => 'off']);
+                $db->table('equipment')->where('user_id', $userId)->update(['condition_pct' => 100]);
+                $db->table('buildings')->where('user_id', $userId)->where('status', 'broken')->update(['status' => 'open']);
                 $db->table('buildings')->where('user_id', $userId)->update(['condition_pct' => 100]);
                 break;
 
@@ -185,18 +181,44 @@ class Genepis extends BaseController
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
 
         if ($direction === 'to_cash') {
-            if ((int) $genepis['balance'] < $amount) return redirect()->back()->with('error', 'Not enough Génépis.');
             $cashValue = $amount * 1000;
-            $db->table('genepis')->where('user_id', $userId)->update([
-                'balance' => (int) $genepis['balance'] - $amount,
-                'total_spent' => (int) $genepis['total_spent'] + $amount,
-            ]);
-            $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $cashValue, false)->update();
-            $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'spent', 'reason' => 'Exchanged for ' . currency($cashValue), 'created_at' => date('Y-m-d H:i:s')]);
+            $db->transStart();
+            if (!$this->spend($userId, $amount, 'Exchanged for ' . currency($cashValue))) {
+                $db->transRollback();
+                return redirect()->back()->with('error', 'Not enough Génépis.');
+            }
+            $this->creditCash($userId, $cashValue, 'Exchanged ' . $amount . ' Génépis');
+            $db->transComplete();
             log_activity($userId, 'Génépis', 'Exchanged ' . $amount . ' Génépis for ' . currency($cashValue), 'fa-solid fa-seedling');
             return redirect()->to('/genepis')->with('success', 'Exchanged ' . $amount . ' Génépis for ' . currency($cashValue) . '!');
         }
 
         return redirect()->back()->with('error', 'Invalid exchange.');
+    }
+
+    /**
+     * Takes $amount Génépis in one statement, only if the balance covers it, and logs it. Reading the
+     * balance and writing back balance - cost let two quick requests both spend the same Génépis.
+     */
+    private function spend(int $userId, int $amount, string $reason): bool
+    {
+        $db = db_connect();
+        $db->table('genepis')->where('user_id', $userId)->where('balance >=', $amount)
+            ->set('balance', 'balance - ' . $amount, false)->set('total_spent', 'total_spent + ' . $amount, false)
+            ->set('updated_at', date('Y-m-d H:i:s'))->update();
+        if ($db->affectedRows() !== 1) return false;
+        $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'spent', 'reason' => $reason, 'created_at' => date('Y-m-d H:i:s')]);
+        return true;
+    }
+
+    /** Adds cash bought with Génépis and records it in the finances ledger */
+    private function creditCash(int $userId, int $amount, string $description): void
+    {
+        $db = db_connect();
+        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $amount, false)->set('total_income', 'total_income + ' . $amount, false)->update();
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Génépis', 'description' => $description,
+            'amount' => $amount, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
+        ]);
     }
 }

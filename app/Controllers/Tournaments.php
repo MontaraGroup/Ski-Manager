@@ -81,13 +81,13 @@ class Tournaments extends BaseController
 
         $t = $types[$type];
 
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if ((int)($finance['cash'] ?? 0) < $t['cost']) {
+        $db->transStart();
+        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $t['cost'])
+            ->set('cash', 'cash - ' . (int) $t['cost'], false)->set('total_expenses', 'total_expenses + ' . (int) $t['cost'], false)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
             return redirect()->back()->with('error', 'Not enough cash to host ' . $t['name'] . ' (' . currency($t['cost']) . ' required).');
         }
-
-        // Deduct cash
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$t['cost']}", false)->update();
 
         $db->table('financial_transactions')->insert([
             'user_id' => $userId,
@@ -112,6 +112,7 @@ class Tournaments extends BaseController
             'reputation_boost' => $t['reputation'],
             'created_at' => date('Y-m-d H:i:s'),
         ]);
+        $db->transComplete();
 
         log_activity($userId, 'Tournament', 'Hosting ' . $t['name'] . ' (starts tomorrow for ' . currency($t['cost']) . ')', 'fa-solid fa-trophy');
 
@@ -125,30 +126,30 @@ class Tournaments extends BaseController
         $t = $db->table('tournaments')->where('id', $id)->where('host_id', $userId)->get()->getRowArray();
         if (!$t) return redirect()->back()->with('error', 'Tournament not found.');
 
-        $wasUpcoming = ($t['status'] ?? '') === 'upcoming';
-        $db->table('tournaments')->where('id', $id)->update(['status' => 'ended']);
+        // Only an event that hasn't started yet is refunded: one that already brought its visitors is not.
+        // The status change is the guard, so a second click can't refund twice.
+        $db->transStart();
+        $db->table('tournaments')->where('id', $id)->where('status', 'upcoming')->where('start_day >', getGameDay())->update(['status' => 'ended']);
+        $refundable = $db->affectedRows() === 1;
+        if (!$refundable) {
+            $db->table('tournaments')->where('id', $id)->where('status !=', 'ended')->update(['status' => 'ended']);
+        }
 
-        if ($wasUpcoming && !empty($t['prize_pool'])) {
+        if ($refundable && !empty($t['prize_pool'])) {
             $refund = (int) round($t['prize_pool'] * 0.8);
-            $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash + {$refund}", false)->update();
-
-            $startDate = getSeasonStartDate();
-            $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+            $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash + ' . $refund, false)->set('total_income', 'total_income + ' . $refund, false)->update();
             $db->table('financial_transactions')->insert([
-                'user_id' => $userId,
-                'game_day' => $gameDay,
-                'category' => 'Tournaments',
-                'description' => 'Tournament Cancellation Refund (80%)',
-                'amount' => $refund,
-                'type' => 'income',
-                'created_at' => date('Y-m-d H:i:s'),
+                'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Tournaments',
+                'description' => 'Tournament Cancellation Refund (80%)', 'amount' => $refund, 'type' => 'income', 'created_at' => date('Y-m-d H:i:s'),
             ]);
+            $db->transComplete();
 
             log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'] . ' (received ' . currency($refund) . ' refund)', 'fa-solid fa-xmark');
             return redirect()->to('/tournaments')->with('success', $t['name'] . ' cancelled. 80% refund of ' . currency($refund) . ' credited.');
         }
+        $db->transComplete();
 
         log_activity($userId, 'Tournament', 'Cancelled ' . $t['name'], 'fa-solid fa-xmark');
-        return redirect()->to('/tournaments')->with('success', $t['name'] . ' cancelled.');
+        return redirect()->to('/tournaments')->with('success', $t['name'] . ' cancelled. It had already started, so there is no refund.');
     }
 }

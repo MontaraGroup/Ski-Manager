@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Scenic;
 use App\Models\PlayerItemModel;
 
 class ScenicLifts extends BaseController
@@ -40,14 +41,16 @@ class ScenicLifts extends BaseController
         $seasonDay = getSeasonDay();
         $isSummer = $seasonDay > getWinterDays();
 
-        $baseRevenue = 1500;
         $totalDailyRevenue = 0;
-        foreach ($scenicLifts as $sl) {
-            $rev = (int) ($sl['scenic']['revenue_per_day'] ?? $baseRevenue);
-            $totalDailyRevenue += $rev;
+        $seasonRevenue = 0;
+        foreach ($scenicLifts as &$sl) {
+            $price = Scenic::clampPrice((int) ($sl['scenic']['ticket_price'] ?? Scenic::REF_PRICE));
+            $sl['scenic'] += ['price' => $price, 'riders' => Scenic::riders($price, $isSummer),
+                'today' => Scenic::dailyRevenue($sl['scenic'], $isSummer), 'summer' => Scenic::dailyRevenue($sl['scenic'], true)];
+            $totalDailyRevenue += $sl['scenic']['summer'];
+            if ($sl['status'] === 'open') $seasonRevenue += $sl['scenic']['today'];
         }
-
-        $seasonRevenue = $isSummer ? $totalDailyRevenue : round($totalDailyRevenue * 0.3);
+        unset($sl);
 
         return view('scenic/index', [
             'lifts' => $lifts,
@@ -65,7 +68,7 @@ class ScenicLifts extends BaseController
     {
         $userId = auth()->id();
         $itemId = (int) $this->request->getPost('item_id');
-        $ticketPrice = (int) ($this->request->getPost('ticket_price') ?? 1500);
+        $ticketPrice = Scenic::clampPrice((int) ($this->request->getPost('ticket_price') ?: Scenic::REF_PRICE));
 
         $itemModel = new PlayerItemModel();
         $lift = $itemModel->where('id', $itemId)->where('user_id', $userId)->where('item_type', 'lift')->first();
@@ -78,7 +81,7 @@ class ScenicLifts extends BaseController
         $db->table('scenic_lifts')->insert([
             'user_id' => $userId,
             'item_id' => $itemId,
-            'revenue_per_day' => max(500, min(5000, $ticketPrice)),
+            'ticket_price' => $ticketPrice,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -90,11 +93,14 @@ class ScenicLifts extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
-        $price = (int) $this->request->getPost('price');
-        $price = max(500, min(5000, $price));
+        $price = Scenic::clampPrice((int) $this->request->getPost('price'));
 
-        $db->table('scenic_lifts')->where('user_id', $userId)->where('item_id', $itemId)->update(['revenue_per_day' => $price]);
-        return redirect()->to('/scenic-lifts')->with('success', 'Ticket price updated to ' . currency($price) . '/day.');
+        if ($db->table('scenic_lifts')->where('user_id', $userId)->where('item_id', $itemId)->countAllResults() === 0) {
+            return redirect()->to('/scenic-lifts')->with('error', 'Scenic lift not found.');
+        }
+        // Only the ticket price changes; upgrades bought for the lift are kept
+        $db->table('scenic_lifts')->where('user_id', $userId)->where('item_id', $itemId)->update(['ticket_price' => $price]);
+        return redirect()->to('/scenic-lifts')->with('success', 'Ticket price set to ' . currency($price) . ' per ride: about ' . Scenic::riders($price, true) . ' riders a summer day.');
     }
 
     public function remove(int $itemId)
@@ -130,39 +136,26 @@ class ScenicLifts extends BaseController
             return redirect()->to('/scenic-lifts')->with('error', 'You need at least one scenic lift to install upgrades.');
         }
 
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if (($finance['cash'] ?? 0) < $up['cost']) {
+        $installed = json_decode((string) ($scenicLift['upgrades'] ?? ''), true);
+        $installed = is_array($installed) ? $installed : [];
+        if (in_array($upgradeKey, $installed, true)) {
+            return redirect()->to('/scenic-lifts')->with('error', $up['name'] . ' is already installed on that lift.');
+        }
+
+        $db->transStart();
+        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $up['cost'])
+            ->set('cash', 'cash - ' . (int) $up['cost'], false)->set('total_expenses', 'total_expenses + ' . (int) $up['cost'], false)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
             return redirect()->to('/scenic-lifts')->with('error', 'Not enough cash to purchase ' . $up['name'] . ' (' . currency($up['cost']) . ' required).');
         }
-
-        // Deduct cash
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$up['cost']}", false)->update();
-
-        // Financial transaction
-        $startDate = getSeasonStartDate();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
         $db->table('financial_transactions')->insert([
-            'user_id' => $userId,
-            'game_day' => $gameDay,
-            'category' => 'Scenic Upgrades',
-            'description' => 'Installed ' . $up['name'],
-            'amount' => $up['cost'],
-            'type' => 'expense',
-            'created_at' => date('Y-m-d H:i:s'),
+            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Scenic Upgrades', 'description' => 'Installed ' . $up['name'],
+            'amount' => $up['cost'], 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
         ]);
-
-        // Increase revenue per day
-        $newRev = (int) ($scenicLift['revenue_per_day'] ?? 1500) + (int) $up['revenue_boost'];
-        $updateData = ['revenue_per_day' => $newRev];
-
-        if ($db->fieldExists('upgrades', 'scenic_lifts')) {
-            $existingUpgrades = !empty($scenicLift['upgrades']) ? json_decode($scenicLift['upgrades'], true) : [];
-            if (!is_array($existingUpgrades)) $existingUpgrades = [];
-            $existingUpgrades[] = $upgradeKey;
-            $updateData['upgrades'] = json_encode(array_values(array_unique($existingUpgrades)));
-        }
-
-        $db->table('scenic_lifts')->where('id', $scenicLift['id'])->update($updateData);
+        $installed[] = $upgradeKey;
+        $db->table('scenic_lifts')->where('id', $scenicLift['id'])->update(['upgrades' => json_encode(array_values(array_unique($installed)))]);
+        $db->transComplete();
 
         $liftItem = $db->table('player_items')->where('id', $scenicLift['item_id'])->get()->getRowArray();
         $liftName = $liftItem['name'] ?? 'Scenic Lift';

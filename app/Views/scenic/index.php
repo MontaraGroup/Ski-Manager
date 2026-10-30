@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Scenic Lifts & Sightseeing<?= $this->endSection() ?>
 <?= $this->section('content') ?>
+<?php use App\Libraries\Scenic; ?>
 <div class="max-w-6xl mx-auto p-4 lg:p-8">
 
     <div class="flex items-center gap-3 mb-6">
@@ -11,8 +12,6 @@
         </div>
     </div>
 
-    <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
-    <?php if (session('error')) : ?><div class="alert alert-error mb-4"><span><?= session('error') ?></span></div><?php endif ?>
 
     <!-- Revenue Dashboard -->
     <div class="card bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm mb-6"><div class="card-body p-4">
@@ -23,14 +22,14 @@
                 <div class="text-xs text-base-content/50">of <?= count($lifts) ?> total</div>
             </div>
             <div>
-                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins mr-1"></i>Peak Revenue</div>
+                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins mr-1"></i>Summer Revenue</div>
                 <div class="text-2xl font-bold text-success"><?= currency($totalDailyRevenue) ?></div>
                 <div class="text-xs text-base-content/50">per summer day</div>
             </div>
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-calendar mr-1"></i>Current Earning</div>
                 <div class="text-2xl font-bold <?= $isSummer ? 'text-success' : 'text-warning' ?>"><?= currency($seasonRevenue) ?></div>
-                <div class="text-xs text-base-content/50"><?= $isSummer ? 'Summer - full rate' : 'Winter - 30% rate' ?></div>
+                <div class="text-xs text-base-content/50"><?= $isSummer ? 'Summer: full tourist numbers' : 'Winter: ' . (int) (Scenic::WINTER_SHARE * 100) . '% of the tourists' ?> · open lifts only</div>
             </div>
             <div>
                 <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-<?= $isSummer ? 'sun' : 'snowflake' ?> mr-1"></i>Season</div>
@@ -51,7 +50,7 @@
     <?php else : ?>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <?php foreach ($scenicLifts as $lift) : ?>
-            <?php $rev = (int) ($lift['scenic']['revenue_per_day'] ?? 1500); ?>
+            <?php $sc = $lift['scenic']; ?>
             <div class="card bg-base-100 shadow-sm ">
                 <div class="card-body p-4">
                     <div class="flex items-start justify-between">
@@ -75,17 +74,17 @@
                             <?= csrf_field() ?>
                             <div class="flex-1">
                                 <label class="text-xs text-base-content/50">Ticket price per ride</label>
-                                <input type="range" name="price" min="500" max="5000" step="100" value="<?= $rev ?>" class="range range-primary range-xs" oninput="this.nextElementSibling.textContent=new Intl.NumberFormat().format(this.value)+' €'">
-                                <span class="text-sm font-bold"><?= number_format($rev) ?> €</span>
+                                <input type="range" name="price" min="<?= Scenic::MIN_PRICE ?>" max="<?= Scenic::MAX_PRICE ?>" step="1" value="<?= $sc['price'] ?>" class="range range-primary range-xs" oninput="this.nextElementSibling.textContent=this.value+' € per ride'" aria-label="Ticket price per ride">
+                                <span class="text-sm font-bold"><?= currency($sc['price']) ?> per ride</span>
                             </div>
                             <button type="submit" class="btn btn-primary btn-xs"><i class="fa-solid fa-check"></i></button>
                         </form>
-                        <div class="text-xs text-base-content/50 mt-1">Higher prices = more revenue but fewer riders. Sweet spot: 1,000-<?= currency(2500) ?></div>
+                        <div class="text-xs text-base-content/50 mt-1">At <?= currency(Scenic::REF_PRICE) ?> about <?= Scenic::BASE_RIDERS ?> tourists ride on a summer day; higher prices bring fewer riders.</div>
                     </div>
 
                     <!-- Stats -->
                     <div class="grid grid-cols-3 gap-2 mt-3 text-center text-sm">
-                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold text-success"><?= currency($rev) ?></div><div class="text-xs text-base-content/50">Revenue/day</div></div>
+                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold text-success"><?= currency($sc['today']) ?></div><div class="text-xs text-base-content/50">Today · <?= $sc['riders'] ?> riders</div></div>
                         <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['condition_pct'] ?>%</div><div class="text-xs text-base-content/50">Condition</div></div>
                         <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['status'] === 'open' ? '✓' : '✗' ?></div><div class="text-xs text-base-content/50">Status</div></div>
                     </div>
@@ -127,10 +126,7 @@
                 <div class="flex items-center gap-2 mb-2">
                     <label class="text-xs text-base-content/50">Starting price:</label>
                     <select name="ticket_price" class="select select-bordered select-xs">
-                        <option value="1000"><?= currency(1000) ?></option>
-                        <option value="1500" selected><?= currency(1500) ?></option>
-                        <option value="2000"><?= currency(2000) ?></option>
-                        <option value="2500"><?= currency(2500) ?></option>
+                        <?php foreach ([15, 25, 35, 50] as $p) : ?><option value="<?= $p ?>" <?= $p === Scenic::REF_PRICE ? 'selected' : '' ?>><?= currency($p) ?> per ride</option><?php endforeach ?>
                     </select>
                 </div>
                 <button class="btn btn-primary btn-sm w-full gap-1"><i class="fa-solid fa-camera"></i> Make Scenic</button>
@@ -158,7 +154,7 @@
                 <?php if (count($scenicLifts) > 1) : ?>
                 <select name="item_id" class="select select-bordered select-xs w-full mt-2">
                     <?php foreach ($scenicLifts as $sl) : ?>
-                    <option value="<?= $sl['id'] ?>"><?= esc($sl['name']) ?></option>
+                    <option value="<?= (int) $sl['id'] ?>"><?= esc($sl['name']) ?></option>
                     <?php endforeach ?>
                 </select>
                 <?php else : ?>
@@ -185,13 +181,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-base-content/60">
             <div class="space-y-1.5">
                 <div><i class="fa-solid fa-sun mr-1 text-warning"></i> <strong>Summer:</strong> Full revenue from sightseeing tourists</div>
-                <div><i class="fa-solid fa-snowflake mr-1 text-info"></i> <strong>Winter:</strong> 30% revenue (tourists still ride for views)</div>
-                <div><i class="fa-solid fa-sliders mr-1"></i> Set ticket prices between 500-5,000€ per ride</div>
+                <div><i class="fa-solid fa-snowflake mr-1 text-info"></i> <strong>Winter:</strong> <?= (int) (Scenic::WINTER_SHARE * 100) ?>% of the summer tourists still ride for the views</div>
+                <div><i class="fa-solid fa-sliders mr-1"></i> Set ticket prices between <?= currency(Scenic::MIN_PRICE) ?> and <?= currency(Scenic::MAX_PRICE) ?> per ride</div>
             </div>
             <div class="space-y-1.5">
-                <div><i class="fa-solid fa-chart-line mr-1 text-success"></i> Higher prices = more revenue but fewer riders</div>
-                <div><i class="fa-solid fa-wrench mr-1"></i> Scenic lifts still need maintenance and staff</div>
-                <div><i class="fa-solid fa-star mr-1 text-warning"></i> Scenic lifts boost resort prestige and rating</div>
+                <div><i class="fa-solid fa-chart-line mr-1 text-success"></i> Revenue is riders x price: higher prices bring fewer riders</div>
+                <div><i class="fa-solid fa-wrench mr-1"></i> Only open lifts earn; they still wear and cost their running cost</div>
+                <div><i class="fa-solid fa-star mr-1 text-warning"></i> Each upgrade adds a fixed amount a day and can be bought once per lift</div>
             </div>
         </div>
     </div></div>
