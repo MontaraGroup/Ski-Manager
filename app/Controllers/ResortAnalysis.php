@@ -230,7 +230,7 @@ class ResortAnalysis extends BaseController
         $sections['cash'] = [
             'score' => $cash < 0 ? 0 : ($profit >= 0 && $tick !== null ? 100 : (int) min(100, round(($runway ?? 30) / 30 * 100))) - ($income > 0 && $dailyLoan > $income * 0.5 ? 30 : 0),
             'summary' => 'Cash ' . currency($cash) . ($debt ? ', owing ' . currency($debt) . ' (' . currency($dailyLoan) . ' a day)' : ', no loans') . '.',
-            'metrics' => [['Cash', currency($cash)], ['Owed', currency($debt)], ['Loan repayments a day', currency($dailyLoan)], ['Days of costs in cash', $runway === null ? '—' : (string) (int) floor(max(0, $runway))]],
+            'metrics' => [['Cash', currency($cash)], ['Owed', currency($debt)], ['Loan repayments a day', currency($dailyLoan)], ['Days of costs in cash', $runway === null ? '–' : (string) (int) floor(max(0, $runway))]],
         ];
         if ($cash < 0) $add('critical', 'Cash & debt', 'Your cash is negative. Cut costs before anything else breaks down.', '/finances');
         elseif ($profit < 0 && $runway !== null && $runway < 14) $add('critical', 'Cash & debt', 'At yesterday\'s loss your cash lasts about ' . (int) floor($runway) . ' more days.', '/finances');

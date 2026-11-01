@@ -36,7 +36,7 @@
                 <?php if (!$e['published']) : ?><span class="badge badge-warning badge-xs">Draft</span><?php endif ?>
             </div>
             <div class="flex items-center gap-2">
-                <span class="text-xs text-base-content/40"><?= date('M j', strtotime($e['created_at'])) ?></span>
+                <span class="text-xs text-base-content/70"><?= date('M j', strtotime($e['created_at'])) ?></span>
                 <form action="/admin/changelogs/delete/<?= $e['id'] ?>" method="post" onsubmit="return confirm('Delete?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs text-error"><i class="fa-solid fa-trash"></i></button></form>
             </div>
         </div>

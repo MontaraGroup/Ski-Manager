@@ -41,15 +41,15 @@
         <h2>4. Third-Party Services</h2>
         <p>We use the following third-party services that may collect information:</p>
         <ul>
-            <li><strong>Google Analytics 4</strong> &mdash; Website usage analytics including page views, session duration, and user interactions. Subject to <a href="https://policies.google.com/privacy" class="link link-primary" target="_blank" rel="noopener">Google's Privacy Policy</a>. We use Google Consent Mode v2 to respect your cookie preferences.</li>
-            <li><strong>Google Tag Manager</strong> &mdash; Tag management for analytics and advertising scripts.</li>
-            <li><strong>Google AdSense</strong> &mdash; Advertising. Google may use cookies to serve ads based on your browsing history. You can opt out of personalized ads at <a href="https://adssettings.google.com" class="link link-primary" target="_blank" rel="noopener">Google Ads Settings</a>.</li>
-            <li><strong>Google Sign-In</strong> &mdash; Optional authentication. We receive basic profile information (name, email) when you choose to sign in with Google.</li>
-            <li><strong>Cloudflare</strong> &mdash; CDN, DNS, security, and performance optimization. Cloudflare may process connection data per their <a href="https://www.cloudflare.com/privacypolicy/" class="link link-primary" target="_blank" rel="noopener">Privacy Policy</a>.</li>
+            <li><strong>Google Analytics 4</strong>: Website usage analytics including page views, session duration, and user interactions. Subject to <a href="https://policies.google.com/privacy" class="link link-primary" target="_blank" rel="noopener">Google's Privacy Policy</a>. We use Google Consent Mode v2 to respect your cookie preferences.</li>
+            <li><strong>Google Tag Manager</strong>: Tag management for analytics and advertising scripts.</li>
+            <li><strong>Google AdSense</strong>: Advertising. Google may use cookies to serve ads based on your browsing history. You can opt out of personalized ads at <a href="https://adssettings.google.com" class="link link-primary" target="_blank" rel="noopener">Google Ads Settings</a>.</li>
+            <li><strong>Google Sign-In</strong>: Optional authentication. We receive basic profile information (name, email) when you choose to sign in with Google.</li>
+            <li><strong>Cloudflare</strong>: CDN, DNS, security, and performance optimization. Cloudflare may process connection data per their <a href="https://www.cloudflare.com/privacypolicy/" class="link link-primary" target="_blank" rel="noopener">Privacy Policy</a>.</li>
             </ul>
         <p>Some third-party services, particularly Google Analytics and AdSense, may collect information directly through cookies and similar technologies in accordance with their own privacy policies.</p>
         <ul>
-            <li><strong>Sentry</strong> &mdash; Error tracking and performance monitoring. Collects technical error data to help us fix bugs.</li>
+            <li><strong>Sentry</strong>: Error tracking and performance monitoring. Collects technical error data to help us fix bugs.</li>
         </ul>
 
         <h2>5. Google Consent Mode</h2>
@@ -58,10 +58,10 @@
         <h2>6. Legal Bases for Processing (GDPR)</h2>
         <p>For users in the EU/EEA, we process personal data based on one or more of the following legal bases:</p>
         <ul>
-            <li><strong>Performance of a contract</strong> — providing and maintaining the game Service</li>
-            <li><strong>Legitimate interests</strong> — security, fraud prevention, analytics, and service improvement</li>
-            <li><strong>Consent</strong> — cookies, optional features, and marketing communications</li>
-            <li><strong>Compliance with legal obligations</strong> — where required by applicable law</li>
+            <li><strong>Performance of a contract</strong>: providing and maintaining the game Service</li>
+            <li><strong>Legitimate interests</strong>: security, fraud prevention, analytics, and service improvement</li>
+            <li><strong>Consent</strong>: cookies, optional features, and marketing communications</li>
+            <li><strong>Compliance with legal obligations</strong>: where required by applicable law</li>
         </ul>
 
         <h2>7. Data Sharing</h2>

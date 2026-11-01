@@ -11,7 +11,7 @@ $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100)
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-landmark mr-2 text-primary" aria-hidden="true"></i>Alpine National Bank</h1>
-            <p class="text-sm text-base-content/60">Borrow now, repay in daily instalments</p>
+            <p class="text-sm text-base-content/70">Borrow now, repay in daily instalments</p>
         </div>
     </div>
 
@@ -21,25 +21,25 @@ $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100)
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Cash</div>
+            <div class="text-xs text-base-content/70">Cash</div>
             <div class="text-2xl font-bold <?= $cash < 0 ? 'text-error' : '' ?>"><?= currency($cash) ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Owed</div>
+            <div class="text-xs text-base-content/70">Owed</div>
             <div class="text-2xl font-bold <?= $totalDebt > 0 ? 'text-error' : 'text-success' ?>"><?= currency($totalDebt) ?></div>
-            <div class="text-xs text-base-content/60"><?= $totalDebt > 0 ? currency($totalPayoff) . ' to pay off today' : 'Debt free' ?></div>
+            <div class="text-xs text-base-content/70"><?= $totalDebt > 0 ? currency($totalPayoff) . ' to pay off today' : 'Debt free' ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Daily repayments</div>
+            <div class="text-xs text-base-content/70">Daily repayments</div>
             <div class="text-2xl font-bold <?= $dailyPayments ? 'text-warning' : '' ?>"><?= currency($dailyPayments) ?></div>
-            <div class="text-xs <?= $loadPct !== null && $loadPct > 50 ? 'text-error' : 'text-base-content/60' ?>">
+            <div class="text-xs <?= $loadPct !== null && $loadPct > 50 ? 'text-error' : 'text-base-content/70' ?>">
                 <?= $loadPct === null ? 'taken each night' : $loadPct . '% of yesterday\'s income (' . currency($lastIncome) . ')' ?>
             </div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Loan slots</div>
+            <div class="text-xs text-base-content/70">Loan slots</div>
             <div class="text-2xl font-bold"><?= count($loans) ?> / <?= $maxLoans ?></div>
-            <div class="text-xs text-base-content/60"><?= $hasExtraSlot ? 'includes your extra slot' : '<a href="/genepis" class="link">Extra slot</a> with Génépis' ?></div>
+            <div class="text-xs text-base-content/70"><?= $hasExtraSlot ? 'includes your extra slot' : '<a href="/genepis" class="link">Extra slot</a> with Génépis' ?></div>
         </div></div>
     </div>
 
@@ -57,7 +57,7 @@ $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100)
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-10">
                     <i class="fa-solid fa-circle-check text-5xl text-success/40 mb-3" aria-hidden="true"></i>
                     <p class="font-semibold">Debt free</p>
-                    <p class="text-sm text-base-content/60 mt-1">Borrowing can pay for lifts and buildings before they earn.</p>
+                    <p class="text-sm text-base-content/70 mt-1">Borrowing can pay for lifts and buildings before they earn.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-3">
@@ -66,21 +66,21 @@ $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100)
                         <div class="flex items-start justify-between gap-2">
                             <div>
                                 <div class="font-bold"><?= esc($loan['name']) ?></div>
-                                <div class="text-xs text-base-content/60"><?= currency((int) $loan['principal']) ?> borrowed · <?= rtrim(rtrim((string) $loan['interest_rate'], '0'), '.') ?>% interest</div>
+                                <div class="text-xs text-base-content/70"><?= currency((int) $loan['principal']) ?> borrowed · <?= rtrim(rtrim((string) $loan['interest_rate'], '0'), '.') ?>% interest</div>
                             </div>
                             <div class="text-right">
                                 <div class="font-mono font-bold text-error"><?= currency((int) $loan['remaining']) ?></div>
-                                <div class="text-xs text-base-content/60">left to repay</div>
+                                <div class="text-xs text-base-content/70">left to repay</div>
                             </div>
                         </div>
                         <div class="flex justify-between text-xs"><span><?= (int) $loan['days_remaining'] ?> days left · <?= currency((int) $loan['daily_payment']) ?>/day</span><span><?= $loan['paid_pct'] ?>% of term</span></div>
                         <progress class="progress progress-primary w-full" value="<?= $loan['paid_pct'] ?>" max="100" aria-label="<?= $loan['paid_pct'] ?>% of the term done"></progress>
                         <form action="/bank/repay/<?= (int) $loan['id'] ?>" method="post" class="flex items-center justify-between gap-2 mt-1"
                               data-confirm="Pay off the <?= esc($loan['name']) ?> now for <?= currency($loan['payoff']) ?>?" data-confirm-title="Pay off loan"><?= csrf_field() ?>
-                            <span class="text-xs <?= $loan['saving'] > 0 ? 'text-success' : 'text-base-content/60' ?>"><?= $loan['saving'] > 0 ? 'Pay off now and save ' . currency($loan['saving']) . ' interest' : 'Pay off now' ?></span>
+                            <span class="text-xs <?= $loan['saving'] > 0 ? 'text-success' : 'text-base-content/70' ?>"><?= $loan['saving'] > 0 ? 'Pay off now and save ' . currency($loan['saving']) . ' interest' : 'Pay off now' ?></span>
                             <button class="btn btn-success btn-xs gap-1 shrink-0" <?= $canPay ? '' : 'disabled' ?>><i class="fa-solid fa-check" aria-hidden="true"></i> Pay <?= currency($loan['payoff']) ?></button>
                         </form>
-                        <?php if (!$canPay) : ?><div class="text-xs text-base-content/60 text-right">You need <?= currency($loan['payoff'] - $cash) ?> more cash</div><?php endif ?>
+                        <?php if (!$canPay) : ?><div class="text-xs text-base-content/70 text-right">You need <?= currency($loan['payoff'] - $cash) ?> more cash</div><?php endif ?>
                     </div></div>
                 <?php endforeach ?>
                 </div>
@@ -104,10 +104,10 @@ $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100)
                         </div>
                     </div>
                     <dl class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Interest</dt><dd class="font-bold"><?= currency($p['interest']) ?> (<?= $p['rate'] + 0 ?>%)</dd></div>
-                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Term</dt><dd class="font-bold"><?= $p['days'] ?> days</dd></div>
-                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Each day</dt><dd class="font-bold"><?= currency($p['daily_payment']) ?></dd></div>
-                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Total to repay</dt><dd class="font-bold"><?= currency($p['total_repay']) ?></dd></div>
+                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Interest</dt><dd class="font-bold"><?= currency($p['interest']) ?> (<?= $p['rate'] + 0 ?>%)</dd></div>
+                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Term</dt><dd class="font-bold"><?= $p['days'] ?> days</dd></div>
+                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Each day</dt><dd class="font-bold"><?= currency($p['daily_payment']) ?></dd></div>
+                        <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Total to repay</dt><dd class="font-bold"><?= currency($p['total_repay']) ?></dd></div>
                     </dl>
                     <form action="/bank/borrow" method="post" data-confirm="Borrow <?= currency($p['amount']) ?> and repay <?= currency($p['daily_payment']) ?> a day for <?= $p['days'] ?> days (<?= currency($p['total_repay']) ?> in total)?" data-confirm-title="Confirm loan"><?= csrf_field() ?>
                         <input type="hidden" name="type" value="<?= esc($key) ?>">

@@ -6,7 +6,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-bullhorn mr-2 text-primary"></i>Marketing</h1>
-            <p class="text-sm text-base-content/50">Launch campaigns to attract visitors and build reputation</p>
+            <p class="text-sm text-base-content/70">Launch campaigns to attract visitors and build reputation</p>
         </div>
     </div>
 
@@ -17,19 +17,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold"><?= count($campaigns) ?></div>
-            <div class="text-xs text-base-content/50">Active</div>
+            <div class="text-xs text-base-content/70">Active</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-error"><?= currency($totalCost) ?></div>
-            <div class="text-xs text-base-content/50">Daily Cost</div>
+            <div class="text-xs text-base-content/70">Daily Cost</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-success">+<?= $totalVisitorBoost ?>%</div>
-            <div class="text-xs text-base-content/50">Visitor Boost</div>
+            <div class="text-xs text-base-content/70">Visitor Boost</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-info">+<?= $totalRepBoost ?></div>
-            <div class="text-xs text-base-content/50">Rep/Day</div>
+            <div class="text-xs text-base-content/70">Rep/Day</div>
         </div></div>
     </div>
 
@@ -41,7 +41,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-bullhorn text-4xl text-base-content/20 mb-3"></i>
                     <p class="font-semibold">No active campaigns</p>
-                    <p class="text-sm text-base-content/50 mt-1">Launch a campaign from the right panel to attract more visitors.</p>
+                    <p class="text-sm text-base-content/70 mt-1">Launch a campaign from the right panel to attract more visitors.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-2">
@@ -56,7 +56,7 @@
                                     <span class="font-semibold text-sm"><?= esc($c['name']) ?></span>
                                     <span class="badge badge-xs <?= $c['status'] === 'active' ? 'badge-success' : 'badge-warning' ?>"><?= ucfirst($c['status']) ?></span>
                                 </div>
-                                <div class="flex items-center gap-3 text-xs text-base-content/50 mt-0.5">
+                                <div class="flex items-center gap-3 text-xs text-base-content/70 mt-0.5">
                                     <span><i class="fa-solid fa-coins mr-1"></i><?= currency($c['daily_cost']) ?>/day</span>
                                     <span><i class="fa-solid fa-people-group mr-1"></i>+<?= $c['visitor_boost'] ?>%</span>
                                     <span><i class="fa-solid fa-star mr-1"></i>+<?= $c['reputation_boost'] ?></span>
@@ -95,7 +95,7 @@
                             </div>
                             <div class="font-bold text-primary text-sm"><?= currency($type['cost'] ?? 0) ?>/day</div>
                         </div>
-                        <div class="flex items-center gap-3 text-xs text-base-content/50 mb-2">
+                        <div class="flex items-center gap-3 text-xs text-base-content/70 mb-2">
                             <span class="badge badge-ghost badge-xs gap-1"><i class="fa-solid fa-people-group"></i>+<?= $type['visitors'] ?? 0 ?>%</span>
                             <span class="badge badge-ghost badge-xs gap-1"><i class="fa-solid fa-star"></i>+<?= $type['rep'] ?? 0 ?></span>
                         </div>

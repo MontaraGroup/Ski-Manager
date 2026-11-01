@@ -7,7 +7,7 @@
     <div class="card bg-base-100 shadow-xl w-full max-w-md">
         <div class="card-body">
             <h2 class="card-title text-2xl font-bold justify-center mb-4">Login via Magic Link</h2>
-            <p class="text-center text-base-content/60 mb-4">Enter your email and we'll send you a link to log in instantly.</p>
+            <p class="text-center text-base-content/70 mb-4">Enter your email and we'll send you a link to log in instantly.</p>
 
             <?php if (session('error')) : ?>
                 <div class="alert alert-error mb-4" role="alert">
@@ -38,7 +38,7 @@
 
             <div class="divider"></div>
 
-            <p class="text-center text-sm text-base-content/60">
+            <p class="text-center text-sm text-base-content/70">
                 <a href="<?= url_to('login') ?>" class="link link-primary">Back to Login</a>
             </p>
         </div>

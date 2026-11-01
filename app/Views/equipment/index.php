@@ -17,7 +17,7 @@ $byType = ['groomer' => array_filter($equipment, fn($e) => $e['equipment_type'] 
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-shop mr-2 text-primary" aria-hidden="true"></i>Equipment</h1>
-                <p class="text-sm text-base-content/60">Groomers restore your slopes each night; snow guns protect them when the snow is thin</p>
+                <p class="text-sm text-base-content/70">Groomers restore your slopes each night; snow guns protect them when the snow is thin</p>
             </div>
         </div>
         <div class="text-sm">Cash <span class="font-bold <?= $cash < 0 ? 'text-error' : 'text-success' ?>"><?= currency($cash) ?></span></div>
@@ -29,24 +29,24 @@ $byType = ['groomer' => array_filter($equipment, fn($e) => $e['equipment_type'] 
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <a href="/grooming" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Grooming tonight</div>
+            <div class="text-xs text-base-content/70">Grooming tonight</div>
             <div class="text-2xl font-bold <?= $slopes && $groomCapacity < $slopes ? 'text-warning' : '' ?>"><?= $groomCapacity ?> <span class="text-sm font-normal">of <?= $slopes ?> slopes</span></div>
-            <div class="text-xs text-base-content/60"><?= $operators ?> operator<?= $operators === 1 ? '' : 's' ?> · <?= $groomers ?> groomer<?= $groomers === 1 ? '' : 's' ?></div>
+            <div class="text-xs text-base-content/70"><?= $operators ?> operator<?= $operators === 1 ? '' : 's' ?> · <?= $groomers ?> groomer<?= $groomers === 1 ? '' : 's' ?></div>
         </div></a>
         <a href="/snowmaking" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Snow guns today</div>
+            <div class="text-xs text-base-content/70">Snow guns today</div>
             <div class="text-2xl font-bold"><?= $gunCapacity ?> <span class="text-sm font-normal">slopes covered</span></div>
-            <div class="text-xs text-base-content/60"><?= $runningGuns ?> of <?= $guns ?> running</div>
+            <div class="text-xs text-base-content/70"><?= $runningGuns ?> of <?= $guns ?> running</div>
         </div></a>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Running cost</div>
+            <div class="text-xs text-base-content/70">Running cost</div>
             <div class="text-2xl font-bold"><?= currency($dailyCost) ?><span class="text-sm font-normal">/day</span></div>
-            <div class="text-xs text-base-content/60">fuel for machines that run</div>
+            <div class="text-xs text-base-content/70">fuel for machines that run</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Fleet resale value</div>
+            <div class="text-xs text-base-content/70">Fleet resale value</div>
             <div class="text-2xl font-bold"><?= currency($fleetValue) ?></div>
-            <div class="text-xs text-base-content/60"><?= count($equipment) ?> machine<?= count($equipment) === 1 ? '' : 's' ?></div>
+            <div class="text-xs text-base-content/70"><?= count($equipment) ?> machine<?= count($equipment) === 1 ? '' : 's' ?></div>
         </div></div>
     </div>
 
@@ -69,16 +69,16 @@ $byType = ['groomer' => array_filter($equipment, fn($e) => $e['equipment_type'] 
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
                         <div class="font-semibold truncate"><?= esc($eq['name']) ?></div>
-                        <div class="text-xs text-base-content/60"><?= esc($eq['brand']) ?> · <?= $type === 'groomer' ? 'grooms' : 'covers' ?> <?= (int) $eq['capacity'] ?> slope<?= (int) $eq['capacity'] === 1 ? '' : 's' ?> · <?= currency((int) $eq['fuel_cost']) ?>/day when running</div>
+                        <div class="text-xs text-base-content/70"><?= esc($eq['brand']) ?> · <?= $type === 'groomer' ? 'grooms' : 'covers' ?> <?= (int) $eq['capacity'] ?> slope<?= (int) $eq['capacity'] === 1 ? '' : 's' ?> · <?= currency((int) $eq['fuel_cost']) ?>/day when running</div>
                     </div>
                     <span class="badge badge-sm <?= $badge ?> shrink-0"><?= $label ?></span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xs text-base-content/60 w-12">Health</span>
+                    <span class="text-xs text-base-content/70 w-12">Health</span>
                     <progress class="progress <?= $cond >= 60 ? 'progress-success' : ($cond >= 30 ? 'progress-warning' : 'progress-error') ?> flex-1 h-1.5" value="<?= $cond ?>" max="100" aria-label="Health <?= $cond ?>%"></progress>
                     <span class="text-xs font-mono w-9 text-right"><?= $cond ?>%</span>
                 </div>
-                <div class="text-xs text-base-content/60"><i class="fa-solid fa-user mr-1" aria-hidden="true"></i><?= $eq['crew'] ? esc($eq['crew']) : ($type === 'groomer' ? 'Any free operator can drive it' : 'No crew (optional)') ?></div>
+                <div class="text-xs text-base-content/70"><i class="fa-solid fa-user mr-1" aria-hidden="true"></i><?= $eq['crew'] ? esc($eq['crew']) : ($type === 'groomer' ? 'Any free operator can drive it' : 'No crew (optional)') ?></div>
                 <div class="flex flex-wrap gap-1">
                     <?php if ($eq['state'] !== 'broken') : ?>
                     <form action="/equipment/toggle/<?= (int) $eq['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?>
@@ -117,26 +117,26 @@ $byType = ['groomer' => array_filter($equipment, fn($e) => $e['equipment_type'] 
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 gap-3">
                 <div>
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-xs font-semibold text-base-content/60 uppercase tracking-wider"><?= esc($c['brand']) ?></span>
+                        <span class="text-xs font-semibold text-base-content/70 uppercase tracking-wider"><?= esc($c['brand']) ?></span>
                         <?php if ($c['owned']) : ?><span class="badge badge-ghost badge-sm">You own <?= $c['owned'] ?></span><?php endif ?>
                     </div>
                     <h3 class="font-bold text-lg"><?= esc($c['name']) ?></h3>
-                    <p class="text-xs text-base-content/60 line-clamp-2"><?= esc($c['description']) ?></p>
+                    <p class="text-xs text-base-content/70 line-clamp-2"><?= esc($c['description']) ?></p>
                 </div>
                 <dl class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60"><?= $type === 'groomer' ? 'Grooms per night' : 'Covers' ?></dt><dd class="font-bold"><?= (int) $c['capacity'] ?> slope<?= (int) $c['capacity'] === 1 ? '' : 's' ?></dd></div>
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Running cost</dt><dd class="font-bold"><?= currency($c['running_cost']) ?>/day</dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70"><?= $type === 'groomer' ? 'Grooms per night' : 'Covers' ?></dt><dd class="font-bold"><?= (int) $c['capacity'] ?> slope<?= (int) $c['capacity'] === 1 ? '' : 's' ?></dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Running cost</dt><dd class="font-bold"><?= currency($c['running_cost']) ?>/day</dd></div>
                     <?php if ($type === 'snowmaker') : ?>
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Works at</dt><dd class="font-bold"><?= $c['max_temp'] === null ? 'Any temperature' : temp($c['max_temp']) . ' or colder' ?></dd></div>
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Uses per day</dt><dd class="font-bold"><?= number_format((int) $c['energy_kwh']) ?> kWh · <?= number_format((int) $c['water_liters'] / 1000, 1) ?> m³</dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Works at</dt><dd class="font-bold"><?= $c['max_temp'] === null ? 'Any temperature' : temp($c['max_temp']) . ' or colder' ?></dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Uses per day</dt><dd class="font-bold"><?= number_format((int) $c['energy_kwh']) ?> kWh · <?= number_format((int) $c['water_liters'] / 1000, 1) ?> m³</dd></div>
                     <?php else : ?>
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Needs</dt><dd class="font-bold">1 operator</dd></div>
-                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/60">Cost per slope</dt><dd class="font-bold"><?= currency((int) round($c['price'] / max(1, (int) $c['capacity']))) ?></dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Needs</dt><dd class="font-bold">1 operator</dd></div>
+                    <div class="bg-base-200 rounded-lg p-2 text-center"><dt class="text-base-content/70">Cost per slope</dt><dd class="font-bold"><?= currency((int) round($c['price'] / max(1, (int) $c['capacity']))) ?></dd></div>
                     <?php endif ?>
                 </dl>
                 <div class="flex items-center justify-between gap-2 mt-auto">
                     <div>
-                        <?php if ($discount) : ?><div class="text-xs text-base-content/60 line-through"><?= currency((int) $c['cost']) ?></div><?php endif ?>
+                        <?php if ($discount) : ?><div class="text-xs text-base-content/70 line-through"><?= currency((int) $c['cost']) ?></div><?php endif ?>
                         <div class="text-xl font-bold"><?= currency($c['price']) ?></div>
                     </div>
                     <form action="/equipment/buy" method="post" data-confirm="Buy <?= esc($c['name']) ?> for <?= currency($c['price']) ?>?"><?= csrf_field() ?>

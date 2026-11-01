@@ -15,7 +15,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-person-skiing mr-2 text-info"></i>Ski Rentals</h1>
-                <p class="text-sm text-base-content/50">Rent equipment to visitors who need gear</p>
+                <p class="text-sm text-base-content/70">Rent equipment to visitors who need gear</p>
             </div>
         </div>
     </div>
@@ -26,10 +26,10 @@
     <div class="card bg-gradient-to-br from-info/5 to-info/10 shadow-sm border border-info/20 mb-6">
         <div class="card-body p-5">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div><div class="text-xs text-base-content/50 mb-1">Rental Shops</div><div class="text-3xl font-bold"><?= count($buildings) ?></div></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Gear Sets</div><div class="text-3xl font-bold"><?= $totalCapacity ?></div><div class="text-xs text-base-content/50"><?= $totalSetsInUse ?> currently rented</div></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Rental Revenue</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue) ?></div><div class="text-xs text-base-content/50">per day</div></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Utilization</div><div class="text-3xl font-bold"><?= $totalCapacity > 0 ? round($totalSetsInUse / $totalCapacity * 100) : 0 ?>%</div><progress class="progress progress-info w-full mt-1" value="<?= $totalSetsInUse ?>" max="<?= max(1, $totalCapacity) ?>"></progress></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Rental Shops</div><div class="text-3xl font-bold"><?= count($buildings) ?></div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Gear Sets</div><div class="text-3xl font-bold"><?= $totalCapacity ?></div><div class="text-xs text-base-content/70"><?= $totalSetsInUse ?> currently rented</div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Rental Revenue</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue) ?></div><div class="text-xs text-base-content/70">per day</div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Utilization</div><div class="text-3xl font-bold"><?= $totalCapacity > 0 ? round($totalSetsInUse / $totalCapacity * 100) : 0 ?>%</div><progress class="progress progress-info w-full mt-1" value="<?= $totalSetsInUse ?>" max="<?= max(1, $totalCapacity) ?>"></progress></div>
             </div>
         </div>
     </div>
@@ -38,7 +38,7 @@
         <div class="lg:col-span-2">
             <h2 class="text-lg font-bold mb-3">Your Rental Shops</h2>
             <?php if (empty($buildings)) : ?>
-                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12"><i class="fa-solid fa-person-skiing text-5xl text-base-content/15 mb-3"></i><p class="font-semibold">No rental shops</p><p class="text-sm text-base-content/50 mt-1">About 40% of visitors need rental gear. Don't miss that revenue.</p></div></div>
+                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12"><i class="fa-solid fa-person-skiing text-5xl text-base-content/15 mb-3"></i><p class="font-semibold">No rental shops</p><p class="text-sm text-base-content/70 mt-1">About 40% of visitors need rental gear. Don't miss that revenue.</p></div></div>
             <?php else : ?>
                 <div class="space-y-3">
                 <?php foreach ($buildings as $b) : $isOpen = $b['status'] === 'open'; $cond = (int) $b['condition_pct']; $gl = $gearLevels[$b['level']] ?? $gearLevels[1]; ?>
@@ -56,10 +56,10 @@
                             <?php endforeach ?>
                         </div>
                         <div class="grid grid-cols-4 gap-1 text-center text-xs mb-3">
-                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/50">Sets</div></div>
-                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= currency($gl['avg_price']) ?></div><div class="text-[10px] text-base-content/50">Avg/Set</div></div>
-                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/50">Revenue</div></div>
-                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/50">Cond.</div></div>
+                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/70">Sets</div></div>
+                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= currency($gl['avg_price']) ?></div><div class="text-[10px] text-base-content/70">Avg/Set</div></div>
+                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/70">Revenue</div></div>
+                            <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/70">Cond.</div></div>
                         </div>
                         <div class="flex gap-1">
                             <form action="/buildings/toggle/<?= $b['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?><button class="btn btn-xs w-full <?= $isOpen ? 'btn-ghost' : 'btn-info' ?>"><i class="fa-solid fa-power-off mr-1"></i><?= $isOpen ? 'Close' : 'Open' ?></button></form>

@@ -57,7 +57,7 @@ class Settings extends BaseController
     {
         $userId = auth()->id();
         db_connect()->table('tutorial_progress')->where('user_id', $userId)->delete();
-        return redirect()->to('/settings')->with('success', 'Tutorial reset — it will start again on your next page load.');
+        return redirect()->to('/settings')->with('success', 'Tutorial reset. It will start again on your next page load.');
     }
 
     public function clearNotifications()

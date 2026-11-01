@@ -8,10 +8,10 @@
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= currency($totalCash) ?></div><div class="text-xs text-base-content/50">Total Cash in Game</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= currency($avgCash) ?></div><div class="text-xs text-base-content/50">Average per Player</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-info"><?= currency($totalIncome) ?></div><div class="text-xs text-base-content/50">Total Income Generated</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-error"><?= currency($totalDebt) ?></div><div class="text-xs text-base-content/50">Total Active Debt</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= currency($totalCash) ?></div><div class="text-xs text-base-content/70">Total Cash in Game</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold"><?= currency($avgCash) ?></div><div class="text-xs text-base-content/70">Average per Player</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-info"><?= currency($totalIncome) ?></div><div class="text-xs text-base-content/70">Total Income Generated</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-error"><?= currency($totalDebt) ?></div><div class="text-xs text-base-content/70">Total Active Debt</div></div></div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -43,7 +43,7 @@
                     <div class="flex items-center gap-2 p-2 text-xs">
                         <span class="font-mono font-bold <?= $t['type'] === 'income' ? 'text-success' : 'text-error' ?> w-20 text-right"><?= $t['type'] === 'income' ? '+' : '-' ?><?= currency(abs($t['amount'])) ?></span>
                         <span class="flex-1 truncate"><?= esc($t['description']) ?></span>
-                        <span class="text-base-content/40 shrink-0">D<?= $t['game_day'] ?></span>
+                        <span class="text-base-content/70 shrink-0">D<?= $t['game_day'] ?></span>
                     </div>
                 <?php endforeach ?>
                 </div>

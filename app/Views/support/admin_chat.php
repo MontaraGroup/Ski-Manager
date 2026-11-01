@@ -6,7 +6,7 @@
         <a href="/admin/support" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-headset mr-2 text-primary"></i><?= esc($player['username'] ?? 'Player') ?></h1>
-            <p class="text-sm text-base-content/50">User #<?= $chatUserId ?></p>
+            <p class="text-sm text-base-content/70">User #<?= $chatUserId ?></p>
         </div>
         <a href="/admin/user/<?= $chatUserId ?>" class="btn btn-ghost btn-sm ml-auto gap-1"><i class="fa-solid fa-user"></i> Profile</a>
     </div>
@@ -17,7 +17,7 @@
     <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body p-0">
         <div class="p-4 min-h-[400px] max-h-[600px] overflow-y-auto flex flex-col gap-3" id="chatMessages">
             <?php if (empty($messages)) : ?>
-                <div class="text-center text-sm text-base-content/40 py-12 m-auto">
+                <div class="text-center text-sm text-base-content/70 py-12 m-auto">
                     <i class="fa-solid fa-comments text-3xl mb-2"></i><p>No messages in this conversation.</p>
                 </div>
             <?php else : ?>
@@ -29,7 +29,7 @@
                             $lastDate = $msgDate;
                             $today = date('Y-m-d'); $yest = date('Y-m-d', strtotime('-1 day'));
                             $label = $msgDate === $today ? 'Today' : ($msgDate === $yest ? 'Yesterday' : date('F j, Y', strtotime($msg['created_at'])));
-                            echo '<div class="text-center my-1"><span class="text-[10px] uppercase tracking-wide text-base-content/40 bg-base-200 rounded-full px-3 py-0.5">' . esc($label) . '</span></div>';
+                            echo '<div class="text-center my-1"><span class="text-[10px] uppercase tracking-wide text-base-content/70 bg-base-200 rounded-full px-3 py-0.5">' . esc($label) . '</span></div>';
                         }
                         $isAdmin = $msg['sender'] === 'admin';
                     ?>
@@ -37,13 +37,13 @@
                         <div class="group relative flex items-center gap-2 <?= $isAdmin ? 'flex-row-reverse' : '' ?> max-w-[85%]">
                         <?php if ($isAdmin): ?>
                         <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                            <button type="button" class="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-base-content" onclick="editAdminMessage(<?= $msg['id'] ?>, this)"><i class="fa-solid fa-pencil text-[10px]"></i></button>
+                            <button type="button" class="btn btn-ghost btn-xs btn-circle text-base-content/70 hover:text-base-content" onclick="editAdminMessage(<?= $msg['id'] ?>, this)"><i class="fa-solid fa-pencil text-[10px]"></i></button>
                             <button type="button" class="btn btn-ghost btn-xs btn-circle text-error/60 hover:text-error" onclick="unsendAdminMessage(<?= $msg['id'] ?>, this)"><i class="fa-solid fa-trash text-[10px]"></i></button>
                         </div>
                         <?php endif; ?>
-                        <div id="msg-container-<?= $msg['id'] ?>" class="w-full <?= $isAdmin ? 'bg-primary text-primary-content' : 'bg-base-200' ?> rounded-2xl px-4 py-2 <?= $isAdmin ? 'rounded-tr-sm' : 'rounded-tl-sm' ?>">
+                        <div id="msg-container-<?= $msg['id'] ?>" class="w-full <?= $isAdmin ? 'bg-primary-fill text-primary-content' : 'bg-base-200' ?> rounded-2xl px-4 py-2 <?= $isAdmin ? 'rounded-tr-sm' : 'rounded-tl-sm' ?>">
                             <div class="text-sm break-words msg-text-content" data-raw="<?= esc($msg['message']) ?>"><?= nl2br(esc($msg['message'])) ?></div>
-                            <div class="text-[10px] <?= $isAdmin ? 'text-primary-content/60' : 'text-base-content/40' ?> mt-1 flex items-center gap-1 <?= $isAdmin ? 'justify-end' : '' ?>">
+                            <div class="text-[10px] <?= $isAdmin ? 'text-primary-content/60' : 'text-base-content/70' ?> mt-1 flex items-center gap-1 <?= $isAdmin ? 'justify-end' : '' ?>">
                                 <span><?= $isAdmin ? 'You' : esc($player['username'] ?? 'Player') ?> · <?= date('g:ia', strtotime($msg['created_at'])) ?></span>
                                 <?php if (!$isAdmin) : ?>
                                     <?php if ($msg['is_read']) : ?><i class="fa-solid fa-check-double text-info text-[8px]" title="Read"></i><?php else : ?><i class="fa-solid fa-check text-base-content/30 text-[8px]" title="Delivered"></i><?php endif ?>
@@ -63,7 +63,7 @@
                     <textarea name="message" id="replyInput" placeholder="Reply..." class="textarea textarea-bordered textarea-sm flex-1 resize-none" rows="1" maxlength="2000" required autocomplete="off"></textarea>
                     <button type="submit" class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-paper-plane"></i> Reply</button>
                 </div>
-                <div class="text-[10px] text-base-content/40 mt-1">Enter to send · Shift+Enter for new line</div>
+                <div class="text-[10px] text-base-content/70 mt-1">Enter to send · Shift+Enter for new line</div>
             </form>
         </div>
     </div></div>

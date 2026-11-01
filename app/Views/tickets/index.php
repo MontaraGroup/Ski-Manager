@@ -11,7 +11,7 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold">Lift Tickets & Pricing</h1>
-            <p class="text-sm text-base-content/50">Set your ticket prices to attract visitors and maximize revenue</p>
+            <p class="text-sm text-base-content/70">Set your ticket prices to attract visitors and maximize revenue</p>
         </div>
     </div>
 
@@ -23,19 +23,19 @@
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 text-center">
-                <div class="text-xs text-base-content/50">Today's Revenue</div>
+                <div class="text-xs text-base-content/70">Today's Revenue</div>
                 <div class="text-2xl font-bold text-success"><?= currency($todayRevenue) ?></div>
             </div>
         </div>
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 text-center">
-                <div class="text-xs text-base-content/50">Tickets Sold Today</div>
+                <div class="text-xs text-base-content/70">Tickets Sold Today</div>
                 <div class="text-2xl font-bold"><?= number_format($todayCount) ?></div>
             </div>
         </div>
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 text-center">
-                <div class="text-xs text-base-content/50">Game Day</div>
+                <div class="text-xs text-base-content/70">Game Day</div>
                 <div class="text-2xl font-bold"><?= $gameDay ?></div>
             </div>
         </div>
@@ -45,7 +45,7 @@
     <div class="card bg-base-100 shadow-sm mb-6">
         <div class="card-body">
             <h2 class="card-title text-base mb-4"><i class="fa-solid fa-ticket mr-2"></i>Ticket Pricing</h2>
-            <p class="text-xs text-base-content/50 mb-4">Set prices too high and visitors stay away. Set them too low and you lose profit. Watch your visitor count to find the sweet spot.</p>
+            <p class="text-xs text-base-content/70 mb-4">Set prices too high and visitors stay away. Set them too low and you lose profit. Watch your visitor count to find the sweet spot.</p>
 
             <div class="space-y-3">
                 <?php foreach ($tickets as $ticket) : ?>
@@ -58,7 +58,7 @@
                         <i class="<?= $label['icon'] ?> text-lg text-primary w-6 text-center"></i>
                         <div class="min-w-0">
                             <div class="font-semibold text-sm"><?= $label['name'] ?></div>
-                            <div class="text-xs text-base-content/50"><?= $label['desc'] ?></div>
+                            <div class="text-xs text-base-content/70"><?= $label['desc'] ?></div>
                             <?php if ($v2 && isset(\App\Libraries\Economy::TICKET_REFERENCE[$ticket['ticket_type']])) : ?>
                             <div class="text-xs mt-0.5 text-base-content/70">Normal price <?= currency(\App\Libraries\Economy::TICKET_REFERENCE[$ticket['ticket_type']]) ?> · <?= round(\App\Libraries\Economy::TICKET_MIX[$ticket['ticket_type']] * 100) ?>% of skiers want this ticket · demand at your price <b class="ticket-demand"><?= round(\App\Libraries\Economy::priceDemand($ticket['ticket_type'], (float) $ticket['price']) * 100) ?>%</b></div>
                             <?php endif ?>

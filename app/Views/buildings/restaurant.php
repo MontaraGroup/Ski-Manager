@@ -18,7 +18,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-utensils mr-2 text-warning"></i>Restaurants & Dining</h1>
-                <p class="text-sm text-base-content/50">Feed visitors across <?= count($mealPeriods) ?> daily meal periods</p>
+                <p class="text-sm text-base-content/70">Feed visitors across <?= count($mealPeriods) ?> daily meal periods</p>
             </div>
         </div>
     </div>
@@ -31,29 +31,29 @@
         <div class="card-body p-5">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Venues</div>
+                    <div class="text-xs text-base-content/70 mb-1">Venues</div>
                     <div class="text-3xl font-bold"><?= count($buildings) ?></div>
-                    <div class="text-xs text-base-content/50"><?= count($openRestaurants) ?> open</div>
+                    <div class="text-xs text-base-content/70"><?= count($openRestaurants) ?> open</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Total Seats</div>
+                    <div class="text-xs text-base-content/70 mb-1">Total Seats</div>
                     <div class="text-3xl font-bold"><?= number_format($totalCapacity) ?></div>
-                    <div class="text-xs text-base-content/50">across all venues</div>
+                    <div class="text-xs text-base-content/70">across all venues</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Food Quality</div>
+                    <div class="text-xs text-base-content/70 mb-1">Food Quality</div>
                     <div class="text-3xl font-bold <?= $foodQuality >= 70 ? 'text-success' : ($foodQuality >= 40 ? 'text-warning' : 'text-error') ?>"><?= $foodQuality ?>%</div>
                     <progress class="progress <?= $foodQuality >= 70 ? 'progress-success' : 'progress-warning' ?> w-full mt-1" value="<?= $foodQuality ?>" max="100"></progress>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Chefs</div>
+                    <div class="text-xs text-base-content/70 mb-1">Chefs</div>
                     <div class="text-3xl font-bold"><?= count($chefs) ?></div>
-                    <div class="text-xs text-base-content/50">Avg Lv.<?= $avgChefLevel ?></div>
+                    <div class="text-xs text-base-content/70">Avg Lv.<?= $avgChefLevel ?></div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Net Profit</div>
+                    <div class="text-xs text-base-content/70 mb-1">Net Profit</div>
                     <div class="text-3xl font-bold text-success"><?= currency($totalRevenue - $totalUpkeep) ?></div>
-                    <div class="text-xs text-base-content/50">per day</div>
+                    <div class="text-xs text-base-content/70">per day</div>
                 </div>
             </div>
         </div>
@@ -66,7 +66,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="<?= $periodIcons[$i] ?> text-lg text-warning mb-1"></i>
             <div class="text-xs font-semibold"><?= explode(' ', $period)[0] ?></div>
-            <div class="text-[10px] text-base-content/50"><?= explode(' ', $period, 2)[1] ?? '' ?></div>
+            <div class="text-[10px] text-base-content/70"><?= explode(' ', $period, 2)[1] ?? '' ?></div>
         </div></div>
         <?php endforeach ?>
     </div>
@@ -78,7 +78,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-utensils text-5xl text-base-content/15 mb-3"></i>
                     <p class="font-semibold">No restaurants yet</p>
-                    <p class="text-sm text-base-content/50 mt-1">Hungry visitors leave sooner. Build dining venues to keep them on the mountain.</p>
+                    <p class="text-sm text-base-content/70 mt-1">Hungry visitors leave sooner. Build dining venues to keep them on the mountain.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-3">
@@ -100,10 +100,10 @@
                                     <?php endforeach ?>
                                 </div>
                                 <div class="grid grid-cols-4 gap-1 text-center text-xs mb-3">
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/50">Seats</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/50">Revenue</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-error"><?= currency($b['upkeep_per_day']) ?></div><div class="text-[10px] text-base-content/50">Costs</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/50">Cond.</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/70">Seats</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/70">Revenue</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-error"><?= currency($b['upkeep_per_day']) ?></div><div class="text-[10px] text-base-content/70">Costs</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/70">Cond.</div></div>
                                 </div>
                                 <div class="flex gap-1">
                                     <form action="/buildings/toggle/<?= $b['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?><button class="btn btn-xs w-full <?= $isOpen ? 'btn-ghost' : 'btn-warning' ?>"><i class="fa-solid fa-power-off mr-1"></i><?= $isOpen ? 'Close' : 'Open' ?></button></form>

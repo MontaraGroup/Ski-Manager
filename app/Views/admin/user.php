@@ -29,7 +29,7 @@
     <!-- Top Row: Cash, Genepis, Reputation, Info -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <h2 class="font-bold text-xs mb-2 text-base-content/50"><i class="fa-solid fa-coins mr-1 text-warning"></i>Cash</h2>
+            <h2 class="font-bold text-xs mb-2 text-base-content/70"><i class="fa-solid fa-coins mr-1 text-warning"></i>Cash</h2>
             <div class="text-xl font-bold mb-2"><?= currency($finance ? (int) $finance['cash'] : 0) ?></div>
             <form action="/admin/cash" method="post" class="flex gap-1"><?= csrf_field() ?>
                 <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
@@ -39,7 +39,7 @@
         </div></div>
 
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <h2 class="font-bold text-xs mb-2 text-base-content/50"><i class="fa-solid fa-seedling mr-1 text-success"></i>Genepis</h2>
+            <h2 class="font-bold text-xs mb-2 text-base-content/70"><i class="fa-solid fa-seedling mr-1 text-success"></i>Genepis</h2>
             <div class="text-xl font-bold mb-2"><?= $genepis ? number_format((int) $genepis['balance']) : 0 ?></div>
             <?php if ($genepis) : ?>
             <form action="/admin/genepis" method="post" class="flex gap-1"><?= csrf_field() ?>
@@ -50,34 +50,34 @@
             <?php endif ?>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <h2 class="font-bold text-xs mb-2 text-base-content/50"><i class="fa-solid fa-mountain mr-1 text-primary"></i>Resort</h2>
+            <h2 class="font-bold text-xs mb-2 text-base-content/70"><i class="fa-solid fa-mountain mr-1 text-primary"></i>Resort</h2>
             <div class="space-y-1 text-xs mb-2">
-                <div class="flex justify-between"><span class="text-base-content/50">Map</span><span><?= esc($finance["resort_map"] ?? "N/A") ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Difficulty</span><span class="badge badge-xs"><?= esc($finance["difficulty"] ?? "standard") ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Units</span><span><?= esc($finance["units"] ?? "metric") ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Open</span><span><?= ($finance["resort_open"] ?? 1) ? "Yes" : "No" ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Map</span><span><?= esc($finance["resort_map"] ?? "N/A") ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Difficulty</span><span class="badge badge-xs"><?= esc($finance["difficulty"] ?? "standard") ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Units</span><span><?= esc($finance["units"] ?? "metric") ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Open</span><span><?= ($finance["resort_open"] ?? 1) ? "Yes" : "No" ?></span></div>
             </div>
         </div></div>
 
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <h2 class="font-bold text-xs mb-2 text-base-content/50"><i class="fa-solid fa-user mr-1"></i>Info</h2>
+            <h2 class="font-bold text-xs mb-2 text-base-content/70"><i class="fa-solid fa-user mr-1"></i>Info</h2>
             <div class="space-y-1 text-xs">
-                <div class="flex justify-between"><span class="text-base-content/50">Email</span><span class="truncate ml-2"><?= esc($identity['secret'] ?? 'N/A') ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Joined</span><span><?= date('M j, Y', strtotime($user['created_at'])) ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Difficulty</span><span><?= esc($finance['difficulty'] ?? 'standard') ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Units</span><span><?= esc($finance['units'] ?? 'metric') ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Email</span><span class="truncate ml-2"><?= esc($identity['secret'] ?? 'N/A') ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Joined</span><span><?= date('M j, Y', strtotime($user['created_at'])) ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Difficulty</span><span><?= esc($finance['difficulty'] ?? 'standard') ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Units</span><span><?= esc($finance['units'] ?? 'metric') ?></span></div>
             </div>
         </div></div>
     </div>
 
     <!-- Stats Row -->
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($staff) ?></div><div class="text-xs text-base-content/50">Staff</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($buildings) ?></div><div class="text-xs text-base-content/50">Buildings</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($items) ?></div><div class="text-xs text-base-content/50">Lifts/Slopes</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($loans) ?></div><div class="text-xs text-base-content/50">Loans</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($achievements) ?></div><div class="text-xs text-base-content/50">Achievements</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($parking) + count($terrainParks) ?></div><div class="text-xs text-base-content/50">Facilities</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($staff) ?></div><div class="text-xs text-base-content/70">Staff</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($buildings) ?></div><div class="text-xs text-base-content/70">Buildings</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($items) ?></div><div class="text-xs text-base-content/70">Lifts/Slopes</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($loans) ?></div><div class="text-xs text-base-content/70">Loans</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($achievements) ?></div><div class="text-xs text-base-content/70">Achievements</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-lg font-bold"><?= count($parking) + count($terrainParks) ?></div><div class="text-xs text-base-content/70">Facilities</div></div></div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -85,7 +85,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-users mr-1 text-info"></i>Staff (<?= count($staff) ?>)</h2>
             <?php if (empty($staff)) : ?>
-                <p class="text-xs text-base-content/50">No staff hired.</p>
+                <p class="text-xs text-base-content/70">No staff hired.</p>
             <?php else : ?>
             <div class="overflow-y-auto max-h-48"><table class="table table-xs">
                 <thead><tr><th>Role</th><th>Name</th><th>Salary</th><th>Morale</th></tr></thead>
@@ -102,7 +102,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-mountain mr-1 text-success"></i>Lifts & Slopes (<?= count($items) ?>)</h2>
             <?php if (empty($items)) : ?>
-                <p class="text-xs text-base-content/50">Nothing built yet.</p>
+                <p class="text-xs text-base-content/70">Nothing built yet.</p>
             <?php else : ?>
             <div class="overflow-y-auto max-h-48"><table class="table table-xs">
                 <thead><tr><th>Name</th><th>Type</th><th>Length</th><th>Status</th></tr></thead>
@@ -119,7 +119,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-building mr-1 text-warning"></i>Buildings (<?= count($buildings) ?>)</h2>
             <?php if (empty($buildings)) : ?>
-                <p class="text-xs text-base-content/50">No buildings.</p>
+                <p class="text-xs text-base-content/70">No buildings.</p>
             <?php else : ?>
             <div class="overflow-y-auto max-h-48"><table class="table table-xs">
                 <thead><tr><th>Name</th><th>Type</th><th>Level</th></tr></thead>
@@ -136,7 +136,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-landmark mr-1 text-error"></i>Active Loans (<?= count($loans) ?>)</h2>
             <?php if (empty($loans)) : ?>
-                <p class="text-xs text-base-content/50">No active loans.</p>
+                <p class="text-xs text-base-content/70">No active loans.</p>
             <?php else : ?>
             <div class="overflow-y-auto max-h-48">
                 <?php foreach ($loans as $l) : ?>
@@ -155,7 +155,7 @@
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body p-4">
         <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-trophy mr-1 text-warning"></i>Achievements (<?= count($achievements) ?>)</h2>
         <?php if (empty($achievements)) : ?>
-            <p class="text-xs text-base-content/50">No achievements earned.</p>
+            <p class="text-xs text-base-content/70">No achievements earned.</p>
         <?php else : ?>
         <div class="flex flex-wrap gap-2">
             <?php foreach ($achievements as $a) : ?>
@@ -171,7 +171,7 @@
         <div class="flex items-center justify-between">
             <h2 class="font-bold text-sm"><i class="fa-solid fa-graduation-cap mr-1"></i>Tutorial</h2>
             <div class="flex items-center gap-2">
-                <span class="text-xs text-base-content/50">Step <?= $tutorial['current_step'] ?? '?' ?></span>
+                <span class="text-xs text-base-content/70">Step <?= $tutorial['current_step'] ?? '?' ?></span>
                 <form action="/admin/reset-tutorial/<?= $user['id'] ?>" method="post" onsubmit="return confirm('Reset tutorial progress?')"><?= csrf_field() ?><button class="btn btn-ghost btn-xs">Reset</button></form>
             </div>
         </div>
@@ -183,7 +183,7 @@
         <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Activity (last 50)</h2>
         <div class="divide-y divide-base-300 max-h-96 overflow-y-auto">
         <?php foreach ($logs as $log) : ?>
-            <div class="flex items-center gap-2 py-1.5"><i class="<?= $log['icon'] ?> text-xs text-base-content/50 w-4 text-center"></i><span class="flex-1 text-sm truncate"><?= esc($log['message']) ?></span><span class="text-xs text-base-content/40 shrink-0">D<?= $log['game_day'] ?></span></div>
+            <div class="flex items-center gap-2 py-1.5"><i class="<?= $log['icon'] ?> text-xs text-base-content/50 w-4 text-center"></i><span class="flex-1 text-sm truncate"><?= esc($log['message']) ?></span><span class="text-xs text-base-content/70 shrink-0">D<?= $log['game_day'] ?></span></div>
         <?php endforeach ?>
         </div>
     </div></div>

@@ -19,7 +19,7 @@
         </div>
         <div class="text-xs font-mono font-bold text-error uppercase tracking-widest mb-1">Error 403</div>
         <h1 class="text-3xl font-extrabold mb-3">Restricted Slope</h1>
-        <p class="text-sm text-base-content/60 leading-relaxed mb-6">
+        <p class="text-sm text-base-content/70 leading-relaxed mb-6">
             <?php if (ENVIRONMENT !== 'production' && !empty($message)) : ?>
                 <?= nl2br(esc($message)) ?>
             <?php else : ?>
@@ -39,7 +39,7 @@
                 </a>
             <?php endif ?>
         </div>
-        <div class="mt-8 pt-4 border-t border-base-300 text-xs text-base-content/40">
+        <div class="mt-8 pt-4 border-t border-base-300 text-xs text-base-content/70">
             Ski Manager Operations Sector · Security Code 403
         </div>
     </div>

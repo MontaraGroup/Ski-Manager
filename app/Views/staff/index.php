@@ -8,7 +8,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-users mr-2 text-info"></i>Staff</h1>
-                <p class="text-sm text-base-content/50"><?= count($staff) ?> employees, <?= currency($totalSalary) ?>/day</p>
+                <p class="text-sm text-base-content/70"><?= count($staff) ?> employees, <?= currency($totalSalary) ?>/day</p>
             </div>
         </div>
         <div class="flex gap-2">
@@ -24,7 +24,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
             <i class="fa-solid fa-users text-4xl text-base-content/20 mb-3"></i>
             <p class="font-semibold">No staff hired yet</p>
-            <p class="text-sm text-base-content/50 mt-1">Your resort needs people to run. Start hiring.</p>
+            <p class="text-sm text-base-content/70 mt-1">Your resort needs people to run. Start hiring.</p>
             <a href="/staff/hire" class="btn btn-primary btn-sm mt-3 gap-1"><i class="fa-solid fa-user-plus"></i>Hire First Employee</a>
         </div></div>
     <?php else : ?>
@@ -40,23 +40,23 @@
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold"><?= count($staff) ?></div>
-                <div class="text-xs text-base-content/50">Total</div>
+                <div class="text-xs text-base-content/70">Total</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold text-error"><?= currency($totalSalary) ?></div>
-                <div class="text-xs text-base-content/50">Daily Cost</div>
+                <div class="text-xs text-base-content/70">Daily Cost</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold <?= $avgMorale >= 70 ? 'text-success' : ($avgMorale >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgMorale ?>%</div>
-                <div class="text-xs text-base-content/50">Avg Morale</div>
+                <div class="text-xs text-base-content/70">Avg Morale</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold text-success"><?= $assigned ?></div>
-                <div class="text-xs text-base-content/50">Assigned</div>
+                <div class="text-xs text-base-content/70">Assigned</div>
             </div></div>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold <?= $unassigned > 0 ? 'text-warning' : 'text-success' ?>"><?= $unassigned ?></div>
-                <div class="text-xs text-base-content/50">Unassigned</div>
+                <div class="text-xs text-base-content/70">Unassigned</div>
             </div></div>
         </div>
 
@@ -107,7 +107,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold text-sm truncate"><?= esc($member['name']) ?></div>
-                            <div class="flex items-center gap-2 text-xs text-base-content/50">
+                            <div class="flex items-center gap-2 text-xs text-base-content/70">
                                 <span><?= $role['name'] ?></span>
                                 <span>·</span>
                                 <span class="flex items-center gap-0.5"><?php for($i=0;$i<min($member['level'],5);$i++): ?><i class="fa-solid fa-star text-warning text-[8px]"></i><?php endfor ?> Lv.<?= $member['level'] ?></span>
@@ -120,13 +120,13 @@
                     <div class="grid grid-cols-2 gap-2 text-xs mb-3">
                         <div class="bg-base-200 rounded-lg p-2">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-base-content/50">Morale</span>
+                                <span class="text-base-content/70">Morale</span>
                                 <span class="font-bold <?= $morale >= 70 ? 'text-success' : ($morale >= 40 ? 'text-warning' : 'text-error') ?>"><?= $morale ?>%</span>
                             </div>
                             <progress class="progress <?= $morale >= 70 ? 'progress-success' : ($morale >= 40 ? 'progress-warning' : 'progress-error') ?> w-full h-1" value="<?= $morale ?>" max="100"></progress>
                         </div>
                         <div class="bg-base-200 rounded-lg p-2 text-center">
-                            <div class="text-base-content/50">Salary</div>
+                            <div class="text-base-content/70">Salary</div>
                             <div class="font-bold"><?= currency($member['salary']) ?>/day</div>
                         </div>
                     </div>

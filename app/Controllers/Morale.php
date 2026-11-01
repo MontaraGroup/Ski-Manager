@@ -94,7 +94,7 @@ class Morale extends BaseController
             $staffModel->update($s['id'], ['morale' => $newMorale]);
         }
 
-        log_activity($userId, 'Staff', $names[$action] . ' — all staff morale +' . $act['morale'], 'fa-solid fa-face-smile');
+        log_activity($userId, 'Staff', $names[$action] . ': all staff morale +' . $act['morale'], 'fa-solid fa-face-smile');
 
         return redirect()->to('/morale')->with('success', $names[$action] . ' done! All staff morale +' . $act['morale'] . '.');
     }

@@ -20,7 +20,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-tractor mr-2 text-success" aria-hidden="true"></i>Grooming</h1>
-                <p class="text-sm text-base-content/60">Slopes wear down every day. Your machines groom the worst ones overnight; worn slopes draw fewer skiers.</p>
+                <p class="text-sm text-base-content/70">Slopes wear down every day. Your machines groom the worst ones overnight; worn slopes draw fewer skiers.</p>
             </div>
         </div>
         <?php if ($capacity > 0 && $batch) : ?>
@@ -47,32 +47,32 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
     <!-- Summary -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Average condition</div>
+            <div class="text-xs text-base-content/70">Average condition</div>
             <div class="text-2xl font-bold text-<?= $tone($avgCondition) ?>"><?= $avgCondition ?>%</div>
-            <div class="text-xs text-base-content/60">Slopes draw <?= (int) round(\App\Libraries\Economy::conditionFactor($avgCondition) * 100) ?>% of their skiers</div>
+            <div class="text-xs text-base-content/70">Slopes draw <?= (int) round(\App\Libraries\Economy::conditionFactor($avgCondition) * 100) ?>% of their skiers</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Tonight's night shift</div>
-            <div class="text-2xl font-bold"><?= count($tonight) ?> <span class="text-sm font-normal text-base-content/60">of <?= count($slopes) ?> slopes</span></div>
-            <div class="text-xs text-base-content/60"><?= $capacity > 0 ? '+' . $restore . '% each, worst first' : 'No machine can run' ?></div>
+            <div class="text-xs text-base-content/70">Tonight's night shift</div>
+            <div class="text-2xl font-bold"><?= count($tonight) ?> <span class="text-sm font-normal text-base-content/70">of <?= count($slopes) ?> slopes</span></div>
+            <div class="text-xs text-base-content/70"><?= $capacity > 0 ? '+' . $restore . '% each, worst first' : 'No machine can run' ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Wear vs grooming</div>
+            <div class="text-xs text-base-content/70">Wear vs grooming</div>
             <div class="text-2xl font-bold text-<?= $net >= 0 ? 'success' : 'error' ?>"><?= $net >= 0 ? 'Keeping up' : 'Falling behind' ?></div>
-            <div class="text-xs text-base-content/60">−<?= $avgDecay ?>%/day wear, +<?= $nightlyRestorePerSlope ?>%/day grooming per slope</div>
+            <div class="text-xs text-base-content/70">−<?= $avgDecay ?>%/day wear, +<?= $nightlyRestorePerSlope ?>%/day grooming per slope</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Daytime runs left today</div>
-            <div class="text-2xl font-bold"><?= $runsLeft ?> <span class="text-sm font-normal text-base-content/60">of <?= $capacity ?></span></div>
-            <div class="text-xs text-base-content/60">Extra passes cost fuel: <?= currency((int) round(\App\Libraries\Grooming::EXTRA_RUN_PER_M * 1000)) ?> per km</div>
+            <div class="text-xs text-base-content/70">Daytime runs left today</div>
+            <div class="text-2xl font-bold"><?= $runsLeft ?> <span class="text-sm font-normal text-base-content/70">of <?= $capacity ?></span></div>
+            <div class="text-xs text-base-content/70">Extra passes cost fuel: <?= currency((int) round(\App\Libraries\Grooming::EXTRA_RUN_PER_M * 1000)) ?> per km</div>
         </div></div>
     </div>
 
     <!-- Slopes -->
-    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-mountain mr-1" aria-hidden="true"></i> Slopes <span class="text-sm font-normal text-base-content/60">worst first</span></h2>
+    <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-mountain mr-1" aria-hidden="true"></i> Slopes <span class="text-sm font-normal text-base-content/70">worst first</span></h2>
     <?php if (!$slopes) : ?>
         <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body text-center py-8">
-            <p class="text-sm text-base-content/60">No slopes yet. <a href="/map" class="link link-primary">Build slopes</a> on the trail map.</p>
+            <p class="text-sm text-base-content/70">No slopes yet. <a href="/map" class="link link-primary">Build slopes</a> on the trail map.</p>
         </div></div>
     <?php else : ?>
     <div class="card bg-base-100 shadow-sm mb-6"><div class="overflow-x-auto">
@@ -86,7 +86,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                             <?php if ($s['difficulty']) : ?><span class="badge badge-xs <?= $diffBadge($s['difficulty']) ?>"><?= esc(ucfirst(str_replace('_', ' ', $s['difficulty']))) ?></span><?php endif ?>
                             <span class="font-semibold"><?= esc($s['name']) ?></span>
                         </div>
-                        <div class="text-xs text-base-content/60"><?= esc($s['sector_name']) ?> · <?= distance($s['length_meters']) ?></div>
+                        <div class="text-xs text-base-content/70"><?= esc($s['sector_name']) ?> · <?= distance($s['length_meters']) ?></div>
                     </td>
                     <td>
                         <div class="flex items-center gap-2">
@@ -99,14 +99,14 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                     <td class="text-xs">−<?= $s['decay'] ?>%<?php if ($s['thin_base']) : ?> <span class="badge badge-warning badge-xs" title="Natural snow base under <?= \App\Libraries\Weather::THIN_BASE ?> cm and no snow gun on this slope">thin base</span><?php elseif ($thinBase && $s['snow_covered']) : ?> <span class="badge badge-info badge-xs" title="A snow gun covers this slope today">snowmaking</span><?php endif ?></td>
                     <?php else : ?>
                     <td class="text-xs text-error">Closed</td>
-                    <td class="text-xs text-base-content/60">—</td>
+                    <td class="text-xs text-base-content/70">–</td>
                     <?php endif ?>
                     <td class="text-xs">
                         <?php if ($s['status'] !== 'open') : ?><span class="badge badge-xs badge-error"><?= esc(ucfirst($s['status'])) ?></span>
                         <?php elseif ($s['groomed_today']) : ?><span class="text-success"><i class="fa-solid fa-check" aria-hidden="true"></i> Groomed today</span>
                         <?php elseif (isset($tonightIds[(int) $s['id']])) : ?><span class="text-info"><i class="fa-solid fa-moon" aria-hidden="true"></i> Tonight</span>
-                        <?php elseif ($c >= 100) : ?><span class="text-base-content/60">Perfect</span>
-                        <?php else : ?><span class="text-base-content/60">Waiting</span><?php endif ?>
+                        <?php elseif ($c >= 100) : ?><span class="text-base-content/70">Perfect</span>
+                        <?php else : ?><span class="text-base-content/70">Waiting</span><?php endif ?>
                     </td>
                     <td class="text-right">
                         <?php if (\App\Libraries\Grooming::groomable($s) && !$s['groomed_today'] && $runsLeft > 0) : ?>
@@ -131,7 +131,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                 <a href="/equipment" class="btn btn-ghost btn-xs">Equipment shop</a>
             </div>
             <?php if (!$machines) : ?>
-                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-6 text-sm text-base-content/60">No machines. <a href="/equipment" class="link link-primary">Buy a groomer</a>.</div></div>
+                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-6 text-sm text-base-content/70">No machines. <a href="/equipment" class="link link-primary">Buy a groomer</a>.</div></div>
             <?php else : ?>
             <div class="space-y-2">
                 <?php $crewedIds = array_flip(array_map(fn($m) => (int) $m['id'], $fleet['machines'])); ?>
@@ -140,7 +140,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                     <div class="flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <div class="font-semibold text-sm truncate"><?= esc($m['name']) ?></div>
-                            <div class="text-xs text-base-content/60"><?= (int) $m['capacity'] ?> slopes/night · <?= currency((int) $m['fuel_cost']) ?>/day fuel</div>
+                            <div class="text-xs text-base-content/70"><?= (int) $m['capacity'] ?> slopes/night · <?= currency((int) $m['fuel_cost']) ?>/day fuel</div>
                         </div>
                         <?php if ($m['status'] === 'broken') : ?><span class="badge badge-sm badge-error">Broken</span>
                         <?php elseif ($m['status'] !== 'active') : ?><span class="badge badge-sm badge-ghost">Off</span>
@@ -148,7 +148,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                         <?php else : ?><span class="badge badge-sm badge-warning">No operator</span><?php endif ?>
                     </div>
                     <div class="flex items-center gap-2 mt-2">
-                        <span class="text-xs text-base-content/60 w-12">Health</span>
+                        <span class="text-xs text-base-content/70 w-12">Health</span>
                         <progress class="progress progress-<?= $hp >= 60 ? 'success' : ($hp >= 30 ? 'warning' : 'error') ?> flex-1 h-1.5" value="<?= $hp ?>" max="100" aria-label="Health <?= $hp ?>%"></progress>
                         <span class="text-xs font-mono w-9 text-right"><?= $hp ?>%</span>
                     </div>
@@ -167,7 +167,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                 </div>
                 <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-sm">
                     <?php if (!$operators) : ?>
-                        <p class="text-base-content/60">No groomer operators. Each operator runs one machine.</p>
+                        <p class="text-base-content/70">No groomer operators. Each operator runs one machine.</p>
                     <?php else : ?>
                         <p><?= count($operators) ?> operator<?= count($operators) === 1 ? '' : 's' ?> running <?= count($fleet['machines']) ?> of <?= $activeMachines ?> switched-on machine<?= $activeMachines === 1 ? '' : 's' ?>. Each pass restores <b>+<?= $restore ?>%</b> (more with experienced operators).</p>
                         <div class="flex flex-wrap gap-1.5 mt-2">
@@ -180,11 +180,11 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
                 <h3 class="text-sm font-bold mb-2">Daily cost</h3>
                 <div class="grid grid-cols-3 gap-3 text-center">
-                    <div><div class="text-xs text-base-content/60">Fuel</div><div class="font-bold"><?= currency($fuelPerDay) ?></div></div>
-                    <div><div class="text-xs text-base-content/60">Operators</div><div class="font-bold"><?= currency($crewPerDay) ?></div></div>
-                    <div><div class="text-xs text-base-content/60">Total</div><div class="font-bold text-error"><?= currency($fuelPerDay + $crewPerDay) ?></div></div>
+                    <div><div class="text-xs text-base-content/70">Fuel</div><div class="font-bold"><?= currency($fuelPerDay) ?></div></div>
+                    <div><div class="text-xs text-base-content/70">Operators</div><div class="font-bold"><?= currency($crewPerDay) ?></div></div>
+                    <div><div class="text-xs text-base-content/70">Total</div><div class="font-bold text-error"><?= currency($fuelPerDay + $crewPerDay) ?></div></div>
                 </div>
-                <p class="text-xs text-base-content/60 mt-2">Fuel is charged for every switched-on machine, crewed or not. Daytime runs cost extra.</p>
+                <p class="text-xs text-base-content/70 mt-2">Fuel is charged for every switched-on machine, crewed or not. Daytime runs cost extra.</p>
             </div></div>
 
             <?php if (count($sectors) > 1) : ?>
@@ -192,7 +192,7 @@ $batchCost = array_sum(array_column($batch, 'extra_cost'));
                 <h3 class="text-sm font-bold mb-2">By sector</h3>
                 <?php foreach ($sectors as $name => $sec) : ?>
                 <div class="flex items-center justify-between text-sm py-1">
-                    <span><?= esc($name) ?> <span class="text-xs text-base-content/60"><?= $sec['count'] ?> slope<?= $sec['count'] === 1 ? '' : 's' ?></span></span>
+                    <span><?= esc($name) ?> <span class="text-xs text-base-content/70"><?= $sec['count'] ?> slope<?= $sec['count'] === 1 ? '' : 's' ?></span></span>
                     <span class="font-mono text-<?= $tone($sec['avg']) ?>">avg <?= $sec['avg'] ?>% · worst <?= $sec['worst'] ?>%</span>
                 </div>
                 <?php endforeach ?>
