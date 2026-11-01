@@ -51,7 +51,7 @@
                     </label>
                     <textarea name="description" id="description" class="textarea textarea-bordered w-full" rows="3" maxlength="500"><?= esc($resort['description'] ?? '') ?></textarea>
                     <label class="label">
-                        <span class="label-text-alt text-base-content/50">Max 500 characters</span>
+                        <span class="label-text-alt text-base-content/70">Max 500 characters</span>
                     </label>
                 </div>
             </div>
@@ -66,7 +66,7 @@
                         <input type="checkbox" name="is_open" class="toggle toggle-success" <?= ($resort['is_open'] ?? true) ? 'checked' : '' ?>>
                         <div>
                             <div class="text-sm font-semibold">Resort Open</div>
-                            <div class="text-xs text-base-content/50">When closed, guests stop visiting and no revenue is generated</div>
+                            <div class="text-xs text-base-content/70">When closed, guests stop visiting and no revenue is generated</div>
                         </div>
                     </label>
                 </div>

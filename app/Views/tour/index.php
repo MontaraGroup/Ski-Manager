@@ -18,7 +18,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'black' => 'b
                     </a>
                 <?php endif ?>
             </div>
-            <p class="text-base-content/60 text-sm ml-10">
+            <p class="text-base-content/70 text-sm ml-10">
                 <?php for ($i = 0; $i < 5; $i++) : ?>
                     <i class="fa-solid fa-star text-xs <?= $i < $rating['stars'] ? 'text-warning' : 'text-base-content/20' ?>"></i>
                 <?php endfor ?>
@@ -38,11 +38,11 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'black' => 'b
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-info"><?= $openSlopes ?></div><div class="text-xs text-base-content/50">Open Slopes</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= $openLifts ?></div><div class="text-xs text-base-content/50">Open Lifts</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-warning"><?= $staffCount ?></div><div class="text-xs text-base-content/50">Staff</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-primary"><?= $buildingCount ?></div><div class="text-xs text-base-content/50">Buildings</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-secondary"><?= $parks ?></div><div class="text-xs text-base-content/50">Parks</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-info"><?= $openSlopes ?></div><div class="text-xs text-base-content/70">Open Slopes</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-success"><?= $openLifts ?></div><div class="text-xs text-base-content/70">Open Lifts</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-warning"><?= $staffCount ?></div><div class="text-xs text-base-content/70">Staff</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-primary"><?= $buildingCount ?></div><div class="text-xs text-base-content/70">Buildings</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center"><div class="text-2xl font-bold text-secondary"><?= $parks ?></div><div class="text-xs text-base-content/70">Parks</div></div></div>
     </div>
 
     <?php foreach ($sectors as $sectorNum => $sector) : ?>
@@ -90,7 +90,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'black' => 'b
     <?php endforeach ?>
 
     <?php if (empty($sectors)) : ?>
-    <div class="card bg-base-100 shadow-sm"><div class="card-body text-center text-base-content/40 py-12"><i class="fa-solid fa-mountain text-4xl mb-3"></i><p>This resort hasn't built anything yet.</p></div></div>
+    <div class="card bg-base-100 shadow-sm"><div class="card-body text-center text-base-content/70 py-12"><i class="fa-solid fa-mountain text-4xl mb-3"></i><p>This resort hasn't built anything yet.</p></div></div>
     <?php endif ?>
 </div>
 <?= $this->endSection() ?>

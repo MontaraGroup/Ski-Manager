@@ -5,12 +5,11 @@
     <!-- Sentry Observability & Session Replay -->
     <?php $__sentryDsn = getenv('SENTRY_DSN') ?: 'https://c2891eb7f1bd5f0b4f9ad8f08f4ae137@o4511424329220096.ingest.us.sentry.io/4512337095032832'; ?>
     <?php if (!empty($__sentryDsn)) : ?>
-    <script
-      src="https://browser.sentry-cdn.com/8.38.0/bundle.tracing.replay.min.js"
-      crossorigin="anonymous"
-    ></script>
+    <!-- Deferred so it never holds up the first paint. The init runs from the bundle's own onload:
+         by then window.Sentry is the full SDK, not a stub another Sentry script may have set first -->
     <script>
-      if (window.Sentry) {
+      window.__initSentry = function () {
+      if (window.Sentry && typeof Sentry.browserTracingIntegration === 'function') {
         Sentry.init({
           dsn: <?= json_encode($__sentryDsn) ?>,
           environment: <?= json_encode(ENVIRONMENT ?? 'production') ?>,
@@ -71,7 +70,14 @@
         });
         <?php endif; ?>
       }
+      };
     </script>
+    <script
+      defer
+      src="https://browser.sentry-cdn.com/8.38.0/bundle.tracing.replay.min.js"
+      crossorigin="anonymous"
+      onload="window.__initSentry()"
+    ></script>
     <?php endif; ?>
     <!-- Google Consent Mode v2 -->
     <script>
@@ -153,7 +159,6 @@
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
 <style>
 :root {
-    color-scheme: dark light;
     accent-color: #3b82f6;
     scrollbar-width: thin;
     scrollbar-gutter: stable;
@@ -197,9 +202,13 @@ body { font-family: var(--sign); }
 /* Keep brand + Log in + Play free on one line without overflowing small phones */
 @media (max-width: 420px) {
     .site-nav .navbar-end { gap: 0.25rem; }
-    .site-nav .navbar-end > .btn-sm:not(.btn-circle) { padding-left: 0.625rem; padding-right: 0.625rem; }
-    .site-nav .brand { padding: 0 0.25rem; }
+    .site-nav .navbar-end > .btn-sm:not(.btn-circle) { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .site-nav .brand { padding: 0 0.25rem; gap: 0.4rem; }
     .brand-name { font-size: 1.125rem; }
+}
+/* Touch screens: the logo link is a 44px tap target like the buttons beside it */
+@media (pointer: coarse) {
+    .site-nav .brand, .site-footer .brand { min-height: 2.75rem; }
 }
 @media (max-width: 380px) {
     .site-nav { padding-left: 0.25rem; padding-right: 0.25rem; }
@@ -218,14 +227,15 @@ body { font-family: var(--sign); }
     border-left: 1px solid var(--color-base-300); font-size: 0.75rem;
 }
 .stats-bar .stat-pill:first-child { border-left: 0; padding-left: 0; }
-.stats-bar .stat-pill:not([href="/resort-analysis"]) i { color: color-mix(in oklab, var(--color-base-content) 50%, transparent) !important; }
+.stats-bar .stat-pill:not([href="/resort-analysis"]) i { color: color-mix(in oklab, var(--color-base-content) 70%, transparent) !important; }
 .stats-bar .stat-pill .font-mono { font-family: inherit; font-variant-numeric: tabular-nums; }
 .stats-bar .stat-pill:hover { color: var(--color-base-content); }
 
 /* Footer */
 .site-footer h6 { font-size: 0.8125rem; font-weight: 600; color: var(--color-base-content); margin-bottom: 0.75rem; }
-.site-footer ul a { color: color-mix(in oklab, var(--color-base-content) 62%, transparent); }
+.site-footer ul a { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .site-footer ul a:hover { color: var(--color-base-content); }
+@media (pointer: coarse) { .site-footer ul a { display: inline-flex; align-items: center; min-height: 2.75rem; } .site-footer ul.space-y-2 > * + * { margin-top: 0; } }
 
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -378,7 +388,7 @@ a.link:hover{opacity:0.8}
         };
     ?>
     <?php if (session()->get('is_demo')) : ?>
-    <div class="bg-primary text-primary-content px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
+    <div class="bg-primary-fill text-primary-content px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
         <div class="flex items-center gap-2">
             <span class="badge badge-warning badge-sm font-bold font-mono text-neutral">DEMO SANDBOX</span>
             <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
@@ -408,7 +418,7 @@ a.link:hover{opacity:0.8}
         </div>
     </div>
     <?php endif ?>
-    <nav aria-label="Main navigation" style="z-index:9999; position:sticky; top:0"><div class="navbar site-nav bg-base-100 border-b border-base-300">
+    <header style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation"><div class="navbar site-nav bg-base-100 border-b border-base-300">
         <div class="navbar-start">
             <div class="dropdown">
                 <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></div>
@@ -451,7 +461,7 @@ a.link:hover{opacity:0.8}
                         <kbd class="kbd kbd-xs">Esc</kbd>
                     </search>
                     <div id="searchResults" class="max-h-80 overflow-y-auto p-2"></div>
-                    <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/40">
+                    <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/70">
                         <i class="fa-solid fa-compass text-2xl mb-2" aria-hidden="true"></i>
                         <p>Type to search pages and features</p>
                     </div>
@@ -482,7 +492,7 @@ a.link:hover{opacity:0.8}
                             <div id="navbarNotifTargetList" class="space-y-1 max-h-64 overflow-y-auto">
                                 <?php $__notifs = db_connect()->table("notifications")->where("user_id", auth()->id())->orderBy("created_at", "DESC")->limit(5)->get()->getResultArray(); ?>
                                 <?php if (empty($__notifs)) : ?>
-                                    <p class="text-xs text-base-content/40 text-center py-4">No notifications</p>
+                                    <p class="text-xs text-base-content/70 text-center py-4">No notifications</p>
                                 <?php else : ?>
                                     <?php foreach ($__notifs as $__n) : ?>
                                         <?php 
@@ -505,7 +515,7 @@ a.link:hover{opacity:0.8}
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="text-[11px] text-base-content font-bold truncate"><?= esc($__n["title"]) ?></div>
-                                                <div class="text-[10px] text-base-content/60 truncate mt-0.5"><?= esc($__n["message"]) ?></div>
+                                                <div class="text-[10px] text-base-content/70 truncate mt-0.5"><?= esc($__n["message"]) ?></div>
                                             </div>
                                             <?php if (!$isRead) : ?>
                                                 <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
@@ -527,13 +537,13 @@ a.link:hover{opacity:0.8}
             <?php endif ?>
         </div>
     </div>
-    </nav>
+    </nav></header>
 
     <!-- Content -->
     <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
     <?php if (session("admin_original_id")) : ?>
     <div class="bg-warning text-warning-content text-center py-2 text-sm font-semibold sticky top-0 z-50">
-        <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= auth()->user()->username ?? "user" ?> — <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
+        <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= auth()->user()->username ?? "user" ?>. <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
     </div>
     <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
@@ -555,15 +565,15 @@ a.link:hover{opacity:0.8}
                 $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
                 $__visitors = $__openLifts * 80 + $__openSlopes * 40;
             ?>
-            <a href="/finances" title="Cash balance — Click for Finances" class="stat-pill text-success border-success/20 ">
+            <a href="/finances" title="Cash balance: open Finances" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-money-bill-wave"></i>
                 <span class="font-bold font-mono"><?= currency($__cash) ?></span>
             </a>
-            <a href="/weather" title="<?= $__weather ? esc($__weather['condition_name']) : 'Weather' ?> — Click for Forecast" class="stat-pill text-info border-info/20 ">
+            <a href="/weather" title="<?= $__weather ? esc($__weather['condition_name']) : 'Weather' ?>: open the forecast" class="stat-pill text-info border-info/20 ">
                 <i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?>"></i>
                 <span class="font-bold"><?= temp($__currentTemp) ?></span>
             </a>
-            <a href="/snowmaking" title="Snow Base — Click for Snowmaking" class="stat-pill text-info border-info/20 ">
+            <a href="/snowmaking" title="Snow base: open Snowmaking" class="stat-pill text-info border-info/20 ">
                 <i class="fa-solid fa-layer-group"></i>
                 <span class="font-medium"><?= snow($__snow) ?></span>
             </a>
@@ -575,7 +585,7 @@ a.link:hover{opacity:0.8}
                 <i class="fa-solid fa-people-group text-primary"></i>
                 <span id="navVisitors" class="font-bold"><?= number_format($__visitors) ?></span>
             </span>
-            <a href="/genepis" title="Génépis balance — Click for Genepis Shop" class="stat-pill text-success border-success/20 ">
+            <a href="/genepis" title="Génépis balance: open the Génépis shop" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-seedling"></i>
                 <span class="font-bold font-mono"><?= number_format($__gbal) ?></span>
             </a>
@@ -644,10 +654,10 @@ a.link:hover{opacity:0.8}
                 <!-- Brand -->
                 <div class="col-span-2 md:col-span-1">
                     <a href="/" class="brand mb-3" style="padding:0"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg><span class="brand-name">Ski Manager</span></a>
-                    <p class="text-sm text-base-content/60 mb-4">A free ski resort management game. Build lifts and runs on real mountains and try to keep the place profitable.</p>
+                    <p class="text-sm text-base-content/70 mb-4">A free ski resort management game. Build lifts and runs on real mountains and try to keep the place profitable.</p>
                     <div class="flex gap-3">
-                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="Discord"><i class="fa-brands fa-discord text-lg"></i></a>
-                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitHub"><i class="fa-brands fa-github text-lg"></i></a>
+                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="Discord" aria-label="Ski Manager on Discord"><i class="fa-brands fa-discord text-lg" aria-hidden="true"></i></a>
+                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitHub" aria-label="Ski Manager source code on GitHub"><i class="fa-brands fa-github text-lg" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <!-- Game -->
@@ -687,7 +697,7 @@ a.link:hover{opacity:0.8}
             </div>
         </div>
         <div class="border-t border-base-300">
-            <div class="flex flex-col md:flex-row items-center justify-between px-4 py-3 max-w-6xl mx-auto text-xs text-base-content/50">
+            <div class="flex flex-col md:flex-row items-center justify-between px-4 py-3 max-w-6xl mx-auto text-xs text-base-content/70">
                 <p>&copy; <?= date('Y') ?> Ski Manager · Free to play in your browser</p>
                 <p class="mt-1 md:mt-0">Maps by <a href="https://skimap.com" target="_blank" rel="noopener noreferrer" class="link link-hover">Mapsynergy</a> &middot; v1.1</p>
             </div>
@@ -781,7 +791,7 @@ if(si){
         }
         if(emptyEl) emptyEl.classList.add("hidden");
         const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));
-        sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):`<p class="text-xs text-base-content/40 text-center py-2">No results</p>`;
+        sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):`<p class="text-xs text-base-content/70 text-center py-2">No results</p>`;
     });
     si.addEventListener("keydown",function(e){
         if(e.key==="Enter"){
@@ -791,7 +801,7 @@ if(si){
     });
 }
 </script>
-<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.5rem;height:2.5rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up"></i></button>
+<button id="backToTop" type="button" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.75rem;height:2.75rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
 <script>window.addEventListener("scroll",function(){document.getElementById("backToTop").style.display=window.scrollY>300?"flex":"none";});</script>
 <script>
 document.querySelectorAll(".alert-success").forEach(function(el){
@@ -922,12 +932,11 @@ function fetchLiveResortAlerts() {
                 const toast = document.createElement("div");
                 
                 const iconStr = (alert.icon || "").toLowerCase();
-                let glowLayer = "shadow-[0_0_20px_rgba(59,130,246,0.15)] border-primary/20";
-                if (iconStr.includes("snowflake")) glowLayer = "shadow-[0_0_20px_rgba(0,218,255,0.2)] border-info/30";
-                else if (iconStr.includes("trophy") || iconStr.includes("medal")) glowLayer = "shadow-[0_0_20px_rgba(217,70,239,0.2)] border-accent/30";
-                else if (iconStr.includes("exclamation") || iconStr.includes("triangle")) glowLayer = "shadow-[0_0_20px_rgba(239,68,68,0.25)] border-error/30";
+                // No glow: only warnings get a colored border, so the color still means something
+                let toastBorder = "border-base-300";
+                if (iconStr.includes("exclamation") || iconStr.includes("triangle")) toastBorder = "border-error/40";
 
-                toast.className = `alert bg-base-100 p-3.5 flex gap-3 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 rounded-xl border ${glowLayer}`;
+                toast.className = `alert bg-base-100 p-3.5 flex gap-3 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 rounded-xl border ${toastBorder}`;
 
                 let accentColor = "text-primary bg-primary/10";
                 if (iconStr.includes("snowflake")) accentColor = "text-info bg-info/10";
@@ -948,7 +957,7 @@ function fetchLiveResortAlerts() {
                 titleEl.className = "text-xs font-bold text-base-content truncate";
                 titleEl.textContent = alert.title || "";
                 const msgEl = document.createElement("p");
-                msgEl.className = "text-[11px] text-base-content/60 truncate mt-0.5";
+                msgEl.className = "text-[11px] text-base-content/70 truncate mt-0.5";
                 msgEl.textContent = alert.message || "";
                 body.append(titleEl, msgEl);
                 toast.append(iconWrap, body);
@@ -981,27 +990,27 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Mobile Bottom Navigation Dock -->
 <nav class="mobile-bottom-dock md:hidden" aria-label="Mobile Navigation">
     <div class="grid grid-cols-5 items-center text-center px-1 py-1">
-        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
+        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
             <i class="fa-solid fa-gauge-high text-lg"></i>
             <span class="text-[10px] mt-0.5">Dashboard</span>
         </a>
-        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
+        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
             <i class="fa-solid fa-mountain-sun text-lg"></i>
             <span class="text-[10px] mt-0.5">Resort</span>
         </a>
-        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
+        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
             <i class="fa-solid fa-map text-lg"></i>
             <span class="text-[10px] mt-0.5">Map</span>
         </a>
-        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/60 ' ?>">
+        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
             <i class="fa-solid fa-coins text-lg"></i>
             <span class="text-[10px] mt-0.5">Finances</span>
         </a>
-        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/60  transition-colors" aria-label="More operations">
+        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/70  transition-colors" aria-label="More operations">
             <div class="relative">
                 <i class="fa-solid fa-bars text-lg"></i>
                 <?php if ($__bonusDue) : ?>
-                    <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+                    <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-warning"></span>
                 <?php endif ?>
             </div>
             <span class="text-[10px] mt-0.5">More</span>
@@ -1021,7 +1030,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="space-y-4 overflow-y-auto max-h-[65vh] pr-1">
             <?php foreach ($__nav as $__secName => $__sec) : ?>
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-2 flex items-center gap-1.5">
+                <p class="text-xs font-bold uppercase tracking-wider text-base-content/70 mb-2 flex items-center gap-1.5">
                     <i class="fa-solid <?= esc($__sec['icon']) ?> text-[11px]"></i> <?= esc($__secName) ?>
                 </p>
                 <div class="grid grid-cols-2 gap-2">
@@ -1075,8 +1084,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/60 " title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
-                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs text-base-content/40 hover:text-error" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
+                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/70 " title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs text-base-content/70 hover:text-error" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="flex gap-3">

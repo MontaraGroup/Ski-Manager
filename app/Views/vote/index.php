@@ -21,7 +21,7 @@
                         <i class="fa-solid fa-check-to-slot mr-2 text-primary"></i>Vote for Season 4 Resort
                     </h1>
                 </div>
-                <p class="text-sm text-base-content/60 mt-0.5">
+                <p class="text-sm text-base-content/70 mt-0.5">
                     Help choose the next mountain destination. The winning resort becomes the official community map in Season 4.
                 </p>
             </div>
@@ -109,7 +109,7 @@
                         <?php endif; ?>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="bg-base-200 w-full h-full flex items-center justify-center text-[10px] text-base-content/50">
+                    <div class="bg-base-200 w-full h-full flex items-center justify-center text-[10px] text-base-content/70">
                         No votes recorded yet &bull; Be the first to vote!
                     </div>
                 <?php endif; ?>
@@ -125,7 +125,7 @@
                     <div class="flex items-center gap-1.5 truncate">
                         <span class="w-2.5 h-2.5 rounded-full shrink-0 <?= esc($opt['bar_color']) ?>"></span>
                         <span class="truncate font-medium"><?= esc($opt['name']) ?></span>
-                        <span class="text-base-content/40 font-mono ml-auto"><?= $pct ?>%</span>
+                        <span class="text-base-content/70 font-mono ml-auto"><?= $pct ?>%</span>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -153,7 +153,7 @@
                                 <div class="flex items-center gap-2">
                                     <h3 class="font-bold text-base text-base-content"><?= esc($opt['name']) ?></h3>
                                 </div>
-                                <div class="text-xs text-base-content/50 flex items-center gap-1">
+                                <div class="text-xs text-base-content/70 flex items-center gap-1">
                                     <i class="fa-solid fa-location-dot text-[10px]"></i> <?= esc($opt['location']) ?>
                                 </div>
                             </div>
@@ -184,28 +184,28 @@
                     <!-- Mountain Specs Grid -->
                     <div class="grid grid-cols-4 gap-2 p-2.5 rounded-lg bg-base-200/50 text-center mb-4 border border-base-200">
                         <div>
-                            <div class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Vertical</div>
+                            <div class="text-[10px] uppercase font-bold text-base-content/70 tracking-wider">Vertical</div>
                             <div class="text-xs font-mono font-bold text-base-content mt-0.5"><?= esc($opt['specs']['vertical']) ?></div>
                         </div>
                         <div>
-                            <div class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Acres</div>
+                            <div class="text-[10px] uppercase font-bold text-base-content/70 tracking-wider">Acres</div>
                             <div class="text-xs font-mono font-bold text-base-content mt-0.5"><?= esc($opt['specs']['acres']) ?></div>
                         </div>
                         <div>
-                            <div class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Summit</div>
+                            <div class="text-[10px] uppercase font-bold text-base-content/70 tracking-wider">Summit</div>
                             <div class="text-xs font-mono font-bold text-base-content mt-0.5"><?= esc($opt['specs']['summit']) ?></div>
                         </div>
                         <div>
-                            <div class="text-[10px] uppercase font-bold text-base-content/40 tracking-wider">Snowfall</div>
+                            <div class="text-[10px] uppercase font-bold text-base-content/70 tracking-wider">Snowfall</div>
                             <div class="text-xs font-mono font-bold text-base-content mt-0.5"><?= esc($opt['specs']['snowfall']) ?></div>
                         </div>
                     </div>
 
                     <!-- Terrain Difficulty Distribution -->
                     <div class="mb-4">
-                        <div class="flex items-center justify-between text-[11px] font-semibold text-base-content/60 mb-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-base-content/70 mb-1.5">
                             <span>Terrain Difficulty Split</span>
-                            <span class="text-[10px] font-mono text-base-content/40">G / B / Blk / Double-Blk</span>
+                            <span class="text-[10px] font-mono text-base-content/70">G / B / Blk / Double-Blk</span>
                         </div>
                         <div class="h-2 w-full bg-base-300 rounded-full overflow-hidden flex">
                             <div class="bg-emerald-500 h-full" style="width: <?= $opt['specs']['difficulty']['green'] ?>%;" title="Green: <?= $opt['specs']['difficulty']['green'] ?>%"></div>
@@ -213,7 +213,7 @@
                             <div class="bg-zinc-800 h-full" style="width: <?= $opt['specs']['difficulty']['black'] ?>%;" title="Black Diamond: <?= $opt['specs']['difficulty']['black'] ?>%"></div>
                             <div class="bg-rose-600 h-full" style="width: <?= $opt['specs']['difficulty']['double_black'] ?>%;" title="Double Black: <?= $opt['specs']['difficulty']['double_black'] ?>%"></div>
                         </div>
-                        <div class="flex items-center justify-between text-[10px] text-base-content/50 mt-1 font-mono">
+                        <div class="flex items-center justify-between text-[10px] text-base-content/70 mt-1 font-mono">
                             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> <?= $opt['specs']['difficulty']['green'] ?>%</span>
                             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> <?= $opt['specs']['difficulty']['blue'] ?>%</span>
                             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-zinc-800"></span> <?= $opt['specs']['difficulty']['black'] ?>%</span>
@@ -240,13 +240,13 @@
                     <!-- Vote Progress & Action Button -->
                     <div class="pt-2 border-t border-base-200">
                         <div class="flex items-center justify-between text-xs mb-1.5">
-                            <span class="text-base-content/50 font-mono"><?= $cnt ?> <?= $cnt === 1 ? 'vote' : 'votes' ?></span>
+                            <span class="text-base-content/70 font-mono"><?= $cnt ?> <?= $cnt === 1 ? 'vote' : 'votes' ?></span>
                             <span class="font-mono font-bold <?= $isLeader ? 'text-warning' : 'text-base-content' ?>"><?= $pct ?>%</span>
                         </div>
                         <progress class="progress <?= $isUserChoice ? 'progress-primary' : ($isLeader ? 'progress-warning' : 'progress-secondary') ?> w-full h-2 mb-3" value="<?= $pct ?>" max="100"></progress>
 
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-base-content/40">
+                            <span class="text-xs text-base-content/70">
                                 <?php if ($isUserChoice): ?>
                                     <i class="fa-solid fa-circle-check text-primary mr-1"></i>Your current selection
                                 <?php else: ?>
@@ -300,18 +300,18 @@
                                     </div>
                                     <div class="truncate">
                                         <span class="font-semibold text-base-content"><?= esc($rv['username'] ?? 'Anonymous Skier') ?></span>
-                                        <span class="text-base-content/40">&rarr;</span>
+                                        <span class="text-base-content/70">&rarr;</span>
                                         <span class="font-medium <?= $rOpt['color'] ?? 'text-primary' ?>"><?= esc($rOpt['name'] ?? $rv['resort_key']) ?></span>
                                     </div>
                                 </div>
-                                <span class="text-[10px] text-base-content/40 font-mono shrink-0">
+                                <span class="text-[10px] text-base-content/70 font-mono shrink-0">
                                     <?= timeAgo($timeStr) ?>
                                 </span>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="py-6 text-center text-xs text-base-content/40">
+                    <div class="py-6 text-center text-xs text-base-content/70">
                         <i class="fa-solid fa-check-to-slot text-2xl mb-1 block opacity-30"></i>
                         No votes recorded yet.
                     </div>

@@ -7,7 +7,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="<?= $def['icon'] ?> mr-2 <?= $def['color'] ?>"></i><?= $def['label'] ?></h1>
-                <p class="text-sm text-base-content/50"><?= $def['desc'] ?></p>
+                <p class="text-sm text-base-content/70"><?= $def['desc'] ?></p>
             </div>
         </div>
     </div>
@@ -18,19 +18,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold"><?= count($buildings) ?></div>
-            <div class="text-xs text-base-content/50">Total <?= $def['label'] ?></div>
+            <div class="text-xs text-base-content/70">Total <?= $def['label'] ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-info"><?= number_format($totalCapacity) ?></div>
-            <div class="text-xs text-base-content/50"><?= $type === 'ski_patrol' ? 'Sectors Covered' : 'Total Capacity' ?></div>
+            <div class="text-xs text-base-content/70"><?= $type === 'ski_patrol' ? 'Sectors Covered' : 'Total Capacity' ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-success"><?= currency($totalRevenue) ?></div>
-            <div class="text-xs text-base-content/50">Revenue/Day</div>
+            <div class="text-xs text-base-content/70">Revenue/Day</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-error"><?= currency($totalUpkeep) ?></div>
-            <div class="text-xs text-base-content/50">Upkeep/Day</div>
+            <div class="text-xs text-base-content/70">Upkeep/Day</div>
         </div></div>
     </div>
 
@@ -41,7 +41,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="<?= $def['icon'] ?> text-4xl text-base-content/20 mb-4"></i>
                     <h3 class="font-semibold text-lg">No <?= strtolower($def['label']) ?> built yet</h3>
-                    <p class="text-sm text-base-content/50">Build your first <?= strtolower($def['singular']) ?> to get started.</p>
+                    <p class="text-sm text-base-content/70">Build your first <?= strtolower($def['singular']) ?> to get started.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-3">
@@ -54,7 +54,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <div class="font-semibold text-sm"><?= esc($b['name']) ?></div>
-                                    <div class="text-xs text-base-content/50">
+                                    <div class="text-xs text-base-content/70">
                                         Lv.<?= $b['level'] ?> -
                                         <?= $type === 'ski_patrol' ? $b['capacity'] . ' sector(s)' : 'Cap: ' . $b['capacity'] ?> -
                                         <?php if ($b['revenue_per_day'] > 0) : ?><?= currency($b['revenue_per_day']) ?>/day income - <?php endif ?>
@@ -108,7 +108,7 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm"><?= $info['name'] ?></div>
-                                    <div class="text-xs text-base-content/50">
+                                    <div class="text-xs text-base-content/70">
                                         <?= $type === 'ski_patrol' ? $info['capacity'] . ' sector(s)' : 'Capacity: ' . $info['capacity'] ?> -
                                         <?php if ($info['revenue'] > 0) : ?><?= currency($info['revenue']) ?>/day - <?php endif ?>
                                         <?= currency($info['upkeep']) ?>/day upkeep
@@ -127,7 +127,7 @@
             <?php if ($type === 'ski_patrol') : ?>
             <div class="card bg-base-100 shadow-sm mt-4"><div class="card-body p-4">
                 <h3 class="font-semibold text-sm mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>Ski Patrol Info</h3>
-                <ul class="text-xs text-base-content/60 space-y-1.5">
+                <ul class="text-xs text-base-content/70 space-y-1.5">
                     <li><i class="fa-solid fa-shield-halved mr-1"></i>Each station covers a number of sectors</li>
                     <li><i class="fa-solid fa-user-shield mr-1"></i>Requires ski patrol staff to operate</li>
                     <li><i class="fa-solid fa-star mr-1"></i>Uncovered slopes reduce reputation</li>
@@ -137,7 +137,7 @@
             <?php elseif ($type === 'hotel') : ?>
             <div class="card bg-base-100 shadow-sm mt-4"><div class="card-body p-4">
                 <h3 class="font-semibold text-sm mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>Hotel Info</h3>
-                <ul class="text-xs text-base-content/60 space-y-1.5">
+                <ul class="text-xs text-base-content/70 space-y-1.5">
                     <li><i class="fa-solid fa-bed mr-1"></i>Hotels let visitors stay overnight</li>
                     <li><i class="fa-solid fa-coins mr-1"></i>Generate passive accommodation revenue</li>
                     <li><i class="fa-solid fa-users mr-1"></i>More rooms = more multi-day visitors</li>

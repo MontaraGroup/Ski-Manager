@@ -15,7 +15,7 @@
                     </span>
                     <h1 class="text-2xl lg:text-3xl font-black text-base-content"><?= esc($alliance['name']) ?></h1>
                 </div>
-                <p class="text-sm text-base-content/60 mt-0.5 italic">"<?= esc($alliance['motto']) ?>"</p>
+                <p class="text-sm text-base-content/70 mt-0.5 italic">"<?= esc($alliance['motto']) ?>"</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -43,15 +43,15 @@
 
             <div class="pt-2 border-t border-base-300 grid grid-cols-3 gap-3 text-center">
                 <div class="p-3 bg-base-200/50 rounded-xl">
-                    <div class="text-xs text-base-content/50 uppercase font-semibold">Alliance Level</div>
+                    <div class="text-xs text-base-content/70 uppercase font-semibold">Alliance Level</div>
                     <div class="text-xl font-bold text-primary mt-0.5">Level <?= (int)$alliance['level'] ?></div>
                 </div>
                 <div class="p-3 bg-base-200/50 rounded-xl">
-                    <div class="text-xs text-base-content/50 uppercase font-semibold">Treasury Vault</div>
+                    <div class="text-xs text-base-content/70 uppercase font-semibold">Treasury Vault</div>
                     <div class="text-xl font-bold text-success mt-0.5"><?= currency((int)$alliance['treasury_cash']) ?></div>
                 </div>
                 <div class="p-3 bg-base-200/50 rounded-xl">
-                    <div class="text-xs text-base-content/50 uppercase font-semibold">Membership</div>
+                    <div class="text-xs text-base-content/70 uppercase font-semibold">Membership</div>
                     <div class="text-xl font-bold text-base-content mt-0.5"><?= count($members) ?> / <?= (int)$alliance['max_members'] ?></div>
                 </div>
             </div>
@@ -66,10 +66,10 @@
             <div class="text-xs font-semibold text-primary">
                 Tier <?= (int)$alliance['pass_tier'] ?>: <?= esc($curTier['name']) ?> (+<?= $curTier['visitor_pct'] ?>% visitors)
             </div>
-            <p class="text-xs text-base-content/60 leading-relaxed">
+            <p class="text-xs text-base-content/70 leading-relaxed">
                 <?= esc($curTier['desc']) ?>
             </p>
-            <div class="text-[11px] text-base-content/50 pt-2 border-t border-base-300">
+            <div class="text-[11px] text-base-content/70 pt-2 border-t border-base-300">
                 Founder: <strong><?= esc($founder['username'] ?? 'Unknown') ?></strong>
             </div>
         </div>
@@ -85,7 +85,7 @@
                         <a href="/tour/<?= (int)$m['user_id'] ?>" class="font-bold text-sm link link-hover text-base-content">
                             <?= esc($m['username']) ?>
                         </a>
-                        <div class="text-xs text-base-content/50">
+                        <div class="text-xs text-base-content/70">
                             <?= esc($m['resort_map'] ?? 'ParkCity') ?> &bull; <?= (int)$m['open_slopes'] ?> Slopes
                         </div>
                     </div>

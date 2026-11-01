@@ -5,7 +5,7 @@
     <div class="card bg-base-100 shadow-xl w-full max-w-md">
         <div class="card-body">
             <h2 class="card-title text-2xl font-bold justify-center mb-2">Welcome to Ski Manager!</h2>
-            <p class="text-center text-base-content/60 mb-4">Set up your resort before you start playing.</p>
+            <p class="text-center text-base-content/70 mb-4">Set up your resort before you start playing.</p>
 
             <?php if (session('error')) : ?>
                 <div class="alert alert-error mb-4"><span><?= session('error') ?></span></div>
@@ -55,7 +55,7 @@
                                     <i class="fa-solid <?= $icons[$key] ?? 'fa-mountain' ?> text-xl <?= $enabled ? 'text-primary' : 'text-base-content/20' ?>"></i>
                                 </div>
                                 <div class="text-xs font-bold"><?= $key === 'BigSkyCombo' ? 'Big Sky' : ($key === 'AspenSnowmass' ? 'Aspen' : ($key === 'PalisadesTahoe' ? 'Palisades' : ($key === 'DeerValley' ? 'Deer Valley' : ($key === 'ParkCity' ? 'Park City' : $key)))) ?></div>
-                                <div class="text-[10px] text-base-content/50"><?= $loc ?></div>
+                                <div class="text-[10px] text-base-content/70"><?= $loc ?></div>
                                 <?php if (!$enabled) : ?><div class="text-[9px] font-bold text-center mt-1"><span class="bg-neutral text-neutral-content px-1.5 py-0.5 rounded">Soon</span></div><?php endif ?>
                             </div>
                         </label>

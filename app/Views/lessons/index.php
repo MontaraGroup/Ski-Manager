@@ -7,7 +7,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-chalkboard-user mr-2 text-info"></i>Ski School</h1>
-                <p class="text-sm text-base-content/50">Offer professional lessons to boost resort satisfaction and daily revenue</p>
+                <p class="text-sm text-base-content/70">Offer professional lessons to boost resort satisfaction and daily revenue</p>
             </div>
         </div>
         <a href="/staff/hire" class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-user-plus"></i>Hire Instructors</a>
@@ -18,21 +18,21 @@
         <div class="card bg-base-100 shadow-sm border border-base-200">
             <div class="card-body p-4 text-center">
                 <div class="text-3xl font-bold text-info"><?= $activeInstructors ?></div>
-                <div class="text-xs text-base-content/50">Active Instructors</div>
-                <div class="text-[11px] text-base-content/40 mt-1"><?= $dailyCapacity ?> students daily capacity</div>
+                <div class="text-xs text-base-content/70">Active Instructors</div>
+                <div class="text-[11px] text-base-content/70 mt-1"><?= $dailyCapacity ?> students daily capacity</div>
             </div>
         </div>
         <div class="card bg-base-100 shadow-sm border border-base-200">
             <div class="card-body p-4 text-center">
                 <div class="text-3xl font-bold"><?= $lessonsToday ?></div>
-                <div class="text-xs text-base-content/50">Classes / Day</div>
-                <div class="text-[11px] text-base-content/40 mt-1"><?= count($slopes) ?> open slopes available</div>
+                <div class="text-xs text-base-content/70">Classes / Day</div>
+                <div class="text-[11px] text-base-content/70 mt-1"><?= count($slopes) ?> open slopes available</div>
             </div>
         </div>
         <div class="card bg-base-100 shadow-sm border border-base-200">
             <div class="card-body p-4 text-center">
                 <div class="text-3xl font-bold text-success"><?= currency($estimatedRevenue) ?></div>
-                <div class="text-xs text-base-content/50">Est. Daily Lesson Income</div>
+                <div class="text-xs text-base-content/70">Est. Daily Lesson Income</div>
                 <div class="text-[11px] text-success/70 mt-1">Generated during daily simulation</div>
             </div>
         </div>
@@ -60,7 +60,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
-                        <tr class="text-base-content/60 text-xs">
+                        <tr class="text-base-content/70 text-xs">
                             <th>Program</th>
                             <th>Duration</th>
                             <th>Ticket Price</th>
@@ -93,7 +93,7 @@
             </div>
 
             <?php if (empty($instructors)) : ?>
-                <div class="text-center py-8 text-base-content/50">
+                <div class="text-center py-8 text-base-content/70">
                     <i class="fa-solid fa-person-skiing text-4xl mb-2 text-base-content/20"></i>
                     <p class="font-medium">No instructors hired yet</p>
                     <p class="text-xs mt-1">Visit the <a href="/staff/hire" class="link link-primary">hiring page</a> to recruit instructors.</p>
@@ -106,13 +106,13 @@
                             <span class="font-bold text-sm"><?= esc($inst['name']) ?></span>
                             <span class="badge <?= ($inst['status'] ?? '') === 'active' ? 'badge-success' : 'badge-ghost' ?> badge-xs"><?= ucfirst($inst['status'] ?? 'active') ?></span>
                         </div>
-                        <div class="text-xs text-base-content/60 space-y-0.5">
+                        <div class="text-xs text-base-content/70 space-y-0.5">
                             <div><i class="fa-solid fa-medal text-warning text-[10px] mr-1"></i>Level <?= $inst['level'] ?? 1 ?> · Salary <?= currency((int)($inst['salary'] ?? 0)) ?>/day</div>
                             <div><i class="fa-solid fa-face-smile text-[10px] mr-1"></i>Morale: <?= $inst['morale'] ?? 100 ?>%</div>
                             <?php if (!empty($inst['assigned_to'])) : ?>
                             <div class="text-primary text-[11px]"><i class="fa-solid fa-location-dot text-[10px] mr-1"></i><?= esc($inst['assigned_to']) ?></div>
                             <?php else : ?>
-                            <div class="text-base-content/40 text-[11px]"><i class="fa-solid fa-location-dot text-[10px] mr-1"></i>General Ski School</div>
+                            <div class="text-base-content/70 text-[11px]"><i class="fa-solid fa-location-dot text-[10px] mr-1"></i>General Ski School</div>
                             <?php endif ?>
                         </div>
                     </div>

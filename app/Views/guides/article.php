@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <?php use App\Controllers\Guides as G; ?>
 <article class="max-w-3xl mx-auto p-4 lg:p-8">
-    <nav class="text-sm text-base-content/60 mb-3" aria-label="Breadcrumb"><a href="/guides" class="link">Guides</a> / <?= esc($guide[0]) ?></nav>
+    <nav class="text-sm text-base-content/70 mb-3" aria-label="Breadcrumb"><a href="/guides" class="link">Guides</a> / <?= esc($guide[0]) ?></nav>
     <h1 class="text-3xl font-bold mb-2"><?= esc($guide[0]) ?></h1>
     <p class="text-lg text-base-content/70 mb-6"><?= esc($guide[1]) ?></p>
     <div class="guide-body space-y-4 leading-relaxed">

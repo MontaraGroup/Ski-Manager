@@ -2,7 +2,13 @@
 <?= $this->section('title') ?>Leaderboard<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 <?php
-$medal = fn(int $rank) => match ($rank) { 1 => '🥇', 2 => '🥈', 3 => '🥉', default => '' };
+// Gold, silver and bronze medal for the podium; the rank number is always printed next to it
+$medal = fn(int $rank) => match ($rank) {
+    1 => '<i class="fa-solid fa-medal text-warning" aria-hidden="true"></i>',
+    2 => '<i class="fa-solid fa-medal text-base-content/70" aria-hidden="true"></i>',
+    3 => '<i class="fa-solid fa-medal text-orange-700" aria-hidden="true"></i>',
+    default => '',
+};
 $money = fn(int $v) => ($v > 0 ? '+' : '') . currency($v);
 $initials = fn(string $name) => mb_strtoupper(mb_substr($name, 0, 2));
 $metric = fn(array $p) => $v2 ? (int) $p['net_profit'] : (int) $p['score'];
@@ -18,7 +24,7 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
                         <?php if ($isMe) : ?><span class="badge badge-primary badge-xs ml-1">You</span>
                         <?php else : ?><a href="/tour/<?= (int) $p['id'] ?>" class="badge badge-ghost badge-xs ml-1 gap-1" aria-label="Tour <?= esc($p['username'], 'attr') ?>'s resort"><i class="fa-solid fa-binoculars text-[8px]" aria-hidden="true"></i>Tour</a><?php endif ?>
                     </div>
-                    <?php if (!empty($p['resort_name'])) : ?><div class="text-xs text-base-content/60 truncate"><?= esc($p['resort_name']) ?></div><?php endif ?>
+                    <?php if (!empty($p['resort_name'])) : ?><div class="text-xs text-base-content/70 truncate"><?= esc($p['resort_name']) ?></div><?php endif ?>
                 </div>
             </div>
         </td>
@@ -34,7 +40,7 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-trophy text-warning mr-2" aria-hidden="true"></i>Leaderboard</h1>
-            <p class="text-sm text-base-content/60"><?= esc($seasonName) ?> · day <?= (int) $seasonDay ?> · <?= $v2 ? 'ranked by profit this season' : 'ranked by score' ?></p>
+            <p class="text-sm text-base-content/70"><?= esc($seasonName) ?> · day <?= (int) $seasonDay ?> · <?= $v2 ? 'ranked by profit this season' : 'ranked by score' ?></p>
         </div>
     </div>
 
@@ -66,7 +72,7 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
             <div class="text-3xl" aria-hidden="true"><?= $medal((int) $p['rank']) ?: '#' . (int) $p['rank'] ?></div>
             <div class="font-bold truncate"><?= esc($p['username']) ?></div>
             <div class="font-bold text-success text-sm sm:text-lg"><?= $v2 ? $money((int) $p['net_profit']) : number_format((int) $p['score']) ?></div>
-            <div class="text-xs text-base-content/60"><?= (int) $p['slope_count'] ?> slopes · <?= (int) $p['lift_count'] ?> lifts</div>
+            <div class="text-xs text-base-content/70"><?= (int) $p['slope_count'] ?> slopes · <?= (int) $p['lift_count'] ?> lifts</div>
         </div></div>
         <?php endforeach ?>
     </div>
@@ -83,16 +89,16 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
             <tbody>
             <?php foreach ($players as $p) $row($p, (int) $p['id'] === $currentUserId); ?>
             <?php if ($meOutsideTop) : ?>
-                <tr aria-hidden="true"><td colspan="6" class="text-center text-base-content/60 py-1">⋯</td></tr>
+                <tr aria-hidden="true"><td colspan="6" class="text-center text-base-content/70 py-1">⋯</td></tr>
                 <?php $row($me, true); ?>
             <?php endif ?>
             <?php if (!$players) : ?>
-                <tr><td colspan="6" class="text-center text-base-content/60 py-8">No resorts on this board yet. Be the first to build one.</td></tr>
+                <tr><td colspan="6" class="text-center text-base-content/70 py-8">No resorts on this board yet. Be the first to build one.</td></tr>
             <?php endif ?>
             </tbody>
         </table>
     </div></div>
-    <p class="text-xs text-base-content/60 mt-2">
+    <p class="text-xs text-base-content/70 mt-2">
         Showing the top <?= min(\App\Controllers\Leaderboard::SHOWN, $rankedCount) ?> of <?= $rankedCount ?> ranked resort<?= $rankedCount === 1 ? '' : 's' ?>.
         <?php if ($unranked) : ?><?= $unranked ?> manager<?= $unranked === 1 ? ' hasn\'t' : 's haven\'t' ?> built anything yet this season.<?php endif ?>
         Profit is income minus running costs since the season started; tied resorts share a rank.
@@ -111,7 +117,7 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
                 <?php foreach ($season['rows'] as $r) : ?>
                 <tr>
                     <td class="font-bold"><?= $medal((int) $r['rank_position']) ?> <?= (int) $r['rank_position'] ?></td>
-                    <td><div class="font-semibold"><?= esc($r['username']) ?></div><?php if (!empty($r['resort_name'])) : ?><div class="text-xs text-base-content/60"><?= esc($r['resort_name']) ?></div><?php endif ?></td>
+                    <td><div class="font-semibold"><?= esc($r['username']) ?></div><?php if (!empty($r['resort_name'])) : ?><div class="text-xs text-base-content/70"><?= esc($r['resort_name']) ?></div><?php endif ?></td>
                     <td class="font-mono"><?= currency((int) $r['cash']) ?></td>
                     <td class="text-xs hidden sm:table-cell"><?= (int) $r['total_slopes'] ?> slopes · <?= (int) $r['total_lifts'] ?> lifts</td>
                 </tr>
@@ -128,7 +134,7 @@ $row = function (array $p, bool $isMe) use ($medal, $money, $initials, $v2) { ?>
             <i class="fa-solid fa-check-to-slot text-primary text-2xl" aria-hidden="true"></i>
             <div class="flex-1">
                 <div class="font-bold">Where should we ski next?</div>
-                <div class="text-sm text-base-content/60">Vote for the next season's resort.</div>
+                <div class="text-sm text-base-content/70">Vote for the next season's resort.</div>
             </div>
             <span class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Vote</span>
         </div>

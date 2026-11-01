@@ -72,7 +72,7 @@ class Demo extends BaseController
         session()->set('demo_token', $token);
         session()->set('demo_created_at', time());
 
-        return redirect()->to('/dashboard')->with('success', '🏔️ Welcome to Demo Mountain! You have full operational control of Sector 1.');
+        return redirect()->to('/dashboard')->with('success', 'Welcome to Demo Mountain! You have full operational control of Sector 1.');
     }
 
     public static function seedDemoMountain(int $userId): void
@@ -372,6 +372,6 @@ class Demo extends BaseController
             log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
         }
 
-        return redirect()->to('/dashboard')->with('success', '🎉 Welcome Director ' . esc($username) . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
+        return redirect()->to('/dashboard')->with('success', 'Welcome, Director ' . esc($username) . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
     }
 }

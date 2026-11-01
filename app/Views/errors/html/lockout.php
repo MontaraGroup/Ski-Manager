@@ -11,12 +11,12 @@
         <div class="card-body text-center">
             <i class="fa-solid fa-lock text-error text-5xl mb-4"></i>
             <h1 class="text-2xl font-bold text-error">Access Blocked</h1>
-            <p class="text-base-content/60 mt-2">Too many failed login attempts from your IP address.</p>
+            <p class="text-base-content/70 mt-2">Too many failed login attempts from your IP address.</p>
             <div class="bg-error/10 rounded-lg p-4 mt-4">
                 <div class="text-3xl font-bold text-error"><?= $minutes ?></div>
-                <div class="text-sm text-base-content/50">minutes remaining</div>
+                <div class="text-sm text-base-content/70">minutes remaining</div>
             </div>
-            <p class="text-xs text-base-content/40 mt-4">If you believe this is an error, please wait or contact support.</p>
+            <p class="text-xs text-base-content/70 mt-4">If you believe this is an error, please wait or contact support.</p>
             <a href="/" class="btn btn-ghost btn-sm mt-4">Back to Home</a>
         </div>
     </div>

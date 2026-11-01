@@ -5,13 +5,13 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold mb-1">Game Updates</h1>
-            <p class="text-base-content/60">What's new in Ski Manager. Follow our progress and see what's shipped.</p>
+            <p class="text-base-content/70">What's new in Ski Manager. Follow our progress and see what's shipped.</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <a href="/roadmap" class="btn btn-sm btn-outline gap-1.5">
                 <i class="fa-solid fa-compass text-primary"></i> Roadmap
             </a>
-            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost gap-1.5 text-xs text-base-content/60">
+            <a href="https://skimanager1.featurebase.app/en/changelog" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost gap-1.5 text-xs text-base-content/70">
                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> External Changelog
             </a>
         </div>
@@ -26,11 +26,11 @@
                         <span class="badge badge-primary font-mono">v1.4.10</span>
                         <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-star text-[10px]"></i>Latest</span>
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.10 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -42,11 +42,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.9</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.9 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -58,11 +58,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.8</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.8 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -74,11 +74,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.7</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.7 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -90,11 +90,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.6</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.6 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -106,11 +106,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.5</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.5 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -122,11 +122,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.4</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 30, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.4 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -138,11 +138,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.3</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 29, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 29, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.3 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -154,11 +154,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.2</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 28, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 28, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.2 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -170,11 +170,11 @@
                         <span class="badge badge-ghost font-mono">v1.4.1</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 28, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 28, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.4.1 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -188,7 +188,7 @@
                         <span class="badge badge-warning font-mono font-bold">Season 2 Preview</span>
                         <span class="badge badge-outline badge-sm text-warning font-semibold gap-1"><i class="fa-solid fa-clock text-[10px]"></i>Oct 19, 2026</span>
                         <span class="badge badge-outline badge-sm">Expansion</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-hourglass-half mr-1"></i>14 Days Remaining</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-hourglass-half mr-1"></i>14 Days Remaining</span>
                     </div>
                     <h2 class="text-lg font-bold">Season 2: Park City Expansion (Sector 2 - Advanced Peaks)</h2>
                     <p class="text-sm text-base-content/70 mt-1">Season 1 enters its final 14-day stretch. On October 19, 2026, Season 2 will automatically launch with full player progress carryover, unlocking Sector 2 on Park City Mountain.</p>
@@ -222,7 +222,7 @@
                         <span class="badge badge-ghost font-mono">v1.4.0</span>
                         
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 2, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 2, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Season 4 Mountain Vote, Engine Optimization &amp; AI Integration</h2>
                     <p class="text-sm text-base-content/70 mt-1">Launched the official Season 4 Mountain Selection Vote with live telemetry, overhauled database performance and automated storage maintenance, and deployed AI Agent content negotiation.</p>
@@ -231,7 +231,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
-                                <span class="text-xs text-base-content/40">3</span>
+                                <span class="text-xs text-base-content/70">3</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -251,7 +251,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
-                                <span class="text-xs text-base-content/40">2</span>
+                                <span class="text-xs text-base-content/70">2</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -267,7 +267,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
-                                <span class="text-xs text-base-content/40">3</span>
+                                <span class="text-xs text-base-content/70">3</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -297,11 +297,11 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.7</span>
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release v1.3.7 Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -313,11 +313,11 @@
                         <span class="badge badge-ghost font-mono">Release</span>
                         
                         <span class="badge badge-outline badge-sm">Patch</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 24, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Release Update (2026-07-24 23:07)</h2>
                     <p class="text-sm text-base-content/70 mt-1">Automated production release containing recent system enhancements and bug fixes.</p>
-                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/40">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
+                    <div class="mt-4 space-y-4"><div><div class="flex items-center gap-2 mb-2"><span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span><span class="text-xs text-base-content/70">1</span></div><ul class="space-y-1.5 ml-1"><li class="flex items-start gap-2 text-sm text-base-content/80"><span class="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0"></span><span>Routine maintenance and system updates</span></li></ul></div></div>
                 </div>
             </div>
         </div>
@@ -330,7 +330,7 @@
                         <span class="badge badge-ghost font-mono">v1.3.6</span>
                         
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 2, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>October 2, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Season 4 Mountain Vote, Engine Optimization &amp; AI Integration</h2>
                     <p class="text-sm text-base-content/70 mt-1">Launched the official Season 4 Mountain Selection Vote with live telemetry, overhauled database performance and automated storage maintenance, and deployed AI Agent content negotiation.</p>
@@ -339,7 +339,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
-                                <span class="text-xs text-base-content/40">3</span>
+                                <span class="text-xs text-base-content/70">3</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -359,7 +359,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
-                                <span class="text-xs text-base-content/40">2</span>
+                                <span class="text-xs text-base-content/70">2</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -375,7 +375,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
-                                <span class="text-xs text-base-content/40">3</span>
+                                <span class="text-xs text-base-content/70">3</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -404,7 +404,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.6</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 22, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 22, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Deployment Automation &amp; System Resilience</h2>
                     <p class="text-sm text-base-content/70 mt-1">Integrated seamless GitHub webhook CI/CD deployment pipelines, automated writable cache directory recovery, and fixed session persistence boundaries.</p>
@@ -413,7 +413,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
-                                <span class="text-xs text-base-content/40">1</span>
+                                <span class="text-xs text-base-content/70">1</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -425,7 +425,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
-                                <span class="text-xs text-base-content/40">1</span>
+                                <span class="text-xs text-base-content/70">1</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -437,7 +437,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
-                                <span class="text-xs text-base-content/40">1</span>
+                                <span class="text-xs text-base-content/70">1</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -458,7 +458,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.5</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 2, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>July 2, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Authentication Infrastructure Overhaul</h2>
                     <p class="text-sm text-base-content/70 mt-1">A massive under-the-hood refactor to isolate and stabilize user registration pipelines, resolving container session context anomalies and enhancing visual verification entry profiles.</p>
@@ -467,7 +467,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-success badge-sm gap-1"><i class="fa-solid fa-plus text-[10px]"></i>New Features</span>
-                                <span class="text-xs text-base-content/40">2</span>
+                                <span class="text-xs text-base-content/70">2</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -483,7 +483,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-info badge-sm gap-1"><i class="fa-solid fa-arrow-up-long text-[10px]"></i>Improvements</span>
-                                <span class="text-xs text-base-content/40">2</span>
+                                <span class="text-xs text-base-content/70">2</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -499,7 +499,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="badge badge-error badge-sm gap-1"><i class="fa-solid fa-bug text-[10px]"></i>Bug Fixes</span>
-                                <span class="text-xs text-base-content/40">2</span>
+                                <span class="text-xs text-base-content/70">2</span>
                             </div>
                             <ul class="space-y-1.5 ml-1">
                                 <li class="flex items-start gap-2 text-sm text-base-content/80">
@@ -524,7 +524,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3.1</span>
                         <span class="badge badge-outline badge-sm">Minor</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 28, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Operations &amp; Support Overhaul</h2>
                     <p class="text-sm text-base-content/70 mt-1">Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.</p>
@@ -539,7 +539,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.3</span>
                         <span class="badge badge-outline badge-sm">Minor</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 14, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 14, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Polish &amp; Quality-of-Life</h2>
                     <p class="text-sm text-base-content/70 mt-1">A round of refinements across the site plus important fixes to daily bonuses and the tutorial.</p>
@@ -554,7 +554,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.2</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 10, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 10, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">UI Overhaul &amp; New Features</h2>
                     <p class="text-sm text-base-content/70 mt-1">Major UI improvements across all pages, support chat, voting system, compliance hub, equipment shop redesign, and dozens of fixes.</p>
@@ -569,7 +569,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.1</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 9, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 9, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Economy Rebalance &amp; Systems Overhaul</h2>
                     <p class="text-sm text-base-content/70 mt-1">Major economy rebalance, improved grooming/snowmaking/weather/finances, PWA support, and dozens of bug fixes.</p>
@@ -584,7 +584,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v1.0</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 7, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 7, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Season 1 Launch Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Major update rebuilding the trail map, admin panel, unit system, and adding feature flags.</p>
@@ -599,7 +599,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.5</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 7, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 7, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Season 1: Park City</h2>
                     <p class="text-sm text-base-content/70 mt-1">Season 1 officially launches June 7, 2026 at 12:00 AM Eastern Time. All players start fresh on Park City Mountain Resort.</p>
@@ -614,7 +614,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.4</span>
                         <span class="badge badge-outline badge-sm">Minor</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 4, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 4, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Bug Fixes &amp; Dashboard Improvements</h2>
                     <p class="text-sm text-base-content/70 mt-1">Bug fixes, dashboard improvements, and developer tooling.</p>
@@ -629,7 +629,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.3</span>
                         <span class="badge badge-outline badge-sm">Minor</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 3, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 3, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Polish &amp; Compliance Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Cookie consent, legal pages, analytics setup, cross-system integration, and quality-of-life improvements.</p>
@@ -644,7 +644,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.2</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 1, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>June 1, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Resource Management Update</h2>
                     <p class="text-sm text-base-content/70 mt-1">Major update bringing resource management, terrain parks, and quality-of-life improvements to Ski Manager.</p>
@@ -659,7 +659,7 @@
                     <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="badge badge-ghost font-mono">v0.1</span>
                         <span class="badge badge-outline badge-sm">Major</span>
-                        <span class="text-xs text-base-content/50 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>May 27, 2026</span>
+                        <span class="text-xs text-base-content/70 ml-auto"><i class="fa-solid fa-calendar mr-1"></i>May 27, 2026</span>
                     </div>
                     <h2 class="text-lg font-bold">Complete Rebuild</h2>
                     <p class="text-sm text-base-content/70 mt-1">Ski Manager has been completely rebuilt from the ground up with a modern technology stack and dramatically expanded gameplay.</p>

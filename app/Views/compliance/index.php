@@ -6,7 +6,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-scale-balanced mr-2 text-primary"></i>Compliance & Risk</h1>
-            <p class="text-sm text-base-content/50">Insurance, regulations, and environmental management</p>
+            <p class="text-sm text-base-content/70">Insurance, regulations, and environmental management</p>
         </div>
     </div>
 
@@ -18,19 +18,19 @@
         <a href="?tab=insurance" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow <?= $tab === 'insurance' ? 'border-2 border-primary' : '' ?>"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-shield-halved text-success text-xl mb-1"></i>
             <div class="text-lg font-bold"><?= $activeInsCount ?? 0 ?>/<?= count($policies ?? []) ?></div>
-            <div class="text-xs text-base-content/50">Insurance</div>
+            <div class="text-xs text-base-content/70">Insurance</div>
             <div class="text-xs text-success"><?= currency($totalPremium ?? 0) ?>/day</div>
         </div></a>
         <a href="?tab=government" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow <?= $tab === 'government' ? 'border-2 border-primary' : '' ?>"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-building-columns text-warning text-xl mb-1"></i>
             <div class="text-lg font-bold <?= ($complianceScore ?? 100) >= 80 ? 'text-success' : (($complianceScore ?? 100) >= 50 ? 'text-warning' : 'text-error') ?>"><?= $complianceScore ?? 100 ?>%</div>
-            <div class="text-xs text-base-content/50">Compliance</div>
+            <div class="text-xs text-base-content/70">Compliance</div>
             <div class="text-xs"><?= $compliant ?? 0 ?>/<?= count($regs ?? []) ?> compliant</div>
         </div></a>
         <a href="?tab=environment" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow <?= $tab === 'environment' ? 'border-2 border-primary' : '' ?>"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-leaf text-success text-xl mb-1"></i>
             <div class="text-lg font-bold <?= ((int)($env['eco_score'] ?? 50)) >= 70 ? 'text-success' : (((int)($env['eco_score'] ?? 50)) >= 40 ? 'text-warning' : 'text-error') ?>"><?= (int)($env['eco_score'] ?? 50) ?></div>
-            <div class="text-xs text-base-content/50">Eco Score</div>
+            <div class="text-xs text-base-content/70">Eco Score</div>
             <div class="text-xs"><?= count($ecoUpgrades ?? []) ?> upgrades</div>
         </div></a>
     </div>
@@ -42,7 +42,7 @@
         <?php if (empty($policies)) : ?>
             <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-8">
                 <i class="fa-solid fa-shield-halved text-3xl text-base-content/20 mb-2"></i>
-                <p class="text-sm text-base-content/50">No insurance policies available.</p>
+                <p class="text-sm text-base-content/70">No insurance policies available.</p>
             </div></div>
         <?php else : ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -56,7 +56,7 @@
                     </div>
                     <span class="badge badge-sm <?= $isActive ? 'badge-success' : 'badge-ghost' ?>"><?= $isActive ? 'Active' : 'Inactive' ?></span>
                 </div>
-                <div class="flex items-center gap-3 text-xs text-base-content/50 mb-2">
+                <div class="flex items-center gap-3 text-xs text-base-content/70 mb-2">
                     <span>Premium: <?= currency($p['premium'] ?? 0) ?>/day</span>
                     <span>Coverage: <?= currency($p['coverage'] ?? 0) ?></span>
                 </div>
@@ -76,7 +76,7 @@
         <?php if (empty($regs)) : ?>
             <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-8">
                 <i class="fa-solid fa-building-columns text-3xl text-base-content/20 mb-2"></i>
-                <p class="text-sm text-base-content/50">No regulations to manage.</p>
+                <p class="text-sm text-base-content/70">No regulations to manage.</p>
             </div></div>
         <?php else : ?>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -90,8 +90,8 @@
                     </div>
                     <span class="badge badge-sm <?= $isCompliant ? 'badge-success' : 'badge-error' ?>"><?= $isCompliant ? 'Compliant' : 'Non-Compliant' ?></span>
                 </div>
-                <div class="text-xs text-base-content/50 mb-2"><?= esc($r['description'] ?? '') ?></div>
-                <div class="text-xs text-base-content/50">Cost: <?= currency($r['compliance_cost'] ?? 0) ?>/day</div>
+                <div class="text-xs text-base-content/70 mb-2"><?= esc($r['description'] ?? '') ?></div>
+                <div class="text-xs text-base-content/70">Cost: <?= currency($r['compliance_cost'] ?? 0) ?>/day</div>
                 <?php if (!$isCompliant) : ?>
                 <form action="/government/toggle/<?= $r['id'] ?>" method="post" class="mt-2"><?= csrf_field() ?>
                     <button class="btn btn-xs btn-success w-full gap-1"><i class="fa-solid fa-check"></i> Comply (<?= currency($r['compliance_cost'] ?? 0) ?>/day)</button>
@@ -132,7 +132,7 @@
                 <div class="radial-progress text-<?= ((int)($env['eco_score'] ?? 50)) >= 70 ? 'success' : (((int)($env['eco_score'] ?? 50)) >= 40 ? 'warning' : 'error') ?>" style="--value:<?= (int)($env['eco_score'] ?? 50) ?>;--size:4rem;--thickness:4px;"><?= (int)($env['eco_score'] ?? 50) ?></div>
                 <div>
                     <div class="text-lg font-bold">Eco Score: <?= (int)($env['eco_score'] ?? 50) ?>/100</div>
-                    <div class="text-sm text-base-content/50"><?= ((int)($env['eco_score'] ?? 50)) >= 80 ? 'Excellent! Earning Genepis daily.' : (((int)($env['eco_score'] ?? 50)) >= 50 ? 'Good, but room to improve.' : 'Low score. Consider eco upgrades.') ?></div>
+                    <div class="text-sm text-base-content/70"><?= ((int)($env['eco_score'] ?? 50)) >= 80 ? 'Excellent! Earning Genepis daily.' : (((int)($env['eco_score'] ?? 50)) >= 50 ? 'Good, but room to improve.' : 'Low score. Consider eco upgrades.') ?></div>
                 </div>
             </div>
         </div></div>

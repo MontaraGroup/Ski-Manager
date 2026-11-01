@@ -7,7 +7,7 @@
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-headset mr-2 text-primary"></i>Support Inbox</h1>
             <?php $totalUnread = array_sum(array_map(fn($c) => (int) $c['unread'], $conversations ?? [])); ?>
-            <p class="text-sm text-base-content/50"><?= count($conversations ?? []) ?> conversation<?= count($conversations ?? []) === 1 ? '' : 's' ?><?= $totalUnread > 0 ? ' · ' . $totalUnread . ' unread' : '' ?></p>
+            <p class="text-sm text-base-content/70"><?= count($conversations ?? []) ?> conversation<?= count($conversations ?? []) === 1 ? '' : 's' ?><?= $totalUnread > 0 ? ' · ' . $totalUnread . ' unread' : '' ?></p>
         </div>
     </div>
 
@@ -15,7 +15,7 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
             <i class="fa-solid fa-inbox text-5xl text-base-content/15 mb-3"></i>
             <p class="font-semibold">No support messages yet</p>
-            <p class="text-sm text-base-content/50 mt-1">Player messages will appear here.</p>
+            <p class="text-sm text-base-content/70 mt-1">Player messages will appear here.</p>
         </div></div>
     <?php else : ?>
         <div class="space-y-2">
@@ -29,10 +29,10 @@
                             <span class="font-semibold <?= $unread > 0 ? 'text-error' : '' ?>"><?= esc($conv['username'] ?? 'User #' . $conv['user_id']) ?></span>
                             <?php if ($unread > 0) : ?><span class="badge badge-error badge-xs"><?= $unread ?></span><?php endif ?>
                         </div>
-                        <div class="text-xs text-base-content/50 truncate <?= $unread > 0 ? 'font-medium text-base-content/70' : '' ?>"><?= esc($conv['last_message'] ?? '') ?></div>
+                        <div class="text-xs text-base-content/70 truncate <?= $unread > 0 ? 'font-medium text-base-content/70' : '' ?>"><?= esc($conv['last_message'] ?? '') ?></div>
                     </div>
                     <div class="text-right shrink-0">
-                        <div class="text-xs text-base-content/40"><?= $conv['last_at'] ? (function_exists('timeAgo') ? timeAgo($conv['last_at']) : date('M j, g:ia', strtotime($conv['last_at']))) : '' ?></div>
+                        <div class="text-xs text-base-content/70"><?= $conv['last_at'] ? (function_exists('timeAgo') ? timeAgo($conv['last_at']) : date('M j, g:ia', strtotime($conv['last_at']))) : '' ?></div>
                         <?php if ($unread > 0) : ?><div class="text-xs text-error font-semibold"><?= $unread ?> unread</div><?php endif ?>
                     </div>
                 </div>

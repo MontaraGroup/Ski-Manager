@@ -32,13 +32,13 @@ $hireForm = function (string $key, array $r, string $btn) use ($candidates) {
             <a href="/staff" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to staff"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold">Hire staff</h1>
-                <p class="text-sm text-base-content/60">Pick from today's candidates. No hiring fee: you pay their daily salary from tonight.</p>
+                <p class="text-sm text-base-content/70">Pick from today's candidates. No hiring fee: you pay their daily salary from tonight.</p>
             </div>
         </div>
         <dl class="flex gap-5 text-sm">
-            <div><dt class="text-xs text-base-content/60">Cash</dt><dd class="font-bold <?= $cash < 0 ? 'text-error' : '' ?>"><?= currency($cash) ?></dd></div>
-            <div><dt class="text-xs text-base-content/60">Staff</dt><dd class="font-bold"><?= $staffCount ?></dd></div>
-            <div><dt class="text-xs text-base-content/60">Salaries</dt><dd class="font-bold"><?= currency($payroll) ?>/day</dd></div>
+            <div><dt class="text-xs text-base-content/70">Cash</dt><dd class="font-bold <?= $cash < 0 ? 'text-error' : '' ?>"><?= currency($cash) ?></dd></div>
+            <div><dt class="text-xs text-base-content/70">Staff</dt><dd class="font-bold"><?= $staffCount ?></dd></div>
+            <div><dt class="text-xs text-base-content/70">Salaries</dt><dd class="font-bold"><?= currency($payroll) ?>/day</dd></div>
         </dl>
     </div>
 
@@ -59,7 +59,7 @@ $hireForm = function (string $key, array $r, string $btn) use ($candidates) {
                         <div class="font-semibold"><?= esc($r['name']) ?></div>
                         <div class="text-sm text-base-content/70"><?= esc($r['why']) ?></div>
                     </div>
-                    <span class="text-sm font-semibold"><?= currency($r['daily']) ?><span class="font-normal text-base-content/60">/day</span></span>
+                    <span class="text-sm font-semibold"><?= currency($r['daily']) ?><span class="font-normal text-base-content/70">/day</span></span>
                     <?= $hireForm($key, $r, 'btn-primary') ?>
                 </li>
             <?php endforeach ?>
@@ -96,16 +96,16 @@ $hireForm = function (string $key, array $r, string $btn) use ($candidates) {
             <p class="text-xs flex items-start gap-1.5 <?= $r['verdict'] === 'needed' ? 'text-error' : 'text-base-content/70' ?>"><i class="fa-solid <?= $icon ?> mt-0.5" aria-hidden="true"></i><span><?= esc($r['why']) ?></span></p>
             <div class="flex items-center justify-between gap-2 border-t border-base-300 pt-3">
                 <dl class="flex gap-4 text-xs">
-                    <div><dt class="text-base-content/60">Salary</dt><dd class="font-semibold"><?= currency($r['daily']) ?>/day</dd></div>
-                    <div><dt class="text-base-content/60">You have</dt><dd class="font-semibold"><?= $r['have'] ?><?= $r['have'] ? ' (' . $r['assigned'] . ' working)' : '' ?></dd></div>
-                    <?php if ($key !== 'manager') : ?><div><dt class="text-base-content/60">Posts</dt><dd class="font-semibold"><?= $r['posts'] ?></dd></div><?php endif ?>
+                    <div><dt class="text-base-content/70">Salary</dt><dd class="font-semibold"><?= currency($r['daily']) ?>/day</dd></div>
+                    <div><dt class="text-base-content/70">You have</dt><dd class="font-semibold"><?= $r['have'] ?><?= $r['have'] ? ' (' . $r['assigned'] . ' working)' : '' ?></dd></div>
+                    <?php if ($key !== 'manager') : ?><div><dt class="text-base-content/70">Posts</dt><dd class="font-semibold"><?= $r['posts'] ?></dd></div><?php endif ?>
                 </dl>
                 <?= $hireForm($key, $r, $dim ? 'btn-ghost' : 'btn-primary') ?>
             </div>
         </div></article>
     <?php endforeach; endforeach ?>
     </div>
-    <p id="roleEmpty" class="text-sm text-base-content/60 text-center py-6" hidden>No roles would help right now.</p>
+    <p id="roleEmpty" class="text-sm text-base-content/70 text-center py-6" hidden>No roles would help right now.</p>
 
     <!-- Candidate lists, one dialog per role -->
     <?php foreach ($roles as $key => $r) : if (empty($candidates[$key])) continue; $dim = in_array($r['verdict'], ['enough', 'none'], true); ?>

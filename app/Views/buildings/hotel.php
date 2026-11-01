@@ -17,7 +17,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-hotel mr-2 text-primary"></i>Hotels & Lodging</h1>
-                <p class="text-sm text-base-content/50">Manage accommodation for overnight guests</p>
+                <p class="text-sm text-base-content/70">Manage accommodation for overnight guests</p>
             </div>
         </div>
     </div>
@@ -30,27 +30,27 @@
         <div class="card-body p-5">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Star Rating</div>
+                    <div class="text-xs text-base-content/70 mb-1">Star Rating</div>
                     <div class="flex items-center gap-1">
                         <?php for ($i = 1; $i <= 5; $i++) : ?>
                             <i class="fa-<?= $i <= $starRating ? 'solid' : 'regular' ?> fa-star text-warning text-lg"></i>
                         <?php endfor ?>
                     </div>
-                    <div class="text-xs text-base-content/50 mt-1"><?= $starRating ?>/5 average</div>
+                    <div class="text-xs text-base-content/70 mt-1"><?= $starRating ?>/5 average</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Tonight's Occupancy</div>
+                    <div class="text-xs text-base-content/70 mb-1">Tonight's Occupancy</div>
                     <div class="text-3xl font-bold"><?= $occupancyRate ?>%</div>
-                    <div class="text-xs text-base-content/50"><?= $occupiedBeds ?>/<?= $totalCapacity ?> beds filled</div>
+                    <div class="text-xs text-base-content/70"><?= $occupiedBeds ?>/<?= $totalCapacity ?> beds filled</div>
                     <progress class="progress progress-primary w-full mt-1" value="<?= $occupancyRate ?>" max="100"></progress>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Daily Revenue</div>
+                    <div class="text-xs text-base-content/70 mb-1">Daily Revenue</div>
                     <div class="text-3xl font-bold text-success"><?= currency($totalRevenue) ?></div>
                     <div class="text-xs text-success">Net: <?= currency($totalRevenue - $totalUpkeep) ?>/day</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Front Desk Staff</div>
+                    <div class="text-xs text-base-content/70 mb-1">Front Desk Staff</div>
                     <div class="text-3xl font-bold"><?= $receptionists ?></div>
                     <div class="text-xs <?= $receptionists >= count($openHotels) ? 'text-success' : 'text-warning' ?>"><?= $receptionists >= count($openHotels) ? 'Fully staffed' : 'Need ' . (count($openHotels) - $receptionists) . ' more' ?></div>
                 </div>
@@ -70,7 +70,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-hotel text-5xl text-base-content/15 mb-3"></i>
                     <p class="font-semibold">No hotels built yet</p>
-                    <p class="text-sm text-base-content/50 mt-1">Build your first lodge to start earning overnight revenue.</p>
+                    <p class="text-sm text-base-content/70 mt-1">Build your first lodge to start earning overnight revenue.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-3">
@@ -91,14 +91,14 @@
                                 <div class="flex items-center gap-1 mb-2">
                                     <?php for ($i = 1; $i <= $b['level']; $i++) : ?><i class="fa-solid fa-star text-warning text-xs"></i><?php endfor ?>
                                     <?php for ($i = $b['level']+1; $i <= 3; $i++) : ?><i class="fa-regular fa-star text-base-content/20 text-xs"></i><?php endfor ?>
-                                    <span class="text-xs text-base-content/50 ml-1"><?= $b['level'] == 1 ? 'Budget' : ($b['level'] == 2 ? 'Comfort' : 'Luxury') ?></span>
+                                    <span class="text-xs text-base-content/70 ml-1"><?= $b['level'] == 1 ? 'Budget' : ($b['level'] == 2 ? 'Comfort' : 'Luxury') ?></span>
                                 </div>
                                 <div class="grid grid-cols-5 gap-1 text-center text-xs mb-3">
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/50">Beds</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $bOccupancy ?>%</div><div class="text-[10px] text-base-content/50">Occ.</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/50">Rev.</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-error"><?= currency($b['upkeep_per_day']) ?></div><div class="text-[10px] text-base-content/50">Cost</div></div>
-                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/50">Cond.</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $b['capacity'] ?></div><div class="text-[10px] text-base-content/70">Beds</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $bOccupancy ?>%</div><div class="text-[10px] text-base-content/70">Occ.</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-success"><?= currency($b['revenue_per_day']) ?></div><div class="text-[10px] text-base-content/70">Rev.</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold text-error"><?= currency($b['upkeep_per_day']) ?></div><div class="text-[10px] text-base-content/70">Cost</div></div>
+                                    <div class="bg-base-200 rounded p-1.5"><div class="font-bold"><?= $cond ?>%</div><div class="text-[10px] text-base-content/70">Cond.</div></div>
                                 </div>
                                 <div class="flex gap-1">
                                     <form action="/buildings/toggle/<?= $b['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?>
@@ -131,7 +131,7 @@
                             <span class="font-semibold text-sm"><?= $info['name'] ?></span>
                             <div class="flex"><?php for ($i = 0; $i < $hi['star']; $i++) : ?><i class="fa-solid fa-star text-warning text-xs"></i><?php endfor ?></div>
                         </div>
-                        <p class="text-xs text-base-content/50 mb-2"><?= $hi['desc'] ?></p>
+                        <p class="text-xs text-base-content/70 mb-2"><?= $hi['desc'] ?></p>
                         <div class="flex justify-between text-xs">
                             <span><?= $info['capacity'] ?> beds - <?= currency($info['revenue']) ?>/day</span>
                             <span class="font-bold text-primary"><?= currency($info['cost']) ?></span>
@@ -143,7 +143,7 @@
 
             <div class="card bg-base-100 shadow-sm mt-4"><div class="card-body p-3">
                 <h3 class="font-semibold text-xs mb-2"><i class="fa-solid fa-lightbulb mr-1 text-warning"></i>Revenue Boosters</h3>
-                <ul class="text-xs text-base-content/60 space-y-1.5">
+                <ul class="text-xs text-base-content/70 space-y-1.5">
                     <li class="flex items-start gap-2"><i class="fa-solid fa-bell-concierge mt-0.5 text-primary"></i> <a href="/staff/hire" class="link link-primary">Receptionists</a> increase check-in speed and satisfaction</li>
                     <li class="flex items-start gap-2"><i class="fa-solid fa-utensils mt-0.5 text-warning"></i> Nearby <a href="/restaurants" class="link link-primary">restaurants</a> boost overnight bookings</li>
                     <li class="flex items-start gap-2"><i class="fa-solid fa-spa mt-0.5 text-secondary"></i> Luxury hotels benefit from <a href="/off-season" class="link link-primary">spa facilities</a></li>

@@ -14,7 +14,7 @@ $maxBase = max(array_merge([W::THIN_BASE * 2], array_column($history, 'snow_base
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-cloud-sun mr-2 text-info" aria-hidden="true"></i>Weather</h1>
-            <p class="text-sm text-base-content/60"><?= esc(getSeasonName()) ?> · day <?= $seasonDay ?> of <?= $seasonLength ?> · <?= $phaseLabel ?></p>
+            <p class="text-sm text-base-content/70"><?= esc(getSeasonName()) ?> · day <?= $seasonDay ?> of <?= $seasonLength ?> · <?= $phaseLabel ?></p>
         </div>
     </div>
 
@@ -25,15 +25,15 @@ $maxBase = max(array_merge([W::THIN_BASE * 2], array_column($history, 'snow_base
                 <i class="fa-solid <?= weatherIcon($cond) ?> text-5xl mb-2" aria-hidden="true"></i>
                 <div class="text-4xl font-bold"><?= esc($now['temp_formatted']) ?></div>
                 <div class="font-semibold mt-1"><?= esc($cond) ?></div>
-                <div class="text-xs text-base-content/60">Day <?= temp((int) $now['base_temp'] + 4) ?> high · night <?= temp((int) $now['base_temp'] - 4) ?> low</div>
+                <div class="text-xs text-base-content/70">Day <?= temp((int) $now['base_temp'] + 4) ?> high · night <?= temp((int) $now['base_temp'] - 4) ?> low</div>
             </div>
             <dl class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">New snow today</dt><dd class="text-xl font-bold"><?= esc($now['snowfall_formatted']) ?></dd></div>
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">Snow base</dt><dd class="text-xl font-bold <?= $thinBase ? 'text-warning' : '' ?>"><?= esc($now['snow_formatted']) ?></dd><?php if ($thinBase) : ?><dd class="text-xs text-warning">Thin (under <?= W::THIN_BASE ?> cm)</dd><?php endif ?></div>
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">Wind</dt><dd class="text-xl font-bold <?= $windHold ? 'text-error' : '' ?>"><?= speed((int) $now['base_wind']) ?></dd><?php if ($windHold) : ?><dd class="text-xs text-error">Lifts on wind hold</dd><?php endif ?></div>
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">Visibility</dt><dd class="text-xl font-bold"><?= esc($now['visibility']) ?></dd></div>
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">Humidity</dt><dd class="text-xl font-bold"><?= (int) $now['humidity'] ?>%</dd></div>
-                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/60">Snowmaking</dt><dd class="text-xl font-bold <?= $snowWindow ? 'text-success' : 'text-error' ?>"><?= $snowWindow ? count($snowWindow) . ' h' : 'Too warm' ?></dd><dd class="text-xs text-base-content/60">at <?= temp(W::SNOWMAKING_MAX_TEMP) ?> or colder</dd></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">New snow today</dt><dd class="text-xl font-bold"><?= esc($now['snowfall_formatted']) ?></dd></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">Snow base</dt><dd class="text-xl font-bold <?= $thinBase ? 'text-warning' : '' ?>"><?= esc($now['snow_formatted']) ?></dd><?php if ($thinBase) : ?><dd class="text-xs text-warning">Thin (under <?= W::THIN_BASE ?> cm)</dd><?php endif ?></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">Wind</dt><dd class="text-xl font-bold <?= $windHold ? 'text-error' : '' ?>"><?= speed((int) $now['base_wind']) ?></dd><?php if ($windHold) : ?><dd class="text-xs text-error">Lifts on wind hold</dd><?php endif ?></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">Visibility</dt><dd class="text-xl font-bold"><?= esc($now['visibility']) ?></dd></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">Humidity</dt><dd class="text-xl font-bold"><?= (int) $now['humidity'] ?>%</dd></div>
+                <div class="bg-base-200 rounded-lg p-3"><dt class="text-xs text-base-content/70">Snowmaking</dt><dd class="text-xl font-bold <?= $snowWindow ? 'text-success' : 'text-error' ?>"><?= $snowWindow ? count($snowWindow) . ' h' : 'Too warm' ?></dd><dd class="text-xs text-base-content/70">at <?= temp(W::SNOWMAKING_MAX_TEMP) ?> or colder</dd></div>
             </dl>
         </div>
     </div></div>
@@ -69,13 +69,13 @@ $maxBase = max(array_merge([W::THIN_BASE * 2], array_column($history, 'snow_base
         <div class="overflow-x-auto"><div class="flex gap-1" style="min-width:720px">
             <?php foreach ($hourly as $h) : $isNow = $h['hour'] === $currentHour; $canMake = $h['temp'] <= W::SNOWMAKING_MAX_TEMP; ?>
             <div class="flex-1 text-center rounded-lg p-1.5 <?= $isNow ? 'bg-primary/20 ring-1 ring-primary' : '' ?>">
-                <div class="text-[10px] <?= $isNow ? 'font-bold text-primary' : 'text-base-content/60' ?>"><?= $isNow ? 'Now' : $h['label'] ?></div>
+                <div class="text-[10px] <?= $isNow ? 'font-bold text-primary' : 'text-base-content/70' ?>"><?= $isNow ? 'Now' : $h['label'] ?></div>
                 <div class="text-xs font-bold mt-0.5 <?= $canMake ? 'text-info' : ($h['temp'] > 0 ? 'text-warning' : '') ?>"><?= temp($h['temp']) ?></div>
                 <div class="w-full h-1 rounded mt-0.5 <?= $canMake ? 'bg-info/50' : 'bg-base-300' ?>"></div>
             </div>
             <?php endforeach ?>
         </div></div>
-        <div class="flex gap-4 mt-2 text-xs text-base-content/60"><span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-info/50 inline-block"></span> cold enough for snow guns</span><span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-base-300 inline-block"></span> too warm</span></div>
+        <div class="flex gap-4 mt-2 text-xs text-base-content/70"><span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-info/50 inline-block"></span> cold enough for snow guns</span><span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-base-300 inline-block"></span> too warm</span></div>
     </div></div>
 
     <!-- Forecast -->
@@ -84,16 +84,16 @@ $maxBase = max(array_merge([W::THIN_BASE * 2], array_column($history, 'snow_base
         <div class="grid grid-cols-5 gap-2">
             <?php foreach ($forecast as $f) : $ff = W::demandFactor($f['condition'], (int) ($f['wind'] ?? 0)); ?>
             <div class="bg-base-200 rounded-lg p-2 text-center">
-                <div class="text-xs text-base-content/60">Day <?= $seasonDay + (int) $f['day'] ?></div>
+                <div class="text-xs text-base-content/70">Day <?= $seasonDay + (int) $f['day'] ?></div>
                 <i class="fa-solid <?= weatherIcon($f['condition']) ?> text-xl my-1" aria-hidden="true"></i>
                 <div class="font-bold"><?= temp((int) $f['temp']) ?></div>
-                <div class="text-[11px] text-base-content/60 hidden sm:block"><?= esc($f['condition']) ?></div>
+                <div class="text-[11px] text-base-content/70 hidden sm:block"><?= esc($f['condition']) ?></div>
                 <?php if ((int) $f['snowfall'] > 0) : ?><div class="text-xs text-info">+<?= snow((int) $f['snowfall']) ?></div><?php endif ?>
                 <div class="text-[11px] <?= $ff >= 1 ? 'text-success' : 'text-error' ?>"><?= $ff == 1 ? 'skiers =' : 'skiers ' . $pct($ff) ?></div>
             </div>
             <?php endforeach ?>
         </div>
-        <p class="text-xs text-base-content/60 mt-2">Mountain forecasts here are reliable: plan grooming and snowmaking around them.</p>
+        <p class="text-xs text-base-content/70 mt-2">Mountain forecasts here are reliable: plan grooming and snowmaking around them.</p>
     </div></div>
 
     <!-- Snow base -->
@@ -107,7 +107,7 @@ $maxBase = max(array_merge([W::THIN_BASE * 2], array_column($history, 'snow_base
             </div>
             <?php endforeach ?>
         </div>
-        <div class="flex justify-between text-xs text-base-content/60 mt-1"><span>Day <?= (int) $history[0]['game_day'] ?></span><span>Today: <?= esc($now['snow_formatted']) ?></span></div>
+        <div class="flex justify-between text-xs text-base-content/70 mt-1"><span>Day <?= (int) $history[0]['game_day'] ?></span><span>Today: <?= esc($now['snow_formatted']) ?></span></div>
     </div></div>
     <?php endif ?>
 

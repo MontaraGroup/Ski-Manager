@@ -11,42 +11,42 @@ $nextMultPct = (int) round(($next['multiplier'] - 1) * 100);
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-fire mr-2 text-warning" aria-hidden="true"></i>Daily bonus</h1>
-            <p class="text-sm text-base-content/60">Claim once a day. Every day in a row grows your streak, and each full week makes rewards bigger.</p>
+            <p class="text-sm text-base-content/70">Claim once a day. Every day in a row grows your streak, and each full week makes rewards bigger.</p>
         </div>
     </div>
 
     <!-- Claim -->
     <div class="card bg-base-100 shadow-sm mb-4 <?= !$claimedToday ? 'border border-warning/50' : '' ?>"><div class="card-body p-5 text-center">
         <?php if ($claimedToday) : ?>
-            <div class="text-sm text-base-content/60">Claimed today. Tomorrow's bonus:</div>
+            <div class="text-sm text-base-content/70">Claimed today. Tomorrow's bonus:</div>
             <div class="text-3xl font-bold"><?= currency($next['cash']) ?><?= $next['genepis'] ? ' <span class="text-lg text-success">+ ' . $next['genepis'] . ' Génépis</span>' : '' ?></div>
-            <div class="text-sm text-base-content/60 mt-1">Unlocks in <span id="resetIn" data-seconds="<?= $secondsToReset ?>"><?= $h ?>h <?= $m ?>m</span> (midnight, server time). Claim before the end of tomorrow to keep your streak.</div>
+            <div class="text-sm text-base-content/70 mt-1">Unlocks in <span id="resetIn" data-seconds="<?= $secondsToReset ?>"><?= $h ?>h <?= $m ?>m</span> (midnight, server time). Claim before the end of tomorrow to keep your streak.</div>
         <?php else : ?>
             <?php if ($lostStreak) : ?>
             <div role="alert" class="alert alert-warning mb-3 text-sm"><i class="fa-solid fa-heart-crack" aria-hidden="true"></i><span>You missed a day, so your <?= $lostStreak ?>-day streak ended. Today starts a new one.</span></div>
             <?php endif ?>
-            <div class="text-sm text-base-content/60">Day <?= $streak + 1 ?> bonus</div>
+            <div class="text-sm text-base-content/70">Day <?= $streak + 1 ?> bonus</div>
             <div class="text-4xl font-bold text-warning"><?= currency($next['cash']) ?><?= $next['genepis'] ? ' <span class="text-xl text-success">+ ' . $next['genepis'] . ' Génépis</span>' : '' ?></div>
             <?php if ($nextMultPct > 0) : ?><div class="text-xs text-success mt-1">Includes +<?= $nextMultPct ?>% for week <?= $next['week'] ?> of your streak</div><?php endif ?>
             <form action="/daily-bonus/claim" method="post" class="mt-3"><?= csrf_field() ?>
                 <button class="btn btn-warning btn-lg gap-2"><i class="fa-solid fa-gift" aria-hidden="true"></i> Claim</button>
             </form>
-            <div class="text-xs text-base-content/60 mt-2">Available until midnight, in <span id="resetIn" data-seconds="<?= $secondsToReset ?>"><?= $h ?>h <?= $m ?>m</span></div>
+            <div class="text-xs text-base-content/70 mt-2">Available until midnight, in <span id="resetIn" data-seconds="<?= $secondsToReset ?>"><?= $h ?>h <?= $m ?>m</span></div>
         <?php endif ?>
     </div></div>
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-3 mb-4">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center">
-            <div class="text-xs text-base-content/60">Current streak</div>
-            <div class="text-2xl font-bold text-warning"><?= $streak ?> <span class="text-sm font-normal text-base-content/60">day<?= $streak === 1 ? '' : 's' ?></span></div>
+            <div class="text-xs text-base-content/70">Current streak</div>
+            <div class="text-2xl font-bold text-warning"><?= $streak ?> <span class="text-sm font-normal text-base-content/70">day<?= $streak === 1 ? '' : 's' ?></span></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center">
-            <div class="text-xs text-base-content/60">Best streak</div>
-            <div class="text-2xl font-bold"><?= max((int) $row['best_streak'], $streak) ?> <span class="text-sm font-normal text-base-content/60">days</span></div>
+            <div class="text-xs text-base-content/70">Best streak</div>
+            <div class="text-2xl font-bold"><?= max((int) $row['best_streak'], $streak) ?> <span class="text-sm font-normal text-base-content/70">days</span></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center">
-            <div class="text-xs text-base-content/60">Claimed in total</div>
+            <div class="text-xs text-base-content/70">Claimed in total</div>
             <div class="text-2xl font-bold text-success"><?= currency((int) $row['total_claimed']) ?></div>
         </div></div>
     </div>
@@ -55,12 +55,12 @@ $nextMultPct = (int) round(($next['multiplier'] - 1) * 100);
     <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body p-4">
         <div class="flex items-baseline justify-between mb-3">
             <h2 class="font-bold">Week <?= $days[0]['week'] ?></h2>
-            <span class="text-xs text-base-content/60"><?= $days[0]['multiplier'] > 1 ? 'Rewards ×' . rtrim(rtrim(number_format($days[0]['multiplier'], 2), '0'), '.') : 'Base rewards' ?></span>
+            <span class="text-xs text-base-content/70"><?= $days[0]['multiplier'] > 1 ? 'Rewards ×' . rtrim(rtrim(number_format($days[0]['multiplier'], 2), '0'), '.') : 'Base rewards' ?></span>
         </div>
         <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
             <?php foreach ($days as $d) : ?>
             <div class="rounded-lg border p-2 text-center <?= $d['done'] ? 'bg-warning/15 border-warning/50' : ($d['next'] ? 'border-primary bg-primary/10' : 'border-base-300') ?>">
-                <div class="text-[11px] text-base-content/60">Day <?= $d['streak'] ?></div>
+                <div class="text-[11px] text-base-content/70">Day <?= $d['streak'] ?></div>
                 <div class="my-1"><i class="fa-solid <?= $d['done'] ? 'fa-check text-warning' : ($d['genepis'] ? 'fa-star text-success' : 'fa-gift text-base-content/40') ?>" aria-hidden="true"></i></div>
                 <div class="text-xs font-bold"><?= currency($d['cash']) ?></div>
                 <?php if ($d['genepis']) : ?><div class="text-[10px] text-success">+<?= $d['genepis'] ?> Génépis</div><?php endif ?>

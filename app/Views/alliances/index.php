@@ -15,7 +15,7 @@
                     </span>
                     <h1 class="text-2xl lg:text-3xl font-black text-base-content"><?= esc($alliance['name']) ?></h1>
                 </div>
-                <p class="text-sm text-base-content/60 mt-0.5 italic">"<?= esc($alliance['motto']) ?>"</p>
+                <p class="text-sm text-base-content/70 mt-0.5 italic">"<?= esc($alliance['motto']) ?>"</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -53,24 +53,24 @@
     <!-- Header Stats Banner -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="card bg-base-100 border border-base-300 shadow-sm p-4 text-center">
-            <div class="text-xs text-base-content/50 uppercase font-semibold">Alliance Level</div>
+            <div class="text-xs text-base-content/70 uppercase font-semibold">Alliance Level</div>
             <div class="text-2xl font-black text-primary mt-1">Level <?= (int)$alliance['level'] ?></div>
-            <div class="text-[11px] text-base-content/50 mt-1"><?= (int)$alliance['xp'] ?> Total XP</div>
+            <div class="text-[11px] text-base-content/70 mt-1"><?= (int)$alliance['xp'] ?> Total XP</div>
         </div>
         <div class="card bg-base-100 border border-base-300 shadow-sm p-4 text-center">
-            <div class="text-xs text-base-content/50 uppercase font-semibold">Alliance Vault</div>
+            <div class="text-xs text-base-content/70 uppercase font-semibold">Alliance Vault</div>
             <div class="text-2xl font-black text-success mt-1"><?= currency((int)$alliance['treasury_cash']) ?></div>
-            <div class="text-[11px] text-base-content/50 mt-1">Shared Capital</div>
+            <div class="text-[11px] text-base-content/70 mt-1">Shared Capital</div>
         </div>
         <div class="card bg-base-100 border border-base-300 shadow-sm p-4 text-center">
-            <div class="text-xs text-base-content/50 uppercase font-semibold">Network Scale</div>
+            <div class="text-xs text-base-content/70 uppercase font-semibold">Network Scale</div>
             <div class="text-2xl font-black text-base-content mt-1"><?= count($members) ?> / <?= (int)$alliance['max_members'] ?></div>
-            <div class="text-[11px] text-base-content/50 mt-1"><?= $totalSlopes ?> Slopes &bull; <?= $totalLifts ?> Lifts</div>
+            <div class="text-[11px] text-base-content/70 mt-1"><?= $totalSlopes ?> Slopes &bull; <?= $totalLifts ?> Lifts</div>
         </div>
         <div class="card bg-base-100 border border-base-300 shadow-sm p-4 text-center">
-            <div class="text-xs text-base-content/50 uppercase font-semibold">Total Trail Length</div>
+            <div class="text-xs text-base-content/70 uppercase font-semibold">Total Trail Length</div>
             <div class="text-2xl font-black text-info mt-1"><?= $totalSlopeKm ?> km</div>
-            <div class="text-[11px] text-base-content/50 mt-1">Valuation: <?= currency($combinedTreasury) ?></div>
+            <div class="text-[11px] text-base-content/70 mt-1">Valuation: <?= currency($combinedTreasury) ?></div>
         </div>
     </div>
 
@@ -111,19 +111,19 @@
                 <div class="p-6 space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="p-3 bg-base-200/50 rounded-xl border border-base-300">
-                            <div class="text-xs text-base-content/50">Base Pass Boost</div>
+                            <div class="text-xs text-base-content/70">Base Pass Boost</div>
                             <div class="text-xl font-bold text-primary mt-0.5">+<?= $curTier['visitor_pct'] ?>%</div>
-                            <div class="text-[11px] text-base-content/60"><?= esc($curTier['desc']) ?></div>
+                            <div class="text-[11px] text-base-content/70"><?= esc($curTier['desc']) ?></div>
                         </div>
                         <div class="p-3 bg-base-200/50 rounded-xl border border-base-300">
-                            <div class="text-xs text-base-content/50">Sister Mountain Synergy</div>
+                            <div class="text-xs text-base-content/70">Sister Mountain Synergy</div>
                             <div class="text-xl font-bold text-info mt-0.5">+<?= $sisterBonus ?>%</div>
-                            <div class="text-[11px] text-base-content/60">+1% skier traffic per allied sister resort</div>
+                            <div class="text-[11px] text-base-content/70">+1% skier traffic per allied sister resort</div>
                         </div>
                         <div class="p-3 bg-base-200/50 rounded-xl border border-base-300">
-                            <div class="text-xs text-base-content/50">Pass Upgrades</div>
+                            <div class="text-xs text-base-content/70">Pass Upgrades</div>
                             <div class="text-xl font-bold text-success mt-0.5">Tier <?= $curTierNum ?> of 4</div>
-                            <div class="text-[11px] text-base-content/60">
+                            <div class="text-[11px] text-base-content/70">
                                 <?= $nextTier ? 'Next: ' . esc($nextTier['name']) : 'Max Tier Achieved' ?>
                             </div>
                         </div>
@@ -133,7 +133,7 @@
                         <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-base-200 rounded-xl border border-base-300">
                             <div>
                                 <div class="font-bold text-sm text-base-content">Upgrade to Tier <?= $nextTierNum ?>: <?= esc($nextTier['name']) ?></div>
-                                <div class="text-xs text-base-content/60">
+                                <div class="text-xs text-base-content/70">
                                     Requires Alliance Level <?= $nextTier['req_level'] ?> &bull; Cost: <?= currency($nextTier['cost']) ?>
                                     &bull; Boosts visitors by <strong>+<?= $nextTier['visitor_pct'] ?>%</strong>
                                 </div>
@@ -155,7 +155,7 @@
                 <div class="flex items-center justify-between border-b border-base-300 pb-3">
                     <div>
                         <h2 class="text-lg font-bold text-base-content"><i class="fa-solid fa-bolt mr-2 text-warning"></i>Syndicate Perks & Research</h2>
-                        <p class="text-xs text-base-content/50">Cooperative upgrades financed by the Alliance Treasury</p>
+                        <p class="text-xs text-base-content/70">Cooperative upgrades financed by the Alliance Treasury</p>
                     </div>
                     <span class="badge badge-sm badge-outline"><?= count($unlockedPerks) ?> Active Perks</span>
                 </div>
@@ -176,11 +176,11 @@
                                         </div>
                                         <span class="font-bold text-sm text-base-content"><?= esc($pDef['name']) ?></span>
                                     </div>
-                                    <span class="badge badge-sm <?= $curPLevel > 0 ? 'badge-success font-bold' : 'badge-ghost text-base-content/40' ?>">
+                                    <span class="badge badge-sm <?= $curPLevel > 0 ? 'badge-success font-bold' : 'badge-ghost text-base-content/70' ?>">
                                         <?= $curPLevel > 0 ? "Level {$curPLevel}" : 'Locked' ?>
                                     </span>
                                 </div>
-                                <p class="text-xs text-base-content/60 mt-2 leading-relaxed"><?= esc($pDef['desc']) ?></p>
+                                <p class="text-xs text-base-content/70 mt-2 leading-relaxed"><?= esc($pDef['desc']) ?></p>
 
                                 <?php if ($curPLevel > 0) : ?>
                                     <div class="mt-2 text-xs font-semibold text-success flex items-center gap-1.5">
@@ -196,7 +196,7 @@
                                     </span>
                                 <?php else : ?>
                                     <div class="flex items-center justify-between gap-2">
-                                        <div class="text-[11px] text-base-content/60">
+                                        <div class="text-[11px] text-base-content/70">
                                             <span>Rank <?= $nextPLevel ?>: <?= currency($nextPConfig['cost']) ?></span>
                                             <span class="block text-primary font-medium"><?= esc($nextPConfig['effect']) ?></span>
                                         </div>
@@ -223,7 +223,7 @@
                 <div class="flex items-center justify-between border-b border-base-300 pb-3">
                     <div>
                         <h2 class="text-lg font-bold text-base-content"><i class="fa-solid fa-users mr-2 text-primary"></i>Allied Resort Directors</h2>
-                        <p class="text-xs text-base-content/50"><?= count($members) ?> resorts in syndicate</p>
+                        <p class="text-xs text-base-content/70"><?= count($members) ?> resorts in syndicate</p>
                     </div>
                     <span class="badge badge-sm badge-info font-mono"><?= count($members) ?> / <?= (int)$alliance['max_members'] ?> Cap</span>
                 </div>
@@ -231,7 +231,7 @@
                 <div class="overflow-x-auto">
                     <table class="table table-sm w-full">
                         <thead>
-                            <tr class="text-xs text-base-content/50 border-b border-base-300">
+                            <tr class="text-xs text-base-content/70 border-b border-base-300">
                                 <th>Director & Resort</th>
                                 <th>Role</th>
                                 <th>Lifts & Slopes</th>
@@ -252,7 +252,7 @@
                                                 <span class="badge badge-xs badge-primary font-mono">You</span>
                                             <?php endif ?>
                                         </div>
-                                        <div class="text-[11px] text-base-content/50"><?= esc($m['resort_map'] ?? 'ParkCity') ?> &bull; Rep: <?= (int)$m['reputation'] ?></div>
+                                        <div class="text-[11px] text-base-content/70"><?= esc($m['resort_map'] ?? 'ParkCity') ?> &bull; Rep: <?= (int)$m['reputation'] ?></div>
                                     </td>
                                     <td>
                                         <?php if ($m['role'] === 'founder') : ?>
@@ -338,7 +338,7 @@
                     <i class="fa-solid fa-vault text-warning text-lg"></i>
                     <div>
                         <h3 class="font-bold text-sm text-base-content">Contribute to Vault</h3>
-                        <div class="text-[11px] text-base-content/50">Your Treasury: <?= currency($userCash) ?></div>
+                        <div class="text-[11px] text-base-content/70">Your Treasury: <?= currency($userCash) ?></div>
                     </div>
                 </div>
 
@@ -358,7 +358,7 @@
                     <button type="submit" class="btn btn-sm btn-success w-full font-bold shadow-sm text-neutral" <?= $userCash < 1000 ? 'disabled' : '' ?>>
                         <i class="fa-solid fa-coins mr-1"></i> Deposit Capital
                     </button>
-                    <div class="text-[11px] text-base-content/50 text-center">
+                    <div class="text-[11px] text-base-content/70 text-center">
                         Grants 1 Alliance XP per 1,000 € deposited
                     </div>
                 </form>
@@ -379,7 +379,7 @@
                             <div class="p-3 bg-base-200 rounded-xl space-y-2 border border-base-300">
                                 <div class="flex items-center justify-between">
                                     <div class="font-bold text-sm"><?= esc($app['username']) ?></div>
-                                    <span class="text-xs text-base-content/60 font-mono">Rep: <?= (int)$app['reputation'] ?></span>
+                                    <span class="text-xs text-base-content/70 font-mono">Rep: <?= (int)$app['reputation'] ?></span>
                                 </div>
                                 <?php if (!empty($app['message'])) : ?>
                                     <p class="text-xs text-base-content/70 italic">"<?= esc($app['message']) ?>"</p>
@@ -414,12 +414,12 @@
 
                 <div class="space-y-2.5 max-h-96 overflow-y-auto pr-1">
                     <?php if (empty($activities)) : ?>
-                        <div class="text-xs text-base-content/40 text-center py-6">No recent activity.</div>
+                        <div class="text-xs text-base-content/70 text-center py-6">No recent activity.</div>
                     <?php else : ?>
                         <?php foreach ($activities as $act) : ?>
                             <div class="text-xs p-2.5 bg-base-200/50 rounded-lg border border-base-300/60 space-y-1">
                                 <div class="text-base-content font-medium leading-snug"><?= esc($act['message']) ?></div>
-                                <div class="text-[10px] text-base-content/40 font-mono"><?= timeAgo($act['created_at']) ?></div>
+                                <div class="text-[10px] text-base-content/70 font-mono"><?= timeAgo($act['created_at']) ?></div>
                             </div>
                         <?php endforeach ?>
                     <?php endif ?>
