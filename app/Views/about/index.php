@@ -5,7 +5,7 @@
 
     <div class="mb-8">
         <h1 class="text-3xl font-bold mb-2"><i class="fa-solid fa-mountain-sun mr-2 text-primary"></i>About Ski Manager</h1>
-        <p class="text-base-content/60">A free, browser-based ski resort tycoon - built by one developer who loves the mountains.</p>
+        <p class="text-base-content/70">A free, browser-based ski resort tycoon - built by one developer who loves the mountains.</p>
     </div>
 
     <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
@@ -45,7 +45,7 @@
             <li><i class="fa-solid fa-tractor fa-fw mr-1 text-base-content/40"></i><a href="https://www.pistenbully.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">PistenBully</a> and <a href="https://www.prinoth.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">Prinoth</a> snow groomers</li>
             <li><i class="fa-solid fa-spray-can fa-fw mr-1 text-base-content/40"></i><a href="https://www.technoalpin.com/" target="_blank" rel="noopener noreferrer" class="link link-primary">TechnoAlpin</a>, <a href="https://www.dfrgroup.it/" target="_blank" rel="noopener noreferrer" class="link link-primary">Demaclenko</a>, HKD, and SMI snowmaking systems</li>
         </ul>
-        <p class="text-xs text-base-content/50 mt-3">All brand names and trademarks are property of their respective owners. Their inclusion is for simulation and educational purposes only.</p>
+        <p class="text-xs text-base-content/70 mt-3">All brand names and trademarks are property of their respective owners. Their inclusion is for simulation and educational purposes only.</p>
     </div></div>
 
     <div class="card bg-gradient-to-br from-primary to-secondary text-primary-content shadow-sm"><div class="card-body text-center">

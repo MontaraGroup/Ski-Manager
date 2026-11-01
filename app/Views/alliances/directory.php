@@ -11,7 +11,7 @@
                 <i class="fa-solid fa-handshake text-primary text-2xl"></i>
                 <h1 class="text-2xl lg:text-3xl font-black text-base-content">Resort Alliances & Syndicates</h1>
             </div>
-            <p class="text-sm text-base-content/60 mt-1">Band together with fellow directors to co-brand a multi-pass, pool capital, and unlock cooperative fleet discounts.</p>
+            <p class="text-sm text-base-content/70 mt-1">Band together with fellow directors to co-brand a multi-pass, pool capital, and unlock cooperative fleet discounts.</p>
         </div>
         <div class="flex items-center gap-2">
             <a href="/alliances/leaderboard" class="btn btn-sm btn-outline gap-1.5">
@@ -58,7 +58,7 @@
                 <i class="fa-solid fa-id-badge"></i>
             </div>
             <h3 class="font-bold text-sm text-base-content">Syndicate Multi-Pass</h3>
-            <p class="text-xs text-base-content/60 leading-relaxed">
+            <p class="text-xs text-base-content/70 leading-relaxed">
                 Co-brand a shared mountain pass that drives +5% to +20% cross-mountain visitors and extra price tolerance across all sister resorts.
             </p>
         </div>
@@ -67,7 +67,7 @@
                 <i class="fa-solid fa-truck-monster"></i>
             </div>
             <h3 class="font-bold text-sm text-base-content">Bulk Equipment Procurement</h3>
-            <p class="text-xs text-base-content/60 leading-relaxed">
+            <p class="text-xs text-base-content/70 leading-relaxed">
                 Pool capital into the shared vault to research cooperative purchasing agreements, slashing groomer and snowmaker costs by up to 20%.
             </p>
         </div>
@@ -76,7 +76,7 @@
                 <i class="fa-solid fa-ranking-star"></i>
             </div>
             <h3 class="font-bold text-sm text-base-content">Seasonal Alliance Trophy</h3>
-            <p class="text-xs text-base-content/60 leading-relaxed">
+            <p class="text-xs text-base-content/70 leading-relaxed">
                 Compete on the global Alliance Leaderboard. Carry your syndicate tag and crest on your Director Accreditation Pass and public profile.
             </p>
         </div>
@@ -87,7 +87,7 @@
         <div class="flex items-center justify-between border-b border-base-300 pb-3">
             <div>
                 <h2 class="text-lg font-bold text-base-content">Active Alliances</h2>
-                <p class="text-xs text-base-content/50">Browse established syndicates or apply to join their mountain collective</p>
+                <p class="text-xs text-base-content/70">Browse established syndicates or apply to join their mountain collective</p>
             </div>
             <span class="badge badge-sm badge-ghost"><?= count($alliances) ?> Alliances Registered</span>
         </div>
@@ -98,7 +98,7 @@
                     <i class="fa-solid fa-mountain-sun"></i>
                 </div>
                 <h3 class="font-bold text-base">No alliances formed yet</h3>
-                <p class="text-xs text-base-content/50 max-w-sm mx-auto">Be the first ski director to establish a mountain syndicate and recruit partner resorts!</p>
+                <p class="text-xs text-base-content/70 max-w-sm mx-auto">Be the first ski director to establish a mountain syndicate and recruit partner resorts!</p>
                 <button onclick="document.getElementById('foundModal').showModal()" class="btn btn-sm btn-primary font-bold">
                     Found the First Alliance
                 </button>
@@ -107,7 +107,7 @@
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/50 border-b border-base-300">
+                        <tr class="text-xs text-base-content/70 border-b border-base-300">
                             <th>Alliance</th>
                             <th>Level & Pass</th>
                             <th>Members</th>
@@ -136,13 +136,13 @@
                                                 </a>
                                                 <span class="badge badge-xs badge-neutral font-mono font-bold">[<?= esc($a['tag']) ?>]</span>
                                             </div>
-                                            <div class="text-[11px] text-base-content/50 italic line-clamp-1">"<?= esc($a['motto']) ?>"</div>
+                                            <div class="text-[11px] text-base-content/70 italic line-clamp-1">"<?= esc($a['motto']) ?>"</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <span class="badge badge-xs badge-primary font-bold">Lvl <?= (int)$a['level'] ?></span>
-                                    <div class="text-[11px] text-base-content/60 mt-0.5"><?= esc($tier['name']) ?> (+<?= $tier['visitor_pct'] ?>%)</div>
+                                    <div class="text-[11px] text-base-content/70 mt-0.5"><?= esc($tier['name']) ?> (+<?= $tier['visitor_pct'] ?>%)</div>
                                 </td>
                                 <td class="font-mono text-xs">
                                     <span class="<?= $isFull ? 'text-error font-bold' : 'text-base-content' ?>">
@@ -161,7 +161,7 @@
                                             <?= (int)$a['min_reputation'] ?>+ Rep
                                         </span>
                                     <?php else : ?>
-                                        <span class="text-[11px] text-base-content/50">None</span>
+                                        <span class="text-[11px] text-base-content/70">None</span>
                                     <?php endif ?>
                                 </td>
                                 <td class="text-right">
@@ -181,7 +181,7 @@
                                         <dialog id="applyModal_<?= (int)$a['id'] ?>" class="modal modal-middle" closedby="any" aria-labelledby="applyModalTitle_<?= (int)$a['id'] ?>">
                                             <div class="modal-box text-left">
                                                 <h3 id="applyModalTitle_<?= (int)$a['id'] ?>" class="font-bold text-lg mb-2">Apply to <?= esc($a['name']) ?></h3>
-                                                <p class="text-xs text-base-content/60 mb-4">Leadership will review your application before admitting your mountain to the syndicate.</p>
+                                                <p class="text-xs text-base-content/70 mb-4">Leadership will review your application before admitting your mountain to the syndicate.</p>
                                                 <form action="/alliances/join/<?= (int)$a['id'] ?>" method="post" class="space-y-3">
                                                     <?= csrf_field() ?>
                                                     <div class="form-control">
@@ -217,7 +217,7 @@
             </div>
             <div>
                 <h3 id="foundModalTitle" class="font-bold text-lg text-base-content">Charter a New Alliance</h3>
-                <div class="text-xs text-base-content/50">Creation Fee: 50,000 € (Your Cash: <?= currency($userCash) ?>)</div>
+                <div class="text-xs text-base-content/70">Creation Fee: 50,000 € (Your Cash: <?= currency($userCash) ?>)</div>
             </div>
         </div>
 
@@ -281,7 +281,7 @@
                         <input type="checkbox" name="is_recruiting" value="1" checked class="checkbox checkbox-primary checkbox-sm">
                         <span class="label-text text-xs font-medium">Open Recruitment</span>
                     </label>
-                    <div class="text-[10px] text-base-content/50 ml-6">Allow direct joining without approval</div>
+                    <div class="text-[10px] text-base-content/70 ml-6">Allow direct joining without approval</div>
                 </div>
             </div>
 

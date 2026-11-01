@@ -6,6 +6,14 @@
   <url><loc>https://ski-manager.net/updates</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://ski-manager.net/roadmap</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://ski-manager.net/developers</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://ski-manager.net/guides</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://ski-manager.net/guides/getting-started</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/ticket-pricing</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/lifts</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/grooming</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/snow-and-weather</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/staff</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ski-manager.net/guides/money</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://ski-manager.net/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://ski-manager.net/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://ski-manager.net/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>

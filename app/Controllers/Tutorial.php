@@ -4,69 +4,73 @@ namespace App\Controllers;
 
 class Tutorial extends BaseController
 {
+    /**
+     * Ordered so a new player builds first and only then hires: staff hired before there's a post
+     * for them are paid to do nothing and lose morale.
+     */
     public const STEPS = [
         [
             'title' => 'Welcome to Ski Manager!',
-            'text' => "You're the new owner of a ski resort. Let's get you set up. This quick tour covers the basics - you can skip it anytime.",
+            'text' => "You're the new owner of a ski resort. Let's get you set up: build a slope and a lift, price your tickets, then hire and build around them. You can skip this anytime.",
             'action' => null,
             'page' => '/dashboard',
             'icon' => 'fa-solid fa-mountain-sun',
         ],
         [
-            'title' => 'Check Your Finances',
-            'text' => "See what you're working with. Open the Finances page to view your starting cash and daily budget.",
-            'action' => 'Visit the Finances page',
-            'page' => '/finances',
-            'icon' => 'fa-solid fa-coins',
-            'check' => 'visit_finances',
-        ],
-        [
-            'title' => 'Hire Your First Staff',
-            'text' => "A resort needs people to run it. On the Staff page, hire at least one employee - a groomer, ski patroller, or mechanic.",
-            'action' => 'Hire a staff member',
-            'page' => '/staff',
-            'icon' => 'fa-solid fa-users',
-            'check' => 'has_staff',
-        ],
-        [
             'title' => 'Build a Slope',
-            'text' => "Give your guests somewhere to ski. Open the Trail Map, click a segment, and build your first slope.",
+            'text' => "Slopes are what bring skiers. Open the Trail Map, press Build, and pick a slope: a moderate one near the base is a good start.",
             'action' => 'Build a slope on the trail map',
             'page' => '/map',
             'icon' => 'fa-solid fa-map',
             'check' => 'has_slope',
         ],
         [
+            'title' => 'Build a Lift',
+            'text' => "Skiers need a lift to reach your slope: without one only about 100 walk-up skiers come each day. On the Trail Map, open Build and choose a lift that serves your slope.",
+            'action' => 'Build a lift on the trail map',
+            'page' => '/map',
+            'icon' => 'fa-solid fa-cable-car',
+            'check' => 'has_lift',
+        ],
+        [
             'title' => 'Set Your Ticket Prices',
-            'text' => "Guests need lift tickets. On the Tickets page, set your prices - higher prices mean more revenue per guest but fewer visitors.",
+            'text' => "Guests need lift tickets. Prices near the suggested ones are a safe start: higher prices earn more per skier but fewer come.",
             'action' => 'Visit the Tickets page',
             'page' => '/tickets',
             'icon' => 'fa-solid fa-ticket',
             'check' => 'visit_tickets',
         ],
         [
+            'title' => 'Hire Your First Staff',
+            'text' => "Now that you have a lift, hire a Lift Mechanic for it: it wears more slowly and needs fewer repairs. The hire page shows what else your resort needs.",
+            'action' => 'Hire a staff member',
+            'page' => '/staff/hire',
+            'icon' => 'fa-solid fa-users',
+            'check' => 'has_staff',
+        ],
+        [
+            'title' => 'Build a Restaurant',
+            'text' => "Most skiers stop for a meal: a restaurant earns from about 7 in 10 of your visitors.",
+            'action' => 'Build a restaurant (or another building)',
+            'page' => '/restaurants',
+            'icon' => 'fa-solid fa-utensils',
+            'check' => 'has_building',
+        ],
+        [
             'title' => 'Check the Weather',
-            'text' => "Weather drives visitor numbers, snow conditions, and energy costs. Check today's forecast on the Weather page.",
+            'text' => "Weather changes how many skiers come and how fast slopes wear. The 5-day forecast is exact, so you can plan ahead.",
             'action' => 'Visit the Weather page',
             'page' => '/weather',
             'icon' => 'fa-solid fa-cloud-sun',
             'check' => 'visit_weather',
         ],
         [
-            'title' => 'Build a Building',
-            'text' => "Guests need places to eat and stay. Build a restaurant, hotel, or shop to earn extra revenue.",
-            'action' => 'Build a building (hotel, restaurant, etc.)',
-            'page' => '/hotels',
-            'icon' => 'fa-solid fa-building',
-            'check' => 'has_building',
-        ],
-        [
-            'title' => 'Explore Your Resort',
-            'text' => "Your Resort page is the command center - an overview of everything you own. Take a look.",
-            'action' => 'Visit the Resort page',
-            'page' => '/resort',
-            'icon' => 'fa-solid fa-mountain-sun',
-            'check' => 'visit_resort',
+            'title' => 'Check Your Finances',
+            'text' => "Each night the game adds up your income and costs. The Finances page shows where your money goes.",
+            'action' => 'Visit the Finances page',
+            'page' => '/finances',
+            'icon' => 'fa-solid fa-coins',
+            'check' => 'visit_finances',
         ],
         [
             'title' => 'Claim Your Daily Bonus',
@@ -78,9 +82,9 @@ class Tutorial extends BaseController
         ],
         [
             'title' => "You're Ready!",
-            'text' => "That's the basics. From here you can add snowmaking, night skiing, terrain parks, marketing, and more. Check the Achievements page for goals to chase. Good luck!",
+            'text' => "That's the basics. Your first night's results appear on the dashboard tomorrow. The Guides explain grooming, snowmaking, pricing and staff in detail. Good luck!",
             'action' => null,
-            'page' => '/dashboard',
+            'page' => '/guides',
             'icon' => 'fa-solid fa-trophy',
         ],
     ];
@@ -122,6 +126,8 @@ class Tutorial extends BaseController
                 return $db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults() > 0;
             case 'has_slope':
                 return $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->countAllResults() > 0;
+            case 'has_lift':
+                return $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->countAllResults() > 0;
             case 'has_building':
                 return $db->table('buildings')->where('user_id', $userId)->countAllResults() > 0;
             case 'claimed_bonus':

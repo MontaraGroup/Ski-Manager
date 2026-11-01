@@ -17,10 +17,10 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="avatar placeholder"><div class="bg-primary text-primary-content rounded-full w-14 h-14 flex items-center justify-center"><i class="fa-solid fa-mountain-sun text-2xl"></i></div></div>
+                <div class="avatar placeholder"><div class="bg-primary-fill text-primary-content rounded-full w-14 h-14 flex items-center justify-center"><i class="fa-solid fa-mountain-sun text-2xl"></i></div></div>
                 <div>
                     <h1 class="text-2xl font-bold"><?= esc($resort['name']) ?></h1>
-                    <p class="text-sm text-base-content/50"><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></p>
+                    <p class="text-sm text-base-content/70"><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></p>
                     <div class="flex items-center gap-2 mt-1">
                         <?php if ($resort['is_open']) : ?><span class="badge badge-success badge-sm">Open</span><?php else : ?><span class="badge badge-error badge-sm">Closed</span><?php endif ?>
                     </div>
@@ -36,10 +36,10 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
 
     <!-- Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-info"><?= $openSlopes ?></div><div class="text-xs text-base-content/50">Open Slopes</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-success"><?= $openLifts ?></div><div class="text-xs text-base-content/50">Open Lifts</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-warning"><?= $staffCount ?></div><div class="text-xs text-base-content/50">Staff</div></div></div>
-        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-primary"><?= $buildingCount ?></div><div class="text-xs text-base-content/50">Buildings</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-info"><?= $openSlopes ?></div><div class="text-xs text-base-content/70">Open Slopes</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-success"><?= $openLifts ?></div><div class="text-xs text-base-content/70">Open Lifts</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-warning"><?= $staffCount ?></div><div class="text-xs text-base-content/70">Staff</div></div></div>
+        <div class="card bg-base-100 shadow-sm"><div class="card-body p-4 text-center"><div class="text-3xl font-bold text-primary"><?= $buildingCount ?></div><div class="text-xs text-base-content/70">Buildings</div></div></div>
     </div>
 
     <!-- Conditions & Revenue -->
@@ -63,7 +63,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <i class="fa-solid fa-<?= $__currentTemp <= -5 ? 'snowflake text-info' : ($__currentTemp <= 0 ? 'cloud text-base-content/50' : 'sun text-warning') ?> text-lg"></i>
                 <div>
                     <div class="text-lg font-bold"><?= temp($__currentTemp) ?></div>
-                    <div class="text-xs text-base-content/50"><?= $__w['condition_name'] ?? 'Clear' ?></div>
+                    <div class="text-xs text-base-content/70"><?= $__w['condition_name'] ?? 'Clear' ?></div>
                 </div>
             </div>
         </div></div>
@@ -72,7 +72,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <i class="fa-solid fa-layer-group text-info text-lg"></i>
                 <div>
                     <div class="text-lg font-bold"><?= snow($__snowBase) ?></div>
-                    <div class="text-xs text-base-content/50">Snow Base</div>
+                    <div class="text-xs text-base-content/70">Snow Base</div>
                 </div>
             </div>
         </div></div>
@@ -81,7 +81,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <i class="fa-solid fa-heart-pulse <?= $__avgCond >= 70 ? 'text-success' : ($__avgCond >= 40 ? 'text-warning' : 'text-error') ?> text-lg"></i>
                 <div>
                     <div class="text-lg font-bold"><?= $__avgCond ?>%</div>
-                    <div class="text-xs text-base-content/50">Avg Condition</div>
+                    <div class="text-xs text-base-content/70">Avg Condition</div>
                 </div>
             </div>
         </div></div>
@@ -90,7 +90,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <i class="fa-solid fa-money-bill-wave text-success text-lg"></i>
                 <div>
                     <div class="text-lg font-bold"><?= currency((int)($__fin['cash'] ?? 0)) ?></div>
-                    <div class="text-xs text-base-content/50">Balance</div>
+                    <div class="text-xs text-base-content/70">Balance</div>
                 </div>
             </div>
         </div></div>
@@ -119,7 +119,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                 <div class="collapse-content">
 
                     <?php if (!empty($sector['lifts'])) : ?>
-                    <h4 class="text-xs font-semibold uppercase tracking-wider text-base-content/50 mb-2 mt-2"><i class="fa-solid fa-cable-car mr-1"></i>Lifts</h4>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-base-content/70 mb-2 mt-2"><i class="fa-solid fa-cable-car mr-1"></i>Lifts</h4>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
                             <thead><tr><th>Name</th><th>Type</th><th>Level</th><th>Condition</th><th>Length</th><th>Capacity</th><th>Status</th><th>Action</th></tr></thead>
@@ -144,9 +144,16 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                                         <?php else : ?><span class="badge badge-info badge-sm">Building</span><?php endif ?>
                                     </td>
                                     <td>
+                                        <?php if ($lift['status'] !== 'broken') : ?>
                                         <form action="/resort/toggle/<?= $lift['id'] ?>" method="post" class="inline"><?= csrf_field() ?>
                                             <button class="btn btn-ghost btn-xs" aria-label="Toggle on/off"><i class="fa-solid fa-power-off" aria-hidden="true"></i></button>
                                         </form>
+                                        <?php endif ?>
+                                        <?php if ((int) $lift['condition_pct'] < 100 && in_array($lift['status'], ['open', 'closed', 'broken'], true)) : $__repair = \App\Controllers\Resort::liftRepairCost($lift); ?>
+                                        <form action="/resort/repair/<?= $lift['id'] ?>" method="post" class="inline" data-confirm="Repair <?= esc($lift['name']) ?> to 100% for <?= currency($__repair) ?>?"><?= csrf_field() ?>
+                                            <button class="btn btn-xs gap-1 <?= $lift['status'] === 'broken' ? 'btn-warning' : 'btn-ghost' ?>" aria-label="Repair <?= esc($lift['name']) ?> for <?= currency($__repair) ?>" title="Repair to 100% (<?= currency($__repair) ?>)"><i class="fa-solid fa-wrench" aria-hidden="true"></i><?= $lift['status'] === 'broken' ? ' ' . currency($__repair) : '' ?></button>
+                                        </form>
+                                        <?php endif ?>
                                         <?php $__salvage = \App\Controllers\ResortMap::salvageValue($lift); ?>
                                         <form action="/map/demolish/<?= $lift['id'] ?>" method="post" class="inline" onsubmit="return confirm('Demolish <?= esc($lift['name'], 'js') ?>? You get <?= esc(currency($__salvage), 'js') ?> back (25% salvage). This can\'t be undone.')"><?= csrf_field() ?>
                                             <button class="btn btn-ghost btn-xs text-error" aria-label="Demolish <?= esc($lift['name']) ?>" title="Demolish (<?= currency($__salvage) ?> refund)"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
@@ -160,7 +167,7 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
                     <?php endif ?>
 
                     <?php if (!empty($sector['slopes'])) : ?>
-                    <h4 class="text-xs font-semibold uppercase tracking-wider text-base-content/50 mb-2 mt-4"><i class="fa-solid fa-person-skiing mr-1"></i>Slopes</h4>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-base-content/70 mb-2 mt-4"><i class="fa-solid fa-person-skiing mr-1"></i>Slopes</h4>
                     <div class="overflow-x-auto">
                         <table class="table table-sm">
                             <thead><tr><th>Name</th><th>Type</th><th>Difficulty</th><th>Condition</th><th>Snow</th><th>Length</th><th>Status</th><th>Action</th></tr></thead>
@@ -241,27 +248,27 @@ $diffColors = ['green' => 'badge-success', 'blue' => 'badge-info', 'red' => 'bad
             <a href="/map" class="block text-center group">
                 <h3 class="font-semibold text-sm mb-2">Trail Map</h3>
                 <img src="/img/<?= esc($resort['resort_map'] ?? 'ParkCity') ?>_low.jpg" alt="Trail Map" class="rounded-lg w-full opacity-80 group-hover:opacity-100 transition-opacity" width="600" height="340" loading="lazy" decoding="async">
-                <p class="text-xs text-base-content/50 mt-2">Click to build slopes & lifts</p>
+                <p class="text-xs text-base-content/70 mt-2">Click to build slopes & lifts</p>
             </a>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-sm">Resort Info</h3><a href="/resort/edit" class="btn btn-ghost btn-xs">Edit</a></div>
             <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-base-content/50">Name</span><span class="font-semibold"><?= esc($resort['name']) ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Location</span><span><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Map</span><span><?= esc($resort['resort_map'] ?? 'ParkCity') ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Status</span><?php if ($resort['is_open']) : ?><span class="text-success font-semibold">Open</span><?php else : ?><span class="text-error font-semibold">Closed</span><?php endif ?></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Sectors</span><span><?= count($sectors) ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Name</span><span class="font-semibold"><?= esc($resort['name']) ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Location</span><span><?= $resort['location'] ? esc($resort['location']) : 'Park City, Utah' ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Map</span><span><?= esc($resort['resort_map'] ?? 'ParkCity') ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Status</span><?php if ($resort['is_open']) : ?><span class="text-success font-semibold">Open</span><?php else : ?><span class="text-error font-semibold">Closed</span><?php endif ?></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Sectors</span><span><?= count($sectors) ?></span></div>
             </div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <h3 class="font-semibold text-sm mb-3">Quick Stats</h3>
             <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-base-content/50">Total Slopes</span><span class="font-semibold"><?= $openSlopes ?> open</span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Total Lifts</span><span class="font-semibold"><?= $openLifts ?> open</span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Staff</span><span class="font-semibold"><?= $staffCount ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Buildings</span><span class="font-semibold"><?= $buildingCount ?></span></div>
-                <div class="flex justify-between"><span class="text-base-content/50">Equipment</span><span class="font-semibold"><?= isset($equipmentCount) ? $equipmentCount : '-' ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Total Slopes</span><span class="font-semibold"><?= $openSlopes ?> open</span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Total Lifts</span><span class="font-semibold"><?= $openLifts ?> open</span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Staff</span><span class="font-semibold"><?= $staffCount ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Buildings</span><span class="font-semibold"><?= $buildingCount ?></span></div>
+                <div class="flex justify-between"><span class="text-base-content/70">Equipment</span><span class="font-semibold"><?= isset($equipmentCount) ? $equipmentCount : '-' ?></span></div>
             </div>
         </div></div>
     </div>

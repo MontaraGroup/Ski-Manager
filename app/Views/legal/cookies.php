@@ -14,9 +14,9 @@
         <h2>2. Your Cookie Choices</h2>
         <p>When you first visit Ski Manager, a consent banner gives you three options:</p>
         <ul>
-            <li><strong>Accept All</strong> &mdash; Enables analytics and advertising cookies</li>
-            <li><strong>Analytics Only</strong> &mdash; Enables analytics cookies, blocks advertising cookies</li>
-            <li><strong>Reject All</strong> &mdash; Blocks all non-essential cookies</li>
+            <li><strong>Accept All</strong>: Enables analytics and advertising cookies</li>
+            <li><strong>Analytics Only</strong>: Enables analytics cookies, blocks advertising cookies</li>
+            <li><strong>Reject All</strong>: Blocks all non-essential cookies</li>
         </ul>
         <p>You can change your preference at any time through the cookie consent banner or, when logged in, from the <a href="/settings" class="link link-primary">Settings</a> page under "Cookie Preferences." We use Google Consent Mode v2 to enforce your choice across all Google services on our site.</p>
 
@@ -75,7 +75,7 @@
             </table>
         </div>
 
-        <p class="text-xs text-base-content/50 mt-2">These providers may process information according to their own privacy policies.</p>
+        <p class="text-xs text-base-content/70 mt-2">These providers may process information according to their own privacy policies.</p>
 
         <h3>3.5 Security Cookies</h3>
         <p>Set by our CDN/security provider to protect against threats.</p>

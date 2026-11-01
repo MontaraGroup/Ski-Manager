@@ -59,14 +59,14 @@
     <!-- Game Settings Link -->
     <div class="card bg-base-100 shadow-sm mb-4"><div class="card-body">
         <h2 class="font-bold text-base mb-3"><i class="fa-solid fa-sliders mr-1"></i>Game Settings</h2>
-        <p class="text-sm text-base-content/60 mb-3">Units, currency, and theme preferences</p>
+        <p class="text-sm text-base-content/70 mb-3">Units, currency, and theme preferences</p>
         <a href="/settings" class="btn btn-outline btn-sm">Game Settings</a>
     </div></div>
 
     <!-- Delete Account -->
     <div class="card bg-error/10 border border-error/30 shadow-sm"><div class="card-body">
         <h2 class="font-bold text-base text-error mb-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Delete Account</h2>
-        <p class="text-sm text-base-content/60 mb-3">This permanently deletes your account, resort, and all game data. This cannot be undone.</p>
+        <p class="text-sm text-base-content/70 mb-3">This permanently deletes your account, resort, and all game data. This cannot be undone.</p>
         <form action="/account/delete" method="post" onsubmit="return document.querySelector('[name=confirm_delete]').value === 'DELETE'">
             <?= csrf_field() ?>
             <div class="form-control mb-3">

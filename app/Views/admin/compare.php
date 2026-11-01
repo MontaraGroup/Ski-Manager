@@ -32,7 +32,7 @@
         </table>
     </div></div></div>
     <?php elseif ($a || $b) : ?>
-    <p class="text-sm text-base-content/50">Select two players to compare.</p>
+    <p class="text-sm text-base-content/70">Select two players to compare.</p>
     <?php endif ?>
 </div>
 <?= $this->endSection() ?>

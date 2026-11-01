@@ -6,10 +6,10 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
             <h1 class="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-                <i class="fa-solid fa-bell text-primary animate-pulse"></i>
+                <i class="fa-solid fa-bell text-primary" aria-hidden="true"></i>
                 Notification Center
             </h1>
-            <p class="text-sm text-base-content/60 mt-1">Manage your resort alerts, system logs, and structural updates.</p>
+            <p class="text-sm text-base-content/70 mt-1">Manage your resort alerts, system logs, and structural updates.</p>
         </div>
 
         <?php if (!empty($notifications)) : ?>
@@ -51,11 +51,11 @@
     <?php if (empty($notifications)) : ?>
         <div class="card bg-base-100 border border-base-200 shadow-sm py-16 text-center">
             <div class="card-body max-w-sm mx-auto items-center justify-center">
-                <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mb-4 text-base-content/40">
+                <div class="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mb-4 text-base-content/70">
                     <i class="fa-solid fa-folder-open text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-bold">All caught up!</h3>
-                <p class="text-sm text-base-content/50"><?= $filter === 'unread' ? 'No unread alerts waiting for attention right now.' : 'Your resort alert dashboard is completely clean.' ?></p>
+                <p class="text-sm text-base-content/70"><?= $filter === 'unread' ? 'No unread alerts waiting for attention right now.' : 'Your resort alert dashboard is completely clean.' ?></p>
                 <?php if ($filter === 'unread') : ?>
                     <a href="/notifications" class="btn btn-sm btn-outline mt-4">View History Archive</a>
                 <?php endif ?>
@@ -104,7 +104,7 @@
                                 <p class="text-xs md:text-sm text-base-content/70 mt-0.5 whitespace-normal break-words leading-relaxed">
                                     <?= esc($n['message']) ?>
                                 </p>
-                                <span class="text-[10px] uppercase font-bold tracking-wider text-base-content/40 block mt-2">
+                                <span class="text-[10px] uppercase font-bold tracking-wider text-base-content/70 block mt-2">
                                     <i class="fa-regular fa-clock mr-1"></i><?= date('M d, H:i', strtotime($n['created_at'])) ?>
                                 </span>
                             </div>

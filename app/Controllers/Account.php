@@ -179,27 +179,7 @@ class Account extends BaseController
             return redirect()->back()->with('error', 'Incorrect password. Account deletion aborted.');
         }
 
-        $userId = auth()->id();
-        $db = db_connect();
-
-        $tables = [
-            'staff', 'buildings', 'snow_cannons', 'night_skiing', 'equipment',
-            'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements',
-            'daily_bonus', 'player_finances', 'financial_transactions', 'activity_log',
-            'lift_tickets', 'ticket_sales', 'player_items', 'genepis', 'genepis_log',
-            'environmental', 'energy_management', 'water_management', 'vip_guests',
-            'tournaments', 'alliance_members', 'alliance_applications', 'resort_reports',
-            'parking', 'terrain_parks', 'scenic_lifts', 'dashboard_widgets', 'tutorial_progress',
-        ];
-
-        foreach ($tables as $table) {
-            try { $db->table($table)->where('user_id', $userId)->delete(); } catch (\Throwable $e) {}
-        }
-
-        $db->table('auth_identities')->where('user_id', $userId)->delete();
-        $db->table('auth_logins')->where('user_id', $userId)->delete();
-        $db->table('auth_remember_tokens')->where('user_id', $userId)->delete();
-        $db->table('users')->where('id', $userId)->delete();
+        \App\Libraries\AccountPurge::purge((int) auth()->id());
 
         auth()->logout();
         return redirect()->to('/')->with('message', 'Account deleted successfully.');

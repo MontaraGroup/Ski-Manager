@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-clock-rotate-left mr-2 text-primary"></i>Activity Log</h1>
-            <p class="text-sm text-base-content/50">Global real-time tracking for all player modules and backend cron automation.</p>
+            <p class="text-sm text-base-content/70">Global real-time tracking for all player modules and backend cron automation.</p>
         </div>
     </div>
 
@@ -36,7 +36,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="text-center py-8 text-base-content/40">No activities recorded yet.</td>
+                        <td colspan="5" class="text-center py-8 text-base-content/70">No activities recorded yet.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

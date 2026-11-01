@@ -7,7 +7,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-square-parking mr-2 text-info"></i>Parking & Transit</h1>
-            <p class="text-sm text-base-content/50">Build lots and garages to handle visitor traffic</p>
+            <p class="text-sm text-base-content/70">Build lots and garages to handle visitor traffic</p>
         </div>
     </div>
 
@@ -19,19 +19,19 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-primary"><?= number_format($totalCapacity) ?></div>
-            <div class="text-xs text-base-content/50">Total Spots</div>
+            <div class="text-xs text-base-content/70">Total Spots</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold <?= $occupancyPct > 90 ? 'text-error' : ($occupancyPct > 70 ? 'text-warning' : 'text-success') ?>"><?= $occupancyPct ?>%</div>
-            <div class="text-xs text-base-content/50">Occupied</div>
+            <div class="text-xs text-base-content/70">Occupied</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-success"><?= currency($totalRevenue) ?></div>
-            <div class="text-xs text-base-content/50">Daily Revenue</div>
+            <div class="text-xs text-base-content/70">Daily Revenue</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold"><?= count($facilities) ?></div>
-            <div class="text-xs text-base-content/50">Facilities</div>
+            <div class="text-xs text-base-content/70">Facilities</div>
         </div></div>
     </div>
 
@@ -53,7 +53,7 @@
                         </div>
                         <div>
                             <div class="font-bold"><?= esc($f['name']) ?></div>
-                            <div class="text-xs text-base-content/50"><?= \App\Models\ParkingModel::getLabel($f['parking_type']) ?> · <?= number_format($f['capacity']) ?> spots</div>
+                            <div class="text-xs text-base-content/70"><?= \App\Models\ParkingModel::getLabel($f['parking_type']) ?> · <?= number_format($f['capacity']) ?> spots</div>
                         </div>
                     </div>
                     <span class="badge badge-sm <?= $f['status'] === 'open' ? 'badge-success' : ($f['status'] === 'under_construction' ? 'badge-warning' : ($f['status'] === 'full' ? 'badge-error' : 'badge-ghost')) ?>">
@@ -62,23 +62,23 @@
                 </div>
                 <?php if ($f['status'] !== 'under_construction') : ?>
                 <div class="grid grid-cols-2 gap-2 text-xs mb-2">
-                    <div class="bg-base-200 rounded p-2 text-center"><div class="font-bold text-base"><?= number_format($f['occupied']) ?>/<?= number_format($f['capacity']) ?></div><div class="text-base-content/50">Occupied (<?= $fOccPct ?>%)</div></div>
-                    <div class="bg-base-200 rounded p-2 text-center"><div class="font-bold text-base text-success"><?= currency($f['daily_revenue']) ?></div><div class="text-base-content/50">Revenue</div></div>
+                    <div class="bg-base-200 rounded p-2 text-center"><div class="font-bold text-base"><?= number_format($f['occupied']) ?>/<?= number_format($f['capacity']) ?></div><div class="text-base-content/70">Occupied (<?= $fOccPct ?>%)</div></div>
+                    <div class="bg-base-200 rounded p-2 text-center"><div class="font-bold text-base text-success"><?= currency($f['daily_revenue']) ?></div><div class="text-base-content/70">Revenue</div></div>
                 </div>
                 <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs text-base-content/50 w-16">Occupancy</span>
+                    <span class="text-xs text-base-content/70 w-16">Occupancy</span>
                     <progress class="progress progress-info flex-1 h-1.5" value="<?= $f['occupied'] ?>" max="<?= max(1, $f['capacity']) ?>"></progress>
                 </div>
                 <div class="flex items-center gap-2 mb-3">
-                    <span class="text-xs text-base-content/50 w-16">Condition</span>
+                    <span class="text-xs text-base-content/70 w-16">Condition</span>
                     <progress class="progress <?= $f['condition_pct'] >= 60 ? 'progress-success' : ($f['condition_pct'] >= 30 ? 'progress-warning' : 'progress-error') ?> flex-1 h-1.5" value="<?= $f['condition_pct'] ?>" max="100"></progress>
                     <span class="text-xs font-mono w-8 text-right"><?= (int)$f['condition_pct'] ?>%</span>
                 </div>
                 <form action="/parking/update-fee/<?= $f['id'] ?>" method="post" class="flex items-center gap-2 mb-2">
                     <?= csrf_field() ?>
-                    <span class="text-xs text-base-content/50">Fee:</span>
+                    <span class="text-xs text-base-content/70">Fee:</span>
                     <input type="number" name="fee" value="<?= $f['fee_per_day'] ?>" min="0" max="100" step="1" class="input input-bordered input-xs w-20">
-                    <span class="text-xs text-base-content/50">/day</span>
+                    <span class="text-xs text-base-content/70">/day</span>
                     <button type="submit" class="btn btn-ghost btn-xs"><i class="fa-solid fa-check text-success"></i></button>
                 </form>
                 <div class="flex gap-1">
@@ -114,12 +114,12 @@
                 <div class="card-body p-4">
                     <h3 class="font-bold text-sm"><?= $cfg['label'] ?></h3>
                     <div class="grid grid-cols-2 gap-1 text-xs mt-2 mb-3">
-                        <div class="bg-base-200 rounded p-1.5 text-center"><div class="font-bold"><?= $cfg['capacity'] ?></div><div class="text-base-content/50">Spots</div></div>
-                        <div class="bg-base-200 rounded p-1.5 text-center"><div class="font-bold"><?= currency($cfg['upkeep']) ?></div><div class="text-base-content/50">Per Day</div></div>
+                        <div class="bg-base-200 rounded p-1.5 text-center"><div class="font-bold"><?= $cfg['capacity'] ?></div><div class="text-base-content/70">Spots</div></div>
+                        <div class="bg-base-200 rounded p-1.5 text-center"><div class="font-bold"><?= currency($cfg['upkeep']) ?></div><div class="text-base-content/70">Per Day</div></div>
                     </div>
                     <div class="flex items-center justify-between border-t border-base-300 pt-3">
                         <div>
-                            <div class="text-xs text-base-content/40 line-through"><?= currency((int)($cfg['cost'] * 1.2)) ?></div>
+                            <div class="text-xs text-base-content/70 line-through"><?= currency((int)($cfg['cost'] * 1.2)) ?></div>
                             <div class="text-lg font-bold text-info"><?= currency($cfg['cost']) ?></div>
                         </div>
                         <form action="/parking/build" method="post" data-confirm="Build <?= $cfg['label'] ?> for <?= currency($cfg['cost']) ?>?"><?= csrf_field() ?>
@@ -127,7 +127,7 @@
                             <button class="btn btn-info btn-sm gap-1"><i class="fa-solid fa-cart-plus"></i> Build</button>
                         </form>
                     </div>
-                    <div class="text-xs text-base-content/40 mt-1"><?= $cfg['build_days'] ?> day<?= $cfg['build_days'] > 1 ? 's' : '' ?> to build</div>
+                    <div class="text-xs text-base-content/70 mt-1"><?= $cfg['build_days'] ?> day<?= $cfg['build_days'] > 1 ? 's' : '' ?> to build</div>
                 </div>
             </div>
         <?php endforeach ?>
@@ -137,7 +137,7 @@
     <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
         <i class="fa-solid fa-square-parking text-4xl text-base-content/20 mb-3"></i>
         <p class="font-semibold">No parking facilities yet</p>
-        <p class="text-sm text-base-content/50 mt-1">Without parking, your visitor capacity is limited. Build your first lot above!</p>
+        <p class="text-sm text-base-content/70 mt-1">Without parking, your visitor capacity is limited. Build your first lot above!</p>
     </div></div>
     <?php endif ?>
 </div>

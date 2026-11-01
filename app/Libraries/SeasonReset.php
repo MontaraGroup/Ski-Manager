@@ -16,7 +16,7 @@ class SeasonReset
         'player_items', 'buildings', 'staff', 'equipment', 'snow_cannons', 'night_skiing',
         'marketing_campaigns', 'loans', 'insurance', 'regulations', 'environmental',
         'energy_management', 'water_management', 'vip_guests', 'parking', 'terrain_parks',
-        'scenic_lifts', 'lift_tickets', 'ticket_sales', 'avalanche_zones',
+        'scenic_lifts', 'lift_tickets', 'ticket_sales', 'avalanche_zones', 'staff_candidates',
     ];
 
     /** Net worth, starting cash and legacy bonus for every player, richest first */

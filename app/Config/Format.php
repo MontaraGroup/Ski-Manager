@@ -57,7 +57,9 @@ class Format extends BaseConfig
      * @var array<string, int>
      */
     public array $formatterOptions = [
-        'application/json' => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+        // Substitute invalid UTF-8 instead of failing: an error page for a malformed URL (e.g. /%C0)
+        // otherwise crashed with "Malformed UTF-8 characters" and turned a 400 into a 500
+        'application/json' => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE,
         'application/xml'  => 0,
         'text/xml'         => 0,
     ];

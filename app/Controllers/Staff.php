@@ -61,39 +61,106 @@ class Staff extends BaseController
         ]);
     }
 
+    /** What each role does in the nightly tick (GameTick), shown on the hire page */
+    public const EFFECTS = [
+        'ski_patrol' => 'Assigned to a slope: +2% skiers each, and fewer accidents (each costs 2,500–8,000 €).',
+        'instructor' => 'Assigned to a slope: +3% skiers each, and up to 10 ski lessons a day at 50 € (about 8% of your skiers want one).',
+        'mechanic' => 'Assigned to a lift: that lift wears 1% a day less, so it needs repairs less often. One mechanic per lift.',
+        'groomer' => 'Drives one groomer each night, restoring your worst slopes; higher levels restore more.',
+        'snowmaker' => 'Assigned to a snow gun: that gun wears 1% a day less.',
+        'receptionist' => 'Assigned to a hotel: hotels earn up to 15% more with one receptionist per hotel.',
+        'chef' => 'Assigned to a restaurant: restaurants earn up to 15% more with one chef per restaurant.',
+        'medic' => 'Assigned to a patrol station: the biggest single cut in accidents.',
+        'manager' => 'Assigned: +5% skiers each, and better odds of VIP guests.',
+        'park_crew' => 'Assigned to a terrain park: parks wear 0.4% a day less each (up to 1.5%).',
+    ];
+
     public function hire(): string
     {
-        return view('staff/hire', ['roles' => $this->getRoles()]);
+        $userId = auth()->id();
+        $db = db_connect();
+        $roles = $this->getRoles();
+        $costMult = ((int) getDifficultyConfig('cost_multiplier', '100')) / 100;
+        $staff = $this->staffModel->where('user_id', $userId)->where('status', 'active')->findAll();
+        $targets = $this->getAssignmentTargets($userId, $db);
+        $groomers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'groomer')->countAllResults();
+        $lifts = count($targets['mechanic']);
+
+        foreach ($roles as $key => &$r) {
+            $mine = array_filter($staff, fn($s) => $s['role'] === $key);
+            $assigned = count(array_filter($mine, fn($s) => !empty($s['assigned_to'])));
+            $posts = count($targets[$key] ?? []);
+            $r += ['effect' => self::EFFECTS[$key] ?? $r['desc'], 'daily' => (int) round($r['salary'] * $costMult),
+                'have' => count($mine), 'assigned' => $assigned, 'idle' => count($mine) - $assigned, 'posts' => $posts, 'free' => max(0, $posts - $assigned)];
+            [$r['verdict'], $r['why']] = match (true) {
+                $key === 'groomer' => $groomers === 0 ? ['none', 'Buy a groomer first.'] : (count($mine) < $groomers
+                    ? ['needed', $groomers === 1 ? 'Your groomer has no driver.' : ($groomers - count($mine)) . ' of your ' . $groomers . ' groomers ' . ($groomers - count($mine) === 1 ? 'has' : 'have') . ' no driver.']
+                    : ['enough', 'Every groomer has a driver.']),
+                $key === 'mechanic' && $lifts > 0 && $r['idle'] === 0 && $assigned < $lifts => ['needed', $lifts === 1 ? 'Your lift has no mechanic.' : ($lifts - $assigned) . ' of your ' . $lifts . ' lifts ' . ($lifts - $assigned === 1 ? 'has' : 'have') . ' no mechanic.'],
+                in_array($key, ['receptionist', 'chef'], true) => $posts === 0 ? ['none', 'Build a ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ' first.']
+                    : ($assigned < $posts ? ['needed', ($posts - $assigned) . ' ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ($posts - $assigned === 1 ? ' has' : 's have') . ' none.'] : ['enough', 'Every ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ' has one.']),
+                $key === 'park_crew' && $posts > 0 && $assigned >= 4 => ['enough', 'Parks can\'t wear any slower.'],
+                $r['idle'] > 0 => ['enough', 'You already have ' . $r['idle'] . ' with nothing to do. Assign them first.'],
+                $posts === 0 => ['none', match ($key) { 'ski_patrol', 'instructor' => 'Build a slope first.', 'mechanic' => 'Build a lift first.', 'snowmaker' => 'Buy a snow gun first.', 'medic' => 'Build a ski patrol station first.', 'park_crew' => 'Build a terrain park first.', default => 'No post for this role yet.' }],
+                $assigned >= $posts => ['enough', 'Every post is filled.'],
+                default => ['useful', $r['free'] . ' free post' . ($r['free'] === 1 ? '' : 's') . '.'],
+            };
+        }
+        unset($r);
+
+        $candidates = \App\Libraries\Candidates::today($userId, $roles);
+        foreach ($candidates as &$list) {
+            foreach ($list as &$c) $c['daily'] = (int) round((int) $c['salary'] * $costMult);
+        }
+        unset($list, $c);
+
+        return view('staff/hire', [
+            'roles' => $roles,
+            'candidates' => $candidates,
+            'cash' => (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow()->cash ?? 0),
+            'payroll' => (int) round(array_sum(array_column($staff, 'salary')) * $costMult),
+            'staffCount' => count($staff),
+        ]);
     }
 
     public function doHire()
     {
-        $role = $this->request->getPost('role');
         $userId = auth()->id();
         if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
-
         $roles = $this->getRoles();
-        if (!isset($roles[$role])) {
-            return redirect()->back()->with('error', 'Invalid role.');
+        $db = db_connect();
+        $c = $db->table('staff_candidates')->where('id', (int) $this->request->getPost('candidate'))->where('user_id', $userId)
+            ->where('game_day', getGameDay())->where('hired', 0)->get()->getRowArray();
+        if (!$c || !isset($roles[$c['role']])) {
+            return redirect()->to('/staff/hire')->with('error', 'That candidate is no longer available. Today\'s candidates are listed below.');
+        }
+        $role = $c['role'];
+
+        // Start the new hire on the first free post for the role, so they work (and keep their morale) from tonight
+        $taken = array_flip(array_column($this->staffModel->select('assigned_to')->where('user_id', $userId)->where('role', $role)
+            ->where('status', 'active')->where('assigned_to IS NOT NULL')->findAll(), 'assigned_to'));
+        $post = null;
+        foreach ($this->getAssignmentTargets($userId, $db)[$role] ?? [] as $t) {
+            if (!isset($taken[$t])) { $post = $t; break; }
         }
 
-        $firstNames = ['Alex', 'Marie', 'Pierre', 'Sophie', 'Lucas', 'Emma', 'Hugo', 'Lea', 'Thomas', 'Camille', 'Max', 'Clara', 'Jules', 'Alice', 'Liam', 'Chloe'];
-        $lastNames = ['Dupont', 'Martin', 'Bernard', 'Dubois', 'Moreau', 'Laurent', 'Simon', 'Michel', 'Lefebvre', 'Roux', 'Blanc', 'Fournier', 'Morel', 'Girard'];
-
-        $name = $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)];
-
+        $db->transStart();
+        // Taking the candidate off the list is what reserves them, so a double click can't hire them twice
+        $db->table('staff_candidates')->where('id', $c['id'])->where('hired', 0)->update(['hired' => 1]);
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return redirect()->to('/staff/hire')->with('error', $c['name'] . ' has already been hired.');
+        }
         $this->staffModel->insert([
-            'user_id' => $userId,
-            'name' => $name,
-            'role' => $role,
-            'level' => 1,
-            'salary' => $roles[$role]['salary'],
-            'morale' => rand(70, 100),
-            'experience' => 0,
-            'status' => 'active',
+            'user_id' => $userId, 'name' => $c['name'], 'role' => $role, 'level' => (int) $c['level'],
+            'salary' => (int) $c['salary'], 'morale' => (int) $c['morale'], 'experience' => 0,
+            'assigned_to' => $post, 'status' => 'active',
         ]);
+        $db->transComplete();
+        log_activity($userId, 'Staff', 'Hired ' . $c['name'] . ' as ' . $roles[$role]['name'] . ($post ? ' (' . $post . ')' : ''), 'fa-solid fa-user-plus');
 
-        return redirect()->to('/staff')->with('success', $name . ' hired as ' . $roles[$role]['name'] . '!');
+        $where = $post ? ' and assigned to ' . $post . '.' : '. There is no free post for them yet, so they\'ll lose morale until you give them one.';
+        return redirect()->to('/staff/hire')->with('success', $c['name'] . ' hired as ' . $roles[$role]['name'] . $where);
     }
 
     public function fire(int $id)
@@ -204,22 +271,57 @@ class Staff extends BaseController
         return $targets;
     }
 
+    public const TRAIN_COST_PER_LEVEL = 5000;
+
+    /**
+     * Highest level worth training to. Only groomer operators use their level (Grooming::restore:
+     * RESTORE_BASE + RESTORE_PER_LEVEL x average level, capped at RESTORE_MAX), so training other
+     * roles cost money for nothing.
+     */
+    public static function maxUsefulLevel(string $role): int
+    {
+        if ($role !== 'groomer') return 1;
+        return (int) ceil((\App\Libraries\Grooming::RESTORE_MAX - \App\Libraries\Grooming::RESTORE_BASE) / \App\Libraries\Grooming::RESTORE_PER_LEVEL);
+    }
+
+    public static function trainCost(array $member): int
+    {
+        return self::TRAIN_COST_PER_LEVEL * (int) $member['level'];
+    }
+
     public function train(int $id)
     {
         $userId = auth()->id();
-        $member = $this->staffModel->where('id', $id)->where('user_id', $userId)->first();
+        $member = $this->staffModel->where('id', $id)->where('user_id', $userId)->where('status', 'active')->first();
         if (!$member) return redirect()->back()->with('error', 'Staff not found.');
-        if ((int) $member['level'] >= 10) return redirect()->back()->with('error', $member['name'] . ' is already max level.');
+        if ((int) $member['level'] >= self::maxUsefulLevel($member['role'])) {
+            return redirect()->to('/staff')->with('error', $member['role'] === 'groomer'
+                ? esc($member['name']) . ' is already at the level where training stops helping.'
+                : 'Training has no effect for this role: only groomer operators get better with level.');
+        }
 
-        $cost = 5000 * (int) $member['level'];
+        $cost = self::trainCost($member);
         $db = db_connect();
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if ((int)($finance['cash'] ?? 0) < $cost) return redirect()->back()->with('error', 'Not enough cash. Need ' . currency($cost) . '.');
-
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cost, false)->update();
-        $this->staffModel->update($id, ['level' => (int) $member['level'] + 1]);
+        $db->transStart();
+        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cost)
+            ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return redirect()->to('/staff')->with('error', 'Not enough cash: training costs ' . currency($cost) . '.');
+        }
+        // Only raise the level we charged for, so a double submit can't pay twice for one level
+        $db->table('staff')->where('id', $id)->where('level', (int) $member['level'])->set('level', 'level + 1', false)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return redirect()->to('/staff')->with('error', esc($member['name']) . ' was already trained.');
+        }
+        $db->table('financial_transactions')->insert([
+            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Staff', 'description' => 'Trained ' . $member['name'] . ' to level ' . ((int) $member['level'] + 1),
+            'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $db->transComplete();
 
         log_activity($userId, 'Staff', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost), 'fa-solid fa-graduation-cap');
-        return redirect()->to('/staff')->with('success', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . '! (-' . currency($cost) . ')');
+        return redirect()->to('/staff')->with('success', esc($member['name']) . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost) . '.');
     }
 }

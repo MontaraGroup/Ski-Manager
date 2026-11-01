@@ -4,7 +4,7 @@
 <div class="max-w-5xl mx-auto p-4 lg:p-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold mb-1">Sitemap</h1>
-        <p class="text-sm text-base-content/50">Every page in Ski Manager, organized by area.</p>
+        <p class="text-sm text-base-content/70">Every page in Ski Manager, organized by area.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -15,6 +15,7 @@
                 <li><a href="/" class="link link-hover">Home</a></li>
                 <li><a href="/about" class="link link-hover">About</a></li>
                 <li><a href="/updates" class="link link-hover">Game Updates</a></li>
+                <li><a href="/guides" class="link link-hover">Guides</a></li>
                 <li><a href="/faq" class="link link-hover">FAQ</a></li>
                 <li><a href="/contact" class="link link-hover">Contact</a></li>
                 <li><a href="/leaderboard" class="link link-hover">Leaderboard</a></li>

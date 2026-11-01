@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="container mx-auto p-4 max-w-6xl">
     <h1 class="text-3xl font-bold mb-2"><i class="fa-solid fa-sun mr-2 text-warning"></i> Off-Season Management</h1>
-    <p class="text-base-content/60 mb-6">Summer activities, bulk maintenance, and preparing for next winter.</p>
+    <p class="text-base-content/70 mb-6">Summer activities, bulk maintenance, and preparing for next winter.</p>
 
     <?php if (session()->getFlashdata('success')) : ?><div class="alert alert-success mb-4"><?= session()->getFlashdata('success') ?></div><?php endif ?>
     <?php if (session()->getFlashdata('error')) : ?><div class="alert alert-error mb-4"><?= session()->getFlashdata('error') ?></div><?php endif ?>
@@ -24,11 +24,11 @@
         </div>
         <div class="flex gap-1">
             <div style="flex:100">
-                <div class="text-xs text-base-content/50 mb-1">Winter (Days 1-100)</div>
+                <div class="text-xs text-base-content/70 mb-1">Winter (Days 1-100)</div>
                 <progress class="progress progress-info w-full" value="<?= min($seasonDay, getWinterDays()) ?>" max="<?= getWinterDays() ?>"></progress>
             </div>
             <div style="flex:35">
-                <div class="text-xs text-base-content/50 mb-1">Summer (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>)</div>
+                <div class="text-xs text-base-content/70 mb-1">Summer (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>)</div>
                 <progress class="progress progress-warning w-full" value="<?= max(0, $seasonDay - getWinterDays()) ?>" max="<?= getSummerDays() ?>"></progress>
             </div>
         </div>
@@ -39,38 +39,38 @@
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-mountain text-info text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgSlopeCond >= 70 ? 'text-success' : ($avgSlopeCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgSlopeCond ?>%</div>
-            <div class="text-xs text-base-content/50">Slopes (<?= count($slopes) ?>)</div>
+            <div class="text-xs text-base-content/70">Slopes (<?= count($slopes) ?>)</div>
             <progress class="progress <?= $avgSlopeCond >= 70 ? 'progress-success' : ($avgSlopeCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgSlopeCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-cable-car text-success text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgLiftCond >= 70 ? 'text-success' : ($avgLiftCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgLiftCond ?>%</div>
-            <div class="text-xs text-base-content/50">Lifts (<?= count($lifts) ?>)</div>
+            <div class="text-xs text-base-content/70">Lifts (<?= count($lifts) ?>)</div>
             <progress class="progress <?= $avgLiftCond >= 70 ? 'progress-success' : ($avgLiftCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgLiftCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-building text-primary text-xl mb-1"></i>
             <div class="text-2xl font-bold text-success"><?= count($buildings) ?></div>
-            <div class="text-xs text-base-content/50">Buildings (<?= count($buildings) ?>)</div>
+            <div class="text-xs text-base-content/70">Buildings (<?= count($buildings) ?>)</div>
             <progress class="progress progress-success w-full mt-1" value="100" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-toolbox text-warning text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgEquipCond >= 70 ? 'text-success' : ($avgEquipCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgEquipCond ?>%</div>
-            <div class="text-xs text-base-content/50">Equipment (<?= count($equipment) ?>)</div>
+            <div class="text-xs text-base-content/70">Equipment (<?= count($equipment) ?>)</div>
             <progress class="progress <?= $avgEquipCond >= 70 ? 'progress-success' : ($avgEquipCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgEquipCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <i class="fa-solid fa-person-snowboarding text-secondary text-xl mb-1"></i>
             <div class="text-2xl font-bold <?= $avgParkCond >= 70 ? 'text-success' : ($avgParkCond >= 40 ? 'text-warning' : 'text-error') ?>"><?= $avgParkCond ?>%</div>
-            <div class="text-xs text-base-content/50">Parks (<?= count($terrainParks) ?>)</div>
+            <div class="text-xs text-base-content/70">Parks (<?= count($terrainParks) ?>)</div>
             <progress class="progress <?= $avgParkCond >= 70 ? 'progress-success' : ($avgParkCond >= 40 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $avgParkCond ?>" max="<?= getWinterDays() ?>"></progress>
         </div></div>
     </div>
 
     <!-- Bulk Maintenance -->
     <h2 class="text-xl font-semibold mb-3"><i class="fa-solid fa-wrench mr-1"></i> Bulk Maintenance</h2>
-    <p class="text-sm text-base-content/60 mb-3">Repair everything in a category at once. Available year-round but best done during summer when there's less revenue pressure.</p>
+    <p class="text-sm text-base-content/70 mb-3">Repair everything in a category at once. Available year-round but best done during summer when there's less revenue pressure.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <?php foreach ($maintenanceTasks as $key => $task) : ?>
             <?php
@@ -86,12 +86,12 @@
             ?>
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
                 <h3 class="font-semibold"><i class="<?= $task['icon'] ?> mr-1"></i> <?= $task['name'] ?></h3>
-                <p class="text-xs text-base-content/60 mt-1"><?= $task['desc'] ?></p>
+                <p class="text-xs text-base-content/70 mt-1"><?= $task['desc'] ?></p>
                 <div class="grid grid-cols-2 gap-2 text-sm mt-3">
-                    <div><span class="text-base-content/50">Items:</span> <?= $itemCount ?></div>
-                    <div><span class="text-base-content/50">Needs repair:</span> <span class="<?= $needsRepair > 0 ? 'text-warning font-semibold' : 'text-success' ?>"><?= $needsRepair ?></span></div>
-                    <div><span class="text-base-content/50">Cost each:</span> <?= currency($task['cost_per_unit']) ?></div>
-                    <div><span class="text-base-content/50">Total:</span> <span class="font-semibold"><?= currency($totalCost) ?></span></div>
+                    <div><span class="text-base-content/70">Items:</span> <?= $itemCount ?></div>
+                    <div><span class="text-base-content/70">Needs repair:</span> <span class="<?= $needsRepair > 0 ? 'text-warning font-semibold' : 'text-success' ?>"><?= $needsRepair ?></span></div>
+                    <div><span class="text-base-content/70">Cost each:</span> <?= currency($task['cost_per_unit']) ?></div>
+                    <div><span class="text-base-content/70">Total:</span> <span class="font-semibold"><?= currency($totalCost) ?></span></div>
                 </div>
                 <form action="/off-season/maintenance" method="post" class="mt-3" onsubmit="return confirm('Run <?= $task['name'] ?> for <?= currency($totalCost) ?>?')">
                     <?= csrf_field() ?>
@@ -106,7 +106,7 @@
 
     <!-- Summer Activities -->
     <h2 class="text-xl font-semibold mb-3"><i class="fa-solid fa-sun mr-1 text-warning"></i> Summer Activities</h2>
-    <p class="text-sm text-base-content/60 mb-3">Build summer attractions to generate revenue during the off-season. These earn income during summer days (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>) and remain available year-round.</p>
+    <p class="text-sm text-base-content/70 mb-3">Build summer attractions to generate revenue during the off-season. These earn income during summer days (<?= getWinterDays() + 1 ?>-<?= getSeasonLength() ?>) and remain available year-round.</p>
 
     <?php if (!empty($summerActivities)) : ?>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -117,8 +117,8 @@
                 <div class="badge <?= $isSummer ? 'badge-success' : 'badge-ghost' ?>"><?= $isSummer ? 'Active' : 'Off-Season' ?></div>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm mt-2">
-                <div><span class="text-base-content/50">Revenue:</span> <?= currency($act['revenue'] ?? 0) ?>/day</div>
-                <div><span class="text-base-content/50">Upkeep:</span> <?= currency($act['upkeep'] ?? 0) ?>/day</div>
+                <div><span class="text-base-content/70">Revenue:</span> <?= currency($act['revenue'] ?? 0) ?>/day</div>
+                <div><span class="text-base-content/70">Upkeep:</span> <?= currency($act['upkeep'] ?? 0) ?>/day</div>
             </div>
         </div></div>
         <?php endforeach ?>
@@ -129,7 +129,7 @@
         <?php foreach ($activityConfig as $key => $cfg) : ?>
         <div class="card bg-base-200/50 border border-base-300"><div class="card-body p-3">
             <h3 class="font-semibold text-sm"><i class="<?= $cfg['icon'] ?> mr-1"></i> <?= $cfg['name'] ?></h3>
-            <p class="text-xs text-base-content/60 mt-1"><?= $cfg['desc'] ?></p>
+            <p class="text-xs text-base-content/70 mt-1"><?= $cfg['desc'] ?></p>
             <div class="text-xs space-y-1 mt-2">
                 <div>Cost: <strong><?= currency($cfg['cost']) ?></strong></div>
                 <div>Revenue: <strong><?= currency($cfg['revenue']) ?>/day</strong></div>

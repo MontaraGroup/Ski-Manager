@@ -80,12 +80,57 @@ class Resort extends BaseController
         return view('resort/edit', ['resort' => $resort]);
     }
 
+    /** Repairing a lift from 0% costs this share of what it cost to build, less as condition is higher */
+    public const LIFT_REPAIR_SHARE = 0.3;
+
+    public static function liftRepairCost(array $lift): int
+    {
+        return (int) round(ResortMap::buildCost($lift) * self::LIFT_REPAIR_SHARE * (100 - (int) $lift['condition_pct']) / 100);
+    }
+
+    /** Lifts wear every day and break at 0%; this restores one to 100% (a broken lift reopens) */
+    public function repairLift(int $id)
+    {
+        $userId = auth()->id();
+        $db = db_connect();
+        $lift = $db->table('player_items')->where('id', $id)->where('user_id', $userId)->where('item_type', 'lift')->get()->getRowArray();
+        if (!$lift) return redirect()->to('/resort')->with('error', 'Lift not found.');
+        if ((int) $lift['condition_pct'] >= 100) return redirect()->to('/resort')->with('error', esc($lift['name']) . ' is already in perfect condition.');
+
+        $cost = self::liftRepairCost($lift);
+        $db->transStart();
+        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cost)
+            ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
+        if ($cost > 0 && $db->affectedRows() !== 1) {
+            $db->transRollback();
+            return redirect()->to('/resort')->with('error', 'Not enough cash: repairing ' . esc($lift['name']) . ' costs ' . currency($cost) . '.');
+        }
+        $db->table('player_items')->where('id', $id)->update([
+            'condition_pct' => 100, 'status' => $lift['status'] === 'broken' ? 'open' : $lift['status'], 'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        if ($cost > 0) {
+            $db->table('financial_transactions')->insert([
+                'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Lifts', 'description' => 'Repaired ' . $lift['name'],
+                'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        $db->transComplete();
+
+        log_activity($userId, 'Lift', 'Repaired ' . $lift['name'] . ' for ' . currency($cost), 'fa-solid fa-wrench');
+        return redirect()->to('/resort')->with('success', esc($lift['name']) . ' repaired for ' . currency($cost) . ($lift['status'] === 'broken' ? ' and reopened.' : '.'));
+    }
+
     public function toggleItem(int $id)
     {
         $userId = auth()->id();
         $itemModel = new PlayerItemModel();
         $item = $itemModel->where('id', $id)->where('user_id', $userId)->first();
         if (!$item) return redirect()->back()->with('error', 'Not found.');
+        // A broken lift needs a repair, a broken slope needs grooming: switching them on did nothing useful
+        if ($item['status'] === 'broken') {
+            return redirect()->to('/resort')->with('error', esc($item['name']) . ' is broken: ' . ($item['item_type'] === 'lift' ? 'repair it first.' : 'groom it to bring it back.'));
+        }
+        if (!in_array($item['status'], ['open', 'closed'], true)) return redirect()->to('/resort')->with('error', esc($item['name']) . ' isn\'t ready yet.');
 
         $new = $item['status'] === 'open' ? 'closed' : 'open';
         $itemModel->update($id, ['status' => $new]);
@@ -103,7 +148,7 @@ class Resort extends BaseController
         $db->table("player_finances")->where("user_id", $userId)->update(["resort_open" => $new]);
         $status = $new ? "opened" : "closed";
         log_activity($userId, "resort_toggle", "Resort " . $status);
-        notify($userId, "resort", "Resort " . $status, "Your resort is now " . $status . ". " . ($new ? "Visitors are arriving!" : "No visitors while closed — upkeep still applies."), $new ? "fa-solid fa-door-open" : "fa-solid fa-door-closed", "/resort");
+        notify($userId, "resort", "Resort " . $status, "Your resort is now " . $status . ". " . ($new ? "Visitors are arriving!" : "No visitors while closed, but upkeep still applies."), $new ? "fa-solid fa-door-open" : "fa-solid fa-door-closed", "/resort");
         return redirect()->to("/resort")->with("success", "Resort " . $status . "!");
     }
 

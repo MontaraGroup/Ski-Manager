@@ -7,7 +7,7 @@
         <a href="/" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-envelope mr-2 text-primary"></i>Contact Us</h1>
-            <p class="text-sm text-base-content/50">Questions, bugs, ideas - we'd love to hear from you</p>
+            <p class="text-sm text-base-content/70">Questions, bugs, ideas - we'd love to hear from you</p>
         </div>
     </div>
 
@@ -57,26 +57,26 @@
                 <div class="space-y-3">
                     <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-brands fa-discord text-lg w-6 text-center text-[#5865F2]"></i>
-                        <div><div class="text-sm font-semibold">Discord</div><div class="text-xs text-base-content/50">Fastest way to get help</div></div>
+                        <div><div class="text-sm font-semibold">Discord</div><div class="text-xs text-base-content/70">Fastest way to get help</div></div>
                     </a>
                     <a href="/support" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-solid fa-headset text-lg w-6 text-center"></i>
-                        <div><div class="text-sm font-semibold">In-Game Support</div><div class="text-xs text-base-content/50">Message us from your account</div></div>
+                        <div><div class="text-sm font-semibold">In-Game Support</div><div class="text-xs text-base-content/70">Message us from your account</div></div>
                     </a>
                     <a href="/bugs" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-solid fa-bug text-lg w-6 text-center"></i>
-                        <div><div class="text-sm font-semibold">Report a Bug</div><div class="text-xs text-base-content/50">GitHub issue tracker</div></div>
+                        <div><div class="text-sm font-semibold">Report a Bug</div><div class="text-xs text-base-content/70">GitHub issue tracker</div></div>
                     </a>
                     <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 hover:text-primary transition-colors">
                         <i class="fa-brands fa-github text-lg w-6 text-center"></i>
-                        <div><div class="text-sm font-semibold">Contribute</div><div class="text-xs text-base-content/50">Open source on GitHub</div></div>
+                        <div><div class="text-sm font-semibold">Contribute</div><div class="text-xs text-base-content/70">Open source on GitHub</div></div>
                     </a>
                 </div>
             </div></div>
 
             <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
                 <h3 class="font-bold text-sm mb-3">Good to Know</h3>
-                <div class="space-y-2 text-xs text-base-content/60">
+                <div class="space-y-2 text-xs text-base-content/70">
                     <p><strong>Response time?</strong> Usually within 48 hours.</p>
                     <p><strong>Found a bug?</strong> GitHub issues get tracked fastest.</p>
                     <p><strong>Feature idea?</strong> We love suggestions - use the form or GitHub.</p>

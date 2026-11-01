@@ -24,7 +24,7 @@ class Genepis extends BaseController
             'snow_dump' => ['name' => 'Instant Snow Dump', 'desc' => 'Add 30cm of fresh powder to all slopes', 'cost' => 40, 'icon' => 'fa-solid fa-snowflake', 'color' => 'text-primary', 'duration' => null, 'category' => 'Instant'],
             'repair_all' => ['name' => 'Repair Everything', 'desc' => 'All slopes, lifts, equipment, and buildings to 100%', 'cost' => 60, 'icon' => 'fa-solid fa-wrench', 'color' => 'text-warning', 'duration' => null, 'category' => 'Instant'],
             'reputation_boost' => ['name' => 'PR Campaign', 'desc' => '+500 visitors instantly', 'cost' => 80, 'icon' => 'fa-solid fa-star', 'color' => 'text-warning', 'duration' => null, 'category' => 'Instant'],
-            'cash_injection' => ['name' => 'Cash Injection', 'desc' => 'Receive $100,000 cash immediately', 'cost' => 150, 'icon' => 'fa-solid fa-money-bill-transfer', 'color' => 'text-success', 'duration' => null, 'category' => 'Instant'],
+            'cash_injection' => ['name' => 'Cash Injection', 'desc' => 'Receive 100,000 € cash immediately', 'cost' => 150, 'icon' => 'fa-solid fa-money-bill-transfer', 'color' => 'text-success', 'duration' => null, 'category' => 'Instant'],
             'groom_all' => ['name' => 'Perfect Grooming', 'desc' => 'All slopes groomed to 100% condition', 'cost' => 35, 'icon' => 'fa-solid fa-tractor', 'color' => 'text-success', 'duration' => null, 'category' => 'Instant'],
             'morale_boost' => ['name' => 'Staff Party', 'desc' => 'All staff morale set to 100%', 'cost' => 45, 'icon' => 'fa-solid fa-champagne-glasses', 'color' => 'text-info', 'duration' => null, 'category' => 'Instant'],
             // Timed boosts

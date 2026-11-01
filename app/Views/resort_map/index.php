@@ -12,6 +12,7 @@ $distUnit        = function_exists('distanceUnit') ? distanceUnit() : 'm';
 ?>
 
 <?= $this->extend('layouts/main') ?>
+<?= $this->section('title') ?>Trail Map<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 
 <link rel="stylesheet" href="/css/leaflet.css" />
@@ -312,8 +313,8 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
 
 /* Top bar */
 .map-title { font-family: var(--sign); font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
-.map-title span { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; margin-left: 6px; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
-.map-counts { display: flex; gap: 12px; margin-top: 2px; font-size: 12px; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.map-title span { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; margin-left: 6px; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+.map-counts { display: flex; gap: 12px; margin-top: 2px; font-size: 12px; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .map-counts b { color: var(--color-base-content); font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
 
@@ -374,7 +375,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
     <!-- Initial Loader -->
     <div id="mapLoader" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;text-align:center;pointer-events:none">
         <span class="loading loading-spinner loading-lg text-primary"></span>
-        <p class="text-sm text-base-content/60 mt-2">Loading trail map...</p>
+        <p class="text-sm text-base-content/70 mt-2">Loading trail map...</p>
     </div>
 
     <!-- Subtle HD Resolution Indicator -->
@@ -421,7 +422,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 <i class="fa-solid fa-draw-polygon text-warning"></i> Sectors
             </button>
 
-            <span class="text-[11px] text-base-content/50 hidden xl:inline ml-1">
+            <span class="text-[11px] text-base-content/70 hidden xl:inline ml-1">
                 <i class="fa-solid fa-keyboard mr-1"></i><b>L</b> Lift • <b>S</b> Slope • Click any line to edit
             </span>
         </div>
@@ -466,10 +467,10 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
 
             <!-- Inline Difficulty (shown for slopes) -->
             <select id="toolSegDiff" class="select select-xs select-bordered text-xs py-0 h-6 min-h-0" style="display:none" title="Slope Difficulty">
-                <option value="green">🟢 Green (Easy)</option>
-                <option value="blue">🔵 Blue (Intermediate)</option>
-                <option value="black">⚫ Black (Advanced)</option>
-                <option value="double_black">🔴 Double Black (Expert)</option>
+                <option value="green">● Green (Easy)</option>
+                <option value="blue">■ Blue (Intermediate)</option>
+                <option value="black">◆ Black (Advanced)</option>
+                <option value="double_black">◆◆ Double Black (Expert)</option>
             </select>
 
             <div class="h-4 w-px bg-white/15 mx-0.5 hidden sm:block"></div>
@@ -500,7 +501,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
         </div>
 
         <!-- Helper Hint Sub-bar (shown while active) -->
-        <div id="toolHelperHint" class="text-[11px] text-base-content/60 pt-1.5 mt-1.5 border-t border-white/10 flex items-center justify-between gap-3" style="display:none">
+        <div id="toolHelperHint" class="text-[11px] text-base-content/70 pt-1.5 mt-1.5 border-t border-white/10 flex items-center justify-between gap-3" style="display:none">
             <span id="toolHintText">
                 <i class="fa-solid fa-circle-info text-info mr-1"></i>
                 <b>Click map</b> to add points • <b>Drag white/colored dots</b> to move • <b>Click or drag small midpoints</b> to add bends • <b>Right-click or Alt+click</b> a point to delete it
@@ -540,7 +541,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                     <h2 style="font-size:15px;font-weight:800;color:#f8fafc;line-height:1.2">Build</h2>
                     <div class="flex items-center gap-1.5 mt-1">
                         <span style="font-size:12px;color:#8b95a3">Cash</span>
-                        <span class="drawer-cash-pill" id="drawerCashBalance">$<?= number_format($userCashVal) ?></span>
+                        <span class="drawer-cash-pill" id="drawerCashBalance"><?= currency($userCashVal) ?></span>
                     </div>
                 </div>
             </div>
@@ -613,7 +614,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                                     <i class="fa-solid fa-circle-dot text-xs" style="color:#94a3b8"></i>
                                     <div>
                                         <div style="font-weight:700;color:#f8fafc">Button / Surface Lift</div>
-                                        <div style="font-size:10px;color:#64748b">$80 / m base rate</div>
+                                        <div style="font-size:10px;color:#64748b"><?= currency(80) ?> / m base rate</div>
                                     </div>
                                 </div>
                                 <span style="font-family:var(--sign);font-size:14px;font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;color:#fbbf24">1,000/hr</span>
@@ -624,7 +625,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                                     <i class="fa-solid fa-circle-dot text-xs" style="color:#38bdf8"></i>
                                     <div>
                                         <div style="font-weight:700;color:#f8fafc">Fixed-Grip Chairlift</div>
-                                        <div style="font-size:10px;color:#64748b">$150 / m base rate</div>
+                                        <div style="font-size:10px;color:#64748b"><?= currency(150) ?> / m base rate</div>
                                     </div>
                                 </div>
                                 <span style="font-family:var(--sign);font-size:14px;font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;color:#fbbf24">2,400/hr</span>
@@ -635,7 +636,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                                     <i class="fa-solid fa-circle-dot text-xs" style="color:#94a3b8"></i>
                                     <div>
                                         <div style="font-weight:700;color:#f8fafc">Detachable High-Speed</div>
-                                        <div style="font-size:10px;color:#64748b">$250 / m base rate</div>
+                                        <div style="font-size:10px;color:#64748b"><?= currency(250) ?> / m base rate</div>
                                     </div>
                                 </div>
                                 <span style="font-family:var(--sign);font-size:14px;font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;color:#fbbf24">3,400/hr</span>
@@ -646,7 +647,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                                     <i class="fa-solid fa-circle-dot text-xs" style="color:#94a3b8"></i>
                                     <div>
                                         <div style="font-weight:700;color:#f8fafc">8-10p Cabin Gondola</div>
-                                        <div style="font-size:10px;color:#64748b">$400 / m base rate</div>
+                                        <div style="font-size:10px;color:#64748b"><?= currency(400) ?> / m base rate</div>
                                     </div>
                                 </div>
                                 <span style="font-family:var(--sign);font-size:14px;font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;color:#fbbf24">3,500/hr</span>
@@ -657,7 +658,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                                     <i class="fa-solid fa-circle-dot text-xs" style="color:#94a3b8"></i>
                                     <div>
                                         <div style="font-weight:700;color:#f8fafc">Aerial Tram / Cable Car</div>
-                                        <div style="font-size:10px;color:#64748b">$600 / m base rate</div>
+                                        <div style="font-size:10px;color:#64748b"><?= currency(600) ?> / m base rate</div>
                                     </div>
                                 </div>
                                 <span style="font-family:var(--sign);font-size:14px;font-variant-numeric:tabular-nums;font-size:11px;font-weight:700;color:#fbbf24">4,000/hr</span>
@@ -726,8 +727,8 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 <div class="flex items-center gap-1.5">
                     <select id="buildDiffFilter" class="drawer-select flex-1" style="display:none">
                         <option value="">All Grades</option>
-                        <option value="green">🟢 Green (Easy)</option>
-                        <option value="blue">🟦 Blue (Intermediate)</option>
+                        <option value="green">● Green (Easy)</option>
+                        <option value="blue">■ Blue (Intermediate)</option>
                         <option value="black">◆ Black (Advanced)</option>
                         <option value="double_black">◆◆ Double Black</option>
                     </select>
@@ -741,7 +742,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
             </div>
 
             <div id="segmentList" class="flex flex-col">
-                <p class="text-sm text-base-content/50 text-center py-4">Select a purple line to build</p>
+                <p class="text-sm text-base-content/70 text-center py-4">Select a purple line to build</p>
             </div>
         </div>
     </div>
@@ -842,6 +843,9 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
     var RELEASED_IDS = <?= $releasedIdsJson ?>;
     var IS_ADMIN     = <?= $isAdmin ? 'true' : 'false' ?>;
     var USER_CASH    = <?= $userCashVal ?>;
+    // Money in the player's own format: "13,950 €" (metric) or "$13,950" (imperial), like currency()
+    var CURRENCY_PREFIX = <?= json_encode(isImperial() ? '$' : '') ?>, CURRENCY_SUFFIX = <?= json_encode(isImperial() ? '' : ' €') ?>;
+    function fmtMoney(n) { return (n < 0 ? '-' : '') + CURRENCY_PREFIX + Math.abs(Math.round(n)).toLocaleString('en-US') + CURRENCY_SUFFIX; }
     var DIST_UNIT    = <?= json_encode($distUnit) ?>;
     var CSRF_NAME    = <?= json_encode($csrfName) ?>;
     var CSRF_HASH    = <?= json_encode($csrfHash) ?>;
@@ -1176,7 +1180,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
             '</div>' +
             (canDemolish
                 ? '<button type="button" class="btn btn-ghost btn-xs w-full mt-2 gap-1.5 text-error" data-demolish>' +
-                      '<i class="fa-solid fa-trash-can"></i> Demolish · refund $' + Number(item.salvage || 0).toLocaleString() +
+                      '<i class="fa-solid fa-trash-can"></i> Demolish · refund ' + fmtMoney(Number(item.salvage || 0)) +
                   '</button>'
                 : '');
         var btn = el.querySelector('[data-demolish]');
@@ -1189,7 +1193,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
 
     function demolishBuilt(seg, item, btn) {
         var name = seg.name || (seg.type === 'lift' ? 'this lift' : 'this slope');
-        var ok = confirm('Demolish ' + name + '?\n\nYou get $' + Number(item.salvage || 0).toLocaleString() +
+        var ok = confirm('Demolish ' + name + '?\n\nYou get ' + fmtMoney(Number(item.salvage || 0)) +
             ' back (25% salvage). Snow cannons and terrain parks on it are kept but unassigned. This can\'t be undone.');
         if (!ok) return;
         btn.disabled = true;
@@ -1204,7 +1208,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
             if (typeof res.new_cash === 'number') {
                 USER_CASH = res.new_cash;
                 var cashEl = document.getElementById('drawerCashBalance');
-                if (cashEl) cashEl.textContent = '$' + USER_CASH.toLocaleString();
+                if (cashEl) cashEl.textContent = fmtMoney(USER_CASH);
             }
             map.closePopup();
             renderSegments(buildMode);
@@ -1477,7 +1481,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 '<div class="build-item-price-col">' +
                     '<div class="build-item-price" style="color:' + (canAfford ? '#f1f3f5' : '#f87171') + '">' +
                         (seg.type === 'lift' ? '<span style="font-size:9px;color:#94a3b8;font-weight:600;margin-right:2px">from</span>' : '') +
-                        '$' + baseCost.toLocaleString() +
+                        fmtMoney(baseCost) +
                     '</div>' +
                     '<div class="build-item-cta">' + (isSel ? 'Selected' : 'Configure') + '</div>' +
                 '</div>';
@@ -1602,25 +1606,25 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 var ltv = (document.querySelector('input[name="liftType"]:checked') || {}).value || 'chair_fixed';
                 var stv = parseInt((document.querySelector('input[name="seats"]:checked') || {}).value || 4, 10);
                 var perHour = Math.round((ECONOMY_V2.capacity[ltv] || 2400) * Math.min(1, stv / (ECONOMY_V2.maxSeats[ltv] || 4)));
-                info = 'Carries ~' + Math.round(perHour * ECONOMY_V2.perDay).toLocaleString() + ' skiers/day · runs $' + Math.round(m * (ECONOMY_V2.liftRun[ltv] || 0.8)).toLocaleString() + '/day + ' + Math.round(m * (ECONOMY_V2.liftKwh[ltv] || 0.8)).toLocaleString() + ' kWh';
+                info = 'Carries ~' + Math.round(perHour * ECONOMY_V2.perDay).toLocaleString() + ' skiers/day · runs ' + fmtMoney(m * (ECONOMY_V2.liftRun[ltv] || 0.8)) + '/day + ' + Math.round(m * (ECONOMY_V2.liftKwh[ltv] || 0.8)).toLocaleString() + ' kWh';
             } else {
-                info = 'Draws ~' + Math.round(30 + m / 40) + ' skiers/day · upkeep $' + Math.round(m * ECONOMY_V2.slopeRun).toLocaleString() + '/day';
+                info = 'Draws ~' + Math.round(30 + m / 40) + ' skiers/day · upkeep ' + fmtMoney(m * ECONOMY_V2.slopeRun) + '/day';
             }
             runEl.textContent = info;
             runEl.hidden = false;
         }
         var costEl = document.getElementById('selSegCost');
         if (costEl) {
-            costEl.textContent = '$' + roundedCost.toLocaleString();
+            costEl.textContent = fmtMoney(roundedCost);
             costEl.style.color = canAfford ? '#4ade80' : '#f87171';
         }
         var afterEl = document.getElementById('selSegAfterCash');
         if (afterEl) {
             if (canAfford) {
-                afterEl.textContent = 'Balance after: $' + (USER_CASH - roundedCost).toLocaleString();
+                afterEl.textContent = 'Balance after: ' + fmtMoney(USER_CASH - roundedCost);
                 afterEl.style.color = '#94a3b8';
             } else {
-                afterEl.textContent = 'Need $' + (roundedCost - USER_CASH).toLocaleString() + ' more';
+                afterEl.textContent = 'Need ' + fmtMoney(roundedCost - USER_CASH) + ' more';
                 afterEl.style.color = '#f87171';
             }
         }
@@ -1688,9 +1692,9 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 if (typeof res.new_cash === 'number') {
                     USER_CASH = res.new_cash;
                     var cashEl = document.getElementById('drawerCashBalance');
-                    if (cashEl) cashEl.textContent = '$' + USER_CASH.toLocaleString();
+                    if (cashEl) cashEl.textContent = fmtMoney(USER_CASH);
                 }
-                showToast('Constructed "' + (seg.name || seg.type) + '" for $' + Number(res.cost || 0).toLocaleString() + '!', 'success');
+                showToast('Constructed "' + (seg.name || seg.type) + '" for ' + fmtMoney(Number(res.cost || 0)) + '!', 'success');
                 deselectSeg();
                 renderSegments(buildMode);
                 populateList(activeTab);
@@ -1848,7 +1852,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
         var pill = document.getElementById('snapStatusPill');
         if (pill) {
             pill.style.display = 'inline-flex';
-            pill.textContent = '🧲 Snapped: ' + label;
+            pill.textContent = 'Snapped: ' + label;
         }
     }
 

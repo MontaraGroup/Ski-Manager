@@ -16,7 +16,7 @@ $groups = [
 .ff { max-width: 56rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 .ff h1 { font-family: var(--sign); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
 .ff h2 { font-family: var(--sign); font-size: 1.0625rem; font-weight: 600; margin: 1.75rem 0 0.6rem; }
-.ff .muted { color: color-mix(in oklab, var(--color-base-content) 58%, transparent); }
+.ff .muted { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .ff .panel { background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 10px; }
 .ff .row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-top: 1px solid var(--color-base-300); scroll-margin-top: 5rem; }
 .ff .row:first-child { border-top: 0; }

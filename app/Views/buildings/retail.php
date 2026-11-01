@@ -16,7 +16,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-store mr-2 text-secondary"></i>Retail & Merchandise</h1>
-                <p class="text-sm text-base-content/50">Sell souvenirs, apparel, and premium goods</p>
+                <p class="text-sm text-base-content/70">Sell souvenirs, apparel, and premium goods</p>
             </div>
         </div>
     </div>
@@ -27,10 +27,10 @@
     <div class="card bg-gradient-to-br from-secondary/5 to-secondary/10 shadow-sm border border-secondary/20 mb-6">
         <div class="card-body p-5">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div><div class="text-xs text-base-content/50 mb-1">Stores</div><div class="text-3xl font-bold"><?= count($buildings) ?></div><div class="text-xs text-base-content/50"><?= $totalProducts ?> product lines</div></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Daily Sales</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue) ?></div></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Profit Margin</div><div class="text-3xl font-bold"><?= $avgMargin ?>%</div><progress class="progress progress-secondary w-full mt-1" value="<?= $avgMargin ?>" max="100"></progress></div>
-                <div><div class="text-xs text-base-content/50 mb-1">Net Profit</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue - $totalUpkeep) ?></div><div class="text-xs text-base-content/50">per day</div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Stores</div><div class="text-3xl font-bold"><?= count($buildings) ?></div><div class="text-xs text-base-content/70"><?= $totalProducts ?> product lines</div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Daily Sales</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue) ?></div></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Profit Margin</div><div class="text-3xl font-bold"><?= $avgMargin ?>%</div><progress class="progress progress-secondary w-full mt-1" value="<?= $avgMargin ?>" max="100"></progress></div>
+                <div><div class="text-xs text-base-content/70 mb-1">Net Profit</div><div class="text-3xl font-bold text-success"><?= currency($totalRevenue - $totalUpkeep) ?></div><div class="text-xs text-base-content/70">per day</div></div>
             </div>
         </div>
     </div>
@@ -38,7 +38,7 @@
     <!-- Best Sellers Showcase -->
     <?php if (!empty($buildings)) : ?>
     <div class="mb-6">
-        <h2 class="text-sm font-bold mb-2 text-base-content/50 uppercase tracking-wide">Product Categories</h2>
+        <h2 class="text-sm font-bold mb-2 text-base-content/70 uppercase tracking-wide">Product Categories</h2>
         <div class="flex flex-wrap gap-2">
             <?php $shown = []; foreach ($buildings as $b) : $ml = $merchLevels[$b['level']] ?? $merchLevels[1]; foreach ($ml['products'] as $p) : if (!in_array($p['name'], $shown)) : $shown[] = $p['name']; ?>
                 <div class="badge badge-lg gap-1 py-3"><i class="<?= $p['icon'] ?>"></i> <?= $p['name'] ?></div>
@@ -51,7 +51,7 @@
         <div class="lg:col-span-2">
             <h2 class="text-lg font-bold mb-3">Your Stores</h2>
             <?php if (empty($buildings)) : ?>
-                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12"><i class="fa-solid fa-store text-5xl text-base-content/15 mb-3"></i><p class="font-semibold">No stores yet</p><p class="text-sm text-base-content/50 mt-1">Visitors love taking home souvenirs. High margin, low effort.</p></div></div>
+                <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12"><i class="fa-solid fa-store text-5xl text-base-content/15 mb-3"></i><p class="font-semibold">No stores yet</p><p class="text-sm text-base-content/70 mt-1">Visitors love taking home souvenirs. High margin, low effort.</p></div></div>
             <?php else : ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <?php foreach ($buildings as $b) : $isOpen = $b['status'] === 'open'; $cond = (int) $b['condition_pct']; $ml = $merchLevels[$b['level']] ?? $merchLevels[1]; ?>
@@ -73,7 +73,7 @@
                         </div>
                         <div class="flex items-center justify-between text-xs mb-3">
                             <span class="text-success font-bold"><?= currency($b['revenue_per_day']) ?>/day</span>
-                            <span class="text-base-content/50">Upkeep: <?= currency($b['upkeep_per_day']) ?></span>
+                            <span class="text-base-content/70">Upkeep: <?= currency($b['upkeep_per_day']) ?></span>
                             <span>Cond: <?= $cond ?>%</span>
                         </div>
                         <div class="flex gap-1">

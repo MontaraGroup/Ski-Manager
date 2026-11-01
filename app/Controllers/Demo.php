@@ -19,6 +19,14 @@ class Demo extends BaseController
             return redirect()->to('/dashboard')->with('info', 'Resumed your active Demo Mountain sandbox.');
         }
 
+        // A half-finished sign-in in this browser (an account still waiting for its activation code,
+        // say) makes Shield refuse any new login, which crashed here after the guest was created.
+        // Starting a demo replaces it; the account itself is untouched and can be logged into later.
+        $authenticator = auth('session')->getAuthenticator();
+        if ($authenticator->isPending()) {
+            $authenticator->logout();
+        }
+
         $db = db_connect();
         $token = bin2hex(random_bytes(6));
         $demoUsername = 'Demo Director ' . strtoupper(substr($token, 0, 4));
@@ -64,7 +72,7 @@ class Demo extends BaseController
         session()->set('demo_token', $token);
         session()->set('demo_created_at', time());
 
-        return redirect()->to('/dashboard')->with('success', '🏔️ Welcome to Demo Mountain! You have full operational control of Sector 1.');
+        return redirect()->to('/dashboard')->with('success', 'Welcome to Demo Mountain! You have full operational control of Sector 1.');
     }
 
     public static function seedDemoMountain(int $userId): void
@@ -364,6 +372,6 @@ class Demo extends BaseController
             log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
         }
 
-        return redirect()->to('/dashboard')->with('success', '🎉 Welcome Director ' . esc($username) . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
+        return redirect()->to('/dashboard')->with('success', 'Welcome, Director ' . esc($username) . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
     }
 }

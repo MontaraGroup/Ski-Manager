@@ -161,7 +161,8 @@ class ResortAnalysis extends BaseController
         // --- Lifts ---
         $liftCap = (int) ($tick['lift_capacity'] ?? Economy::liftDailyCapacity($openLifts));
         $brokenLifts = count(array_filter($lifts, fn($l) => $l['status'] === 'broken'));
-        $hasMechanic = (bool) array_filter($staff, fn($s) => $s['role'] === 'mechanic');
+        $mechanicLifts = array_flip(array_column(array_filter($staff, fn($s) => $s['role'] === 'mechanic' && !empty($s['assigned_to'])), 'assigned_to'));
+        $unmaintained = count(array_filter($lifts, fn($l) => !isset($mechanicLifts[$l['name'] ?? 'Lift #' . $l['id']])));
         $liftCond = $avg($openLifts, 'condition_pct');
         $sections['lifts'] = [
             'score' => !$lifts ? 0 : (int) round(min(100, $liftCond) * ($turnedAway > 0 ? max(0.4, $visitors / max(1, $visitors + $turnedAway)) : 1) * (count($openLifts) / count($lifts))),
@@ -170,8 +171,8 @@ class ResortAnalysis extends BaseController
         ];
         if (!$lifts) $add('critical', 'Lifts', 'You have no lifts: skiers need them to reach your slopes. Build one on the trail map.', '/map');
         if ($turnedAway > 0) $add('critical', 'Lifts', number_format($turnedAway) . ' skiers were turned away because your lifts were full. Build another lift or a bigger one.', '/map');
-        if ($brokenLifts) $add('warning', 'Lifts', $brokenLifts . ' lift' . ($brokenLifts === 1 ? ' is' : 's are') . ' broken. Lifts are restored by off-season maintenance.', '/off-season');
-        if ($lifts && !$hasMechanic && $liftCond < 80) $add('info', 'Lifts', 'Lifts wear up to 2% a day. A mechanic cuts that by 1% a day for every lift.', '/staff/hire');
+        if ($brokenLifts) $add('warning', 'Lifts', $brokenLifts . ' lift' . ($brokenLifts === 1 ? ' is' : 's are') . ' broken. Repair ' . ($brokenLifts === 1 ? 'it' : 'them') . ' on the resort page to reopen.', '/resort');
+        if ($lifts && $unmaintained > 0 && $liftCond < 80) $add('info', 'Lifts', $unmaintained . ' lift' . ($unmaintained === 1 ? ' has' : 's have') . ' no mechanic. Lifts wear up to 2% a day and cost money to repair; a mechanic assigned to a lift cuts its wear by 1% a day.', '/staff/hire');
 
         // --- Slopes & grooming ---
         $operators = array_values(array_filter($staff, fn($s) => $s['role'] === 'groomer'));
@@ -229,7 +230,7 @@ class ResortAnalysis extends BaseController
         $sections['cash'] = [
             'score' => $cash < 0 ? 0 : ($profit >= 0 && $tick !== null ? 100 : (int) min(100, round(($runway ?? 30) / 30 * 100))) - ($income > 0 && $dailyLoan > $income * 0.5 ? 30 : 0),
             'summary' => 'Cash ' . currency($cash) . ($debt ? ', owing ' . currency($debt) . ' (' . currency($dailyLoan) . ' a day)' : ', no loans') . '.',
-            'metrics' => [['Cash', currency($cash)], ['Owed', currency($debt)], ['Loan repayments a day', currency($dailyLoan)], ['Days of costs in cash', $runway === null ? '—' : (string) (int) floor(max(0, $runway))]],
+            'metrics' => [['Cash', currency($cash)], ['Owed', currency($debt)], ['Loan repayments a day', currency($dailyLoan)], ['Days of costs in cash', $runway === null ? '–' : (string) (int) floor(max(0, $runway))]],
         ];
         if ($cash < 0) $add('critical', 'Cash & debt', 'Your cash is negative. Cut costs before anything else breaks down.', '/finances');
         elseif ($profit < 0 && $runway !== null && $runway < 14) $add('critical', 'Cash & debt', 'At yesterday\'s loss your cash lasts about ' . (int) floor($runway) . ' more days.', '/finances');

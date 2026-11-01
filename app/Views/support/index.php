@@ -13,10 +13,10 @@
 <style>
 .sup { max-width: 44rem; margin: 0 auto; padding: 1.75rem 1rem 3rem; }
 .sup h1 { font-family: var(--sign); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; margin: 0; }
-.sup .muted { color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.sup .muted { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .sup .panel { background: var(--color-base-100); border: 1px solid var(--color-base-300); border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); overflow: hidden; }
 .sup .chat { height: min(60vh, 32rem); overflow-y: auto; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.sup .day { align-self: center; font-size: 0.6875rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--color-base-200); color: color-mix(in oklab, var(--color-base-content) 55%, transparent); margin: 0.25rem 0; }
+.sup .day { align-self: center; font-size: 0.6875rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--color-base-200); color: color-mix(in oklab, var(--color-base-content) 70%, transparent); margin: 0.25rem 0; }
 .sup .msg { max-width: 82%; padding: 0.55rem 0.85rem; border-radius: 14px; font-size: 0.9375rem; line-height: 1.5; overflow-wrap: anywhere; }
 .sup .msg.me { align-self: flex-end; background: var(--color-primary); color: var(--color-primary-content); border-bottom-right-radius: 4px; }
 .sup .msg.team { align-self: flex-start; background: var(--color-base-200); border-bottom-left-radius: 4px; }

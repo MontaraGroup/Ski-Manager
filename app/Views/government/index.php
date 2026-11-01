@@ -7,7 +7,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-building-columns mr-2 text-primary"></i>Government & Regulations</h1>
-                <p class="text-sm text-base-content/50">Stay compliant to avoid inspections, fines, and reputation damage</p>
+                <p class="text-sm text-base-content/70">Stay compliant to avoid inspections, fines, and reputation damage</p>
             </div>
         </div>
         <?php if ($compliant < $total) : ?>
@@ -29,7 +29,7 @@
             </div>
             <div class="flex-1">
                 <h2 class="text-lg font-bold">Compliance Score</h2>
-                <p class="text-sm text-base-content/60"><?= $complianceScore >= 100 ? 'Perfect! All regulations met.' : ($complianceScore >= 75 ? 'Good standing with minor gaps.' : ($complianceScore >= 50 ? 'Moderate risk - several regulations not met.' : 'High risk - major compliance issues.')) ?></p>
+                <p class="text-sm text-base-content/70"><?= $complianceScore >= 100 ? 'Perfect! All regulations met.' : ($complianceScore >= 75 ? 'Good standing with minor gaps.' : ($complianceScore >= 50 ? 'Moderate risk - several regulations not met.' : 'High risk - major compliance issues.')) ?></p>
             </div>
         </div>
     </div></div>
@@ -38,23 +38,23 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold <?= $compliant === $total ? 'text-success' : 'text-warning' ?>"><?= $compliant ?>/<?= $total ?></div>
-            <div class="text-xs text-base-content/50">Compliant</div>
+            <div class="text-xs text-base-content/70">Compliant</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-warning"><?= currency($totalCost) ?></div>
-            <div class="text-xs text-base-content/50">Daily Cost</div>
+            <div class="text-xs text-base-content/70">Daily Cost</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold <?= $inspectionChance > 20 ? 'text-error' : ($inspectionChance > 0 ? 'text-warning' : 'text-success') ?>"><?= $inspectionChance ?>%</div>
-            <div class="text-xs text-base-content/50">Inspection Risk</div>
+            <div class="text-xs text-base-content/70">Inspection Risk</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-error"><?= currency($totalRisk) ?></div>
-            <div class="text-xs text-base-content/50">Max Fine</div>
+            <div class="text-xs text-base-content/70">Max Fine</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-error">-<?= $visitorPenalty ?>%</div>
-            <div class="text-xs text-base-content/50">Visitor Penalty</div>
+            <div class="text-xs text-base-content/70">Visitor Penalty</div>
         </div></div>
     </div>
 
@@ -84,7 +84,7 @@
         <div class="flex items-center gap-2 mb-3">
             <h2 class="text-lg font-bold"><?= $tierInfo[0] ?></h2>
             <span class="badge <?= $tierInfo[2] ?> badge-sm">Tier <?= $tierNum ?></span>
-            <span class="text-xs text-base-content/50">- <?= $tierInfo[1] ?></span>
+            <span class="text-xs text-base-content/70">- <?= $tierInfo[1] ?></span>
         </div>
         <div class="space-y-2">
         <?php foreach ($tierRegs as $reg) : ?>
@@ -103,7 +103,7 @@
                                 <?php else : ?>
                                     <div class="text-xs text-error mt-0.5"><i class="fa-solid fa-xmark mr-1"></i>Risk: <?= currency((int)$reg['penalty_risk']) ?> fine per inspection</div>
                                 <?php endif ?>
-                                <div class="flex items-center gap-3 text-xs text-base-content/50 mt-1">
+                                <div class="flex items-center gap-3 text-xs text-base-content/70 mt-1">
                                     <span><i class="fa-solid fa-coins mr-1"></i><?= currency((int)$reg['compliance_cost']) ?>/day</span>
                                     <span><i class="fa-solid fa-gavel mr-1"></i><?= currency((int)$reg['penalty_risk']) ?> penalty</span>
                                 </div>
@@ -140,7 +140,7 @@
             <div class="flex items-center gap-2 text-sm">
                 <i class="<?= $insp['icon'] ?? 'fa-solid fa-gavel' ?> text-warning w-5 text-center"></i>
                 <span class="flex-1"><?= esc($insp['message']) ?></span>
-                <span class="text-xs text-base-content/40">Day <?= $insp['game_day'] ?></span>
+                <span class="text-xs text-base-content/70">Day <?= $insp['game_day'] ?></span>
             </div>
         <?php endforeach ?>
         </div>
@@ -150,7 +150,7 @@
     <!-- How It Works -->
     <div class="card bg-base-100 shadow-sm mt-6"><div class="card-body p-4">
         <h3 class="font-semibold text-base mb-3"><i class="fa-solid fa-circle-info mr-1 text-info"></i> How Regulations Work</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-base-content/60">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-base-content/70">
             <div class="space-y-1.5">
                 <div><i class="fa-solid fa-gavel mr-1 text-warning"></i> Each violation adds <strong>5%</strong> daily inspection chance</div>
                 <div><i class="fa-solid fa-star mr-1 text-error"></i> Each violation costs <strong>15</strong> reputation per day</div>

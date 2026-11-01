@@ -6,7 +6,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-leaf mr-2 text-success"></i>Environment</h1>
-            <p class="text-sm text-base-content/50">Manage your resort's environmental impact</p>
+            <p class="text-sm text-base-content/70">Manage your resort's environmental impact</p>
         </div>
     </div>
 
@@ -14,28 +14,28 @@
 
     <!-- Eco Score -->
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body p-6 text-center">
-        <div class="text-xs text-base-content/50 uppercase tracking-wider">Eco Score</div>
+        <div class="text-xs text-base-content/70 uppercase tracking-wider">Eco Score</div>
         <div class="text-5xl font-bold mt-1 <?= $env['eco_score'] > 70 ? 'text-success' : ($env['eco_score'] > 40 ? 'text-warning' : 'text-error') ?>"><?= $env['eco_score'] ?>/100</div>
         <progress class="progress <?= $env['eco_score'] > 70 ? 'progress-success' : ($env['eco_score'] > 40 ? 'progress-warning' : 'progress-error') ?> w-64 mx-auto mt-2" value="<?= $env['eco_score'] ?>" max="100"></progress>
-        <p class="text-xs text-base-content/50 mt-2"><?= $env['eco_score'] > 70 ? 'Great! Eco-friendly resorts attract more visitors.' : ($env['eco_score'] > 40 ? 'Average. Consider investing in green upgrades.' : 'Poor. Risk of government penalties.') ?></p>
+        <p class="text-xs text-base-content/70 mt-2"><?= $env['eco_score'] > 70 ? 'Great! Eco-friendly resorts attract more visitors.' : ($env['eco_score'] > 40 ? 'Average. Consider investing in green upgrades.' : 'Poor. Risk of government penalties.') ?></p>
     </div></div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-error"><?= $totalCarbon ?></div>
-            <div class="text-xs text-base-content/50">Carbon Output</div>
+            <div class="text-xs text-base-content/70">Carbon Output</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-success"><?= $env['renewable_pct'] ?>%</div>
-            <div class="text-xs text-base-content/50">Renewable Energy</div>
+            <div class="text-xs text-base-content/70">Renewable Energy</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-info"><?= $env['waste_management'] ?></div>
-            <div class="text-xs text-base-content/50">Waste Management</div>
+            <div class="text-xs text-base-content/70">Waste Management</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-warning"><?= $env['wildlife_impact'] ?></div>
-            <div class="text-xs text-base-content/50">Wildlife Score</div>
+            <div class="text-xs text-base-content/70">Wildlife Score</div>
         </div></div>
     </div>
 
@@ -74,7 +74,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold text-sm"><?= $up['name'] ?></div>
-                            <div class="text-xs text-base-content/50"><?= $up['desc'] ?></div>
+                            <div class="text-xs text-base-content/70"><?= $up['desc'] ?></div>
                         </div>
                         <div class="font-bold text-primary text-sm shrink-0"><?= currency($up['cost']) ?></div>
                     </button>

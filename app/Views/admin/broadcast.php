@@ -11,7 +11,7 @@
     <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
 
     <div class="card bg-base-100 shadow-sm"><div class="card-body">
-        <p class="text-sm text-base-content/60 mb-4">Send a push flash notification to all players currently active in-game. This saves to their permanent log files.</p>
+        <p class="text-sm text-base-content/70 mb-4">Send a push flash notification to all players currently active in-game. This saves to their permanent log files.</p>
         
         <form action="/admin/sendBroadcast" method="post"><?= csrf_field() ?>
             <div class="grid grid-cols-2 gap-4 mb-3">
@@ -27,11 +27,11 @@
                 <div>
                     <label class="label text-xs font-bold uppercase tracking-wider">Display Icon</label>
                     <select name="icon" class="select select-bordered select-sm w-full">
-                        <option value="fa-solid fa-bullhorn">📢 Announcement</option>
-                        <option value="fa-solid fa-snowflake">❄️ Weather / Snow</option>
-                        <option value="fa-solid fa-trophy">🏆 Event / Tournament</option>
-                        <option value="fa-solid fa-triangle-exclamation">⚠️ Hazard / Notice</option>
-                        <option value="fa-solid fa-wrench">🔧 System Maintenance</option>
+                        <option value="fa-solid fa-bullhorn">Announcement</option>
+                        <option value="fa-solid fa-snowflake">Weather / Snow</option>
+                        <option value="fa-solid fa-trophy">Event / Tournament</option>
+                        <option value="fa-solid fa-triangle-exclamation">Hazard / Notice</option>
+                        <option value="fa-solid fa-wrench">System Maintenance</option>
                     </select>
                 </div>
             </div>

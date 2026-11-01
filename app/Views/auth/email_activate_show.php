@@ -43,12 +43,12 @@ if ($user !== null && $user->email) {
             <?= csrf_field() ?>
             <?php if ($user === null) : ?>
             <label class="block">
-                <span class="block text-xs font-semibold text-base-content/60 mb-1.5">Email</span>
+                <span class="block text-xs font-semibold text-base-content/70 mb-1.5">Email</span>
                 <input type="email" name="email" value="<?= esc(old('email') ?? '', 'attr') ?>" autocomplete="email" required class="input input-bordered w-full" style="background: var(--color-base-200); border-color: color-mix(in oklab, var(--color-base-content) 25%, transparent)">
             </label>
             <?php endif ?>
             <label class="block">
-                <span class="block text-xs font-semibold text-base-content/60 mb-1.5">6-digit code</span>
+                <span class="block text-xs font-semibold text-base-content/70 mb-1.5">6-digit code</span>
                 <input type="text" name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required
                     class="input input-bordered w-full h-14 text-center font-mono text-2xl tracking-[0.5em]" style="background: var(--color-base-200); border-color: color-mix(in oklab, var(--color-base-content) 25%, transparent)" <?= $user !== null ? 'autofocus' : '' ?>>
             </label>

@@ -8,7 +8,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-moon mr-2 text-warning"></i>Night Skiing</h1>
-                <p class="text-sm text-base-content/50">Extend operating hours with lighting systems - more visitors, more revenue</p>
+                <p class="text-sm text-base-content/70">Extend operating hours with lighting systems - more visitors, more revenue</p>
             </div>
         </div>
         <div class="flex gap-2">
@@ -32,15 +32,9 @@
     <?php $activeLights = array_filter($lights, fn($l) => $l['status'] === 'active'); ?>
     <div class="card bg-gradient-to-br from-slate-900 to-indigo-900 text-white shadow-xl mb-6">
         <div class="card-body p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                    <?php $__h = (int) date('G'); $__isNight = $__h >= 17 || $__h < 7; ?>
-                    <i class="fa-solid fa-<?= $__isNight ? 'moon text-amber-300' : 'sun text-amber-400' ?> text-lg"></i>
-                    <span class="text-sm text-white/70"><?= $__isNight ? 'Night skiing is active now (' . date('g:i A') . ')' : 'Night skiing starts at 5:00 PM (' . date('g:i A') . ' now)' ?></span>
-                </div>
-                <?php if ($__isNight && count($activeLights) > 0) : ?>
-                <span class="badge badge-warning badge-sm gap-1 animate-pulse"><i class="fa-solid fa-circle text-[6px]"></i> LIVE</span>
-                <?php endif ?>
+            <div class="flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-moon text-amber-300 text-lg" aria-hidden="true"></i>
+                <span class="text-sm text-white/70">Lights that are switched on run every game day. The nightly game tick charges their energy and wear.</span>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
@@ -81,7 +75,7 @@
                 <div class="card bg-base-100 shadow-sm"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-moon text-5xl text-base-content/15 mb-3"></i>
                     <p class="font-semibold">No lights installed</p>
-                    <p class="text-sm text-base-content/50 mt-1">Install your first light from the shop on the right</p>
+                    <p class="text-sm text-base-content/70 mt-1">Install your first light from the shop on the right</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-2">
@@ -98,7 +92,7 @@
                                         <span class="font-semibold text-sm"><?= esc($light['light_name']) ?></span>
                                         <span class="badge badge-xs <?= $cond <= 0 ? 'badge-error' : ($isOn ? 'badge-warning' : 'badge-ghost') ?>"><?= $cond <= 0 ? 'BROKEN' : ($isOn ? 'ON' : 'OFF') ?></span>
                                     </div>
-                                    <div class="flex items-center gap-3 text-xs text-base-content/50 mt-1">
+                                    <div class="flex items-center gap-3 text-xs text-base-content/70 mt-1">
                                         <span><i class="fa-solid fa-signal mr-1"></i><?= $light['coverage'] ?>% coverage</span>
                                         <span><i class="fa-solid fa-bolt mr-1"></i><?= currency($light['energy_cost']) ?>/day</span>
                                     </div>
@@ -139,11 +133,11 @@
                             <i class="<?= $lt['icon'] ?> text-warning"></i>
                             <span class="font-semibold text-sm"><?= $lt['name'] ?></span>
                         </div>
-                        <p class="text-xs text-base-content/60 mb-2"><?= $lt['desc'] ?></p>
+                        <p class="text-xs text-base-content/70 mb-2"><?= $lt['desc'] ?></p>
                         <div class="grid grid-cols-3 gap-1 text-xs text-center mb-2">
-                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= $lt['coverage'] ?>%</div><div class="text-base-content/50">Cover</div></div>
-                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= currency($lt['energy']) ?></div><div class="text-base-content/50">Energy</div></div>
-                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= currency($lt['cost']) ?></div><div class="text-base-content/50">Cost</div></div>
+                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= $lt['coverage'] ?>%</div><div class="text-base-content/70">Cover</div></div>
+                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= currency($lt['energy']) ?></div><div class="text-base-content/70">Energy</div></div>
+                            <div class="bg-base-200 rounded p-1"><div class="font-bold"><?= currency($lt['cost']) ?></div><div class="text-base-content/70">Cost</div></div>
                         </div>
                         <form action="/night-skiing/buy" method="post"><?= csrf_field() ?>
                             <input type="hidden" name="type" value="<?= $key ?>">
@@ -156,7 +150,7 @@
 
             <div class="card bg-base-100 shadow-sm mt-4"><div class="card-body p-3">
                 <h3 class="font-semibold text-xs mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>How It Works</h3>
-                <ul class="text-xs text-base-content/60 space-y-1">
+                <ul class="text-xs text-base-content/70 space-y-1">
                     <li><i class="fa-solid fa-moon mr-1 text-warning"></i> Adds <?= $nightHours ?> hours of evening skiing</li>
                     <li><i class="fa-solid fa-users mr-1"></i> Up to +30% more daily visitors</li>
                     <li><i class="fa-solid fa-bolt mr-1 text-error"></i> Active lights consume energy daily</li>

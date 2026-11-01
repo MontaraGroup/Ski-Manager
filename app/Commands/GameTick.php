@@ -241,7 +241,7 @@ class GameTick extends BaseCommand
                     if (rand(1, 100) <= $inspChance) {
                         $fine = (int) $r['penalty_risk'];
                         $dayExpenses += $fine;
-                        log_activity($userId, 'inspection', 'Inspection fine: ' . $r['name'] . ' — ' . number_format($fine) . '€', 'fa-solid fa-gavel');
+                        log_activity($userId, 'inspection', 'Inspection fine: ' . $r['name'] . ': ' . number_format($fine) . '€', 'fa-solid fa-gavel');
                     }
                 }
             }
@@ -268,9 +268,11 @@ class GameTick extends BaseCommand
             $items = $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray();
             // Snow guns protect the slopes they cover from a thin natural base (cold days only)
             $snowCovered = $v2 ? \App\Libraries\Snowmaking::coverage(array_filter($items, fn($i) => $i['item_type'] === 'slope'), $activeSnowmakers, $baseTemp) : [];
+            // A mechanic looks after the lift they're assigned to (assigned_to holds the lift's name)
+            $mechanicLifts = array_flip(array_column($assignedByRole['mechanic'] ?? [], 'assigned_to'));
             foreach ($items as $item) {
                 $decay = rand(0, 2);
-                if ($item['item_type'] === 'lift' && $countAssigned('mechanic') > 0) {
+                if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
                     $decay = max(0, $decay - 1);
                 }
                 // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
@@ -600,7 +602,7 @@ class GameTick extends BaseCommand
 
                 $tpNewStatus = $tpNewCondition < 30 ? 'maintenance' : 'open';
                 if ($tpNewStatus === 'maintenance' && $park['status'] === 'open') {
-                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance — condition too low.');
+                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance: condition too low.');
                 }
 
                 $terrainParkModel->update($park['id'], [
@@ -654,7 +656,7 @@ class GameTick extends BaseCommand
 
             if ($totalParkingCapacity > 0 && $visitors > $totalParkingCapacity) {
                 $turnedAway = $visitors - $totalParkingCapacity;
-                log_activity($userId, 'parking_bottleneck', number_format($turnedAway) . ' visitors turned away — not enough parking.');
+                log_activity($userId, 'parking_bottleneck', number_format($turnedAway) . ' visitors turned away: not enough parking.');
             }
 
             // ==============================
@@ -788,7 +790,7 @@ class GameTick extends BaseCommand
                         $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . (int) $vg['reputation_bonus'], false)->update();
                         log_activity($userId, 'vip_satisfied', $vg['name'] . ' departed thoroughly satisfied with your resort! +' . (int)$vg['reputation_bonus'] . ' Reputation', 'fa-solid fa-star');
                     } else {
-                        log_activity($userId, 'vip_departure', $vg['name'] . ' departed disappointed — resort lacked requested amenities.', 'fa-solid fa-plane-departure');
+                        log_activity($userId, 'vip_departure', $vg['name'] . ' departed disappointed: the resort lacked the amenities they asked for.', 'fa-solid fa-plane-departure');
                     }
                 } else {
                     $db->table('vip_guests')->where('id', $vg['id'])->update(['days_remaining' => $newDays]);
@@ -831,11 +833,10 @@ class GameTick extends BaseCommand
             // ==============================
             // UPDATE FINANCES
             // ==============================
+            // Apply the day as a change to the current balance: the cash read at the start may be stale
+            // if the player bought or sold something while the tick was running
             $newCash = $cash + $dayIncome - $dayExpenses;
             $financeUpdate = [
-                'cash' => $newCash,
-                'total_income' => (int) $finance['total_income'] + $dayIncome,
-                'total_expenses' => (int) $finance['total_expenses'] + $dayExpenses,
                 'daily_visitors' => $visitors,
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
@@ -847,7 +848,11 @@ class GameTick extends BaseCommand
                     'other_income' => $dayIncome - $known, 'other_costs' => $dayExpenses - $knownCost,
                 ]);
             }
-            $db->table('player_finances')->where('user_id', $userId)->update($financeUpdate);
+            $db->table('player_finances')->where('user_id', $userId)
+                ->set('cash', 'cash + ' . ((int) $dayIncome - (int) $dayExpenses), false)
+                ->set('total_income', 'total_income + ' . (int) $dayIncome, false)
+                ->set('total_expenses', 'total_expenses + ' . (int) $dayExpenses, false)
+                ->update($financeUpdate);
 
             // ==============================
             // FINANCIAL TRANSACTIONS LOG
