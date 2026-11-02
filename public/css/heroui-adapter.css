@@ -1,0 +1,252 @@
+/**
+ * HeroUI v3 CSS Adapter for CodeIgniter 4
+ * Maps HeroUI v3 design system tokens & interactions to Ski Manager components.
+ * Zero React runtime required.
+ */
+
+:root,
+html,
+[data-theme] {
+  color-scheme: dark;
+  --background: oklch(12% 0.005 285.82);
+  --foreground: #f4f4f6;
+  --surface: oklch(18% 0.006 285.89);
+  --surface-secondary: oklch(23% 0.005 286.14);
+  --surface-tertiary: oklch(28% 0.004 247.91);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --muted: oklch(70% 0.015 286.06);
+  --accent: oklch(62% 0.195 253.83);
+  --accent-hover: oklch(58% 0.21 253.83);
+  --accent-foreground: #ffffff;
+  --success: oklch(73% 0.193 150.81);
+  --danger: oklch(65% 0.233 25.74);
+  --warning: oklch(78% 0.158 72.33);
+  --heroui-radius: 0.75rem; /* 12px signature HeroUI radius */
+  --heroui-card-radius: 1rem; /* 16px */
+}
+
+/* 1. Global Canvas */
+html, body {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 2. HeroUI Buttons */
+.btn,
+button.btn,
+a.btn,
+input[type="submit"].btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  padding: 0 1.125rem !important;
+  border-radius: var(--heroui-radius) !important;
+  border: 1px solid transparent !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  user-select: none;
+  transform-origin: center;
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Button Variants */
+.btn-primary {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+.btn-primary:hover {
+  background-color: var(--accent-hover) !important;
+  box-shadow: 0 4px 12px rgba(0, 114, 245, 0.35) !important;
+}
+
+.btn-secondary {
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.btn-secondary:hover {
+  background-color: var(--surface-tertiary) !important;
+}
+
+.btn-outline,
+.btn-ghost {
+  background-color: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+.btn-outline:hover,
+.btn-ghost:hover {
+  background-color: var(--surface-secondary) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.btn-success {
+  background-color: var(--success) !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+.btn-error {
+  background-color: var(--danger) !important;
+  color: #ffffff !important;
+}
+.btn-warning {
+  background-color: var(--warning) !important;
+  color: #000000 !important;
+}
+
+.btn-xs {
+  height: 1.75rem !important;
+  min-height: 1.75rem !important;
+  padding: 0 0.5rem !important;
+  font-size: 0.75rem !important;
+  border-radius: 0.5rem !important;
+}
+.btn-sm {
+  height: 2.125rem !important;
+  min-height: 2.125rem !important;
+  padding: 0 0.875rem !important;
+  font-size: 0.8125rem !important;
+  border-radius: 0.625rem !important;
+}
+.btn-lg {
+  height: 3rem !important;
+  min-height: 3rem !important;
+  padding: 0 1.5rem !important;
+  font-size: 1rem !important;
+  border-radius: 0.875rem !important;
+}
+
+/* 3. HeroUI Cards */
+.card,
+.bg-base-200,
+.bg-base-300,
+[class*="rounded-box"] {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--heroui-card-radius) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.card-body {
+  padding: 1.5rem !important;
+}
+
+/* 4. HeroUI Inputs & Form Controls */
+.input,
+.select,
+.textarea,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"] {
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--heroui-radius) !important;
+  padding: 0.5rem 0.875rem !important;
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus,
+input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(0, 114, 245, 0.25) !important;
+  outline: none !important;
+}
+
+/* 5. HeroUI Badges & Chips */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px !important;
+  padding: 0.2rem 0.65rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  background-color: var(--surface-secondary) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+}
+
+.badge-primary {
+  background-color: rgba(0, 114, 245, 0.18) !important;
+  color: #60a5fa !important;
+  border-color: rgba(0, 114, 245, 0.35) !important;
+}
+.badge-success {
+  background-color: rgba(23, 201, 100, 0.18) !important;
+  color: #4ade80 !important;
+  border-color: rgba(23, 201, 100, 0.35) !important;
+}
+.badge-error {
+  background-color: rgba(243, 18, 96, 0.18) !important;
+  color: #fb7185 !important;
+  border-color: rgba(243, 18, 96, 0.35) !important;
+}
+.badge-warning {
+  background-color: rgba(245, 165, 36, 0.18) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 165, 36, 0.35) !important;
+}
+
+/* 6. HeroUI Navbar */
+.navbar {
+  background-color: rgba(24, 24, 30, 0.8) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  margin-bottom: 1.5rem;
+}
+
+/* 7. Tables */
+table.table thead th {
+  background-color: var(--surface-secondary) !important;
+  color: var(--muted) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+table.table tbody td {
+  border-bottom: 1px solid var(--border-subtle) !important;
+  color: var(--foreground) !important;
+}
+
+table.table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* 8. Modals & Dialogs */
+.modal-box,
+dialog[open] {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--heroui-card-radius) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  color: var(--foreground) !important;
+}
