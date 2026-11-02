@@ -83,7 +83,7 @@
     <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_med.jpg" as="image">
     <?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
-    <link rel="stylesheet" href="/css/heroui.css?v=<?= @filemtime(FCPATH . "css/heroui.css") ?>">
+    <link rel="stylesheet" href="/build/app.css?v=<?= @filemtime(FCPATH . "build/app.css") ?>">
     <link rel="stylesheet" href="/css/heroui-adapter.css?v=<?= @filemtime(FCPATH . "css/heroui-adapter.css") ?>">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1184,5 +1184,6 @@ if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElemen
     });
 }
 </script>
+<script type="module" src="/build/app.js?v=<?= @filemtime(FCPATH . 'build/app.js') ?>"></script>
 </body>
 </html>

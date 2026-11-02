@@ -149,6 +149,13 @@
     </div>
 </section>
 
+<!-- HeroUI React Component Showcase -->
+<section class="py-8 bg-base-200 border-b border-border">
+    <div class="max-w-6xl mx-auto px-4">
+        <div data-react-component="HeroDemo" data-props='{"resortName": "Ski Manager v2"}'></div>
+    </div>
+</section>
+
 <?php if ($s2Live) : ?>
 <!-- Season 2 note -->
 <section id="season-2" class="home-section bg-base-100 border-b border-base-300">
