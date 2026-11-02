@@ -83,7 +83,9 @@
     <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_med.jpg" as="image">
     <?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
-    <link rel="stylesheet" href="/css/material-ui.css?v=<?= @filemtime(FCPATH . "css/material-ui.css") ?>">
+    <link rel="stylesheet" href="https://unpkg.com/@material-tailwind/html@2.3.2/styles/material-tailwind.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="/css/material-tailwind.css?v=<?= @filemtime(FCPATH . "css/material-tailwind.css") ?>">
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1183,5 +1185,6 @@ if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElemen
     });
 }
 </script>
+<script src="https://unpkg.com/@material-tailwind/html@2.3.2/scripts/ripple.js" defer></script>
 </body>
 </html>
