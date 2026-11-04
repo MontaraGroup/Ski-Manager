@@ -334,13 +334,44 @@ class Roadmap extends BaseController
 
         $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
 
-        return view('roadmap/index', [
-            'columns'    => $columns,
-            'isAdmin'    => self::checkAdmin(),
-            'totalItems' => count($items),
-            'totalVotes' => $totalVotes,
-            'allItems'   => $items,
-        ]);
+        $formattedColumns = [];
+        foreach ($columns as $statusKey => $col) {
+            $rawIcon = $col['icon'] ?? 'fa-compass';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $formattedItems = [];
+            foreach ($col['items'] as $item) {
+                $formattedItems[] = [
+                    'id' => (int) $item['id'],
+                    'title' => (string) $item['title'],
+                    'description' => (string) ($item['description'] ?? ''),
+                    'status' => (string) $item['status'],
+                    'category' => (string) ($item['category'] ?? 'gameplay'),
+                    'upvotes' => (int) ($item['upvotes'] ?? 0),
+                    'author_name' => (string) ($item['author_name'] ?? 'Ski Manager Team'),
+                    'author_id' => isset($item['author_id']) ? (int) $item['author_id'] : null,
+                    'voted' => (bool) ($item['voted'] ?? false),
+                    'created_at' => (string) ($item['created_at'] ?? ''),
+                ];
+            }
+            $formattedColumns[] = [
+                'status' => $statusKey,
+                'title' => (string) $col['title'],
+                'description' => (string) $col['description'],
+                'icon' => $icon,
+                'items' => $formattedItems,
+            ];
+        }
+
+        $page = [
+            'isAdmin' => self::checkAdmin(),
+            'stats' => [
+                'totalItems' => count($items),
+                'totalVotes' => $totalVotes,
+            ],
+            'columns' => $formattedColumns,
+        ];
+
+        return view('roadmap/index', ['page' => $page]);
     }
 
     public function vote(int $itemId)
