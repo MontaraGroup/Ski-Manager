@@ -54,17 +54,61 @@ class Tickets extends BaseController
         ];
 
         $finance = db_connect()->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRowArray();
+        $v2 = featureEnabled('economy_v2');
+        $rawLastTick = json_decode($finance['last_tick'] ?? '', true) ?: null;
 
-        return view('tickets/index', [
-            'v2' => featureEnabled('economy_v2'),
-            'lastTick' => json_decode($finance['last_tick'] ?? '', true) ?: null,
-            'tickets' => $tickets,
-            'ticketLabels' => $ticketLabels,
-            'recentSales' => $recentSales,
-            'todayRevenue' => $todayRevenue,
-            'todayCount' => $todayCount,
-            'gameDay' => $gameDay,
-        ]);
+        $formattedTickets = [];
+        foreach ($tickets as $ticket) {
+            $typeKey = $ticket['ticket_type'];
+            $label = $ticketLabels[$typeKey] ?? ['name' => ucfirst($typeKey), 'icon' => 'fa-solid fa-ticket', 'desc' => ''];
+            $icon = preg_match('/^[a-z0-9 -]+$/i', $label['icon']) ? $label['icon'] : 'fa-solid fa-ticket';
+            $refPrice = \App\Libraries\Economy::TICKET_REFERENCE[$typeKey] ?? null;
+            $mixPct = isset(\App\Libraries\Economy::TICKET_MIX[$typeKey]) ? (int) round(\App\Libraries\Economy::TICKET_MIX[$typeKey] * 100) : null;
+            $priceDemandPct = $refPrice ? (int) round(\App\Libraries\Economy::priceDemand($typeKey, (float) $ticket['price']) * 100) : null;
+
+            $formattedTickets[] = [
+                'id' => (int) $ticket['id'],
+                'ticket_type' => $typeKey,
+                'name' => (string) $label['name'],
+                'icon' => $icon,
+                'desc' => (string) $label['desc'],
+                'price' => (int) $ticket['price'],
+                'priceText' => currency((int) $ticket['price']),
+                'active' => (bool) $ticket['active'],
+                'refPrice' => $refPrice,
+                'refPriceText' => $refPrice ? currency($refPrice) : null,
+                'mixPct' => $mixPct,
+                'priceDemandPct' => $priceDemandPct,
+            ];
+        }
+
+        $lastTickData = null;
+        if ($rawLastTick) {
+            $lastTickData = [
+                'visitorsText' => number_format((int) ($rawLastTick['visitors'] ?? 0)),
+                'perVisitText' => currency((int) round($rawLastTick['per_visit'] ?? 0)),
+                'priceDemandPct' => (int) round(($rawLastTick['price_demand'] ?? 1) * 100),
+                'turnedAwayText' => !empty($rawLastTick['turned_away']) ? number_format((int) $rawLastTick['turned_away']) : null,
+            ];
+        }
+
+        $page = [
+            'v2' => $v2,
+            'stats' => [
+                'todayRevenueText' => currency($todayRevenue),
+                'todayCountText' => number_format($todayCount),
+                'gameDay' => $gameDay,
+            ],
+            'tickets' => $formattedTickets,
+            'lastTick' => $lastTickData,
+            'currencySymbol' => currencySymbol(),
+            'rules' => [
+                'maxDemand' => \App\Libraries\Economy::MAX_DEMAND,
+                'priceElasticity' => \App\Libraries\Economy::PRICE_ELASTICITY,
+            ],
+        ];
+
+        return view('tickets/index', ['page' => $page]);
     }
 
     public function updatePrice()

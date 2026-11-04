@@ -1,3 +1,11 @@
+## Release 2026-11-04 22:32
+
+* Merge pull request #9 from Montara-Group/feature/react-phase-3b-commercial (7eaf0d7)
+* feat(ui): tickets, marketing, night skiing, ski lessons and morale in React (phase 3b batch 2) (44a9109)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c302750)
+* Merge pull request #8 from Montara-Group/feature/react-phase-3b-ops (a69c27a)
+* feat(ui): staff, equipment, snowmaking, grooming, parking and scenic lifts in React (phase 3b batch 1) (d32bdf0)
+
 ## Release 2026-11-04 22:12
 
 * Merge pull request #8 from Montara-Group/feature/react-phase-3b-ops (a69c27a)
