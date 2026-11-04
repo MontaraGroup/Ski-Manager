@@ -46,15 +46,34 @@ class Achievements extends BaseController
         }
         usort($lockedFeatures, fn($x, $y) => [$y['ready'], $y['pct']] <=> [$x['ready'], $x['pct']]);
 
-        return view('achievements/index', [
-            'groups' => $groups,
-            'completed' => count(array_filter($rows, fn($a) => $a['completed'])),
+        $completed = count(array_filter($rows, fn($a) => $a['completed']));
+        $fmt = fn(array $a, $v) => str_starts_with($a['achievement_key'], 'cash_') ? currency((int) $v) : number_format((int) $v);
+        $list = [];
+        foreach ($groups as $category => $items) {
+            if (!$items) continue;
+            $list[] = [
+                'category' => $category,
+                'done' => count(array_filter($items, fn($a) => $a['state'] !== 'progress')),
+                'items' => array_map(fn($a) => [
+                    'id' => (int) $a['id'], 'name' => (string) $a['name'], 'description' => (string) $a['description'],
+                    'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $a['icon']) ? (string) $a['icon'] : 'fa-solid fa-award',
+                    'reward' => (int) $a['reward_amount'] ? currency((int) $a['reward_amount']) : null,
+                    'state' => $a['state'], 'pct' => $a['pct'],
+                    'progress' => $fmt($a, $a['progress']) . ' / ' . $fmt($a, $a['target']),
+                    'unlocks' => $a['unlocks'],
+                ], $items),
+            ];
+        }
+
+        return view('achievements/index', ['page' => [
+            'completed' => $completed,
             'total' => count($rows),
             'readyCount' => count($ready),
-            'readyReward' => array_sum(array_map(fn($a) => (int) $a['reward_amount'], $ready)),
-            'earned' => array_sum(array_map(fn($a) => $a['claimed'] ? (int) $a['reward_amount'] : 0, $rows)),
+            'readyReward' => currency(array_sum(array_map(fn($a) => (int) $a['reward_amount'], $ready))),
+            'earned' => currency(array_sum(array_map(fn($a) => $a['claimed'] ? (int) $a['reward_amount'] : 0, $rows))),
             'lockedFeatures' => getDifficulty() === 'easy' ? [] : $lockedFeatures,
-        ]);
+            'groups' => $list,
+        ]]);
     }
 
     public function claim(int $id)

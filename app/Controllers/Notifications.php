@@ -17,12 +17,16 @@ class Notifications extends BaseController
         $unreadCount = $db->table('notifications')->where('user_id', $userId)->where('is_read', 0)->countAllResults();
         $totalCount = $db->table('notifications')->where('user_id', $userId)->countAllResults();
 
-        return view('notifications/index', [
-            'notifications' => $notifications,
-            'filter' => $filter,
+        return view('notifications/index', ['page' => [
+            'filter' => $filter === 'unread' ? 'unread' : 'all',
             'unreadCount' => $unreadCount,
             'totalCount' => $totalCount,
-        ]);
+            'items' => array_map(fn($n) => [
+                'id' => (int) $n['id'], 'title' => (string) $n['title'], 'message' => (string) $n['message'],
+                'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $n['icon']) ? (string) $n['icon'] : 'fa-solid fa-bell',
+                'isRead' => (bool) $n['is_read'], 'time' => date('M j, H:i', strtotime($n['created_at'])),
+            ], $notifications),
+        ]]);
     }
 
     /** GET /notifications/open/{id}: mark one of your notifications read and go where it points */
