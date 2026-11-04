@@ -53,13 +53,70 @@ class Government extends BaseController
 
         $inspections = $db->table('activity_log')->where('user_id', $userId)->like('category', 'inspection')->orderBy('created_at', 'DESC')->limit(10)->get()->getResultArray();
 
-        return view('government/index', [
-            'regs' => $regs, 'tiers' => $tiers, 'compliant' => $compliant, 'total' => count($regs),
-            'totalCost' => $totalCost, 'totalRisk' => $totalRisk, 'totalPossibleCost' => $totalPossibleCost,
-            'inspectionChance' => $nonCompliant * 5, 'reputationPenalty' => $nonCompliant * 15,
-            'visitorPenalty' => $nonCompliant * 3, 'complianceScore' => $complianceScore,
-            'inspections' => $inspections, 'regConfig' => $regConfig,
-        ]);
+        $formattedTiers = [];
+        $tierMeta = [
+            1 => ['Basic Regulations', 'Required for all resorts'],
+            2 => ['Advanced Standards', 'Unlock additional benefits'],
+            3 => ['Premium Compliance', 'Top-tier resort requirements'],
+        ];
+
+        foreach ($tiers as $tierNum => $tierRegs) {
+            $formattedRegs = [];
+            foreach ($tierRegs as $r) {
+                $cfg = $regConfig[$r['regulation_type']] ?? [];
+                $rawIcon = $cfg['icon'] ?? 'fa-gavel';
+                $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+                $formattedRegs[] = [
+                    'id' => (int) $r['id'],
+                    'name' => (string) $r['name'],
+                    'regulation_type' => (string) $r['regulation_type'],
+                    'compliant' => (bool) $r['compliant'],
+                    'compliance_cost' => (int) $r['compliance_cost'],
+                    'costText' => currency((int) $r['compliance_cost']),
+                    'penalty_risk' => (int) $r['penalty_risk'],
+                    'penaltyText' => currency((int) $r['penalty_risk']),
+                    'benefit' => (string) ($cfg['benefit'] ?? 'Compliant'),
+                    'icon' => $icon,
+                ];
+            }
+            $meta = $tierMeta[$tierNum] ?? ["Tier {$tierNum}", ''];
+            $formattedTiers[] = [
+                'tier' => (int) $tierNum,
+                'title' => (string) $meta[0],
+                'subtitle' => (string) $meta[1],
+                'regulations' => $formattedRegs,
+            ];
+        }
+
+        $formattedInspections = array_map(function ($insp) {
+            $rawIcon = $insp['icon'] ?? 'fa-gavel';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            return [
+                'id' => (int) ($insp['id'] ?? 0),
+                'message' => (string) ($insp['message'] ?? ''),
+                'game_day' => (int) ($insp['game_day'] ?? 0),
+                'icon' => $icon,
+                'dateText' => isset($insp['created_at']) ? date('M j', strtotime($insp['created_at'])) : '',
+            ];
+        }, $inspections);
+
+        $page = [
+            'stats' => [
+                'compliantCount' => $compliant,
+                'totalCount' => count($regs),
+                'complianceScore' => (int) $complianceScore,
+                'totalCostText' => currency((int) $totalCost),
+                'totalRiskText' => currency((int) $totalRisk),
+                'totalPossibleCostText' => currency((int) $totalPossibleCost),
+                'inspectionChance' => (int) ($nonCompliant * 5),
+                'reputationPenalty' => (int) ($nonCompliant * 15),
+                'visitorPenalty' => (int) ($nonCompliant * 3),
+            ],
+            'tiers' => $formattedTiers,
+            'inspections' => $formattedInspections,
+        ];
+
+        return view('government/index', ['page' => $page]);
     }
 
     public function toggle(int $id)
