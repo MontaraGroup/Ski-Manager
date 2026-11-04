@@ -129,7 +129,14 @@
 
 /* Touch screens: 44px tap targets (DESIGN.md, Layout) */
 @media (pointer: coarse) {
-  [data-island] .button {
+  :is([data-island], [data-island-layer]) .button {
     min-height: 2.75rem;
+  }
+}
+
+/* Phones with the bottom dock (MobileDock): toasts sit above it instead of covering it */
+@media (max-width: 767.98px) {
+  :root:has([data-island="MobileDock"]) .toast-region:is(.toast-region--bottom, .toast-region--bottom-start, .toast-region--bottom-end) {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }

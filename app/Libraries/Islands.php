@@ -26,9 +26,13 @@ class Islands
             . '<script type="application/json">' . $json . '</script>';
     }
 
-    public static function headTags(): string
+    /**
+     * $always: the layout passes true when it will mount islands itself further down the page
+     * (the signed-in shell), since <head> is printed before the layout body runs
+     */
+    public static function headTags(bool $always = false): string
     {
-        if (self::$used === []) return '';
+        if (self::$used === [] && !$always) return '';
         return '<meta name="csrf-token" content="' . esc(csrf_hash(), 'attr') . '" data-header="' . esc(config('Security')->headerName, 'attr') . '">'
             . "\n    " . Vite::tags(self::ENTRY);
     }

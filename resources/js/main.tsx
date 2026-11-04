@@ -13,6 +13,9 @@ import '../css/islands.css';
  * To add one: create resources/js/islands/Name.tsx with a default export, and list it here.
  */
 const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = {
+  AppShell: () => import('./islands/AppShell'),
+  StatsBar: () => import('./islands/StatsBar'),
+  MobileDock: () => import('./islands/MobileDock'),
   UiKit: () => import('./islands/UiKit'),
 };
 
