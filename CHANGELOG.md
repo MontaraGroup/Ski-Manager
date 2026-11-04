@@ -1,3 +1,11 @@
+## Release 2026-11-04 19:19
+
+* Merge pull request #2 from Montara-Group/fix/money-exploits (e38cdf9)
+* Merge main into fix/money-exploits (f84251a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (912ed05)
+* Merge branch 'main' into main (95a00a7)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (4d370b4)
+
 ## Release 2026-11-01 23:58
 
 * Merge branch 'main' into main (95a00a7)
