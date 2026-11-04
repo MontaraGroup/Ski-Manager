@@ -35,6 +35,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   NightSkiingPage: () => import('./islands/NightSkiingPage'),
   SkiLessonsPage: () => import('./islands/SkiLessonsPage'),
   MoralePage: () => import('./islands/MoralePage'),
+  BuildingPage: () => import('./islands/BuildingPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {
