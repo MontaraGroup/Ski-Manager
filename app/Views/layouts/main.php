@@ -218,7 +218,7 @@ body { font-family: var(--sign); }
 }
 .site-nav .menu-horizontal > li > a,
 .site-nav .menu-horizontal > li > details > summary { font-weight: 500; border-radius: 6px; }
-.site-nav .menu-horizontal > li > a.active { background: transparent; color: var(--color-base-content); box-shadow: inset 0 -2px 0 var(--color-primary); border-radius: 0; }
+.site-nav .menu-horizontal > li > a.active { background: color-mix(in oklab, var(--color-base-content) 8%, transparent); color: var(--color-base-content); font-weight: 600; }
 
 /* Resort stats bar under the navbar */
 .stats-bar { gap: 0 !important; }
