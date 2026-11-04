@@ -1,0 +1,151 @@
+/* Resort Map Leaflet Engine & Canvas Styles */
+
+#map {
+  height: 100%;
+  width: 100%;
+  background: #0f172a;
+  position: relative;
+  z-index: 0;
+  user-select: none;
+}
+
+.leaflet-interactive {
+  cursor: pointer !important;
+}
+
+#map.drawing-cursor,
+#map.drawing-cursor .leaflet-interactive {
+  cursor: crosshair !important;
+}
+
+/* Custom Vertex Handle */
+.custom-vertex-wrap {
+  background: transparent;
+  border: none;
+}
+.custom-vertex-handle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  cursor: grab !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.custom-vertex-handle.is-start {
+  width: 20px;
+  height: 20px;
+  background: #22c55e;
+  border: 2.5px solid #ffffff;
+  color: #ffffff;
+}
+.custom-vertex-handle.is-end {
+  width: 20px;
+  height: 20px;
+  background: #ef4444;
+  border: 2.5px solid #ffffff;
+  color: #ffffff;
+}
+.custom-vertex-handle.is-selected {
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.75), 0 2px 8px rgba(0, 0, 0, 0.85);
+  transform: scale(1.25);
+}
+.custom-vertex-handle:hover {
+  transform: scale(1.3);
+}
+.custom-vertex-handle:active {
+  cursor: grabbing !important;
+}
+
+/* Custom Midpoint Handle */
+.custom-midpoint-wrap {
+  background: transparent;
+  border: none;
+}
+.custom-midpoint-handle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+  cursor: copy !important;
+  opacity: 0.85;
+  transition: all 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 900;
+}
+.custom-midpoint-handle:hover {
+  transform: scale(1.45);
+  opacity: 1;
+}
+
+/* Snap Indicator Ring */
+.snap-indicator-wrap {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+.snap-indicator-ring {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.22);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.9);
+  animation: pulseSnap 1s infinite alternate;
+}
+@keyframes pulseSnap {
+  from { transform: scale(0.9); opacity: 0.8; }
+  to { transform: scale(1.15); opacity: 1; }
+}
+
+/* Admin Leaflet Popup */
+.admin-leaflet-popup .leaflet-popup-content-wrapper {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65) !important;
+  padding: 4px;
+}
+.admin-leaflet-popup .leaflet-popup-tip {
+  background: #1e293b !important;
+}
+
+/* Trail signs */
+.tsign {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.tsign.green {
+  border-radius: 50%;
+  background: #23a55a;
+}
+.tsign.blue {
+  background: #2f6fd6;
+}
+.tsign.black {
+  width: 10px;
+  height: 10px;
+  background: #0b0d10;
+  transform: rotate(45deg);
+  margin: 0 1px;
+  box-shadow: 0 0 0 1.5px #cfd4da;
+}
+.tsign-pair {
+  display: inline-flex;
+  gap: 3px;
+}
