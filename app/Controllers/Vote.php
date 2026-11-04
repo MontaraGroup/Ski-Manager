@@ -345,17 +345,77 @@ class Vote extends BaseController
             $recentVotes[] = $rv;
         }
 
-        return view('vote/index', [
-            'options'        => $options,
-            'userVote'       => $userVote,
-            'voteCounts'     => $voteCounts,
-            'totalVotes'     => $totalVotes,
-            'leadingResort'  => $leadingResort,
-            'recentVotes'    => $recentVotes,
-            'seasonNumber'   => getSeasonNumber(),
-            'seasonDay'      => getSeasonDay(),
-            'seasonLength'   => getSeasonLength(),
-        ]);
+        $formattedOptions = [];
+        foreach ($options as $k => $opt) {
+            $rawIcon = $opt['icon'] ?? 'fa-mountain';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $rawPerkIcon = $opt['perk']['icon'] ?? 'fa-sparkles';
+            $perkIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawPerkIcon);
+            $votes = (int) ($voteCounts[$k] ?? 0);
+            $pct = $totalVotes > 0 ? (float) round($votes / $totalVotes * 100, 1) : 0.0;
+            $isLeading = ($k === $leadingResort && $totalVotes > 0);
+            $isUserVote = ($userVote && ($userVote['resort_key'] ?? '') === $k);
+
+            $formattedOptions[] = [
+                'key' => (string) $k,
+                'name' => (string) $opt['name'],
+                'location' => (string) $opt['location'],
+                'tagline' => (string) $opt['tagline'],
+                'desc' => (string) $opt['desc'],
+                'icon' => $icon,
+                'specs' => $opt['specs'],
+                'perk' => [
+                    'title' => (string) $opt['perk']['title'],
+                    'badge' => (string) $opt['perk']['badge'],
+                    'icon' => $perkIcon,
+                    'desc' => (string) $opt['perk']['desc'],
+                ],
+                'votes' => $votes,
+                'percentage' => $pct,
+                'isLeading' => $isLeading,
+                'isUserVote' => $isUserVote,
+            ];
+        }
+
+        $formattedRecent = [];
+        foreach ($recentVotes as $rv) {
+            $rk = $rv['resort_key'] ?? '';
+            $optName = $options[$rk]['name'] ?? $rk;
+            $dt = $rv['updated_at'] ?? $rv['created_at'] ?? null;
+            $formattedRecent[] = [
+                'username' => (string) ($rv['username'] ?? 'Player'),
+                'resort_key' => $rk,
+                'resortName' => $optName,
+                'timeAgoText' => $dt ? timeAgo($dt) : '',
+            ];
+        }
+
+        $userVotedKey = $userVote['resort_key'] ?? null;
+        $userVotedName = $userVotedKey && isset($options[$userVotedKey]) ? $options[$userVotedKey]['name'] : null;
+
+        $page = [
+            'season' => [
+                'number' => getSeasonNumber(),
+                'day' => getSeasonDay(),
+                'length' => getSeasonLength(),
+                'daysRemaining' => max(0, getSeasonLength() - getSeasonDay()),
+            ],
+            'stats' => [
+                'totalVotes' => $totalVotes,
+                'leadingKey' => $leadingResort,
+                'leadingName' => $leadingResort && isset($options[$leadingResort]) ? $options[$leadingResort]['name'] : null,
+                'candidateCount' => count($options),
+            ],
+            'userVote' => [
+                'hasVoted' => !empty($userVotedKey),
+                'resortKey' => $userVotedKey,
+                'resortName' => $userVotedName,
+            ],
+            'options' => $formattedOptions,
+            'recentVotes' => $formattedRecent,
+        ];
+
+        return view('vote/index', ['page' => $page]);
     }
 
     public function cast()

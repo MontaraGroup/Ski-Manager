@@ -6,7 +6,18 @@ class Contact extends BaseController
 {
     public function index(): string
     {
-        return view('contact/index');
+        $page = [
+            'user' => [
+                'name' => (string) (old('name') ?? (auth()->loggedIn() ? auth()->user()->username : '')),
+                'email' => (string) (old('email') ?? (auth()->loggedIn() ? (auth()->user()->email ?? '') : '')),
+                'loggedIn' => auth()->loggedIn(),
+            ],
+            'formTime' => time(),
+            'defaultSubject' => (string) (old('subject') ?? 'general'),
+            'defaultMessage' => (string) (old('message') ?? ''),
+        ];
+
+        return view('contact/index', ['page' => $page]);
     }
 
     public function send()
