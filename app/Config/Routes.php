@@ -134,6 +134,11 @@ $routes->options('/api/resort-data', 'Api::resortData');
 $routes->match(['get', 'options'], '/api/leaderboard', 'Api::leaderboard');
 $routes->match(['post', 'options'], '/api/sync', 'Api::sync');
 $routes->match(['post', 'options'], '/api/auth', 'Api::auth');
+// JSON API for the React islands: signed-in session, CSRF on writes (resources/js/lib/api.ts)
+$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'apiauth'], static function ($routes) {
+    $routes->get('me', 'Me::index');
+});
+$routes->get('/ui-kit', 'UiKit::index', ['filter' => 'admin']);
 $routes->match(['get', 'head'], '/roadmap', 'Roadmap::index');
 $routes->post('/roadmap/vote/(:num)', 'Roadmap::vote/$1');
 $routes->post('/roadmap/suggest', 'Roadmap::suggest');

@@ -1,0 +1,31 @@
+{
+  "_rolldown-runtime-WkwZ5CU-.js": {
+    "file": "assets/rolldown-runtime-WkwZ5CU-.js",
+    "name": "rolldown-runtime"
+  },
+  "resources/js/islands/UiKit.tsx": {
+    "file": "assets/UiKit-BlmOqLl4.js",
+    "name": "UiKit",
+    "src": "resources/js/islands/UiKit.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-WkwZ5CU-.js",
+      "resources/js/main.tsx"
+    ]
+  },
+  "resources/js/main.tsx": {
+    "file": "assets/islands-9D-IxP6D.js",
+    "name": "islands",
+    "src": "resources/js/main.tsx",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-WkwZ5CU-.js"
+    ],
+    "dynamicImports": [
+      "resources/js/islands/UiKit.tsx"
+    ],
+    "css": [
+      "assets/islands-BWr6jhYj.css"
+    ]
+  }
+}

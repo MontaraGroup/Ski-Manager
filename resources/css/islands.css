@@ -1,0 +1,135 @@
+/*
+ * Styles for the React islands: Tailwind v4, HeroUI v3.2.7, and the Ski Manager theme from
+ * DESIGN.md mapped onto HeroUI's variables. Loaded only on pages that mount an island.
+ *
+ * The site's two themes keep their current data-theme values for now (carboncloud = dark,
+ * winter = light). DESIGN.md moves them to HeroUI's own "dark" / "light" when the shell
+ * becomes React; both spellings are listed so that switch needs no CSS change.
+ */
+@import "tailwindcss" source("../js");
+@import "@heroui/styles";
+
+@theme {
+  /* HeroUI rounds buttons and cards with rounded-3xl (pill-like). DESIGN.md: 0.75rem */
+  --radius-3xl: 0.75rem;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --radius: 0.5rem;
+  --skeleton-animation: none; /* no shimmer loop (DESIGN.md, Motion) */
+}
+
+/* Carbon Cloud (dark). Ratios against --background / --surface are in DESIGN.md */
+:root[data-theme="carboncloud"],
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: oklch(17% 0.015 260);
+  --foreground: oklch(90% 0.02 240);
+  --surface: oklch(22% 0.02 260);
+  --surface-foreground: var(--foreground);
+  --surface-secondary: oklch(25% 0.02 260);
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: oklch(28% 0.02 260);
+  --surface-tertiary-foreground: var(--foreground);
+  --overlay: oklch(22% 0.02 260);
+  --overlay-foreground: var(--foreground);
+  --muted: oklch(72% 0.02 250);
+  --default: oklch(28% 0.02 260);
+  --default-foreground: var(--foreground);
+  --field-background: oklch(22% 0.02 260);
+  --field-foreground: var(--foreground);
+  --field-placeholder: var(--muted);
+  --segment: oklch(34% 0.02 260);
+  --segment-foreground: var(--foreground);
+  --border: oklch(30% 0.02 260);
+  --separator: oklch(27% 0.02 260);
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --surface-shadow: 0 0 0 0 transparent inset;
+  --overlay-shadow: 0 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  --field-shadow: 0 0 0 0 transparent inset;
+
+  --accent: oklch(52% 0.18 245);
+  --accent-foreground: var(--snow);
+  --link: oklch(70% 0.15 245);
+  --focus: oklch(70% 0.15 245);
+  --success: oklch(72% 0.18 155);
+  --success-foreground: var(--eclipse);
+  --warning: oklch(75% 0.15 65);
+  --warning-foreground: var(--eclipse);
+  --danger: oklch(66% 0.18 25);
+  --danger-foreground: var(--eclipse);
+  /* HeroUI's default (accent mixed with text) is 4.3:1 on secondary buttons; the link blue is 5.5 */
+  --accent-soft-foreground: var(--link);
+  --sign-green: oklch(66% 0.17 150);
+  --sign-blue: oklch(60% 0.17 258);
+}
+
+/* Winter Alpine (light) */
+:root[data-theme="winter"],
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: oklch(96% 0.008 260);
+  --foreground: oklch(28% 0.04 260);
+  --surface: oklch(99.5% 0.002 260);
+  --surface-foreground: var(--foreground);
+  --surface-secondary: oklch(93% 0.01 260);
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: oklch(90% 0.012 260);
+  --surface-tertiary-foreground: var(--foreground);
+  --overlay: var(--white);
+  --overlay-foreground: var(--foreground);
+  --muted: oklch(47% 0.03 260);
+  --default: oklch(93% 0.01 260);
+  --default-foreground: var(--foreground);
+  --field-background: var(--white);
+  --field-foreground: var(--foreground);
+  --border: oklch(88% 0.012 260);
+  --separator: oklch(91% 0.01 260);
+
+  --accent: oklch(48% 0.2 260);
+  --accent-foreground: var(--snow);
+  --link: oklch(48% 0.2 260);
+  --focus: oklch(48% 0.2 260);
+  --success: oklch(48% 0.15 155);
+  --success-foreground: var(--snow);
+  --warning: oklch(50% 0.15 60);
+  --warning-foreground: var(--snow);
+  --danger: oklch(52% 0.2 25);
+  --danger-foreground: var(--snow);
+  --sign-green: oklch(52% 0.15 150);
+  --sign-blue: oklch(50% 0.17 258);
+}
+
+/* HeroUI hovers mix the fill toward its text color, which lightens a dark-theme fill
+   under white text. Darken instead, so labels keep 4.5:1 while hovered */
+:root[data-theme] {
+  --accent-hover: color-mix(in oklab, var(--accent) 85%, black);
+  --danger-hover: color-mix(in oklab, var(--danger) 88%, black);
+  --success-hover: color-mix(in oklab, var(--success) 88%, black);
+  --warning-hover: color-mix(in oklab, var(--warning) 88%, black);
+}
+
+/*
+ * The site's own CSS (public/css/input.css) has classes with the same names as HeroUI's:
+ * alert, avatar, badge, card, checkbox, dropdown, input, kbd, label, link, menu, radio,
+ * select, tabs, toast. Those rules are unlayered, so they would beat HeroUI's layered ones on
+ * every island. Inside an island, in the overlay layer, and in the toast region (React Aria
+ * portals that one straight into <body>), revert-layer drops them back to the layered
+ * (HeroUI + Tailwind) values. The list goes away once those pages are React.
+ */
+:is([data-island], [data-island-layer], .toast-region) :is(.alert, .avatar, .badge, .card, .checkbox, .dropdown, .input, .kbd, .label, .link, .menu, .radio, .select, .tabs, .toast) {
+  all: revert-layer;
+}
+/* the site's global focus outline would double HeroUI's focus ring */
+:is([data-island], [data-island-layer], .toast-region) *:focus-visible {
+  outline: revert-layer !important;
+  outline-offset: revert-layer !important;
+}
+
+/* Touch screens: 44px tap targets (DESIGN.md, Layout) */
+@media (pointer: coarse) {
+  [data-island] .button {
+    min-height: 2.75rem;
+  }
+}
