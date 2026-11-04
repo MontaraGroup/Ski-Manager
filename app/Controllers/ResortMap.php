@@ -136,7 +136,11 @@ class ResortMap extends BaseController
             $s['type'] === 'lift' ? $lifts++ : $slopes++;
         }
 
-        return view('resort_map/index', [
+        $distUnit   = function_exists('distanceUnit') ? distanceUnit() : 'm';
+        $isImperial = function_exists('isImperial') ? isImperial() : false;
+        $userCashText = function_exists('currency') ? currency($userCash) : '$' . number_format($userCash);
+
+        $page = [
             'resortMap'         => $resortMap,
             'resortMaps'        => self::RESORT_MAPS,
             'mapConfig'         => $mapConfig,
@@ -144,12 +148,32 @@ class ResortMap extends BaseController
             'sectors'           => $sectors,
             'builtSegmentIds'   => $builtSegmentIds,
             'builtItems'        => $builtItems,
+            'releasedSectorIds' => $releasedSectorIds,
             'userCash'          => $userCash,
+            'userCashText'      => $userCashText,
             'isAdmin'           => $isAdmin,
             'liftCount'         => $lifts,
             'slopeCount'        => $slopes,
             'segmentCount'      => count($segments),
-            'releasedSectorIds' => $releasedSectorIds,
+            'distUnit'          => $distUnit,
+            'isImperial'        => $isImperial,
+            'economyV2'         => (function_exists('featureEnabled') && featureEnabled('economy_v2')) ? [
+                'capacity' => \App\Libraries\Economy::LIFT_CAPACITY,
+                'maxSeats' => \App\Libraries\Economy::LIFT_MAX_SEATS,
+                'liftRun'  => \App\Libraries\Economy::LIFT_RUN_PER_M,
+                'slopeRun' => \App\Libraries\Economy::SLOPE_RUN_PER_M,
+                'perDay'   => \App\Libraries\Economy::LIFT_HOURS / \App\Libraries\Economy::RIDES_PER_SKIER,
+                'liftKwh'  => \App\Libraries\Utilities::LIFT_KWH_PER_M,
+            ] : null,
+            'csrf'              => [
+                'name' => csrf_token(),
+                'hash' => csrf_hash(),
+            ],
+        ];
+
+        return view('resort_map/index', [
+            'page'      => $page,
+            'mapConfig' => $mapConfig,
         ]);
     }
 
