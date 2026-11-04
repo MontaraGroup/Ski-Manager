@@ -36,6 +36,24 @@ jobs:
           done < <(find app -type f -name "*.php")
           if [ "$ERRORS" -gt 0 ]; then exit 1; fi
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # The server serves the committed public/build (no Node on the VPS), so a stale build
+      # must stop the deploy rather than ship old islands
+      - name: Build React islands and check the committed build is current
+        run: |
+          npm ci
+          npm run build:islands
+          if ! git diff --quiet -- public/build; then
+            echo "public/build is out of date: run npm run build:islands and commit the result"
+            git status --short -- public/build
+            exit 1
+          fi
+
   release-and-deploy:
     name: Release & Production Deployment
     needs: validate
