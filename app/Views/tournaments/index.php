@@ -11,8 +11,6 @@
         <span class="badge badge-outline ml-auto">Day <?= $gameDay ?></span>
     </div>
 
-    <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
-    <?php if (session('error')) : ?><div class="alert alert-error mb-4"><span><?= session('error') ?></span></div><?php endif ?>
 
     <!-- Stats -->
     <?php

@@ -75,6 +75,24 @@ class ParkingModel extends Model
         return self::PARKING_CONFIG[$type]['icon'] ?? 'fa-square-parking';
     }
 
+    /** Skiers per car arriving at the resort */
+    public const PEOPLE_PER_CAR = 2.5;
+
+    /**
+     * Cars a lot fills in a day: its share (by capacity) of the cars arriving, fewer when its fee is
+     * above the type's default (same price curve as lift tickets) and when it is worn, never more than
+     * it holds.
+     */
+    public static function carsParked(array $lot, int $visitors, int $totalCapacity): int
+    {
+        if ($totalCapacity <= 0 || (int) $lot['capacity'] <= 0) return 0;
+        $ref = max(1, (float) (self::getConfig($lot['parking_type'])['default_fee'] ?? 10));
+        $feeFactor = min(\App\Libraries\Economy::MAX_DEMAND, exp(-\App\Libraries\Economy::PRICE_ELASTICITY * ((float) $lot['fee_per_day'] / $ref - 1)));
+        $share = $visitors / self::PEOPLE_PER_CAR * ((int) $lot['capacity'] / $totalCapacity);
+        $cars = (int) round($share * $feeFactor * \App\Libraries\Economy::conditionFactor((int) $lot['condition_pct']));
+        return min($cars, (int) $lot['capacity']);
+    }
+
     public static function getTotalCapacity(array $parkingFacilities): int
     {
         $total = 0;

@@ -42,8 +42,6 @@ $hireForm = function (string $key, array $r, string $btn) use ($candidates) {
         </dl>
     </div>
 
-    <?php if (session('success')) : ?><div class="alert alert-success mb-4" role="status"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><?= session('success') ?></span></div><?php endif ?>
-    <?php if (session('error')) : ?><div class="alert alert-error mb-4" role="alert"><span><?= esc(session('error')) ?></span></div><?php endif ?>
 
     <!-- What the resort needs -->
     <section class="card bg-base-100 shadow-sm mb-6" aria-labelledby="needs-h"><div class="card-body p-5">
