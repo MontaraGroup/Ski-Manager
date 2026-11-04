@@ -71,23 +71,89 @@ class Equipment extends BaseController
 
         $slopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->whereIn('status', ['open', 'broken'])->countAllResults();
         $runningGuns = array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker' && $e['state'] === 'running');
+        $cash = (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow()->cash ?? 0);
 
-        return view('equipment/index', [
-            'cash' => (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow()->cash ?? 0),
-            'equipment' => $equipment,
-            'catalog' => $catalog,
+        $stateLabels = [
+            'running' => ['tone' => 'success', 'label' => 'Running'],
+            'no_operator' => ['tone' => 'warning', 'label' => 'No operator'],
+            'idle' => ['tone' => 'warning', 'label' => 'Idle: too warm'],
+            'off' => ['tone' => 'neutral', 'label' => 'Off'],
+            'broken' => ['tone' => 'danger', 'label' => 'Broken'],
+        ];
+
+        $formattedEquipment = [];
+        foreach ($equipment as $e) {
+            $formattedEquipment[] = [
+                'id' => (int) $e['id'],
+                'name' => (string) $e['name'],
+                'brand' => (string) $e['brand'],
+                'equipment_type' => (string) $e['equipment_type'],
+                'capacity' => (int) $e['capacity'],
+                'condition_pct' => (int) $e['condition_pct'],
+                'status' => (string) $e['status'],
+                'state' => (string) $e['state'],
+                'stateLabel' => $stateLabels[$e['state']]['label'] ?? ucfirst($e['state']),
+                'stateTone' => $stateLabels[$e['state']]['tone'] ?? 'neutral',
+                'crew' => $e['crew'] ? (string) $e['crew'] : null,
+                'fuelCostText' => currency((int) $e['fuel_cost']),
+                'repairCost' => (int) $e['repair_cost'],
+                'repairCostText' => currency((int) $e['repair_cost']),
+                'resale' => (int) $e['resale'],
+                'resaleText' => currency((int) $e['resale']),
+                'dailyCostText' => currency((int) $e['daily_cost']),
+            ];
+        }
+
+        $formattedCatalog = ['groomer' => [], 'snowmaker' => []];
+        foreach ($catalog as $type => $items) {
+            foreach ($items as $c) {
+                $formattedCatalog[$type][] = [
+                    'model_key' => (string) $c['model_key'],
+                    'name' => (string) $c['name'],
+                    'brand' => (string) $c['brand'],
+                    'description' => (string) $c['description'],
+                    'equipment_type' => (string) $c['equipment_type'],
+                    'capacity' => (int) $c['capacity'],
+                    'owned' => (int) $c['owned'],
+                    'costText' => currency((int) $c['cost']),
+                    'price' => (int) $c['price'],
+                    'priceText' => currency((int) $c['price']),
+                    'runningCostText' => currency((int) $c['running_cost']),
+                    'maxTempText' => $c['max_temp'] === null ? 'Any temperature' : temp($c['max_temp']) . ' or colder',
+                    'energyKwhText' => number_format((int) $c['energy_kwh']) . ' kWh',
+                    'waterLitersText' => number_format((int) $c['water_liters'] / 1000, 1) . ' m³',
+                    'costPerSlopeText' => currency((int) round($c['price'] / max(1, (int) $c['capacity']))),
+                ];
+            }
+        }
+
+        $page = [
+            'cash' => $cash,
+            'cashText' => currency($cash),
+            'cashNegative' => $cash < 0,
             'discount' => $discount,
-            'slopes' => $slopes,
-            'groomCapacity' => $fleet['capacity'],
-            'groomers' => count($groomers),
-            'operators' => count($operators),
-            'idleGroomers' => $fleet['idle_machines'],
-            'guns' => count($guns),
-            'gunCapacity' => count(Snowmaking::coverage($db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->get()->getResultArray(), $guns, $baseTemp)),
-            'runningGuns' => count($runningGuns),
-            'dailyCost' => array_sum(array_column($equipment, 'daily_cost')),
-            'fleetValue' => array_sum(array_column($equipment, 'resale')),
-        ]);
+            'stats' => [
+                'slopes' => $slopes,
+                'groomCapacity' => $fleet['capacity'],
+                'groomers' => count($groomers),
+                'operators' => count($operators),
+                'idleGroomers' => $fleet['idle_machines'],
+                'guns' => count($guns),
+                'gunCapacity' => count(Snowmaking::coverage($db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->get()->getResultArray(), $guns, $baseTemp)),
+                'runningGuns' => count($runningGuns),
+                'dailyCostText' => currency(array_sum(array_column($equipment, 'daily_cost'))),
+                'fleetValueText' => currency(array_sum(array_column($equipment, 'resale'))),
+                'equipmentCount' => count($equipment),
+            ],
+            'equipment' => $formattedEquipment,
+            'catalog' => $formattedCatalog,
+            'rules' => [
+                'repairSharePct' => (int) (Fleet::REPAIR_SHARE * 100),
+                'resaleSharePct' => (int) (Fleet::RESALE_SHARE * 100),
+            ],
+        ];
+
+        return view('equipment/index', ['page' => $page]);
     }
 
     public function buy()
