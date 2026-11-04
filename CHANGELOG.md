@@ -1,3 +1,11 @@
+## Release 2026-11-04 21:29
+
+* Merge branch 'MontaraGroup:main' into main (878ef58)
+* Merge pull request #7 from Montara-Group/feature/react-pages-read (fd14c6a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (87f0715)
+* Merge pull request #5 from Montara-Group/feature/react-foundation (28d7276)
+* Merge pull request #3 from Montara-Group/feature/react-shell (94ecb0b)
+
 ## Release 2026-11-04 21:27
 
 * Merge pull request #5 from Montara-Group/feature/react-foundation (28d7276)
