@@ -48,15 +48,118 @@ class RealEstate extends BaseController
 
         $sold = array_filter($props, fn($p) => $p['state'] === 'sold');
         $leased = array_filter($props, fn($p) => $p['state'] === 'leased');
-        return view('real_estate/index', $s + [
-            'props' => $props,
-            'projects' => $projects,
-            'isWinter' => $isWinter,
-            'rentPerDay' => array_sum(array_column($leased, 'rent')),
-            'upkeepPerDay' => array_sum(array_map(fn($p) => (int) $p['upkeep_per_day'], $leased)),
-            'feesPerDay' => array_sum(array_column($sold, 'fee')),
-            'salesTotal' => array_sum(array_map(fn($p) => (int) $p['sale_price'], $sold)),
-        ]);
+
+        $cash = $s['cash'];
+        $plots = (int) $s['plots'];
+        $plotsFree = (int) $s['plotsFree'];
+        $used = $plots - $plotsFree;
+        $nextPlotAt = $plots < Rules::MAX_PLOTS ? ($plots - Rules::BASE_PLOTS + 1) * Rules::SLOPES_PER_PLOT : null;
+        $signed = fn(float $v) => ($v >= 0 ? '+' : '−') . number_format(abs($v), 2);
+
+        $rentPerDay = array_sum(array_column($leased, 'rent'));
+        $upkeepPerDay = array_sum(array_map(fn($p) => (int) $p['upkeep_per_day'], $leased));
+        $feesPerDay = array_sum(array_column($sold, 'fee'));
+        $salesTotal = array_sum(array_map(fn($p) => (int) $p['sale_price'], $sold));
+
+        $formattedProps = array_map(function ($p) use ($cash) {
+            $rawIcon = $p['project']['icon'] ?? 'fa-building';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $gain = (int) $p['sale_now'] - (int) ($p['project']['cost'] ?? 0);
+            return [
+                'id' => (int) $p['id'],
+                'name' => (string) $p['name'],
+                'level' => (int) $p['level'],
+                'condition_pct' => (int) $p['condition_pct'],
+                'state' => (string) $p['state'],
+                'build_days_left' => (int) ($p['build_days_left'] ?? 0),
+                'rent' => (int) $p['rent'],
+                'rentText' => currency((int) $p['rent']),
+                'upkeep' => (int) $p['upkeep_per_day'],
+                'upkeepText' => currency((int) $p['upkeep_per_day']),
+                'sale_now' => (int) $p['sale_now'],
+                'saleNowText' => currency((int) $p['sale_now']),
+                'sale_price' => (int) $p['sale_price'],
+                'salePriceText' => currency((int) $p['sale_price']),
+                'fee' => (int) $p['fee'],
+                'feeText' => currency((int) $p['fee']),
+                'repair' => (int) $p['repair'],
+                'repairText' => currency((int) $p['repair']),
+                'canRepair' => $cash >= (int) $p['repair'],
+                'gain' => $gain,
+                'gainText' => ($gain >= 0 ? '+' : '') . currency($gain),
+                'project' => [
+                    'name' => (string) $p['project']['name'],
+                    'icon' => $icon,
+                    'cost' => (int) $p['project']['cost'],
+                    'costText' => currency((int) $p['project']['cost']),
+                ],
+            ];
+        }, $props);
+
+        $formattedProjects = [];
+        foreach ($projects as $lvl => $pr) {
+            $rawIcon = $pr['icon'] ?? 'fa-building';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $gain = (int) $pr['sale_now'] - (int) $pr['cost'];
+            $gainPct = (int) round($gain / max(1, (int) $pr['cost']) * 100);
+            $formattedProjects[] = [
+                'level' => (int) $lvl,
+                'name' => (string) $pr['name'],
+                'icon' => $icon,
+                'cost' => (int) $pr['cost'],
+                'costText' => currency((int) $pr['cost']),
+                'days' => (int) $pr['days'],
+                'rent_now' => (int) $pr['rent_now'],
+                'rentNowText' => currency((int) $pr['rent_now']),
+                'net_now' => (int) $pr['net_now'],
+                'netNowText' => currency((int) $pr['net_now']),
+                'payback' => $pr['payback'],
+                'paybackText' => $pr['payback'] ? $pr['payback'] . ' days' : 'never',
+                'sale_now' => (int) $pr['sale_now'],
+                'saleNowText' => currency((int) $pr['sale_now']),
+                'gain' => $gain,
+                'gainText' => ($gain >= 0 ? '+' : '') . currency($gain),
+                'gainPct' => $gainPct,
+                'canAfford' => $cash >= (int) $pr['cost'],
+            ];
+        }
+
+        $page = [
+            'market' => [
+                'value' => (float) round($s['market']['value'], 2),
+                'valueText' => number_format($s['market']['value'], 2) . '×',
+                'parts' => [
+                    'base' => number_format($s['market']['parts']['base'], 2),
+                    'rating' => $signed($s['market']['parts']['rating']),
+                    'slopes' => $signed($s['market']['parts']['slopes']),
+                    'condition' => $signed($s['market']['parts']['condition']),
+                ],
+            ],
+            'plots' => [
+                'total' => $plots,
+                'used' => $used,
+                'free' => $plotsFree,
+                'nextPlotAt' => $nextPlotAt,
+                'maxPlots' => Rules::MAX_PLOTS,
+            ],
+            'stats' => [
+                'stars' => (int) $s['stars'],
+                'openSlopes' => (int) $s['openSlopes'],
+                'avgCond' => (int) $s['avgCond'],
+                'rentPerDayText' => currency((int) $rentPerDay),
+                'upkeepPerDayText' => currency((int) $upkeepPerDay),
+                'feesPerDayText' => currency((int) $feesPerDay),
+                'salesTotalText' => currency((int) $salesTotal),
+                'salesCount' => count($sold),
+                'isWinter' => (bool) $isWinter,
+                'cashText' => currency((int) $cash),
+                'cashRaw' => (int) $cash,
+            ],
+            'projects' => $formattedProjects,
+            'properties' => $formattedProps,
+        ];
+
+        return view('real_estate/index', ['page' => $page]);
     }
 
     public function develop()

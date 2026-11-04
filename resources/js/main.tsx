@@ -36,6 +36,12 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   SkiLessonsPage: () => import('./islands/SkiLessonsPage'),
   MoralePage: () => import('./islands/MoralePage'),
   BuildingPage: () => import('./islands/BuildingPage'),
+  InsurancePage: () => import('./islands/InsurancePage'),
+  GovernmentPage: () => import('./islands/GovernmentPage'),
+  EnvironmentPage: () => import('./islands/EnvironmentPage'),
+  BankPage: () => import('./islands/BankPage'),
+  RealEstatePage: () => import('./islands/RealEstatePage'),
+  CompliancePage: () => import('./islands/CompliancePage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {

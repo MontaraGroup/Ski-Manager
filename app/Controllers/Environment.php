@@ -47,14 +47,37 @@ class Environment extends BaseController
             ['name' => 'Wildlife Corridor', 'icon' => 'fa-solid fa-paw', 'desc' => '+15 wildlife impact', 'field' => 'wildlife_impact', 'boost' => 15, 'cost' => 40000],
         ];
 
-        return view('environment/index', [
-            'env' => $env,
-            'totalCarbon' => $totalCarbon,
-            'carbonFromCannons' => $carbonFromCannons,
-            'carbonFromLights' => $carbonFromLights,
-            'carbonFromBuildings' => $carbonFromBuildings,
-            'upgrades' => $upgrades,
-        ]);
+        $formattedUpgrades = array_map(function ($up) {
+            $rawIcon = $up['icon'] ?? 'fa-seedling';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            return [
+                'name' => (string) $up['name'],
+                'icon' => $icon,
+                'desc' => (string) $up['desc'],
+                'field' => (string) $up['field'],
+                'boost' => (int) $up['boost'],
+                'cost' => (int) $up['cost'],
+                'costText' => currency((int) $up['cost']),
+            ];
+        }, $upgrades);
+
+        $page = [
+            'env' => [
+                'eco_score' => (int) ($env['eco_score'] ?? 50),
+                'renewable_pct' => (int) ($env['renewable_pct'] ?? 0),
+                'waste_management' => (int) ($env['waste_management'] ?? 0),
+                'wildlife_impact' => (int) ($env['wildlife_impact'] ?? 0),
+            ],
+            'carbon' => [
+                'total' => (int) $totalCarbon,
+                'fromCannons' => (int) $carbonFromCannons,
+                'fromLights' => (int) $carbonFromLights,
+                'fromBuildings' => (int) $carbonFromBuildings,
+            ],
+            'upgrades' => $formattedUpgrades,
+        ];
+
+        return view('environment/index', ['page' => $page]);
     }
 
     public function buyUpgrade()
