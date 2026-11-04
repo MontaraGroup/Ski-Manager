@@ -53,16 +53,92 @@ class ScenicLifts extends BaseController
         }
         unset($sl);
 
-        return view('scenic/index', [
-            'lifts' => $lifts,
-            'scenicLifts' => $scenicLifts,
-            'availableLifts' => $availableLifts,
-            'totalDailyRevenue' => $totalDailyRevenue,
-            'seasonRevenue' => $seasonRevenue,
-            'isSummer' => $isSummer,
-            'seasonDay' => $seasonDay,
-            'upgrades' => self::SCENIC_UPGRADES,
-        ]);
+        $formattedScenicLifts = [];
+        foreach ($scenicLifts as $sl) {
+            $installed = !empty($sl['scenic']['upgrades']) ? json_decode((string) $sl['scenic']['upgrades'], true) : [];
+            $installed = is_array($installed) ? $installed : [];
+            $formattedUpgrades = [];
+            foreach ($installed as $uKey) {
+                if (isset(self::SCENIC_UPGRADES[$uKey])) {
+                    $up = self::SCENIC_UPGRADES[$uKey];
+                    $rawIcon = $up['icon'] ?? 'fa-solid fa-sparkles';
+                    $formattedUpgrades[] = [
+                        'key' => $uKey,
+                        'name' => (string) $up['name'],
+                        'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-sparkles',
+                    ];
+                }
+            }
+
+            $formattedScenicLifts[] = [
+                'id' => (int) $sl['id'],
+                'name' => (string) $sl['name'],
+                'subtype' => (string) ($sl['subtype'] ?? ''),
+                'subtypeLabel' => ucwords(str_replace('_', ' ', (string) ($sl['subtype'] ?? ''))),
+                'lengthText' => distance((int) $sl['length_meters']),
+                'sector' => (int) ($sl['sector'] ?? 1),
+                'status' => (string) $sl['status'],
+                'condition_pct' => (int) $sl['condition_pct'],
+                'price' => (int) $sl['scenic']['price'],
+                'priceText' => currency((int) $sl['scenic']['price']),
+                'riders' => (int) $sl['scenic']['riders'],
+                'todayRevenue' => (int) $sl['scenic']['today'],
+                'todayRevenueText' => currency((int) $sl['scenic']['today']),
+                'upgrades' => $formattedUpgrades,
+                'installedKeys' => $installed,
+            ];
+        }
+
+        $formattedAvailableLifts = [];
+        foreach ($availableLifts as $al) {
+            $formattedAvailableLifts[] = [
+                'id' => (int) $al['id'],
+                'name' => (string) $al['name'],
+                'subtypeLabel' => ucwords(str_replace('_', ' ', (string) ($al['subtype'] ?? ''))),
+                'lengthText' => distance((int) $al['length_meters']),
+            ];
+        }
+
+        $formattedUpgradesList = [];
+        foreach (self::SCENIC_UPGRADES as $uKey => $up) {
+            $rawIcon = $up['icon'] ?? 'fa-solid fa-sparkles';
+            $formattedUpgradesList[] = [
+                'key' => (string) $uKey,
+                'name' => (string) $up['name'],
+                'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-sparkles',
+                'cost' => (int) $up['cost'],
+                'costText' => currency((int) $up['cost']),
+                'revenueBoost' => (int) $up['revenue_boost'],
+                'revenueBoostText' => currency((int) $up['revenue_boost']),
+                'desc' => (string) $up['desc'],
+            ];
+        }
+
+        $page = [
+            'stats' => [
+                'scenicCount' => count($scenicLifts),
+                'totalLifts' => count($lifts),
+                'summerRevenueText' => currency($totalDailyRevenue),
+                'seasonRevenueText' => currency($seasonRevenue),
+                'isSummer' => $isSummer,
+                'seasonDay' => $seasonDay,
+                'seasonLength' => getSeasonLength(),
+                'winterSharePct' => (int) (Scenic::WINTER_SHARE * 100),
+            ],
+            'scenicLifts' => $formattedScenicLifts,
+            'availableLifts' => $formattedAvailableLifts,
+            'upgrades' => $formattedUpgradesList,
+            'rules' => [
+                'minPrice' => Scenic::MIN_PRICE,
+                'maxPrice' => Scenic::MAX_PRICE,
+                'refPrice' => Scenic::REF_PRICE,
+                'refPriceText' => currency(Scenic::REF_PRICE),
+                'baseRiders' => Scenic::BASE_RIDERS,
+                'winterSharePct' => (int) (Scenic::WINTER_SHARE * 100),
+            ],
+        ];
+
+        return view('scenic/index', ['page' => $page]);
     }
 
     public function designate()

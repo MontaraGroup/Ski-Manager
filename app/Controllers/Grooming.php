@@ -51,20 +51,134 @@ class Grooming extends BaseController
         // Points the fleet restores per night, spread over all open slopes, against what they lose
         $nightlyRestorePerSlope = $open ? $state['fleet']['capacity'] * $state['restore'] / count($open) : 0;
 
-        return view('grooming/index', array_merge($state, [
-            'slopes' => $slopes,
-            'sectors' => $sectors,
-            'weather' => $weather,
-            'thinBase' => $thinBase,
-            'snowmakerCount' => count($snowmakers),
-            'avgCondition' => $open ? (int) round(array_sum(array_column($open, 'condition_pct')) / count($open)) : 0,
-            'avgDecay' => round($avgDecay, 1),
-            'nightlyRestorePerSlope' => round($nightlyRestorePerSlope, 1),
-            'tonight' => Rules::pick($groomable, $state['fleet']['capacity']),
-            'brokenSlopes' => count(array_filter($slopes, fn($s) => $s['status'] === 'broken')),
-            'fuelPerDay' => array_sum(array_map(fn($m) => $m['status'] === 'active' ? (int) $m['fuel_cost'] : 0, $state['machines'])),
-            'crewPerDay' => array_sum(array_column($state['operators'], 'salary')),
-        ]));
+        $tonight = Rules::pick($groomable, $state['fleet']['capacity']);
+        $tonightIds = array_flip(array_map(fn($s) => (int) $s['id'], $tonight));
+
+        $groomableNotGroomedToday = array_values(array_filter($slopes, fn($s) => Rules::groomable($s) && !$s['groomed_today']));
+        $batch = array_slice($groomableNotGroomedToday, 0, $state['runsLeft']);
+        $batchCost = array_sum(array_column($batch, 'extra_cost'));
+
+        $crewedIds = array_flip(array_map(fn($m) => (int) $m['id'], $state['fleet']['machines']));
+        $activeMachines = count(array_filter($state['machines'], fn($m) => $m['status'] === 'active'));
+
+        $formattedSlopes = [];
+        foreach ($slopes as $s) {
+            $sId = (int) $s['id'];
+            $isGroomable = Rules::groomable($s) && !$s['groomed_today'] && $state['runsLeft'] > 0;
+            $formattedSlopes[] = [
+                'id' => $sId,
+                'name' => (string) $s['name'],
+                'difficulty' => (string) ($s['difficulty'] ?? ''),
+                'sectorName' => (string) $s['sector_name'],
+                'lengthText' => distance((int) $s['length_meters']),
+                'condition_pct' => (int) $s['condition_pct'],
+                'draw_pct' => (int) $s['draw_pct'],
+                'decay' => (int) $s['decay'],
+                'thin_base' => (bool) $s['thin_base'],
+                'snow_covered' => (bool) $s['snow_covered'],
+                'status' => (string) $s['status'],
+                'groomed_today' => (bool) $s['groomed_today'],
+                'isTonight' => isset($tonightIds[$sId]),
+                'isGroomable' => $isGroomable,
+                'extraCost' => (int) $s['extra_cost'],
+                'extraCostText' => currency((int) $s['extra_cost']),
+            ];
+        }
+
+        $formattedMachines = [];
+        foreach ($state['machines'] as $m) {
+            $mId = (int) $m['id'];
+            $cond = (int) $m['condition_pct'];
+            $status = (string) $m['status'];
+            $stateLabel = match (true) {
+                $status === 'broken' => 'Broken',
+                $status !== 'active' => 'Off',
+                isset($crewedIds[$mId]) => 'Running',
+                default => 'No operator',
+            };
+            $stateTone = match (true) {
+                $status === 'broken' => 'danger',
+                $status !== 'active' => 'neutral',
+                isset($crewedIds[$mId]) => 'success',
+                default => 'warning',
+            };
+
+            $formattedMachines[] = [
+                'id' => $mId,
+                'name' => (string) $m['name'],
+                'capacity' => (int) $m['capacity'],
+                'condition_pct' => $cond,
+                'status' => $status,
+                'stateLabel' => $stateLabel,
+                'stateTone' => $stateTone,
+                'fuelCostText' => currency((int) $m['fuel_cost']),
+            ];
+        }
+
+        $formattedOperators = [];
+        foreach ($state['operators'] as $o) {
+            $formattedOperators[] = [
+                'id' => (int) $o['id'],
+                'name' => (string) $o['name'],
+                'level' => (int) $o['level'],
+            ];
+        }
+
+        $formattedSectors = [];
+        foreach ($sectors as $name => $sec) {
+            $formattedSectors[] = [
+                'name' => (string) $name,
+                'count' => (int) $sec['count'],
+                'avg' => (int) $sec['avg'],
+                'worst' => (int) $sec['worst'],
+            ];
+        }
+
+        $fuelPerDay = array_sum(array_map(fn($m) => $m['status'] === 'active' ? (int) $m['fuel_cost'] : 0, $state['machines']));
+        $crewPerDay = array_sum(array_column($state['operators'], 'salary'));
+        $net = $nightlyRestorePerSlope - $avgDecay;
+
+        $page = [
+            'overview' => [
+                'capacity' => $state['fleet']['capacity'],
+                'runsLeft' => $state['runsLeft'],
+                'avgCondition' => $open ? (int) round(array_sum(array_column($open, 'condition_pct')) / count($open)) : 0,
+                'avgDecay' => round($avgDecay, 1),
+                'nightlyRestorePerSlope' => round($nightlyRestorePerSlope, 1),
+                'netPositive' => $net >= 0,
+                'tonightCount' => count($tonight),
+                'slopesCount' => count($slopes),
+                'restore' => $state['restore'],
+                'idleMachines' => $state['fleet']['idle_machines'],
+                'activeMachines' => $activeMachines,
+                'brokenSlopes' => count(array_filter($slopes, fn($s) => $s['status'] === 'broken')),
+                'machinesCount' => count($state['machines']),
+                'extraRunCostPerKmText' => currency((int) round(\App\Libraries\Grooming::EXTRA_RUN_PER_M * 1000)),
+            ],
+            'batch' => [
+                'count' => count($batch),
+                'cost' => $batchCost,
+                'costText' => currency($batchCost),
+                'available' => count($batch) > 0 && $state['fleet']['capacity'] > 0,
+            ],
+            'slopes' => $formattedSlopes,
+            'machines' => $formattedMachines,
+            'operators' => $formattedOperators,
+            'costs' => [
+                'fuelText' => currency($fuelPerDay),
+                'crewText' => currency($crewPerDay),
+                'totalText' => currency($fuelPerDay + $crewPerDay),
+            ],
+            'sectors' => $formattedSectors,
+            'rules' => [
+                'thinBaseThreshold' => \App\Libraries\Weather::THIN_BASE,
+                'restoreBase' => \App\Libraries\Grooming::RESTORE_BASE,
+                'restoreMax' => \App\Libraries\Grooming::RESTORE_MAX,
+                'extraRunPerKmText' => currency((int) round(\App\Libraries\Grooming::EXTRA_RUN_PER_M * 1000)),
+            ],
+        ];
+
+        return view('grooming/index', ['page' => $page]);
     }
 
     /** Paid daytime run on one slope */

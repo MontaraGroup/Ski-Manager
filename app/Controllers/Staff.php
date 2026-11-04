@@ -52,14 +52,60 @@ class Staff extends BaseController
 
         $assigned = count(array_filter($staff, fn($s) => !empty($s['assigned_to'])));
         $unassigned = count($staff) - $assigned;
+        $lowMorale = count(array_filter($staff, fn($s) => (int)$s['morale'] < 40));
+        $avgMorale = count($staff) > 0 ? (int) round(array_sum(array_column($staff, 'morale')) / count($staff)) : 0;
 
-        return view('staff/index', [
-            'staff' => $staff,
-            'roles' => $roles,
-            'totalSalary' => $totalSalary,
-            'assigned' => $assigned,
-            'unassigned' => $unassigned,
-        ]);
+        $roleCounts = [];
+        foreach ($staff as $s) {
+            $roleCounts[$s['role']] = ($roleCounts[$s['role']] ?? 0) + 1;
+        }
+
+        $roleSummaries = [];
+        foreach ($roleCounts as $roleKey => $count) {
+            $roleInfo = $roles[$roleKey] ?? ['name' => ucfirst($roleKey), 'icon' => 'fa-solid fa-user'];
+            $roleSummaries[] = [
+                'key' => $roleKey,
+                'name' => $roleInfo['name'],
+                'icon' => preg_match('/^[a-z0-9 -]+$/i', $roleInfo['icon']) ? $roleInfo['icon'] : 'fa-solid fa-user',
+                'count' => $count,
+            ];
+        }
+
+        $formattedStaff = [];
+        foreach ($staff as $s) {
+            $roleInfo = $roles[$s['role']] ?? ['name' => ucfirst($s['role']), 'icon' => 'fa-solid fa-user'];
+            $canTrain = (int) $s['level'] < self::maxUsefulLevel($s['role']);
+            $trainCost = $canTrain ? self::trainCost($s) : 0;
+            $formattedStaff[] = [
+                'id' => (int) $s['id'],
+                'name' => (string) $s['name'],
+                'role' => (string) $s['role'],
+                'roleName' => (string) $roleInfo['name'],
+                'roleIcon' => preg_match('/^[a-z0-9 -]+$/i', $roleInfo['icon']) ? $roleInfo['icon'] : 'fa-solid fa-user',
+                'level' => (int) $s['level'],
+                'status' => (string) $s['status'],
+                'morale' => (int) $s['morale'],
+                'salaryText' => currency((int) $s['salary']),
+                'assignedTo' => !empty($s['assigned_to']) ? (string) $s['assigned_to'] : null,
+                'canTrain' => $canTrain,
+                'trainCostText' => $canTrain ? currency($trainCost) : null,
+            ];
+        }
+
+        $page = [
+            'stats' => [
+                'total' => count($staff),
+                'dailyCostText' => currency($totalSalary),
+                'avgMorale' => $avgMorale,
+                'assigned' => $assigned,
+                'unassigned' => $unassigned,
+                'lowMoraleCount' => $lowMorale,
+            ],
+            'roles' => $roleSummaries,
+            'staff' => $formattedStaff,
+        ];
+
+        return view('staff/index', ['page' => $page]);
     }
 
     /** What each role does in the nightly tick (GameTick), shown on the hire page */
@@ -87,41 +133,95 @@ class Staff extends BaseController
         $groomers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'groomer')->countAllResults();
         $lifts = count($targets['mechanic']);
 
+        $groups = [
+            'slopes' => ['groomer', 'mechanic', 'ski_patrol', 'medic', 'snowmaker', 'park_crew'],
+            'guests' => ['instructor', 'chef', 'receptionist', 'manager'],
+        ];
+        $groupOf = [];
+        foreach ($groups as $g => $keys) foreach ($keys as $k) $groupOf[$k] = $g;
+
+        $hireRoles = [];
         foreach ($roles as $key => &$r) {
             $mine = array_filter($staff, fn($s) => $s['role'] === $key);
             $assigned = count(array_filter($mine, fn($s) => !empty($s['assigned_to'])));
             $posts = count($targets[$key] ?? []);
-            $r += ['effect' => self::EFFECTS[$key] ?? $r['desc'], 'daily' => (int) round($r['salary'] * $costMult),
-                'have' => count($mine), 'assigned' => $assigned, 'idle' => count($mine) - $assigned, 'posts' => $posts, 'free' => max(0, $posts - $assigned)];
-            [$r['verdict'], $r['why']] = match (true) {
+            $daily = (int) round($r['salary'] * $costMult);
+            $have = count($mine);
+            $idle = $have - $assigned;
+            $free = max(0, $posts - $assigned);
+
+            [$verdict, $why] = match (true) {
                 $key === 'groomer' => $groomers === 0 ? ['none', 'Buy a groomer first.'] : (count($mine) < $groomers
                     ? ['needed', $groomers === 1 ? 'Your groomer has no driver.' : ($groomers - count($mine)) . ' of your ' . $groomers . ' groomers ' . ($groomers - count($mine) === 1 ? 'has' : 'have') . ' no driver.']
                     : ['enough', 'Every groomer has a driver.']),
-                $key === 'mechanic' && $lifts > 0 && $r['idle'] === 0 && $assigned < $lifts => ['needed', $lifts === 1 ? 'Your lift has no mechanic.' : ($lifts - $assigned) . ' of your ' . $lifts . ' lifts ' . ($lifts - $assigned === 1 ? 'has' : 'have') . ' no mechanic.'],
+                $key === 'mechanic' && $lifts > 0 && $idle === 0 && $assigned < $lifts => ['needed', $lifts === 1 ? 'Your lift has no mechanic.' : ($lifts - $assigned) . ' of your ' . $lifts . ' lifts ' . ($lifts - $assigned === 1 ? 'has' : 'have') . ' no mechanic.'],
                 in_array($key, ['receptionist', 'chef'], true) => $posts === 0 ? ['none', 'Build a ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ' first.']
                     : ($assigned < $posts ? ['needed', ($posts - $assigned) . ' ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ($posts - $assigned === 1 ? ' has' : 's have') . ' none.'] : ['enough', 'Every ' . ($key === 'chef' ? 'restaurant' : 'hotel') . ' has one.']),
-                $key === 'park_crew' && $posts > 0 && $assigned >= 4 => ['enough', 'Parks can\'t wear any slower.'],
-                $r['idle'] > 0 => ['enough', 'You already have ' . $r['idle'] . ' with nothing to do. Assign them first.'],
+                $key === 'park_crew' && $posts > 0 && $assigned >= 4 => ['enough', 'Parks cannot wear any slower.'],
+                $idle > 0 => ['enough', 'You already have ' . $idle . ' with nothing to do. Assign them first.'],
                 $posts === 0 => ['none', match ($key) { 'ski_patrol', 'instructor' => 'Build a slope first.', 'mechanic' => 'Build a lift first.', 'snowmaker' => 'Buy a snow gun first.', 'medic' => 'Build a ski patrol station first.', 'park_crew' => 'Build a terrain park first.', default => 'No post for this role yet.' }],
                 $assigned >= $posts => ['enough', 'Every post is filled.'],
-                default => ['useful', $r['free'] . ' free post' . ($r['free'] === 1 ? '' : 's') . '.'],
+                default => ['useful', $free . ' free post' . ($free === 1 ? '' : 's') . '.'],
             };
+
+            $hireRoles[] = [
+                'key' => $key,
+                'name' => (string) $r['name'],
+                'icon' => preg_match('/^[a-z0-9 -]+$/i', $r['icon']) ? $r['icon'] : 'fa-solid fa-user',
+                'color' => (string) ($r['color'] ?? ''),
+                'desc' => (string) $r['desc'],
+                'effect' => (string) (self::EFFECTS[$key] ?? $r['desc']),
+                'dailyText' => currency($daily),
+                'have' => $have,
+                'assigned' => $assigned,
+                'idle' => $idle,
+                'posts' => $posts,
+                'free' => $free,
+                'verdict' => $verdict,
+                'why' => $why,
+                'group' => $groupOf[$key] ?? 'slopes',
+            ];
         }
         unset($r);
 
-        $candidates = \App\Libraries\Candidates::today($userId, $roles);
-        foreach ($candidates as &$list) {
-            foreach ($list as &$c) $c['daily'] = (int) round((int) $c['salary'] * $costMult);
+        $candidateLists = \App\Libraries\Candidates::today($userId, $roles);
+        $formattedCandidates = [];
+        foreach ($candidateLists as $roleKey => $list) {
+            $roleSalary = (int) round(($roles[$roleKey]['salary'] ?? 0) * $costMult);
+            $formattedCandidates[$roleKey] = [];
+            foreach ($list as $c) {
+                $cDaily = (int) round((int) $c['salary'] * $costMult);
+                $diff = $roleSalary > 0 ? (int) round(($cDaily / $roleSalary - 1) * 100) : 0;
+                $diffText = $diff !== 0 ? ($diff > 0 ? '+' : '−') . abs($diff) . '%' : '';
+                $formattedCandidates[$roleKey][] = [
+                    'id' => (int) $c['id'],
+                    'name' => (string) $c['name'],
+                    'trait' => (string) $c['trait'],
+                    'traitLabel' => \App\Libraries\Candidates::label($c['trait']),
+                    'dailyText' => currency($cDaily),
+                    'diffText' => $diffText,
+                    'morale' => (int) $c['morale'],
+                    'level' => (int) $c['level'],
+                ];
+            }
         }
-        unset($list, $c);
 
-        return view('staff/hire', [
-            'roles' => $roles,
-            'candidates' => $candidates,
-            'cash' => (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow()->cash ?? 0),
-            'payroll' => (int) round(array_sum(array_column($staff, 'salary')) * $costMult),
-            'staffCount' => count($staff),
-        ]);
+        $cash = (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow()->cash ?? 0);
+        $payroll = (int) round(array_sum(array_column($staff, 'salary')) * $costMult);
+
+        $page = [
+            'stats' => [
+                'cashText' => currency($cash),
+                'cashNegative' => $cash < 0,
+                'staffCount' => count($staff),
+                'payrollText' => currency($payroll),
+            ],
+            'roles' => $hireRoles,
+            'candidates' => $formattedCandidates,
+            'maxGroomerLevel' => self::maxUsefulLevel('groomer'),
+        ];
+
+        return view('staff/hire', ['page' => $page]);
     }
 
     public function doHire()

@@ -9,11 +9,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:css && npm run build:islands",
-    "build:css": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css --minify",
-    "build:islands": "tsc && vite build",
+    "build:css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./public/css/input.css -o ./public/css/style.css --minify",
+    "build:islands": "node ./node_modules/typescript/lib/tsc.js && node ./node_modules/vite/bin/vite.js build",
     "dev": "vite",
     "watch:css": "tailwindcss -i ./public/css/input.css -o ./public/css/style.css --watch",
-    "typecheck": "tsc"
+    "typecheck": "node ./node_modules/typescript/lib/tsc.js --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +26,7 @@
     "@vitejs/plugin-react": "^6.2.1",
     "daisyui": "^5.7.50",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
+    "typescript": "^5.8.2",
     "vite": "^8.3.5"
   },
   "dependencies": {

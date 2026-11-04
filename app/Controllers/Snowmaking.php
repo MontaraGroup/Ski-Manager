@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\Fleet;
+use App\Libraries\Grooming as G;
 use App\Libraries\Snowmaking as SM;
 use App\Libraries\Utilities;
 use App\Libraries\Weather as W;
@@ -81,26 +82,126 @@ class Snowmaking extends BaseController
             ];
         }
 
-        return view('snowmaking/index', [
-            'guns' => $guns,
-            'running' => $running,
-            'crew' => $crew,
-            'crewByGun' => $crewByGun,
-            'slopes' => $slopes,
-            'openSlopes' => $open,
-            'slopeNames' => $slopeNames,
-            'coverage' => $coverage,
-            'capacity' => array_sum(array_map(fn($g) => max(1, (int) $g['capacity']), $running)),
-            'weather' => $weather,
-            'baseTemp' => $baseTemp,
-            'snowBase' => $snowBase,
-            'thinBase' => $snowBase < W::THIN_BASE,
-            'standardHours' => SM::hours(['model_key' => ''], $baseTemp),
-            'outlook' => $outlook,
-            'energy' => ['need' => $energyDemand['snowmaking'], 'total' => $energyDemand['total'], 'supply' => $energySupply, 'import' => $energyImport, 'hidden' => in_array('energy', $hidden, true)],
-            'water' => ['need' => $waterDemand, 'supply' => $waterSupply, 'import' => $waterImport, 'hidden' => in_array('water', $hidden, true)],
-            'operatingCost' => array_sum(array_column($running, 'operating_cost')),
-        ]);
+        $stateLabels = [
+            'running' => ['tone' => 'success', 'label' => 'Running'],
+            'idle' => ['tone' => 'warning', 'label' => 'Idle: too warm'],
+            'off' => ['tone' => 'neutral', 'label' => 'Off'],
+            'broken' => ['tone' => 'danger', 'label' => 'Broken'],
+        ];
+
+        $formattedGuns = [];
+        $gunLookup = [];
+        foreach ($guns as $g) {
+            $coversNames = array_values(array_map(fn($id) => $slopeNames[$id] ?? '?', $g['covers']));
+            $item = [
+                'id' => (int) $g['id'],
+                'name' => (string) $g['name'],
+                'brand' => (string) $g['brand'],
+                'capacity' => (int) $g['capacity'],
+                'condition_pct' => (int) $g['condition_pct'],
+                'status' => (string) $g['status'],
+                'state' => (string) $g['state'],
+                'stateLabel' => $stateLabels[$g['state']]['label'] ?? ucfirst($g['state']),
+                'stateTone' => $stateLabels[$g['state']]['tone'] ?? 'neutral',
+                'tempLimitText' => $g['max_temp'] === null ? 'Any temperature' : temp($g['max_temp']) . ' or colder',
+                'operatingCostText' => currency((int) $g['operating_cost']),
+                'energyKwhText' => number_format((int) $g['energy_kwh']) . ' kWh',
+                'waterLitersText' => number_format((int) $g['water_liters'] / 1000, 1) . ' m³',
+                'hours' => (int) $g['hours'],
+                'coversNames' => $coversNames,
+                'priority' => (int) $g['priority'],
+                'crew' => $g['crew'] ? (string) $g['crew'] : null,
+                'crewReliefPct' => SM::CREW_WEAR_RELIEF,
+                'repairCost' => (int) $g['repair_cost'],
+                'repairCostText' => currency((int) $g['repair_cost']),
+                'resale' => (int) $g['resale'],
+                'resaleText' => currency((int) $g['resale']),
+            ];
+            $formattedGuns[] = $item;
+            $gunLookup[(int) $g['id']] = $item;
+        }
+
+        $formattedSlopes = [];
+        foreach ($slopes as $sl) {
+            $slId = (int) $sl['id'];
+            $isOpen = $sl['status'] === 'open';
+            $gunId = $coverage[$slId] ?? null;
+            $gun = $gunId ? ($gunLookup[$gunId] ?? null) : null;
+            $wearText = !$isOpen ? '' : ($gunId || !$thinBase ? 'Normal' : '+' . G::THIN_BASE_EXTRA . '%/day');
+            $formattedSlopes[] = [
+                'id' => $slId,
+                'name' => (string) $sl['name'],
+                'difficulty' => (string) ($sl['difficulty'] ?? ''),
+                'status' => (string) $sl['status'],
+                'condition_pct' => (int) $sl['condition_pct'],
+                'gunId' => $gunId,
+                'gunName' => $gun ? $gun['name'] : null,
+                'isPriority' => $gun && $gun['priority'] === $slId,
+                'wearText' => $wearText,
+            ];
+        }
+
+        $formattedOutlook = [];
+        foreach ($outlook as $o) {
+            $formattedOutlook[] = [
+                'day' => (int) $o['day'],
+                'icon' => weatherIcon($o['condition']),
+                'tempText' => temp((int) $o['temp']),
+                'snowfallText' => $o['snowfall'] > 0 ? '+' . snow((int) $o['snowfall']) : null,
+                'hoursText' => $o['hours'] ? $o['hours'] . ' h guns' : 'Too warm',
+                'gunsCanRunText' => !$o['hours'] && $o['guns'] ? $o['guns'] . ' of yours can run' : null,
+                'canRun' => $o['hours'] > 0 || $o['guns'] > 0,
+            ];
+        }
+
+        $totalOperatingCost = array_sum(array_column($running, 'operating_cost'));
+        $page = [
+            'overview' => [
+                'baseTempText' => temp($baseTemp),
+                'nightTempText' => temp($baseTemp - 4),
+                'dayTempText' => temp($baseTemp + 4),
+                'standardHours' => $standardHours,
+                'snowBaseText' => snow($snowBase),
+                'thinBaseThresholdText' => snow(W::THIN_BASE),
+                'thinBase' => $thinBase,
+                'coveredCount' => count($coverage),
+                'openCount' => count($open),
+                'runningGunsCount' => count($running),
+                'totalGunsCount' => count($guns),
+                'capacity' => array_sum(array_map(fn($g) => max(1, (int) $g['capacity']), $running)),
+                'totalOperatingCostText' => currency($totalOperatingCost + $energyImport + $waterImport),
+                'operatingCostGunsText' => currency($totalOperatingCost),
+                'energyImportText' => $energyImport > 0 ? currency($energyImport) : null,
+                'waterImportText' => $waterImport > 0 ? currency($waterImport) : null,
+            ],
+            'outlook' => $formattedOutlook,
+            'guns' => $formattedGuns,
+            'slopes' => $formattedSlopes,
+            'crewCount' => count($crew),
+            'utilities' => [
+                'energy' => [
+                    'hidden' => in_array('energy', $hidden, true),
+                    'needText' => number_format((int) $energyDemand['snowmaking']),
+                    'totalText' => number_format((int) $energyDemand['total']),
+                    'supplyText' => number_format((int) $energySupply),
+                    'ok' => $energySupply >= $energyDemand['total'],
+                ],
+                'water' => [
+                    'hidden' => in_array('water', $hidden, true),
+                    'needText' => number_format((int) $waterDemand),
+                    'supplyText' => number_format((int) $waterSupply),
+                    'ok' => $waterSupply >= $waterDemand,
+                ],
+            ],
+            'rules' => [
+                'thinBaseExtra' => G::THIN_BASE_EXTRA,
+                'crewWearRelief' => SM::CREW_WEAR_RELIEF,
+                'repairSharePct' => (int) (Fleet::REPAIR_SHARE * 100),
+                'resaleSharePct' => (int) (Fleet::RESALE_SHARE * 100),
+            ],
+        ];
+
+        return view('snowmaking/index', ['page' => $page]);
     }
 
     private function gun(int $id): ?array
