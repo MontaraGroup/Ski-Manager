@@ -51,6 +51,9 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AllianceDirectoryPage: () => import('./islands/AllianceDirectoryPage'),
   AllianceLeaderboardPage: () => import('./islands/AllianceLeaderboardPage'),
   AllianceViewPage: () => import('./islands/AllianceViewPage'),
+  DashboardPage: () => import('./islands/DashboardPage'),
+  ResortAnalysisPage: () => import('./islands/ResortAnalysisPage'),
+  ResortAnalysisViewPage: () => import('./islands/ResortAnalysisViewPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {
