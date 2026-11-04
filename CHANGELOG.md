@@ -1,3 +1,11 @@
+## Release 2026-11-04 22:05
+
+* Merge pull request #27 from Montara-Group/fix/nav-active-style (2f57c4c)
+* fix(ui): drop the active-link underline in the navbar; add the React migration handoff (83ce4a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (dff7289)
+* Merge pull request #26 from Montara-Group/main (5e8054e)
+* Merge branch 'MontaraGroup:main' into main (878ef58)
+
 ## Release 2026-11-04 21:29
 
 * Merge branch 'MontaraGroup:main' into main (878ef58)
