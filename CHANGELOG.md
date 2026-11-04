@@ -1,3 +1,11 @@
+## Release 2026-11-04 22:12
+
+* Merge pull request #8 from Montara-Group/feature/react-phase-3b-ops (a69c27a)
+* feat(ui): staff, equipment, snowmaking, grooming, parking and scenic lifts in React (phase 3b batch 1) (d32bdf0)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (a06a3fc)
+* Merge pull request #27 from Montara-Group/fix/nav-active-style (2f57c4c)
+* fix(ui): drop the active-link underline in the navbar; add the React migration handoff (83ce4a2)
+
 ## Release 2026-11-04 22:05
 
 * Merge pull request #27 from Montara-Group/fix/nav-active-style (2f57c4c)
