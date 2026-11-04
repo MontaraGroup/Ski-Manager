@@ -17,6 +17,12 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   StatsBar: () => import('./islands/StatsBar'),
   MobileDock: () => import('./islands/MobileDock'),
   UiKit: () => import('./islands/UiKit'),
+  ActivityPage: () => import('./islands/ActivityPage'),
+  AchievementsPage: () => import('./islands/AchievementsPage'),
+  FinancesPage: () => import('./islands/FinancesPage'),
+  LeaderboardPage: () => import('./islands/LeaderboardPage'),
+  NotificationsPage: () => import('./islands/NotificationsPage'),
+  WeatherPage: () => import('./islands/WeatherPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {

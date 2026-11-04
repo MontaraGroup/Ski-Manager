@@ -58,20 +58,38 @@ class Leaderboard extends BaseController
             if ((int) $r['id'] === $userId) { $me = $r; break; }
         }
 
-        return view('leaderboard/index', [
-            'players' => array_slice($ranked, 0, self::SHOWN),
+        $players = array_slice($ranked, 0, self::SHOWN);
+        $past = $this->pastSeasons();
+        $metric = fn(array $p) => $v2 ? (int) $p['net_profit'] : (int) $p['score'];
+        $signed = fn(int $v) => ($v > 0 ? '+' : '') . currency($v);
+        $row = fn(array $p) => [
+            'id' => (int) $p['id'], 'rank' => (int) $p['rank'], 'username' => (string) $p['username'], 'resortName' => (string) ($p['resort_name'] ?? ''),
+            'profit' => $signed((int) $p['net_profit']), 'profitPositive' => (int) $p['net_profit'] >= 0,
+            'skiers' => number_format((int) $p['daily_visitors']), 'cash' => currency((int) $p['cash']),
+            'score' => $v2 ? null : number_format((int) $p['score']),
+            'slopes' => (int) $p['slope_count'], 'lifts' => (int) $p['lift_count'], 'buildings' => (int) $p['building_count'],
+            'isMe' => (int) $p['id'] === $userId,
+        ];
+
+        return view('leaderboard/index', ['page' => [
+            'v2' => $v2,
+            'subtitle' => getSeasonName() . ' · day ' . getSeasonDay() . ' · ' . ($v2 ? 'ranked by profit this season' : 'ranked by score'),
+            'difficulty' => $difficulty,
+            'me' => $me ? $row($me) + [
+                'behind' => ($me['rank'] > 1 && isset($players[0])) ? currency(max(0, $metric($players[0]) - $metric($me))) : null,
+            ] : null,
+            'meUnranked' => !$me && $userId && (bool) array_filter($rows, fn($r) => (int) $r['id'] === $userId),
+            'meOutsideTop' => $me && $me['rank'] > self::SHOWN,
+            'players' => array_map($row, $players),
+            'shown' => min(self::SHOWN, count($ranked)),
             'rankedCount' => count($ranked),
             'unranked' => $unranked,
-            'me' => $me,
-            'meOutsideTop' => $me && $me['rank'] > self::SHOWN,
-            'meInBoard' => $userId && array_filter($rows, fn($r) => (int) $r['id'] === $userId),
-            'currentUserId' => $userId,
-            'v2' => $v2,
-            'difficulty' => $difficulty,
-            'seasonName' => getSeasonName(),
-            'seasonDay' => getSeasonDay(),
-            'pastSeasons' => $this->pastSeasons(),
-        ]);
+            'pastSeasons' => array_values(array_map(fn($num, $season) => [
+                'number' => $num, 'name' => $season['name'] ?: 'Season ' . $num,
+                'rows' => array_map(fn($r) => ['rank' => (int) $r['rank_position'], 'username' => (string) $r['username'], 'resortName' => (string) ($r['resort_name'] ?? ''),
+                    'cash' => currency((int) $r['cash']), 'slopes' => (int) $r['total_slopes'], 'lifts' => (int) $r['total_lifts']], $season['rows']),
+            ], array_keys($past), $past)),
+        ]]);
     }
 
     /** Top 10 of each finished season, demo accounts left out */

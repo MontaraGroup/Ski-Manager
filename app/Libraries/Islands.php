@@ -33,7 +33,7 @@ class Islands
     public static function headTags(bool $always = false): string
     {
         if (self::$used === [] && !$always) return '';
-        return '<meta name="csrf-token" content="' . esc(csrf_hash(), 'attr') . '" data-header="' . esc(config('Security')->headerName, 'attr') . '">'
+        return '<meta name="csrf-token" content="' . esc(csrf_hash(), 'attr') . '" data-header="' . esc(config('Security')->headerName, 'attr') . '" data-field="' . esc(config('Security')->tokenName, 'attr') . '">'
             . "\n    " . Vite::tags(self::ENTRY);
     }
 }
