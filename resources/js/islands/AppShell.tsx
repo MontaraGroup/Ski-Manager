@@ -62,7 +62,7 @@ function DesktopMenus({ nav, path, user }: ShellProps) {
     <a
       href={href}
       aria-current={isActive(path, href) ? 'page' : undefined}
-      className={`flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default ${isActive(path, href) ? 'text-accent-soft-foreground shadow-[inset_0_-2px_0_var(--accent)]' : ''} ${extra}`}
+      className={`flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default ${isActive(path, href) ? 'bg-default font-semibold text-accent-soft-foreground' : ''} ${extra}`}
     >
       {label}
     </a>
@@ -73,7 +73,7 @@ function DesktopMenus({ nav, path, user }: ShellProps) {
       {link('/dashboard', 'Dashboard')}
       {nav.map((section) => (
         <Dropdown key={section.name}>
-          <Button variant="ghost" size="sm" className={section.items.some((i) => isActive(path, i.url)) ? 'text-accent-soft-foreground' : ''}>
+          <Button variant="ghost" size="sm" className={section.items.some((i) => isActive(path, i.url)) ? 'bg-default font-semibold text-accent-soft-foreground' : ''}>
             {section.name}
             <Icon name="fa-chevron-down" className="text-xs text-muted" />
           </Button>
