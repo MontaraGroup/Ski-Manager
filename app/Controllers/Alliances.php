@@ -107,25 +107,145 @@ class Alliances extends BaseController
 
         $currentUserFinance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
 
-        return view('alliances/index', [
-            'alliance'          => $alliance,
-            'membership'        => $membership,
-            'members'           => $members,
-            'totalSlopes'       => $totalSlopes,
-            'totalLifts'        => $totalLifts,
-            'totalSlopeKm'      => $totalSlopeKm,
-            'combinedTreasury'  => $combinedTreasury,
-            'unlockedPerks'     => $unlockedPerks,
-            'perkDefs'          => AllianceModel::PERKS,
-            'passTiers'         => AllianceModel::PASS_TIERS,
-            'levelThresholds'   => AllianceModel::LEVEL_THRESHOLDS,
-            'applications'      => $applications,
-            'activities'        => $activities,
-            'userCash'          => (int) ($currentUserFinance['cash'] ?? 0),
-            'userRep'           => (int) ($currentUserFinance['reputation'] ?? 0),
-            'isLeader'          => $isLeader,
-            'isFounder'         => $membership['role'] === 'founder',
-        ]);
+        $curTierNum = (int) $alliance['pass_tier'];
+        $passTiers = AllianceModel::PASS_TIERS;
+        $curTier = $passTiers[$curTierNum] ?? $passTiers[1];
+        $nextTierNum = $curTierNum + 1;
+        $nextTier = $passTiers[$nextTierNum] ?? null;
+        $sisterBonus = max(0, min(10, count($members) - 1));
+        $totalPassVisitorBoost = (int) $curTier['visitor_pct'] + $sisterBonus;
+
+        $rawCrest = $alliance['crest_icon'] ?? 'fa-shield';
+        $crestIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawCrest);
+
+        $nextTierData = null;
+        if ($nextTier) {
+            $nextTierData = [
+                'tier' => $nextTierNum,
+                'name' => (string) $nextTier['name'],
+                'req_level' => (int) $nextTier['req_level'],
+                'cost' => (int) $nextTier['cost'],
+                'costText' => currency((int) $nextTier['cost']),
+                'visitor_pct' => (int) $nextTier['visitor_pct'],
+                'canAfford' => (int) $alliance['treasury_cash'] >= (int) $nextTier['cost'],
+                'meetsLevel' => (int) $alliance['level'] >= (int) $nextTier['req_level'],
+            ];
+        }
+
+        $perkDefs = AllianceModel::PERKS;
+        $formattedPerks = [];
+        foreach ($perkDefs as $pKey => $pDef) {
+            $curPLevel = $unlockedPerks[$pKey] ?? 0;
+            $nextPLevel = $curPLevel + 1;
+            $hasMaxLevel = !isset($pDef['levels'][$nextPLevel]);
+            $nextPConfig = $pDef['levels'][$nextPLevel] ?? null;
+            $rawPIcon = $pDef['icon'] ?? 'fa-bolt';
+            $pIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawPIcon);
+
+            $formattedPerks[] = [
+                'key' => (string) $pKey,
+                'name' => (string) $pDef['name'],
+                'desc' => (string) $pDef['desc'],
+                'icon' => $pIcon,
+                'curLevel' => $curPLevel,
+                'curEffect' => $curPLevel > 0 ? (string) ($pDef['levels'][$curPLevel]['effect'] ?? '') : null,
+                'isMax' => $hasMaxLevel,
+                'nextLevel' => $nextPLevel,
+                'nextCost' => $nextPConfig ? (int) $nextPConfig['cost'] : 0,
+                'nextCostText' => $nextPConfig ? currency((int) $nextPConfig['cost']) : '',
+                'nextEffect' => $nextPConfig ? (string) $nextPConfig['effect'] : '',
+                'nextReqLevel' => $nextPConfig ? (int) $nextPConfig['req_level'] : 0,
+                'canAfford' => $nextPConfig ? (int) $alliance['treasury_cash'] >= (int) $nextPConfig['cost'] : false,
+                'meetsLevel' => $nextPConfig ? (int) $alliance['level'] >= (int) $nextPConfig['req_level'] : false,
+            ];
+        }
+
+        $formattedMembers = array_map(function ($m) use ($userId) {
+            return [
+                'membership_id' => (int) $m['membership_id'],
+                'user_id' => (int) $m['user_id'],
+                'username' => (string) $m['username'],
+                'role' => (string) $m['role'],
+                'resort_map' => (string) ($m['resort_map'] ?? 'ParkCity'),
+                'reputation' => (int) ($m['reputation'] ?? 0),
+                'open_slopes' => (int) ($m['open_slopes'] ?? 0),
+                'open_lifts' => (int) ($m['open_lifts'] ?? 0),
+                'cash' => (int) ($m['cash'] ?? 0),
+                'cashText' => currency((int) ($m['cash'] ?? 0)),
+                'donated_cash' => (int) ($m['donated_cash'] ?? 0),
+                'donatedText' => currency((int) ($m['donated_cash'] ?? 0)),
+                'isCurrentUser' => (int) $m['user_id'] === $userId,
+                'canManage' => (int) $m['user_id'] !== $userId && $m['role'] !== 'founder',
+            ];
+        }, $members);
+
+        $formattedApps = array_map(function ($a) {
+            return [
+                'id' => (int) $a['id'],
+                'user_id' => (int) $a['user_id'],
+                'username' => (string) $a['username'],
+                'reputation' => (int) ($a['reputation'] ?? 0),
+                'message' => (string) ($a['message'] ?? ''),
+                'cashText' => currency((int) ($a['cash'] ?? 0)),
+            ];
+        }, $applications);
+
+        $formattedActs = array_map(function ($act) {
+            return [
+                'id' => (int) ($act['id'] ?? 0),
+                'message' => (string) $act['message'],
+                'timeAgoText' => timeAgo($act['created_at']),
+            ];
+        }, $activities);
+
+        $page = [
+            'alliance' => [
+                'id' => (int) $alliance['id'],
+                'name' => (string) $alliance['name'],
+                'tag' => (string) $alliance['tag'],
+                'motto' => (string) ($alliance['motto'] ?? ''),
+                'level' => (int) $alliance['level'],
+                'xp' => (int) $alliance['xp'],
+                'treasury_cash' => (int) $alliance['treasury_cash'],
+                'treasuryText' => currency((int) $alliance['treasury_cash']),
+                'crest_icon' => $crestIcon,
+                'crest_color' => (string) ($alliance['crest_color'] ?? '#3b82f6'),
+                'pass_name' => (string) $alliance['pass_name'],
+                'pass_tier' => $curTierNum,
+                'max_members' => (int) $alliance['max_members'],
+            ],
+            'stats' => [
+                'memberCount' => count($members),
+                'maxMembers' => (int) $alliance['max_members'],
+                'totalSlopes' => $totalSlopes,
+                'totalLifts' => $totalLifts,
+                'totalSlopeKm' => $totalSlopeKm,
+                'combinedValuationText' => currency($combinedTreasury),
+            ],
+            'pass' => [
+                'tier' => $curTierNum,
+                'tierName' => (string) $curTier['name'],
+                'visitorPct' => (int) $curTier['visitor_pct'],
+                'sisterBonus' => $sisterBonus,
+                'totalBoost' => $totalPassVisitorBoost,
+                'desc' => (string) $curTier['desc'],
+                'nextTier' => $nextTierData,
+            ],
+            'perks' => $formattedPerks,
+            'members' => $formattedMembers,
+            'applications' => $formattedApps,
+            'activities' => $formattedActs,
+            'user' => [
+                'cash' => (int) ($currentUserFinance['cash'] ?? 0),
+                'cashText' => currency((int) ($currentUserFinance['cash'] ?? 0)),
+                'rep' => (int) ($currentUserFinance['reputation'] ?? 0),
+                'role' => (string) $membership['role'],
+                'isLeader' => $isLeader,
+                'isFounder' => $membership['role'] === 'founder',
+            ],
+        ];
+
+        return view('alliances/index', ['page' => $page]);
     }
 
     public function directory()
@@ -148,18 +268,66 @@ class Alliances extends BaseController
         ")->getResultArray();
 
         $userFinance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $userCash = (int) ($userFinance['cash'] ?? 0);
+        $userRep = (int) ($userFinance['reputation'] ?? 0);
+
         $myApplication = $db->table('alliance_applications')
             ->where('user_id', $userId)
             ->where('status', 'pending')
             ->get()->getRowArray();
 
-        return view('alliances/directory', [
-            'alliances'     => $alliances,
-            'userCash'      => (int) ($userFinance['cash'] ?? 0),
-            'userRep'       => (int) ($userFinance['reputation'] ?? 0),
-            'myApplication' => $myApplication,
-            'passTiers'     => AllianceModel::PASS_TIERS,
-        ]);
+        $passTiers = AllianceModel::PASS_TIERS;
+
+        $formattedAlliances = array_map(function ($a) use ($passTiers, $userRep) {
+            $tier = $passTiers[(int) $a['pass_tier']] ?? $passTiers[1];
+            $isFull = (int) $a['member_count'] >= (int) $a['max_members'];
+            $meetsRep = $userRep >= (int) $a['min_reputation'];
+            $rawCrest = $a['crest_icon'] ?? 'fa-mountain-sun';
+            $crestIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawCrest);
+
+            return [
+                'id' => (int) $a['id'],
+                'name' => (string) $a['name'],
+                'tag' => (string) $a['tag'],
+                'motto' => (string) ($a['motto'] ?? ''),
+                'founder_name' => (string) $a['founder_name'],
+                'crest_icon' => $crestIcon,
+                'crest_color' => (string) ($a['crest_color'] ?? '#3b82f6'),
+                'level' => (int) $a['level'],
+                'member_count' => (int) $a['member_count'],
+                'max_members' => (int) $a['max_members'],
+                'valuation' => (int) $a['valuation'],
+                'valuationText' => currency((int) $a['valuation']),
+                'pass_tier' => (int) $a['pass_tier'],
+                'passTierName' => (string) $tier['name'],
+                'passVisitorPct' => (int) $tier['visitor_pct'],
+                'min_reputation' => (int) $a['min_reputation'],
+                'is_recruiting' => (int) $a['is_recruiting'] === 1,
+                'isFull' => $isFull,
+                'meetsRep' => $meetsRep,
+                'canJoin' => !$isFull && $meetsRep && (int) $a['is_recruiting'] === 1,
+                'canApply' => !$isFull && $meetsRep && (int) $a['is_recruiting'] !== 1,
+            ];
+        }, $alliances);
+
+        $page = [
+            'alliances' => $formattedAlliances,
+            'user' => [
+                'cash' => $userCash,
+                'cashText' => currency($userCash),
+                'rep' => $userRep,
+                'canFound' => $userCash >= 50000,
+            ],
+            'myApplication' => $myApplication ? [
+                'id' => (int) $myApplication['id'],
+                'alliance_id' => (int) $myApplication['alliance_id'],
+                'created_at' => (string) $myApplication['created_at'],
+            ] : null,
+            'foundingFee' => 50000,
+            'foundingFeeText' => currency(50000),
+        ];
+
+        return view('alliances/directory', ['page' => $page]);
     }
 
     public function create(): ResponseInterface
@@ -761,11 +929,49 @@ class Alliances extends BaseController
             if ($m) $myAllianceId = (int) $m['alliance_id'];
         }
 
-        return view('alliances/leaderboard', [
-            'alliances'    => $alliances,
+        $passTiers = AllianceModel::PASS_TIERS;
+        $formattedAlliances = [];
+        foreach ($alliances as $idx => $a) {
+            $rank = $idx + 1;
+            $tierNum = (int) $a['pass_tier'];
+            $tier = $passTiers[$tierNum] ?? $passTiers[1];
+            $rawCrest = $a['crest_icon'] ?? 'fa-mountain-sun';
+            $crestIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawCrest);
+            $slopeKm = round((int) ($a['total_slope_meters'] ?? 0) / 1000, 1);
+            $isMy = ((int) $a['id'] === $myAllianceId);
+
+            $formattedAlliances[] = [
+                'rank' => $rank,
+                'id' => (int) $a['id'],
+                'name' => (string) $a['name'],
+                'tag' => (string) $a['tag'],
+                'founder_name' => (string) $a['founder_name'],
+                'crest_icon' => $crestIcon,
+                'crest_color' => (string) ($a['crest_color'] ?? '#3b82f6'),
+                'level' => (int) $a['level'],
+                'member_count' => (int) $a['member_count'],
+                'max_members' => (int) $a['max_members'],
+                'total_slopes' => (int) $a['total_slopes'],
+                'total_lifts' => (int) $a['total_lifts'],
+                'total_slope_meters' => (int) ($a['total_slope_meters'] ?? 0),
+                'slopeKm' => $slopeKm,
+                'total_reputation' => (int) $a['total_reputation'],
+                'valuation' => (int) $a['valuation'],
+                'valuationText' => currency((int) $a['valuation']),
+                'pass_tier' => $tierNum,
+                'passTierName' => (string) $tier['name'],
+                'passVisitorPct' => (int) $tier['visitor_pct'],
+                'passTierBadge' => (string) ($tier['badge'] ?? 'badge-ghost'),
+                'isMyAlliance' => $isMy,
+            ];
+        }
+
+        $page = [
+            'alliances' => $formattedAlliances,
             'myAllianceId' => $myAllianceId,
-            'passTiers'    => AllianceModel::PASS_TIERS,
-        ]);
+        ];
+
+        return view('alliances/leaderboard', ['page' => $page]);
     }
 
     public function view(int $id)
@@ -793,23 +999,64 @@ class Alliances extends BaseController
             ORDER BY am.role ASC, am.donated_cash DESC
         ", [$id])->getResultArray();
 
-        $unlockedPerks = $db->table('alliance_unlocked_perks')
-            ->where('alliance_id', $id)
-            ->get()->getResultArray();
-
         $myMembership = null;
         if (auth()->loggedIn()) {
             $myMembership = $this->memberModel->where('user_id', auth()->id())->first();
         }
 
-        return view('alliances/view', [
-            'alliance'      => $alliance,
-            'founder'       => $founder,
-            'members'       => $members,
-            'unlockedPerks' => $unlockedPerks,
-            'perkDefs'      => AllianceModel::PERKS,
-            'passTiers'     => AllianceModel::PASS_TIERS,
-            'myMembership'  => $myMembership,
-        ]);
+        $passTiers = AllianceModel::PASS_TIERS;
+        $curTierNum = (int) $alliance['pass_tier'];
+        $curTier = $passTiers[$curTierNum] ?? $passTiers[1];
+
+        $rawCrest = $alliance['crest_icon'] ?? 'fa-mountain-sun';
+        $crestIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawCrest);
+
+        $formattedMembers = array_map(function ($m) {
+            return [
+                'user_id' => (int) $m['user_id'],
+                'username' => (string) $m['username'],
+                'role' => (string) $m['role'],
+                'resort_map' => (string) ($m['resort_map'] ?? 'ParkCity'),
+                'reputation' => (int) ($m['reputation'] ?? 0),
+                'open_slopes' => (int) ($m['open_slopes'] ?? 0),
+                'open_lifts' => (int) ($m['open_lifts'] ?? 0),
+            ];
+        }, $members);
+
+        $canJoin = !$myMembership && (int) $alliance['is_recruiting'] === 1 && count($members) < (int) $alliance['max_members'];
+
+        $page = [
+            'alliance' => [
+                'id' => (int) $alliance['id'],
+                'name' => (string) $alliance['name'],
+                'tag' => (string) $alliance['tag'],
+                'motto' => (string) ($alliance['motto'] ?? ''),
+                'description' => (string) ($alliance['description'] ?? ''),
+                'level' => (int) $alliance['level'],
+                'treasury_cash' => (int) $alliance['treasury_cash'],
+                'treasuryText' => currency((int) $alliance['treasury_cash']),
+                'crest_icon' => $crestIcon,
+                'crest_color' => (string) ($alliance['crest_color'] ?? '#3b82f6'),
+                'pass_name' => (string) $alliance['pass_name'],
+                'pass_tier' => $curTierNum,
+                'max_members' => (int) $alliance['max_members'],
+                'is_recruiting' => (int) $alliance['is_recruiting'] === 1,
+            ],
+            'founder' => [
+                'id' => (int) ($founder['id'] ?? 0),
+                'username' => (string) ($founder['username'] ?? 'Unknown'),
+            ],
+            'pass' => [
+                'tier' => $curTierNum,
+                'name' => (string) $curTier['name'],
+                'visitorPct' => (int) $curTier['visitor_pct'],
+                'desc' => (string) $curTier['desc'],
+            ],
+            'members' => $formattedMembers,
+            'isMember' => $myMembership !== null && (int) $myMembership['alliance_id'] === (int) $alliance['id'],
+            'canJoin' => $canJoin,
+        ];
+
+        return view('alliances/view', ['page' => $page]);
     }
 }
