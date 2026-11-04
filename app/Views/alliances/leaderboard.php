@@ -13,7 +13,7 @@
                     <i class="fa-solid fa-ranking-star text-warning text-2xl"></i>
                     <h1 class="text-2xl lg:text-3xl font-black text-base-content">Alliance Standings</h1>
                 </div>
-                <p class="text-sm text-base-content/60 mt-1">Ranking the world's premier alpine syndicates by combined valuation and mountain infrastructure.</p>
+                <p class="text-sm text-base-content/70 mt-1">Ranking the world's premier alpine syndicates by combined valuation and mountain infrastructure.</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -55,17 +55,17 @@
                             <a href="/alliances/view/<?= (int)$a['id'] ?>" class="font-black text-base link link-hover truncate block">
                                 <?= esc($a['name']) ?>
                             </a>
-                            <div class="text-xs text-base-content/50 font-mono">[<?= esc($a['tag']) ?>] &bull; Lvl <?= (int)$a['level'] ?></div>
+                            <div class="text-xs text-base-content/70 font-mono">[<?= esc($a['tag']) ?>] &bull; Lvl <?= (int)$a['level'] ?></div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-base-300/80 text-xs">
                         <div>
-                            <div class="text-base-content/50">Combined Valuation</div>
+                            <div class="text-base-content/70">Combined Valuation</div>
                             <div class="font-black text-success font-mono text-sm"><?= currency((int)$a['valuation']) ?></div>
                         </div>
                         <div>
-                            <div class="text-base-content/50">Infrastructure</div>
+                            <div class="text-base-content/70">Infrastructure</div>
                             <div class="font-bold text-base-content font-mono text-sm"><?= (int)$a['total_slopes'] ?> Slopes &bull; <?= (int)$a['total_lifts'] ?> Lifts</div>
                         </div>
                     </div>
@@ -82,12 +82,12 @@
         </div>
 
         <?php if (empty($alliances)) : ?>
-            <div class="text-center py-10 text-xs text-base-content/40">No alliances ranked yet.</div>
+            <div class="text-center py-10 text-xs text-base-content/70">No alliances ranked yet.</div>
         <?php else : ?>
             <div class="overflow-x-auto">
                 <table class="table table-sm w-full">
                     <thead>
-                        <tr class="text-xs text-base-content/50 border-b border-base-300">
+                        <tr class="text-xs text-base-content/70 border-b border-base-300">
                             <th class="w-12 text-center">Rank</th>
                             <th>Alliance</th>
                             <th>Syndicate Pass</th>
@@ -114,7 +114,7 @@
                                     <?php elseif ($rank === 3) : ?>
                                         <span class="text-amber-700">3</span>
                                     <?php else : ?>
-                                        <span class="text-base-content/40"><?= $rank ?></span>
+                                        <span class="text-base-content/70"><?= $rank ?></span>
                                     <?php endif ?>
                                 </td>
                                 <td>

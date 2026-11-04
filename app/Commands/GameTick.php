@@ -241,7 +241,7 @@ class GameTick extends BaseCommand
                     if (rand(1, 100) <= $inspChance) {
                         $fine = (int) $r['penalty_risk'];
                         $dayExpenses += $fine;
-                        log_activity($userId, 'inspection', 'Inspection fine: ' . $r['name'] . ' — ' . number_format($fine) . '€', 'fa-solid fa-gavel');
+                        log_activity($userId, 'inspection', 'Inspection fine: ' . $r['name'] . ': ' . number_format($fine) . '€', 'fa-solid fa-gavel');
                     }
                 }
             }
@@ -605,7 +605,7 @@ class GameTick extends BaseCommand
 
                 $tpNewStatus = $tpNewCondition < 30 ? 'maintenance' : 'open';
                 if ($tpNewStatus === 'maintenance' && $park['status'] === 'open') {
-                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance — condition too low.');
+                    log_activity($userId, 'terrain_park_maintenance', $park['name'] . ' closed for maintenance: condition too low.');
                 }
 
                 $terrainParkModel->update($park['id'], [
@@ -793,7 +793,7 @@ class GameTick extends BaseCommand
                         $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . (int) $vg['reputation_bonus'], false)->update();
                         log_activity($userId, 'vip_satisfied', $vg['name'] . ' departed thoroughly satisfied with your resort! +' . (int)$vg['reputation_bonus'] . ' Reputation', 'fa-solid fa-star');
                     } else {
-                        log_activity($userId, 'vip_departure', $vg['name'] . ' departed disappointed — resort lacked requested amenities.', 'fa-solid fa-plane-departure');
+                        log_activity($userId, 'vip_departure', $vg['name'] . ' departed disappointed: the resort lacked the amenities they asked for.', 'fa-solid fa-plane-departure');
                     }
                 } else {
                     $db->table('vip_guests')->where('id', $vg['id'])->update(['days_remaining' => $newDays]);

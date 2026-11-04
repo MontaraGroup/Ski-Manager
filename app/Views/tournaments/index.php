@@ -6,7 +6,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-trophy mr-2 text-warning"></i>Events & Tournaments</h1>
-            <p class="text-sm text-base-content/50">Host competitions to attract visitors and earn reputation</p>
+            <p class="text-sm text-base-content/70">Host competitions to attract visitors and earn reputation</p>
         </div>
         <span class="badge badge-outline ml-auto">Day <?= $gameDay ?></span>
     </div>
@@ -22,20 +22,20 @@
         <div class="aura aura-holo aura-xs rounded-2xl w-full">
             <div class="card bg-base-100 border border-base-200 shadow-sm w-full"><div class="card-body p-3 text-center">
                 <div class="text-2xl font-bold text-success"><?= count($activeTournaments) ?></div>
-                <div class="text-xs text-base-content/50">Live Now</div>
+                <div class="text-xs text-base-content/70">Live Now</div>
             </div></div>
         </div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-info"><?= count($upcomingTournaments) ?></div>
-            <div class="text-xs text-base-content/50">Upcoming</div>
+            <div class="text-xs text-base-content/70">Upcoming</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold text-warning"><?= count($activeEvents) ?></div>
-            <div class="text-xs text-base-content/50">Active Events</div>
+            <div class="text-xs text-base-content/70">Active Events</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-3 text-center">
             <div class="text-2xl font-bold"><?= count($tournaments) ?></div>
-            <div class="text-xs text-base-content/50">Total Hosted</div>
+            <div class="text-xs text-base-content/70">Total Hosted</div>
         </div></div>
     </div>
 
@@ -47,7 +47,7 @@
                 <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body text-center py-12">
                     <i class="fa-solid fa-trophy text-4xl text-base-content/20 mb-3"></i>
                     <p class="font-semibold">No tournaments hosted yet</p>
-                    <p class="text-sm text-base-content/50 mt-1">Host one from the panel on the right.</p>
+                    <p class="text-sm text-base-content/70 mt-1">Host one from the panel on the right.</p>
                 </div></div>
             <?php else : ?>
                 <div class="space-y-2 mb-6">
@@ -60,11 +60,11 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="font-semibold text-sm"><?= esc($t['name']) ?></span>
-                                    <?php if ($t['status'] === 'active') : ?><span class="badge badge-success badge-xs animate-pulse">Live</span>
+                                    <?php if ($t['status'] === 'active') : ?><span class="badge badge-success badge-xs">Live</span>
                                     <?php elseif ($t['status'] === 'upcoming') : ?><span class="badge badge-info badge-xs">In <?= max(0, (int)$t['start_day'] - $gameDay) ?>d</span>
                                     <?php else : ?><span class="badge badge-ghost badge-xs">Ended</span><?php endif ?>
                                 </div>
-                                <div class="flex items-center gap-3 text-xs text-base-content/50 mt-0.5">
+                                <div class="flex items-center gap-3 text-xs text-base-content/70 mt-0.5">
                                     <span>Day <?= $t['start_day'] ?>-<?= $t['end_day'] ?></span>
                                     <span>+<?= number_format((int)($t['visitors_boost'] ?? 0)) ?> visitors</span>
                                     <span>+<?= (int)($t['reputation_boost'] ?? 0) ?> rep</span>
@@ -96,10 +96,10 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
                                 <span class="font-semibold text-sm"><?= esc($e['name']) ?></span>
-                                <?php if ($e['active'] ?? false) : ?><span class="badge badge-warning badge-xs animate-pulse">Active</span><?php endif ?>
+                                <?php if ($e['active'] ?? false) : ?><span class="badge badge-warning badge-xs">Active</span><?php endif ?>
                             </div>
-                            <div class="text-xs text-base-content/50"><?= esc($e['description'] ?? '') ?></div>
-                            <div class="text-xs text-base-content/40 mt-0.5">Day <?= $e['game_day'] ?> · <?= $e['duration_days'] ?> day<?= $e['duration_days'] > 1 ? 's' : '' ?></div>
+                            <div class="text-xs text-base-content/70"><?= esc($e['description'] ?? '') ?></div>
+                            <div class="text-xs text-base-content/70 mt-0.5">Day <?= $e['game_day'] ?> · <?= $e['duration_days'] ?> day<?= $e['duration_days'] > 1 ? 's' : '' ?></div>
                         </div>
                     </div>
                 </div></div>
@@ -121,7 +121,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-semibold text-sm"><?= $type['name'] ?></div>
-                                <div class="text-xs text-base-content/50"><?= $type['desc'] ?? '' ?></div>
+                                <div class="text-xs text-base-content/70"><?= $type['desc'] ?? '' ?></div>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 text-xs mb-2">

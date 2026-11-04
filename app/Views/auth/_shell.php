@@ -41,19 +41,19 @@ $__players = db_connect()->table('users')->where('id !=', 1)->countAllResults();
 @media (min-width: 640px) { .auth-form { padding: 2.25rem 2.5rem 2.5rem; } }
 .auth-form-inner { max-width: 24rem; margin: 0 auto; }
 .auth-form h1 { font-family: var(--sign); font-weight: 700; font-size: 1.75rem; letter-spacing: -0.025em; line-height: 1.15; margin: 0; }
-.auth-sub { font-size: 0.875rem; margin: 0.4rem 0 1.5rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.auth-sub { font-size: 0.875rem; margin: 0.4rem 0 1.5rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .auth-field { display: block; }
 .auth-field > span { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.35rem; }
 .auth-field > span a { font-weight: 500; }
-.auth-hint { font-size: 0.75rem; margin-top: 0.35rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.auth-hint { font-size: 0.75rem; margin-top: 0.35rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .auth-pw { position: relative; }
 .auth-pw .input { padding-right: 3rem; }
-.auth-pw button { position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; color: color-mix(in oklab, var(--color-base-content) 50%, transparent); }
+.auth-pw button { position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .auth-pw button:hover, .auth-pw button:focus-visible { color: var(--color-base-content); background: color-mix(in oklab, var(--color-base-content) 8%, transparent); }
-.auth-or { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 45%, transparent); }
+.auth-or { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--color-base-300); }
 .auth-social { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.auth-switch { text-align: center; font-size: 0.875rem; margin-top: 1.5rem; color: color-mix(in oklab, var(--color-base-content) 65%, transparent); }
+.auth-switch { text-align: center; font-size: 0.875rem; margin-top: 1.5rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
 /* Difficulty picker */
 .diff { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
@@ -62,7 +62,7 @@ $__players = db_connect()->table('users')->where('id !=', 1)->countAllResults();
 .diff .opt:hover { border-color: color-mix(in oklab, var(--color-base-content) 35%, transparent); }
 .diff .opt b { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.8125rem; }
 .diff .opt .cash { font-family: var(--sign); font-size: 0.9375rem; font-weight: 600; margin-top: 0.2rem; font-variant-numeric: tabular-nums; }
-.diff .opt small { display: block; font-size: 0.6875rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.diff .opt small { display: block; font-size: 0.6875rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .diff input:checked + .opt { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 12%, transparent); }
 .diff input:focus-visible + .opt { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .diff .tsign.black { background: var(--color-base-content); }

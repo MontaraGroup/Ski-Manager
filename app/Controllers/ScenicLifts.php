@@ -12,7 +12,7 @@ class ScenicLifts extends BaseController
         'photo_spot' => ['name' => 'Photo Spot', 'icon' => 'fa-solid fa-camera-retro', 'cost' => 5000, 'revenue_boost' => 500, 'desc' => 'Designated photo point at summit with panoramic views'],
         'audio_guide' => ['name' => 'Audio Guide', 'icon' => 'fa-solid fa-headphones', 'cost' => 8000, 'revenue_boost' => 800, 'desc' => 'Multilingual audio commentary about local history and nature'],
         'glass_cabin' => ['name' => 'Glass-Bottom Cabin', 'icon' => 'fa-solid fa-window-maximize', 'cost' => 25000, 'revenue_boost' => 2000, 'desc' => 'Transparent floor cabins for a thrilling ride experience'],
-        'sunset_ride' => ['name' => 'Sunset Experience', 'icon' => 'fa-solid fa-sun', 'cost' => 12000, 'revenue_boost' => 1200, 'desc' => 'Evening rides timed with sunset — premium ticket pricing'],
+        'sunset_ride' => ['name' => 'Sunset Experience', 'icon' => 'fa-solid fa-sun', 'cost' => 12000, 'revenue_boost' => 1200, 'desc' => 'Evening rides timed with sunset, at premium ticket prices'],
     ];
 
     public function index(): string

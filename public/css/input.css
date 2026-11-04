@@ -13,6 +13,9 @@
   --color-base-content: var(--bc);
   --color-primary: var(--p);
   --color-primary-content: var(--pc);
+  /* Fill behind primary-content text (buttons, active menu items). Darker than --p in the dark
+     theme so white text passes 4.5:1, while --p stays light enough for blue text on dark panels */
+  --color-primary-fill: var(--pf, var(--p));
   --color-secondary: var(--s);
   --color-secondary-content: var(--sc);
   --color-accent: var(--a);
@@ -37,9 +40,10 @@
   --b3: oklch(25% 0.02 260);
   --bc: oklch(85% 0.03 230);
   --p: oklch(62% 0.18 245);
+  --pf: oklch(52% 0.18 245);
   --pc: oklch(97% 0.01 245);
-  --s: oklch(58% 0.2 290);
-  --sc: oklch(96% 0.01 290);
+  --s: oklch(68% 0.17 290);
+  --sc: oklch(18% 0.03 290);
   --a: oklch(90% 0 0);
   --ac: oklch(40% 0.06 230);
   --n: oklch(50% 0.18 260);
@@ -65,18 +69,26 @@
   --pc: oklch(96% 0.01 260);
   --s: oklch(45% 0.15 285);
   --sc: oklch(95% 0.02 285);
-  --a: oklch(55% 0.18 335);
-  --ac: oklch(15% 0.03 335);
+  --a: oklch(52% 0.18 335);
+  --ac: oklch(98% 0.005 335);
   --n: oklch(22% 0.04 260);
   --nc: oklch(90% 0.01 260);
-  --in: oklch(65% 0.15 230);
-  --inc: oklch(15% 0.02 230);
-  --su: oklch(62% 0.17 155);
-  --suc: oklch(15% 0.02 155);
-  --wa: oklch(75% 0.15 70);
-  --wac: oklch(20% 0.03 70);
-  --er: oklch(58% 0.2 25);
-  --erc: oklch(15% 0.02 25);
+  /* Status colors are also used as text (cash in green, warnings in orange), so they sit at
+     L 48-52%: 4.5:1 or more on base-200, and white text on them passes too */
+  --in: oklch(48% 0.13 230);
+  --inc: oklch(98% 0.005 230);
+  --su: oklch(48% 0.15 155);
+  --suc: oklch(98% 0.005 155);
+  --wa: oklch(50% 0.15 60);
+  --wac: oklch(98% 0.005 60);
+  --er: oklch(52% 0.2 25);
+  --erc: oklch(98% 0.005 25);
+}
+
+/* Page text follows the theme. Without this the text color came from the browser's own default,
+   which stayed white in the light theme because of the color-scheme meta */
+body {
+  color: var(--color-base-content);
 }
 
 /* ===================================================
@@ -127,12 +139,13 @@
   margin-right: 0.25rem;
 }
 .btn-primary {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-fill);
   color: var(--color-primary-content);
   border-color: transparent;
 }
+/* Hover darkens instead of lightening, so the white label keeps its contrast */
 .btn-primary:hover {
-  background-color: color-mix(in oklab, var(--color-primary) 85%, white);
+  background-color: color-mix(in oklab, var(--color-primary-fill) 85%, black);
 }
 .btn-secondary {
   background-color: var(--color-secondary);
@@ -140,7 +153,7 @@
   border-color: transparent;
 }
 .btn-secondary:hover {
-  background-color: color-mix(in oklab, var(--color-secondary) 85%, white);
+  background-color: color-mix(in oklab, var(--color-secondary) 88%, var(--color-secondary-content));
 }
 .btn-accent {
   background-color: var(--color-accent);
@@ -240,6 +253,23 @@
   width: 1.5rem;
   height: 1.5rem;
   min-height: 1.5rem;
+}
+/* Touch screens: every button and menu row is at least 44px tall (icon buttons 44px wide too),
+   the smallest comfortable tap target. Mouse layouts keep the compact sizes above */
+@media (pointer: coarse) {
+  .btn, .btn-sm, .btn-xs {
+    min-height: 2.75rem;
+    height: auto;
+  }
+  .btn-circle, .btn-square,
+  .btn-circle.btn-sm, .btn-circle.btn-xs, .btn-square.btn-sm, .btn-square.btn-xs {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+  }
+  .menu li > a, .menu li > button, .menu li > details > summary {
+    min-height: 2.75rem;
+  }
 }
 
 /* Badges */
@@ -626,7 +656,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
   border-bottom: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
 }
 .table td {
@@ -697,7 +727,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
   padding: 0.5rem 0.625rem 0.25rem;
   list-style: none;
 }
@@ -718,7 +748,7 @@
   background-color: color-mix(in oklab, var(--color-base-content) 8%, transparent);
 }
 .menu li > a.active, .menu li > a:active {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-fill);
   color: var(--color-primary-content);
 }
 
@@ -812,7 +842,7 @@ ul.menu-horizontal details > ul {
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
   border-bottom: 2px solid transparent;
   text-decoration: none !important;
 }
@@ -946,7 +976,7 @@ ul.menu-horizontal details > ul {
   font-size: 0.75rem;
   font-family: monospace;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--color-base-content) 40%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
 }
 .divider::before, .divider::after {
   content: "";
@@ -1047,7 +1077,7 @@ ul.menu-horizontal details > ul {
   font-family: monospace;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
 }
 .stat-value {
   font-size: 1.5rem;
@@ -1057,7 +1087,7 @@ ul.menu-horizontal details > ul {
 }
 .stat-desc {
   font-size: 0.6875rem;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
 }
 
 /* HTML5 Dialog & Modals */
@@ -1255,7 +1285,7 @@ body {
     position: fixed; top: 8px; left: 8px;
     width: auto; height: auto; z-index: 999999;
     padding: 8px 16px;
-    background: var(--color-primary);
+    background: var(--color-primary-fill);
     color: var(--color-primary-content);
     border-radius: 8px; font-size: 14px;
 }
@@ -1322,7 +1352,11 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
 }
 
 /* ===================================================
-   REMOVE ALL HOVER EFFECTS ACROSS SITE
+   HOVER: NO MOTION, BUT STILL A VISIBLE STATE
+   Transitions and lift effects stay off site-wide. Every
+   link and button still shows it reacts to the pointer:
+   buttons change fill (above), text links underline, card
+   links pick up a primary border.
    =================================================== */
 *, *::before, *::after {
     transition: none !important;
@@ -1336,12 +1370,14 @@ div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
     filter: none !important;
 }
 
-.table tr:hover, .table-hover tr:hover, .table tbody tr:hover {
-    background-color: transparent !important;
+.link:hover, .link-hover:hover,
+:where(p, li, dd, dt, td, th, span, small, label, h2, h3, h4) > a:not(.btn):not(.badge):not(.stat-pill):hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
 }
-
-a:hover {
-    text-decoration: none !important;
+a.card:hover, a:hover > .card {
+    border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
 }
 
 /* ===================================================
@@ -1361,7 +1397,7 @@ a:hover {
     font-size: 0.875rem;
   }
   .label-text { font-size: 0.875rem; color: var(--color-base-content); }
-  .label-text-alt { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+  .label-text-alt { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
   /* Stat groups (resources pages) */
   .stats {
@@ -1387,7 +1423,7 @@ a:hover {
    unlayered .btn / .btn-ghost rules above. */
 .btn-active,
 .btn-ghost.btn-active {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
+  background-color: var(--color-primary-fill);
+  border-color: var(--color-primary-fill);
   color: var(--color-primary-content);
 }

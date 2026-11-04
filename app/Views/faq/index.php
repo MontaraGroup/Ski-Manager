@@ -21,7 +21,7 @@
 ?>
 <div class="max-w-3xl mx-auto p-4 lg:p-8">
     <h1 class="text-3xl font-bold mb-2">Frequently Asked Questions</h1>
-    <p class="text-base-content/60 mb-6">Everything you need to know about Ski Manager. Can't find your answer? <a href="/contact" class="link link-primary">Contact us</a>.</p>
+    <p class="text-base-content/70 mb-6">Everything you need to know about Ski Manager. Can't find your answer? <a href="/contact" class="link link-primary">Contact us</a>.</p>
 
     <div class="space-y-3">
         <?php foreach ($faqs as $i => $faq) : ?>
@@ -37,7 +37,7 @@
 
     <div class="card bg-base-200/50 shadow-sm mt-8"><div class="card-body p-5 text-center">
         <h2 class="font-bold mb-1">Still have questions?</h2>
-        <p class="text-sm text-base-content/60 mb-3">We're happy to help.</p>
+        <p class="text-sm text-base-content/70 mb-3">We're happy to help.</p>
         <div class="flex gap-2 justify-center flex-wrap">
             <a href="/contact" class="btn btn-primary btn-sm gap-1"><i class="fa-solid fa-envelope"></i> Contact Us</a>
             <a href="/support" class="btn btn-outline btn-sm gap-1"><i class="fa-solid fa-headset"></i> Support</a>

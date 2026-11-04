@@ -42,14 +42,14 @@ $segCount = $db->table('map_segments')->where('active', 1)->where('resort_map', 
                         <input type="number" name="winter_days" value="<?= $season['winter_days'] ?>" class="input input-sm input-bordered w-full">
                     </div>
                 </div>
-                <div class="flex justify-between items-center text-xs text-base-content/50 mb-3">
+                <div class="flex justify-between items-center text-xs text-base-content/70 mb-3">
                     <span>Resort: <?= esc($season['resort_map']) ?></span>
                     <span>Season #<?= $season['season_number'] ?></span>
                 </div>
                 <button class="btn btn-primary btn-sm w-full">Save Season</button>
             </form>
             <?php else : ?>
-            <p class="text-sm text-base-content/50">No active season.</p>
+            <p class="text-sm text-base-content/70">No active season.</p>
             <?php endif ?>
         </div></div>
 
@@ -57,7 +57,7 @@ $segCount = $db->table('map_segments')->where('active', 1)->where('resort_map', 
         <div class="card bg-base-100 shadow-sm"><div class="card-body">
             <h2 class="font-bold text-base mb-3"><i class="fa-solid fa-layer-group mr-1 text-warning"></i>Sectors</h2>
             <?php if (empty($sectors)) : ?>
-                <p class="text-sm text-base-content/50">No sectors found.</p>
+                <p class="text-sm text-base-content/70">No sectors found.</p>
             <?php else : ?>
                 <div class="space-y-2">
                 <?php foreach ($sectors as $sec) : ?>
@@ -97,7 +97,7 @@ $segCount = $db->table('map_segments')->where('active', 1)->where('resort_map', 
         <!-- Map Segments -->
         <div class="card bg-base-100 shadow-sm"><div class="card-body">
             <h2 class="font-bold text-base mb-3"><i class="fa-solid fa-map mr-1 text-primary"></i>Map Segments</h2>
-            <p class="text-sm text-base-content/50 mb-2"><?= $segCount ?> active segments</p>
+            <p class="text-sm text-base-content/70 mb-2"><?= $segCount ?> active segments</p>
             <a href="/map" class="btn btn-outline btn-sm">Manage Map</a>
         </div></div>
 

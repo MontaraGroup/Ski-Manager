@@ -313,8 +313,8 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
 
 /* Top bar */
 .map-title { font-family: var(--sign); font-size: 20px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
-.map-title span { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; margin-left: 6px; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
-.map-counts { display: flex; gap: 12px; margin-top: 2px; font-size: 12px; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.map-title span { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; margin-left: 6px; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+.map-counts { display: flex; gap: 12px; margin-top: 2px; font-size: 12px; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .map-counts b { color: var(--color-base-content); font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
 
@@ -375,7 +375,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
     <!-- Initial Loader -->
     <div id="mapLoader" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;text-align:center;pointer-events:none">
         <span class="loading loading-spinner loading-lg text-primary"></span>
-        <p class="text-sm text-base-content/60 mt-2">Loading trail map...</p>
+        <p class="text-sm text-base-content/70 mt-2">Loading trail map...</p>
     </div>
 
     <!-- Subtle HD Resolution Indicator -->
@@ -422,7 +422,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 <i class="fa-solid fa-draw-polygon text-warning"></i> Sectors
             </button>
 
-            <span class="text-[11px] text-base-content/50 hidden xl:inline ml-1">
+            <span class="text-[11px] text-base-content/70 hidden xl:inline ml-1">
                 <i class="fa-solid fa-keyboard mr-1"></i><b>L</b> Lift • <b>S</b> Slope • Click any line to edit
             </span>
         </div>
@@ -467,10 +467,10 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
 
             <!-- Inline Difficulty (shown for slopes) -->
             <select id="toolSegDiff" class="select select-xs select-bordered text-xs py-0 h-6 min-h-0" style="display:none" title="Slope Difficulty">
-                <option value="green">🟢 Green (Easy)</option>
-                <option value="blue">🔵 Blue (Intermediate)</option>
-                <option value="black">⚫ Black (Advanced)</option>
-                <option value="double_black">🔴 Double Black (Expert)</option>
+                <option value="green">● Green (Easy)</option>
+                <option value="blue">■ Blue (Intermediate)</option>
+                <option value="black">◆ Black (Advanced)</option>
+                <option value="double_black">◆◆ Double Black (Expert)</option>
             </select>
 
             <div class="h-4 w-px bg-white/15 mx-0.5 hidden sm:block"></div>
@@ -501,7 +501,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
         </div>
 
         <!-- Helper Hint Sub-bar (shown while active) -->
-        <div id="toolHelperHint" class="text-[11px] text-base-content/60 pt-1.5 mt-1.5 border-t border-white/10 flex items-center justify-between gap-3" style="display:none">
+        <div id="toolHelperHint" class="text-[11px] text-base-content/70 pt-1.5 mt-1.5 border-t border-white/10 flex items-center justify-between gap-3" style="display:none">
             <span id="toolHintText">
                 <i class="fa-solid fa-circle-info text-info mr-1"></i>
                 <b>Click map</b> to add points • <b>Drag white/colored dots</b> to move • <b>Click or drag small midpoints</b> to add bends • <b>Right-click or Alt+click</b> a point to delete it
@@ -727,8 +727,8 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
                 <div class="flex items-center gap-1.5">
                     <select id="buildDiffFilter" class="drawer-select flex-1" style="display:none">
                         <option value="">All Grades</option>
-                        <option value="green">🟢 Green (Easy)</option>
-                        <option value="blue">🟦 Blue (Intermediate)</option>
+                        <option value="green">● Green (Easy)</option>
+                        <option value="blue">■ Blue (Intermediate)</option>
                         <option value="black">◆ Black (Advanced)</option>
                         <option value="double_black">◆◆ Double Black</option>
                     </select>
@@ -742,7 +742,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
             </div>
 
             <div id="segmentList" class="flex flex-col">
-                <p class="text-sm text-base-content/50 text-center py-4">Select a purple line to build</p>
+                <p class="text-sm text-base-content/70 text-center py-4">Select a purple line to build</p>
             </div>
         </div>
     </div>
@@ -1852,7 +1852,7 @@ body.map-drawer-open #tutorialWidgetContainer { right: calc(380px + 2rem) !impor
         var pill = document.getElementById('snapStatusPill');
         if (pill) {
             pill.style.display = 'inline-flex';
-            pill.textContent = '🧲 Snapped: ' + label;
+            pill.textContent = 'Snapped: ' + label;
         }
     }
 

@@ -7,7 +7,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-seedling mr-2 text-success"></i>Génépis</h1>
-            <p class="text-sm text-base-content/50">Earn through gameplay, spend on boosts and upgrades</p>
+            <p class="text-sm text-base-content/70">Earn through gameplay, spend on boosts and upgrades</p>
         </div>
     </div>
 
@@ -17,13 +17,13 @@
             <div class="card-body p-6">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <div class="text-xs text-base-content/50 uppercase tracking-wider">Your Balance</div>
+                        <div class="text-xs text-base-content/70 uppercase tracking-wider">Your Balance</div>
                         <div class="text-5xl font-bold text-success mt-1"><i class="fa-solid fa-seedling mr-2"></i><?= number_format((int) $genepis['balance']) ?></div>
                     </div>
                     <div class="flex gap-6 text-sm">
-                        <div><div class="text-base-content/50">Earned</div><div class="font-bold text-success"><?= number_format((int) $genepis['total_earned']) ?></div></div>
-                        <div><div class="text-base-content/50">Spent</div><div class="font-bold text-error"><?= number_format((int) $genepis['total_spent']) ?></div></div>
-                        <div><div class="text-base-content/50">Rate</div><div class="font-bold">1 <i class="fa-solid fa-seedling text-success text-xs"></i> = <?= currency(1000) ?></div></div>
+                        <div><div class="text-base-content/70">Earned</div><div class="font-bold text-success"><?= number_format((int) $genepis['total_earned']) ?></div></div>
+                        <div><div class="text-base-content/70">Spent</div><div class="font-bold text-error"><?= number_format((int) $genepis['total_spent']) ?></div></div>
+                        <div><div class="text-base-content/70">Rate</div><div class="font-bold">1 <i class="fa-solid fa-seedling text-success text-xs"></i> = <?= currency(1000) ?></div></div>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
             <div class="card bg-base-100 border border-base-200 shadow-sm">
                 <div class="card-body p-6">
                     <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-money-bill-transfer mr-2 text-success"></i>Exchange Cash</h3>
-                    <p class="text-xs text-base-content/60 mb-4">Liquidate your available Genepis into operational ski resort cash metrics.</p>
+                    <p class="text-xs text-base-content/70 mb-4">Liquidate your available Genepis into operational ski resort cash metrics.</p>
                     <form action="/genepis/exchange" method="post" class="flex flex-col gap-3" data-confirm="Convert Génépis to cash?">
                         <?= csrf_field() ?>
                         <input type="hidden" name="direction" value="to_cash">
@@ -75,7 +75,7 @@
                                             <i class="<?= esc($item['icon']) ?> <?= esc($item['color']) ?> mt-1 text-sm shrink-0"></i>
                                             <h4 class="font-bold text-sm leading-tight"><?= esc($item['name']) ?></h4>
                                         </div>
-                                        <p class="text-xs text-base-content/60 mb-3 ml-6"><?= esc($item['desc']) ?></p>
+                                        <p class="text-xs text-base-content/70 mb-3 ml-6"><?= esc($item['desc']) ?></p>
                                     </div>
                                     <div class="flex items-center justify-between mt-2 ml-6">
                                         <span class="text-xs font-semibold text-success"><i class="fa-solid fa-seedling mr-1"></i><?= number_format((int)$item['cost']) ?></span>
@@ -89,7 +89,7 @@
                             <?php endforeach; ?>
                             
                             <?php if (!$hasItems): ?>
-                                <p class="text-xs text-base-content/50 col-span-2">No active elements in this category container.</p>
+                                <p class="text-xs text-base-content/70 col-span-2">No active elements in this category container.</p>
                             <?php endif; ?>
                         </div>
                     </div>

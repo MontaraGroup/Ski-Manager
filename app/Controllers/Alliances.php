@@ -272,7 +272,7 @@ class Alliances extends BaseController
             log_activity($userId, 'Alliance', "Founded the {$name} [{$tag}] alliance for " . currency($fee), 'fa-solid fa-handshake');
         }
 
-        return redirect()->to('/alliances')->with('success', "🏔️ Congratulations! {$name} [{$tag}] has been chartered!");
+        return redirect()->to('/alliances')->with('success', "Congratulations! {$name} [{$tag}] has been chartered!");
     }
 
     public function join(int $allianceId): ResponseInterface
@@ -447,7 +447,7 @@ class Alliances extends BaseController
             $db->table('alliance_activity_log')->insert([
                 'alliance_id' => $allianceId,
                 'type'        => 'level_up',
-                'message'     => "🎉 Alliance promoted to Level {$newLevel}! Member capacity increased to {$maxMembers}.",
+                'message'     => "Alliance promoted to Level {$newLevel}! Member capacity increased to {$maxMembers}.",
                 'created_at'  => date('Y-m-d H:i:s'),
             ]);
         }
@@ -502,7 +502,7 @@ class Alliances extends BaseController
             'alliance_id' => $alliance['id'],
             'user_id'     => $userId,
             'type'        => 'pass_upgrade',
-            'message'     => "🌟 Upgraded Syndicate Pass to Tier {$nextTier} ({$tierConfig['name']})! All member resorts now gain +{$tierConfig['visitor_pct']}% visitors.",
+            'message'     => "Upgraded Syndicate Pass to Tier {$nextTier} ({$tierConfig['name']})! All member resorts now gain +{$tierConfig['visitor_pct']}% visitors.",
             'created_at'  => date('Y-m-d H:i:s'),
         ]);
 
@@ -573,7 +573,7 @@ class Alliances extends BaseController
             'alliance_id' => $alliance['id'],
             'user_id'     => $userId,
             'type'        => 'perk_unlocked',
-            'message'     => "⚡ Upgraded {$perkDef['name']} to Level {$nextLevel} ({$lvlConfig['effect']})!",
+            'message'     => "Upgraded {$perkDef['name']} to Level {$nextLevel} ({$lvlConfig['effect']})!",
             'created_at'  => date('Y-m-d H:i:s'),
         ]);
 
@@ -658,7 +658,7 @@ class Alliances extends BaseController
                 $this->allianceModel->update($myMembership['alliance_id'], ['founder_id' => $targetUserId]);
                 $db->table('alliance_activity_log')->insert([
                     'alliance_id' => $myMembership['alliance_id'],
-                    'message'     => "👑 Leadership transferred to {$targetName}!",
+                    'message'     => "Leadership transferred to {$targetName}!",
                     'created_at'  => date('Y-m-d H:i:s'),
                 ]);
                 return redirect()->to('/alliances')->with('success', "Transferred leadership to {$targetName}.");

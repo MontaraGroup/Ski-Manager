@@ -19,8 +19,8 @@ class Tournaments extends BaseController
         if (empty($events)) {
             $defaults = [
                 ['name' => 'Early Bird Bonus', 'desc' => '+20% visitor boost for early registrants', 'type' => 'bonus', 'effect' => 'visitors', 'value' => 20, 'day' => 1, 'duration' => 3],
-                ['name' => 'Blizzard Warning', 'desc' => 'Heavy snowfall expected — prepare your slopes!', 'type' => 'weather', 'effect' => 'snow', 'value' => 30, 'day' => 5, 'duration' => 2],
-                ['name' => 'Celebrity Visit', 'desc' => 'A famous skier is visiting — reputation boost!', 'type' => 'celebrity', 'effect' => 'reputation', 'value' => 50, 'day' => 8, 'duration' => 1],
+                ['name' => 'Blizzard Warning', 'desc' => 'Heavy snowfall expected. Prepare your slopes!', 'type' => 'weather', 'effect' => 'snow', 'value' => 30, 'day' => 5, 'duration' => 2],
+                ['name' => 'Celebrity Visit', 'desc' => 'A famous skier is visiting: reputation boost!', 'type' => 'celebrity', 'effect' => 'reputation', 'value' => 50, 'day' => 8, 'duration' => 1],
                 ['name' => 'Equipment Sale', 'desc' => '25% off all new builds this weekend', 'type' => 'sale', 'effect' => 'cost', 'value' => -25, 'day' => 14, 'duration' => 2],
             ];
             foreach ($defaults as $d) {
@@ -36,7 +36,7 @@ class Tournaments extends BaseController
             'freestyle' => ['name' => 'Freestyle Competition', 'icon' => 'fa-solid fa-person-snowboarding', 'visitors' => 1000, 'reputation' => 300, 'cost' => 60000, 'duration' => 2, 'desc' => 'Tricks, jumps, and style'],
             'cross_country' => ['name' => 'Cross-Country Marathon', 'icon' => 'fa-solid fa-person-skiing-nordic', 'visitors' => 600, 'reputation' => 150, 'cost' => 30000, 'duration' => 1, 'desc' => 'Endurance skiing event'],
             'winter_festival' => ['name' => 'Winter Festival', 'icon' => 'fa-solid fa-snowflake', 'visitors' => 2000, 'reputation' => 500, 'cost' => 150000, 'duration' => 3, 'desc' => 'Massive multi-day winter celebration'],
-            'night_race' => ['name' => 'Night Race', 'icon' => 'fa-solid fa-moon', 'visitors' => 700, 'reputation' => 200, 'cost' => 40000, 'duration' => 1, 'desc' => 'Racing under the lights — requires night skiing'],
+            'night_race' => ['name' => 'Night Race', 'icon' => 'fa-solid fa-moon', 'visitors' => 700, 'reputation' => 200, 'cost' => 40000, 'duration' => 1, 'desc' => 'Racing under the lights. Needs night skiing.'],
             'kids_cup' => ['name' => "Kids' Cup", 'icon' => 'fa-solid fa-child', 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1, 'desc' => 'Youth skiing competition'],
         ];
 

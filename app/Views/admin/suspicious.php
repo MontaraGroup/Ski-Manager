@@ -8,7 +8,7 @@
     </div>
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body">
         <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-coins mr-1 text-warning"></i>High Cash Players</h2>
-        <p class="text-xs text-base-content/50 mb-3">Players above expected thresholds for their difficulty.</p>
+        <p class="text-xs text-base-content/70 mb-3">Players above expected thresholds for their difficulty.</p>
         <?php if (empty($suspects)) : ?>
             <p class="text-sm text-success"><i class="fa-solid fa-check mr-1"></i>No suspicious accounts.</p>
         <?php else : ?>
@@ -25,13 +25,13 @@
     <div class="card bg-base-100 shadow-sm"><div class="card-body">
         <h2 class="font-bold text-sm mb-3"><i class="fa-solid fa-user-shield mr-1 text-info"></i>Recent Admin Cash Edits</h2>
         <?php if (empty($recent)) : ?>
-            <p class="text-xs text-base-content/50">No recent admin cash edits.</p>
+            <p class="text-xs text-base-content/70">No recent admin cash edits.</p>
         <?php else : ?>
         <div class="overflow-x-auto"><table class="table table-sm">
             <thead><tr><th>Player</th><th>Cash</th><th>Action</th><th>When</th></tr></thead>
             <tbody>
             <?php foreach ($recent as $r) : ?>
-                <tr><td class="font-semibold"><?= esc($r['username']) ?></td><td class="font-mono"><?= currency((int)($r['cash'] ?? 0)) ?></td><td class="text-xs"><?= esc($r['latest'] ?? '') ?></td><td class="text-xs text-base-content/50"><?= isset($r['created_at']) ? date('M j H:i', strtotime($r['created_at'])) : '-' ?></td></tr>
+                <tr><td class="font-semibold"><?= esc($r['username']) ?></td><td class="font-mono"><?= currency((int)($r['cash'] ?? 0)) ?></td><td class="text-xs"><?= esc($r['latest'] ?? '') ?></td><td class="text-xs text-base-content/70"><?= isset($r['created_at']) ? date('M j H:i', strtotime($r['created_at'])) : '-' ?></td></tr>
             <?php endforeach ?>
             </tbody>
         </table></div>

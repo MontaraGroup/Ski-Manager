@@ -43,7 +43,7 @@
                 </div>
             </form>
 
-            <div class="text-xs text-base-content/50 mt-2">
+            <div class="text-xs text-base-content/70 mt-2">
                 Didn't receive a token? Check your spam folder or wait a moment.
             </div>
         </div>

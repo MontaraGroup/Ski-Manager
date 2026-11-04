@@ -9,7 +9,7 @@
                 <i class="fa-solid fa-lock text-3xl text-warning"></i>
             </div>
             <h1 class="text-2xl font-bold mb-2"><?= esc($unlock['label'] ?? 'Feature') ?> Locked</h1>
-            <p class="text-base-content/60 mb-6">Complete an achievement to unlock this feature.</p>
+            <p class="text-base-content/70 mb-6">Complete an achievement to unlock this feature.</p>
 
             <div class="card bg-base-200 border border-base-300 mx-auto max-w-xs">
                 <div class="card-body p-4">
@@ -19,7 +19,7 @@
                         </div>
                         <div class="text-left flex-1">
                             <div class="font-bold text-sm"><?= esc($unlock['name'] ?? 'Achievement') ?></div>
-                            <div class="text-xs text-base-content/50"><?= esc($unlock['desc'] ?? '') ?></div>
+                            <div class="text-xs text-base-content/70"><?= esc($unlock['desc'] ?? '') ?></div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 mt-3">

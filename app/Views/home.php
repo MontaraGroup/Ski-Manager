@@ -1,5 +1,5 @@
 <?= $this->extend('layouts/main') ?>
-<?= $this->section('title') ?>Ski Manager - Free Online Ski Resort Tycoon Game<?= $this->endSection() ?>
+<?= $this->section('title') ?>Free Online Ski Resort Tycoon Game<?= $this->endSection() ?>
 <?= $this->section('content') ?>
 
 <?php
@@ -52,9 +52,11 @@
 .home-section h2 { font-family: var(--sign); font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; margin: 0; }
 .prose-home p { font-size: 1rem; line-height: 1.7; color: color-mix(in oklab, var(--color-base-content) 80%, transparent); max-width: 38rem; }
 .prose-home p + p { margin-top: 0.9rem; }
-.muted { color: color-mix(in oklab, var(--color-base-content) 58%, transparent); }
+.muted { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .textlink { color: var(--color-primary); font-weight: 600; text-decoration: none; }
 .textlink:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Links that stand on their own (not inside a sentence) get a 44px tap target on touch screens */
+@media (pointer: coarse) { .home-hero .note, .home-tap { display: inline-flex; align-items: center; min-height: 2.75rem; } }
 .tsign { display: inline-block; width: 11px; height: 11px; flex-shrink: 0; }
 .tsign.green { border-radius: 50%; background: #23a55a; }
 .tsign.blue { background: #2f6fd6; }
@@ -62,11 +64,11 @@
 
 /* Season 1 standings */
 .standings { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
-.standings th { text-align: left; font-size: 0.75rem; font-weight: 500; padding: 0 0 0.5rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.standings th { text-align: left; font-size: 0.75rem; font-weight: 500; padding: 0 0 0.5rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .standings td { padding: 0.6rem 0; border-top: 1px solid var(--color-base-300); vertical-align: top; }
 .standings .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.standings .pos { width: 2rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); font-variant-numeric: tabular-nums; }
-.standings small { display: block; font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.standings .pos { width: 2rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); font-variant-numeric: tabular-nums; }
+.standings small { display: block; font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
 /* How a season goes */
 .steps { counter-reset: step; list-style: none; margin: 0; padding: 0; }
@@ -86,7 +88,7 @@
 .season-list { list-style: none; margin: 0; padding: 0; }
 .season-list li { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.25rem 1.25rem; padding: 0.85rem 0; border-top: 1px solid var(--color-base-300); }
 .season-list li:first-child { border-top: 0; }
-.season-list .when { font-size: 0.8125rem; padding-top: 0.15rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.season-list .when { font-size: 0.8125rem; padding-top: 0.15rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .season-list .now .when { color: var(--color-primary); font-weight: 600; }
 .season-list b { font-weight: 600; }
 .season-list p { font-size: 0.9375rem; line-height: 1.55; margin-top: 0.15rem; color: color-mix(in oklab, var(--color-base-content) 72%, transparent); }
@@ -110,7 +112,7 @@
                 <?php if (!auth()->loggedIn()) : ?>
                 <a href="/register" class="btn btn-primary px-6">Play free</a>
                 <a href="/demo" class="btn ghost">Try a demo mountain</a>
-                <a href="/login" class="text-sm underline underline-offset-4 ml-1" style="color:rgba(255,255,255,0.8)">Sign in</a>
+                <a href="/login" class="home-tap text-sm underline underline-offset-4 ml-1" style="color:rgba(255,255,255,0.8)">Sign in</a>
                 <?php else : ?>
                 <a href="/dashboard" class="btn btn-primary px-6">Go to your resort</a>
                 <a href="/map" class="btn ghost">Open the trail map</a>
@@ -129,7 +131,7 @@
                     <div>
                         <div class="report-label">Summit</div>
                         <div class="report-num"><?= $weather ? esc($weather['temp_formatted']) : '–' ?></div>
-                        <div class="text-xs mt-1" style="color:#5b6470"><?= esc($weatherCondition ?: '—') ?></div>
+                        <div class="text-xs mt-1" style="color:#5b6470"><?= esc($weatherCondition ?: '–') ?></div>
                     </div>
                     <div>
                         <div class="report-label">Base depth</div>
@@ -158,7 +160,7 @@
             <h2 class="mb-5">Season 2 is open</h2>
             <p>Sector 2, the upper part of Park City, is now on the trail map.<?php if ($s2Runs) : ?> It has <?= number_format($s2Runs) ?> runs and <?= number_format($s2Lifts) ?> lift<?= $s2Lifts === 1 ? '' : 's' ?>, and most of it is steep: <?= number_format($s2Steep) ?> of those runs are black or double black.<?php endif ?></p>
             <p>Everything you built in Season 1 is still there, and so is your cash. The final Season 1 standings have been saved, everyone who played got the Season 1 Pioneer badge, and the top ten got 50 Genepis each.</p>
-            <p class="pt-1"><a href="<?= auth()->loggedIn() ? '/map' : '/register' ?>" class="textlink"><?= auth()->loggedIn() ? 'Open the trail map' : 'Start a resort' ?> →</a></p>
+            <p class="pt-1"><a href="<?= auth()->loggedIn() ? '/map' : '/register' ?>" class="textlink home-tap"><?= auth()->loggedIn() ? 'Open the trail map' : 'Start a resort' ?> →</a></p>
         </div>
         <?php if ($standings) : ?>
         <div class="lg:col-span-5">
@@ -175,7 +177,7 @@
                 <?php endforeach ?>
                 </tbody>
             </table>
-            <p class="text-sm mt-3"><a href="/leaderboard" class="textlink">Full leaderboard</a></p>
+            <p class="text-sm mt-3"><a href="/leaderboard" class="textlink home-tap">Full leaderboard</a></p>
         </div>
         <?php endif ?>
     </div>
@@ -268,7 +270,7 @@
         <p>It's free, and you can try a demo mountain without making an account.</p>
         <div class="flex items-center gap-4">
             <a href="/register" class="btn btn-primary px-8">Play free</a>
-            <a href="/demo" class="text-sm underline underline-offset-4" style="color:rgba(247,245,240,0.8)">Try the demo</a>
+            <a href="/demo" class="home-tap text-sm underline underline-offset-4" style="color:rgba(247,245,240,0.8)">Try the demo</a>
         </div>
         <?php endif ?>
     </div>

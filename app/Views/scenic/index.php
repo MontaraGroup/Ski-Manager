@@ -8,7 +8,7 @@
         <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
         <div>
             <h1 class="text-2xl font-bold"><i class="fa-solid fa-camera mr-2 text-primary"></i>Scenic Lifts & Sightseeing</h1>
-            <p class="text-sm text-base-content/50">Turn your lifts into tourist attractions - set prices, add upgrades, earn year-round</p>
+            <p class="text-sm text-base-content/70">Turn your lifts into tourist attractions - set prices, add upgrades, earn year-round</p>
         </div>
     </div>
 
@@ -17,24 +17,24 @@
     <div class="card bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm mb-6"><div class="card-body p-4">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-cable-car mr-1"></i>Scenic Lifts</div>
+                <div class="text-xs text-base-content/70 mb-1"><i class="fa-solid fa-cable-car mr-1"></i>Scenic Lifts</div>
                 <div class="text-2xl font-bold"><?= count($scenicLifts) ?></div>
-                <div class="text-xs text-base-content/50">of <?= count($lifts) ?> total</div>
+                <div class="text-xs text-base-content/70">of <?= count($lifts) ?> total</div>
             </div>
             <div>
-                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-coins mr-1"></i>Summer Revenue</div>
+                <div class="text-xs text-base-content/70 mb-1"><i class="fa-solid fa-coins mr-1"></i>Summer Revenue</div>
                 <div class="text-2xl font-bold text-success"><?= currency($totalDailyRevenue) ?></div>
-                <div class="text-xs text-base-content/50">per summer day</div>
+                <div class="text-xs text-base-content/70">per summer day</div>
             </div>
             <div>
-                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-calendar mr-1"></i>Current Earning</div>
+                <div class="text-xs text-base-content/70 mb-1"><i class="fa-solid fa-calendar mr-1"></i>Current Earning</div>
                 <div class="text-2xl font-bold <?= $isSummer ? 'text-success' : 'text-warning' ?>"><?= currency($seasonRevenue) ?></div>
-                <div class="text-xs text-base-content/50"><?= $isSummer ? 'Summer: full tourist numbers' : 'Winter: ' . (int) (Scenic::WINTER_SHARE * 100) . '% of the tourists' ?> · open lifts only</div>
+                <div class="text-xs text-base-content/70"><?= $isSummer ? 'Summer: full tourist numbers' : 'Winter: ' . (int) (Scenic::WINTER_SHARE * 100) . '% of the tourists' ?> · open lifts only</div>
             </div>
             <div>
-                <div class="text-xs text-base-content/50 mb-1"><i class="fa-solid fa-<?= $isSummer ? 'sun' : 'snowflake' ?> mr-1"></i>Season</div>
+                <div class="text-xs text-base-content/70 mb-1"><i class="fa-solid fa-<?= $isSummer ? 'sun' : 'snowflake' ?> mr-1"></i>Season</div>
                 <div class="text-2xl font-bold"><?= $isSummer ? 'Summer' : 'Winter' ?></div>
-                <div class="text-xs text-base-content/50">Day <?= $seasonDay ?>/<?= getSeasonLength() ?></div>
+                <div class="text-xs text-base-content/70">Day <?= $seasonDay ?>/<?= getSeasonLength() ?></div>
             </div>
         </div>
     </div></div>
@@ -45,7 +45,7 @@
         <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body text-center py-10">
             <i class="fa-solid fa-camera text-5xl text-base-content/15 mb-3"></i>
             <p class="font-semibold">No scenic lifts yet</p>
-            <p class="text-sm text-base-content/50 mt-1">Designate a lift below to start earning from sightseeing tourists</p>
+            <p class="text-sm text-base-content/70 mt-1">Designate a lift below to start earning from sightseeing tourists</p>
         </div></div>
     <?php else : ?>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -60,7 +60,7 @@
                             </div>
                             <div>
                                 <h3 class="font-bold"><?= esc($lift['name']) ?></h3>
-                                <div class="text-xs text-base-content/50"><?= ucwords(str_replace('_', ' ', $lift['subtype'] ?? '')) ?> · <?= distance((int)$lift['length_meters']) ?> · Sector <?= $lift['sector'] ?></div>
+                                <div class="text-xs text-base-content/70"><?= ucwords(str_replace('_', ' ', $lift['subtype'] ?? '')) ?> · <?= distance((int)$lift['length_meters']) ?> · Sector <?= $lift['sector'] ?></div>
                             </div>
                         </div>
                         <form action="/scenic-lifts/remove/<?= $lift['id'] ?>" method="post" data-confirm="Remove scenic designation from this lift?"><?= csrf_field() ?>
@@ -73,20 +73,20 @@
                         <form action="/scenic-lifts/update-price/<?= $lift['id'] ?>" method="post" class="flex items-center gap-3">
                             <?= csrf_field() ?>
                             <div class="flex-1">
-                                <label class="text-xs text-base-content/50">Ticket price per ride</label>
+                                <label class="text-xs text-base-content/70">Ticket price per ride</label>
                                 <input type="range" name="price" min="<?= Scenic::MIN_PRICE ?>" max="<?= Scenic::MAX_PRICE ?>" step="1" value="<?= $sc['price'] ?>" class="range range-primary range-xs" oninput="this.nextElementSibling.textContent=this.value+' € per ride'" aria-label="Ticket price per ride">
                                 <span class="text-sm font-bold"><?= currency($sc['price']) ?> per ride</span>
                             </div>
                             <button type="submit" class="btn btn-primary btn-xs"><i class="fa-solid fa-check"></i></button>
                         </form>
-                        <div class="text-xs text-base-content/50 mt-1">At <?= currency(Scenic::REF_PRICE) ?> about <?= Scenic::BASE_RIDERS ?> tourists ride on a summer day; higher prices bring fewer riders.</div>
+                        <div class="text-xs text-base-content/70 mt-1">At <?= currency(Scenic::REF_PRICE) ?> about <?= Scenic::BASE_RIDERS ?> tourists ride on a summer day; higher prices bring fewer riders.</div>
                     </div>
 
                     <!-- Stats -->
                     <div class="grid grid-cols-3 gap-2 mt-3 text-center text-sm">
-                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold text-success"><?= currency($sc['today']) ?></div><div class="text-xs text-base-content/50">Today · <?= $sc['riders'] ?> riders</div></div>
-                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['condition_pct'] ?>%</div><div class="text-xs text-base-content/50">Condition</div></div>
-                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['status'] === 'open' ? '✓' : '✗' ?></div><div class="text-xs text-base-content/50">Status</div></div>
+                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold text-success"><?= currency($sc['today']) ?></div><div class="text-xs text-base-content/70">Today · <?= $sc['riders'] ?> riders</div></div>
+                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['condition_pct'] ?>%</div><div class="text-xs text-base-content/70">Condition</div></div>
+                        <div class="bg-base-200 rounded-lg p-2"><div class="font-bold"><?= $lift['status'] === 'open' ? '✓' : '✗' ?></div><div class="text-xs text-base-content/70">Status</div></div>
                     </div>
 
                     <?php
@@ -118,13 +118,13 @@
                 </div>
                 <div>
                     <div class="font-semibold text-sm"><?= esc($lift['name']) ?></div>
-                    <div class="text-xs text-base-content/50"><?= ucwords(str_replace('_', ' ', $lift['subtype'] ?? '')) ?> · <?= distance((int)$lift['length_meters']) ?></div>
+                    <div class="text-xs text-base-content/70"><?= ucwords(str_replace('_', ' ', $lift['subtype'] ?? '')) ?> · <?= distance((int)$lift['length_meters']) ?></div>
                 </div>
             </div>
             <form action="/scenic-lifts/designate" method="post"><?= csrf_field() ?>
                 <input type="hidden" name="item_id" value="<?= $lift['id'] ?>">
                 <div class="flex items-center gap-2 mb-2">
-                    <label class="text-xs text-base-content/50">Starting price:</label>
+                    <label class="text-xs text-base-content/70">Starting price:</label>
                     <select name="ticket_price" class="select select-bordered select-xs">
                         <?php foreach ([15, 25, 35, 50] as $p) : ?><option value="<?= $p ?>" <?= $p === Scenic::REF_PRICE ? 'selected' : '' ?>><?= currency($p) ?> per ride</option><?php endforeach ?>
                     </select>
@@ -138,7 +138,7 @@
 
     <!-- Upgrade Ideas -->
     <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-sparkles mr-1 text-warning"></i> Available Upgrades</h2>
-    <p class="text-sm text-base-content/60 mb-3">Enhance your scenic lifts with premium experiences to boost revenue.</p>
+    <p class="text-sm text-base-content/70 mb-3">Enhance your scenic lifts with premium experiences to boost revenue.</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <?php foreach ($upgrades as $key => $up) : ?>
         <div class="card bg-base-100 shadow-sm border border-base-200"><div class="card-body p-3">
@@ -146,8 +146,8 @@
                 <i class="<?= $up['icon'] ?> text-warning"></i>
                 <span class="font-semibold text-sm"><?= $up['name'] ?></span>
             </div>
-            <p class="text-xs text-base-content/60"><?= $up['desc'] ?></p>
-            <div class="text-xs mt-2"><span class="text-base-content/50">Cost:</span> <?= currency($up['cost']) ?> · <span class="text-success">+<?= currency($up['revenue_boost']) ?>/day</span></div>
+            <p class="text-xs text-base-content/70"><?= $up['desc'] ?></p>
+            <div class="text-xs mt-2"><span class="text-base-content/70">Cost:</span> <?= currency($up['cost']) ?> · <span class="text-success">+<?= currency($up['revenue_boost']) ?>/day</span></div>
             <?php if (!empty($scenicLifts)) : ?>
             <form action="/scenic-lifts/upgrade" method="post" data-confirm="Buy <?= $up['name'] ?> for <?= currency($up['cost']) ?>?"><?= csrf_field() ?>
                 <input type="hidden" name="upgrade" value="<?= $key ?>">
@@ -178,7 +178,7 @@
 
     <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
         <h3 class="font-semibold text-sm mb-2"><i class="fa-solid fa-circle-info mr-1 text-info"></i>How Scenic Lifts Work</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-base-content/60">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-base-content/70">
             <div class="space-y-1.5">
                 <div><i class="fa-solid fa-sun mr-1 text-warning"></i> <strong>Summer:</strong> Full revenue from sightseeing tourists</div>
                 <div><i class="fa-solid fa-snowflake mr-1 text-info"></i> <strong>Winter:</strong> <?= (int) (Scenic::WINTER_SHARE * 100) ?>% of the summer tourists still ride for the views</div>

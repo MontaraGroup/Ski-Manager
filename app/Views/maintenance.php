@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, follow">
-    <title>Scheduled Maintenance — Season 2 In Development | Ski Manager</title>
+    <title>Scheduled Maintenance: Season 2 In Development | Ski Manager</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/style.css">
@@ -124,7 +124,7 @@
                     </div>
                 </div>
                 <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    All resort assets, bank balances, slopes, lifts, and staff are completely preserved. The game tick is paused while offline — you will not incur any wages, loan interest, or maintenance costs.
+                    All resort assets, bank balances, slopes, lifts, and staff are completely preserved. The game tick is paused while offline, so you will not incur any wages, loan interest, or maintenance costs.
                 </p>
             </div>
 

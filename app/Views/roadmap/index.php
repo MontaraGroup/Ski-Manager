@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2 mb-2 flex-wrap">
                 <span class="badge badge-primary badge-sm font-semibold tracking-wide uppercase">Community Driven</span>
-                <span class="text-xs text-base-content/50"><span id="hero_total_items"><?= $totalItems ?></span> items on board</span>
+                <span class="text-xs text-base-content/70"><span id="hero_total_items"><?= $totalItems ?></span> items on board</span>
             </div>
             <h1 class="text-3xl font-extrabold tracking-tight">Development Roadmap</h1>
             <p class="text-sm text-base-content/70 mt-1 max-w-2xl leading-relaxed">
@@ -34,7 +34,7 @@
                 <i class="fa-solid fa-thumbs-up text-base"></i>
             </div>
             <div>
-                <div class="text-xs text-base-content/60 font-medium">Community Votes</div>
+                <div class="text-xs text-base-content/70 font-medium">Community Votes</div>
                 <div class="text-lg font-black tracking-tight" id="hero_total_votes"><?= number_format($totalVotes) ?></div>
             </div>
         </div>
@@ -44,7 +44,7 @@
                 <i class="fa-solid fa-compass text-base"></i>
             </div>
             <div>
-                <div class="text-xs text-base-content/60 font-medium">Planned</div>
+                <div class="text-xs text-base-content/70 font-medium">Planned</div>
                 <div class="text-lg font-black tracking-tight" id="hero_planned_count"><?= count($columns['planned']['items']) ?></div>
             </div>
         </div>
@@ -54,7 +54,7 @@
                 <i class="fa-solid fa-screwdriver-wrench text-base"></i>
             </div>
             <div>
-                <div class="text-xs text-base-content/60 font-medium">In Progress</div>
+                <div class="text-xs text-base-content/70 font-medium">In Progress</div>
                 <div class="text-lg font-black tracking-tight" id="hero_inprogress_count"><?= count($columns['in_progress']['items']) ?></div>
             </div>
         </div>
@@ -64,7 +64,7 @@
                 <i class="fa-solid fa-circle-check text-base"></i>
             </div>
             <div>
-                <div class="text-xs text-base-content/60 font-medium">Shipped</div>
+                <div class="text-xs text-base-content/70 font-medium">Shipped</div>
                 <div class="text-lg font-black tracking-tight" id="hero_completed_count"><?= count($columns['completed']['items']) ?></div>
             </div>
         </div>
@@ -90,7 +90,7 @@
             
             <!-- Category Filter Pills -->
             <div class="flex flex-wrap items-center gap-1.5" id="categoryFilterBar">
-                <span class="text-xs font-bold text-base-content/50 uppercase tracking-wider px-1">Category:</span>
+                <span class="text-xs font-bold text-base-content/70 uppercase tracking-wider px-1">Category:</span>
                 <button type="button" onclick="filterRoadmap('all', this)" class="btn btn-xs btn-active filter-btn" data-cat="all">All</button>
                 <button type="button" onclick="filterRoadmap('gameplay', this)" class="btn btn-xs btn-ghost filter-btn" data-cat="gameplay">
                     <i class="fa-solid fa-person-skiing text-success text-[10px]"></i> Gameplay
@@ -120,7 +120,7 @@
                             id="clearSearchBtn" 
                             onclick="clearSearch()" 
                             aria-label="Clear search"
-                            class="hidden absolute right-2.5 top-2 text-xs text-base-content/40 hover:text-base-content">
+                            class="hidden absolute right-2.5 top-2 text-xs text-base-content/70 hover:text-base-content">
                         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Help Info Row -->
-        <div class="flex items-center justify-between text-xs text-base-content/50 pt-2 border-t border-base-200">
+        <div class="flex items-center justify-between text-xs text-base-content/70 pt-2 border-t border-base-200">
             <div class="flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-up text-primary text-[10px]"></i>
                 <span>Click the arrow button on any card to upvote features you want prioritized.</span>
@@ -145,10 +145,10 @@
         <button type="button" onclick="switchMobileTab('planned', this)" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-base-100 shadow-xs mobile-tab" data-target="col-planned-wrapper">
             Planned (<span id="mobile-count-planned"><?= count($columns['planned']['items']) ?></span>)
         </button>
-        <button type="button" onclick="switchMobileTab('in_progress', this)" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-base-content/60 hover:text-base-content mobile-tab" data-target="col-in_progress-wrapper">
+        <button type="button" onclick="switchMobileTab('in_progress', this)" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-base-content/70 hover:text-base-content mobile-tab" data-target="col-in_progress-wrapper">
             In Progress (<span id="mobile-count-in_progress"><?= count($columns['in_progress']['items']) ?></span>)
         </button>
-        <button type="button" onclick="switchMobileTab('completed', this)" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-base-content/60 hover:text-base-content mobile-tab" data-target="col-completed-wrapper">
+        <button type="button" onclick="switchMobileTab('completed', this)" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-base-content/70 hover:text-base-content mobile-tab" data-target="col-completed-wrapper">
             Shipped (<span id="mobile-count-completed"><?= count($columns['completed']['items']) ?></span>)
         </button>
     </div>
@@ -169,10 +169,7 @@
                 <div class="flex items-center justify-between pb-3 border-b border-base-300">
                     <div class="flex items-center gap-2">
                         <?php if ($statusKey === 'in_progress'): ?>
-                            <span class="relative flex h-2.5 w-2.5">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
-                            </span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
                         <?php else: ?>
                             <span class="w-2.5 h-2.5 rounded-full <?= $dotColor ?>"></span>
                         <?php endif; ?>
@@ -182,13 +179,13 @@
                         <?= count($col['items']) ?>
                     </span>
                 </div>
-                <p class="text-xs text-base-content/60 -mt-2"><?= esc($col['description']) ?></p>
+                <p class="text-xs text-base-content/70 -mt-2"><?= esc($col['description']) ?></p>
 
                 <!-- Cards Container -->
                 <div class="space-y-3 column-cards min-h-[120px]" id="col-<?= $statusKey ?>">
                     
                     <!-- Static Empty State -->
-                    <div class="text-center py-8 text-xs text-base-content/40 empty-state <?= !empty($col['items']) ? 'hidden' : '' ?>" id="empty-<?= $statusKey ?>">
+                    <div class="text-center py-8 text-xs text-base-content/70 empty-state <?= !empty($col['items']) ? 'hidden' : '' ?>" id="empty-<?= $statusKey ?>">
                         <i class="fa-solid fa-mountain-sun text-2xl mb-2 opacity-30 block"></i>
                         <span>No items in this column</span>
                     </div>
@@ -240,7 +237,7 @@
 
                                     <?php if ($isAdmin) : ?>
                                         <div class="dropdown dropdown-end" onclick="event.stopPropagation()">
-                                            <div tabindex="0" role="button" class="btn btn-ghost btn-xs px-1 text-base-content/40 hover:text-base-content">
+                                            <div tabindex="0" role="button" class="btn btn-ghost btn-xs px-1 text-base-content/70 hover:text-base-content">
                                                 <i class="fa-solid fa-ellipsis-vertical"></i>
                                             </div>
                                             <ul tabindex="0" class="dropdown-content z-20 menu p-2 shadow-lg bg-base-100 rounded-box w-44 text-xs border border-base-200">
@@ -269,7 +266,7 @@
 
                                 <!-- Bottom Footer: Author & Upvote -->
                                 <div class="pt-2 flex items-center justify-between gap-2 border-t border-base-200" onclick="event.stopPropagation()">
-                                    <div class="flex items-center gap-1.5 text-xs text-base-content/50 truncate">
+                                    <div class="flex items-center gap-1.5 text-xs text-base-content/70 truncate">
                                         <i class="fa-solid <?= $isTeam ? 'fa-user-shield text-primary' : 'fa-user' ?> text-[10px] opacity-70"></i>
                                         <span class="truncate"><?= esc($item['author_name']) ?></span>
                                     </div>
@@ -293,11 +290,11 @@
 
     <!-- Global No Results Banner (when search yields zero matches) -->
     <div id="globalNoResults" class="hidden text-center py-16 bg-base-100 rounded-2xl border border-base-200 space-y-3">
-        <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/40">
+        <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mx-auto text-base-content/70">
             <i class="fa-solid fa-magnifying-glass text-xl"></i>
         </div>
         <h3 class="font-bold text-base text-base-content">No features match your search</h3>
-        <p class="text-xs text-base-content/60 max-w-sm mx-auto">
+        <p class="text-xs text-base-content/70 max-w-sm mx-auto">
             Try adjusting your search terms or clearing category filters to view other roadmap features.
         </p>
         <button type="button" onclick="clearSearch(); filterRoadmap('all', document.querySelector('[data-cat=all]'));" class="btn btn-xs btn-outline">
@@ -317,7 +314,7 @@
         <div class="flex items-center gap-2 flex-wrap pt-1">
             <span id="detail_category_badge" class="badge badge-sm font-semibold"></span>
             <span id="detail_status_badge" class="badge badge-sm font-semibold"></span>
-            <span id="detail_author_badge" class="badge badge-ghost badge-sm text-base-content/60"></span>
+            <span id="detail_author_badge" class="badge badge-ghost badge-sm text-base-content/70"></span>
         </div>
 
         <h3 id="detail_title" class="text-lg font-bold text-base-content leading-snug"></h3>
@@ -352,7 +349,7 @@
         <h3 class="font-bold text-lg flex items-center gap-2" id="suggest_modal_title">
             <i class="fa-solid fa-lightbulb text-warning" aria-hidden="true"></i> Suggest a Feature
         </h3>
-        <p class="text-xs text-base-content/60 mt-1">
+        <p class="text-xs text-base-content/70 mt-1">
             Share your idea for upcoming seasons. Approved suggestions are added directly to the community roadmap.
         </p>
 
@@ -362,7 +359,7 @@
             <div class="form-control">
                 <div class="flex items-center justify-between py-1">
                     <label class="label-text text-xs font-semibold">Feature Title</label>
-                    <span id="titleCounter" class="text-[10px] text-base-content/40">0 / 100</span>
+                    <span id="titleCounter" class="text-[10px] text-base-content/70">0 / 100</span>
                 </div>
                 <input type="text" 
                        name="title" 
@@ -380,7 +377,7 @@
                         <i class="fa-solid fa-triangle-exclamation"></i> Similar idea already on the board:
                     </div>
                     <div id="duplicateHintTitle" class="text-[11px] font-medium text-base-content"></div>
-                    <div class="text-[10px] text-base-content/60">
+                    <div class="text-[10px] text-base-content/70">
                         Consider upvoting the existing item instead of submitting a duplicate!
                     </div>
                 </div>
@@ -399,7 +396,7 @@
             <div class="form-control">
                 <div class="flex items-center justify-between py-1">
                     <label class="label-text text-xs font-semibold">Description / How it works</label>
-                    <span id="descCounter" class="text-[10px] text-base-content/40">0 / 1000</span>
+                    <span id="descCounter" class="text-[10px] text-base-content/70">0 / 1000</span>
                 </div>
                 <textarea name="description" 
                           id="suggestDesc" 
@@ -539,10 +536,10 @@ function applyFilters() {
 function switchMobileTab(statusKey, btn) {
     document.querySelectorAll('.mobile-tab').forEach(b => {
         b.classList.remove('bg-base-100', 'shadow-xs', 'text-base-content');
-        b.classList.add('text-base-content/60');
+        b.classList.add('text-base-content/70');
     });
     btn.classList.add('bg-base-100', 'shadow-xs');
-    btn.classList.remove('text-base-content/60');
+    btn.classList.remove('text-base-content/70');
 
     ['planned', 'in_progress', 'completed'].forEach(k => {
         const el = document.getElementById('col-' + k + '-wrapper');

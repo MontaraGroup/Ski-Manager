@@ -16,7 +16,7 @@
                     <td class="text-xs font-semibold"><?= esc($l['admin_name'] ?? '') ?></td>
                     <td><span class="badge badge-sm badge-outline"><?= esc($l['action']) ?></span></td>
                     <td class="text-xs"><?= $l['target_name'] ? esc($l['target_name']) . ' (#' . $l['target_user_id'] . ')' : '-' ?></td>
-                    <td class="text-xs text-base-content/60 max-w-xs truncate"><?= esc($l['details'] ?? '') ?></td>
+                    <td class="text-xs text-base-content/70 max-w-xs truncate"><?= esc($l['details'] ?? '') ?></td>
                 </tr>
             <?php endforeach ?>
             </tbody>

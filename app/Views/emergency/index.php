@@ -12,7 +12,7 @@
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-truck-medical mr-2 text-error"></i>Emergency & Rescue</h1>
-                <p class="text-sm text-base-content/50">Safety operations, medical response, and risk management</p>
+                <p class="text-sm text-base-content/70">Safety operations, medical response, and risk management</p>
             </div>
         </div>
     </div>
@@ -22,30 +22,30 @@
         <div class="card-body p-5">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="text-center md:text-left">
-                    <div class="text-xs text-base-content/50 mb-1">Safety Score</div>
+                    <div class="text-xs text-base-content/70 mb-1">Safety Score</div>
                     <div class="radial-progress <?= $riskColor ?> text-lg" style="--value:<?= $safetyScore ?>;--size:3.5rem;--thickness:4px;" role="progressbar"><?= $safetyScore ?></div>
                     <div class="text-xs font-bold <?= $riskColor ?> mt-1"><?= $riskLevel ?> Risk</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Slope Coverage</div>
+                    <div class="text-xs text-base-content/70 mb-1">Slope Coverage</div>
                     <div class="text-3xl font-bold"><?= $coverageRatio ?>%</div>
-                    <div class="text-xs text-base-content/50"><?= $totalCoverage ?>/<?= $slopes ?> slopes</div>
+                    <div class="text-xs text-base-content/70"><?= $totalCoverage ?>/<?= $slopes ?> slopes</div>
                     <progress class="progress <?= $coverageRatio >= 100 ? 'progress-success' : ($coverageRatio >= 50 ? 'progress-warning' : 'progress-error') ?> w-full mt-1" value="<?= $coverageRatio ?>" max="100"></progress>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Patrol Stations</div>
+                    <div class="text-xs text-base-content/70 mb-1">Patrol Stations</div>
                     <div class="text-3xl font-bold"><?= $activeStations ?></div>
-                    <div class="text-xs text-base-content/50"><?= count($patrolStations) ?> total</div>
+                    <div class="text-xs text-base-content/70"><?= count($patrolStations) ?> total</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Response Team</div>
+                    <div class="text-xs text-base-content/70 mb-1">Response Team</div>
                     <div class="text-3xl font-bold"><?= $patrolStaff + count($medics) ?></div>
-                    <div class="text-xs text-base-content/50"><?= $patrolStaff ?> patrol, <?= count($medics) ?> medics</div>
+                    <div class="text-xs text-base-content/70"><?= $patrolStaff ?> patrol, <?= count($medics) ?> medics</div>
                 </div>
                 <div>
-                    <div class="text-xs text-base-content/50 mb-1">Insurance</div>
+                    <div class="text-xs text-base-content/70 mb-1">Insurance</div>
                     <div class="text-3xl font-bold"><?= count($insurance) ?></div>
-                    <div class="text-xs text-base-content/50">active policies</div>
+                    <div class="text-xs text-base-content/70">active policies</div>
                 </div>
             </div>
         </div>
@@ -73,7 +73,7 @@
                             <i class="fa-solid fa-shield-halved text-2xl text-error"></i>
                         </div>
                         <div class="font-bold text-sm">Ski Patrol</div>
-                        <div class="text-xs text-base-content/50 mb-2"><?= $activeStations ?> station<?= $activeStations !== 1 ? 's' : '' ?> active</div>
+                        <div class="text-xs text-base-content/70 mb-2"><?= $activeStations ?> station<?= $activeStations !== 1 ? 's' : '' ?> active</div>
                         <div class="badge <?= $activeStations > 0 ? 'badge-success' : 'badge-error' ?> badge-sm"><?= $activeStations > 0 ? 'Operational' : 'No Stations' ?></div>
                     </div>
                 </a>
@@ -83,7 +83,7 @@
                             <i class="fa-solid fa-kit-medical text-2xl text-warning"></i>
                         </div>
                         <div class="font-bold text-sm">Medical Team</div>
-                        <div class="text-xs text-base-content/50 mb-2"><?= count($medics) ?> medic<?= count($medics) !== 1 ? 's' : '' ?>, <?= $patrolStaff ?> patrol</div>
+                        <div class="text-xs text-base-content/70 mb-2"><?= count($medics) ?> medic<?= count($medics) !== 1 ? 's' : '' ?>, <?= $patrolStaff ?> patrol</div>
                         <?php if (count($medics) > 0) : ?>
                             <div class="flex flex-wrap gap-1 justify-center">
                                 <?php foreach (array_slice($medics, 0, 3) as $m) : ?>
@@ -102,7 +102,7 @@
                             <i class="fa-solid fa-file-shield text-2xl text-info"></i>
                         </div>
                         <div class="font-bold text-sm">Insurance</div>
-                        <div class="text-xs text-base-content/50 mb-2"><?= count($insurance) ?> polic<?= count($insurance) !== 1 ? 'ies' : 'y' ?> active</div>
+                        <div class="text-xs text-base-content/70 mb-2"><?= count($insurance) ?> polic<?= count($insurance) !== 1 ? 'ies' : 'y' ?> active</div>
                         <?php $totalCoverageAmt = array_sum(array_column($insurance, 'coverage_amount')); ?>
                         <div class="badge badge-info badge-sm"><?= currency($totalCoverageAmt) ?> covered</div>
                     </div>
@@ -117,7 +117,7 @@
                         <div class="text-center py-10">
                             <i class="fa-solid fa-circle-check text-success text-3xl mb-2"></i>
                             <p class="font-semibold">All Clear</p>
-                            <p class="text-sm text-base-content/50">No incidents recorded. Keep your safety coverage up.</p>
+                            <p class="text-sm text-base-content/70">No incidents recorded. Keep your safety coverage up.</p>
                         </div>
                     <?php else : ?>
                         <div class="overflow-x-auto">
@@ -158,7 +158,7 @@
                             <div class="flex items-center gap-2">
                                 <?php if ($check['done']) : ?>
                                     <i class="fa-solid fa-circle-check text-success"></i>
-                                    <span class="text-sm line-through text-base-content/40"><?= $check['text'] ?></span>
+                                    <span class="text-sm line-through text-base-content/70"><?= $check['text'] ?></span>
                                 <?php else : ?>
                                     <i class="fa-regular fa-circle text-base-content/30"></i>
                                     <?php if ($check['link']) : ?><a href="<?= $check['link'] ?>" class="text-sm link link-primary"><?= $check['text'] ?></a>
@@ -175,22 +175,22 @@
             <div class="space-y-2">
                 <a href="/ski-patrol" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
                     <i class="fa-solid fa-shield-halved text-error text-lg"></i>
-                    <div class="flex-1"><div class="text-sm font-bold">Patrol Stations</div><div class="text-xs text-base-content/50">Build and manage stations</div></div>
+                    <div class="flex-1"><div class="text-sm font-bold">Patrol Stations</div><div class="text-xs text-base-content/70">Build and manage stations</div></div>
                     <i class="fa-solid fa-chevron-right text-base-content/30"></i>
                 </div></a>
                 <a href="/staff/hire" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
                     <i class="fa-solid fa-user-plus text-primary text-lg"></i>
-                    <div class="flex-1"><div class="text-sm font-bold">Hire Staff</div><div class="text-xs text-base-content/50">Patrol, medics, instructors</div></div>
+                    <div class="flex-1"><div class="text-sm font-bold">Hire Staff</div><div class="text-xs text-base-content/70">Patrol, medics, instructors</div></div>
                     <i class="fa-solid fa-chevron-right text-base-content/30"></i>
                 </div></a>
                 <a href="/insurance" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
                     <i class="fa-solid fa-file-shield text-info text-lg"></i>
-                    <div class="flex-1"><div class="text-sm font-bold">Insurance</div><div class="text-xs text-base-content/50">Liability and accident coverage</div></div>
+                    <div class="flex-1"><div class="text-sm font-bold">Insurance</div><div class="text-xs text-base-content/70">Liability and accident coverage</div></div>
                     <i class="fa-solid fa-chevron-right text-base-content/30"></i>
                 </div></a>
                 <a href="/government" class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"><div class="card-body p-3 flex-row items-center gap-3">
                     <i class="fa-solid fa-building-columns text-warning text-lg"></i>
-                    <div class="flex-1"><div class="text-sm font-bold">Safety Regulations</div><div class="text-xs text-base-content/50">Compliance reduces penalties</div></div>
+                    <div class="flex-1"><div class="text-sm font-bold">Safety Regulations</div><div class="text-xs text-base-content/70">Compliance reduces penalties</div></div>
                     <i class="fa-solid fa-chevron-right text-base-content/30"></i>
                 </div></a>
             </div>

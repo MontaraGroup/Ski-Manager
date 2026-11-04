@@ -104,7 +104,7 @@ $__minus = fn(int $v) => $v > 0 ? '−' . currency($v) : currency(0);
 .hero-btn[aria-pressed="true"] { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-content); }
 
 .num { font-variant-numeric: tabular-nums; }
-.muted { color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.muted { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
 /* Headline numbers */
 .kpis {
@@ -121,10 +121,10 @@ $__minus = fn(int $v) => $v > 0 ? '−' . currency($v) : currency(0);
     .kpi:nth-child(n+3) { border-top: 0; }
     .kpi:nth-child(n+2) { border-left: 1px solid var(--color-base-300); }
 }
-.kpi-label { font-size: 0.75rem; font-weight: 500; color: color-mix(in oklab, var(--color-base-content) 62%, transparent); display: flex; align-items: center; gap: 0.4rem; }
+.kpi-label { font-size: 0.75rem; font-weight: 500; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); display: flex; align-items: center; gap: 0.4rem; }
 .kpi-value { font-family: var(--sign); font-size: 1.625rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; margin-top: 0.1rem; font-variant-numeric: tabular-nums; }
 .kpi-value small { font-family: inherit; font-size: 1rem; font-weight: 500; opacity: 0.55; margin-left: 2px; }
-.kpi-sub { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 62%, transparent); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-sub { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .split { display: flex; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 0.45rem; background: var(--color-base-300); }
 .split > span:first-child { background: var(--color-success); }
 .split > span:last-child { background: var(--color-error); opacity: 0.8; }
@@ -193,7 +193,7 @@ $__minus = fn(int $v) => $v > 0 ? '−' . currency($v) : currency(0);
     margin: 0 -1.25rem 0.9rem; padding: 0 1.25rem 0.7rem; border-bottom: 1px solid var(--color-base-300);
 }
 .widget-title { font-family: var(--sign); font-size: 1rem; font-weight: 600; line-height: 1.2; margin: 0; }
-.widget-title .aside { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 400; margin-left: 0.5em; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.widget-title .aside { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 400; margin-left: 0.5em; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .widget-links { display: flex; gap: 0.875rem; }
 .widget-link { font-size: 0.75rem; font-weight: 500; white-space: nowrap; text-decoration: none; color: var(--color-primary); }
 .widget-link:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -202,10 +202,10 @@ $__minus = fn(int $v) => $v > 0 ? '−' . currency($v) : currency(0);
 /* Label-over-number stats */
 .stat { display: block; min-width: 0; color: inherit; text-decoration: none; }
 a.stat:hover .stat-value { color: var(--color-primary); }
-.stat-label { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 60%, transparent); }
+.stat-label { font-size: 0.75rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .stat-value { font-family: var(--sign); font-size: 1.3125rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; margin-top: 0.05rem; font-variant-numeric: tabular-nums; white-space: nowrap; transition: color .15s; }
-.stat-value small { font-size: 1rem; font-weight: 500; color: color-mix(in oklab, var(--color-base-content) 45%, transparent); }
-.stat-note { font-size: 0.6875rem; margin-top: 0.25rem; color: color-mix(in oklab, var(--color-base-content) 55%, transparent); }
+.stat-value small { font-size: 1rem; font-weight: 500; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
+.stat-note { font-size: 0.6875rem; margin-top: 0.25rem; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 
 /* Trail difficulty signs */
 .trails { display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; margin-top: 0.35rem; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
@@ -218,7 +218,7 @@ a.stat:hover .stat-value { color: var(--color-primary); }
 /* List rows */
 .dash-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.8125rem; border-top: 1px solid var(--color-base-300); }
 .dash-row:first-child { border-top: 0; padding-top: 0; }
-.dash-row .day { font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: color-mix(in oklab, var(--color-base-content) 50%, transparent); }
+.dash-row .day { font-size: 0.6875rem; font-variant-numeric: tabular-nums; color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .dash-row > i { width: 1rem; text-align: center; color: color-mix(in oklab, var(--color-primary) 80%, transparent); }
 
 .dash-action-tile {

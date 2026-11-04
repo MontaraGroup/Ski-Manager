@@ -22,7 +22,7 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
             <a href="/dashboard" class="btn btn-ghost btn-sm btn-circle" aria-label="Back to dashboard"><i class="fa-solid fa-chevron-left"></i></a>
             <div>
                 <h1 class="text-2xl font-bold"><i class="fa-solid fa-snowflake mr-2 text-info" aria-hidden="true"></i>Snowmaking</h1>
-                <p class="text-sm text-base-content/60">Snow guns keep slopes skiable when the natural base is thin</p>
+                <p class="text-sm text-base-content/70">Snow guns keep slopes skiable when the natural base is thin</p>
             </div>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -46,24 +46,24 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
     <!-- Today -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Today's temperature</div>
+            <div class="text-xs text-base-content/70">Today's temperature</div>
             <div class="text-2xl font-bold"><?= temp($baseTemp) ?></div>
-            <div class="text-xs text-base-content/60">night <?= temp($baseTemp - 4) ?> · day <?= temp($baseTemp + 4) ?></div>
+            <div class="text-xs text-base-content/70">night <?= temp($baseTemp - 4) ?> · day <?= temp($baseTemp + 4) ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Snowmaking window</div>
+            <div class="text-xs text-base-content/70">Snowmaking window</div>
             <div class="text-2xl font-bold <?= $standardHours ? 'text-info' : 'text-error' ?>"><?= $standardHours ? $standardHours . ' h' : 'Too warm' ?></div>
-            <div class="text-xs text-base-content/60">hours at <?= temp(W::SNOWMAKING_MAX_TEMP) ?> or colder</div>
+            <div class="text-xs text-base-content/70">hours at <?= temp(W::SNOWMAKING_MAX_TEMP) ?> or colder</div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Natural snow base</div>
+            <div class="text-xs text-base-content/70">Natural snow base</div>
             <div class="text-2xl font-bold <?= $thinBase ? 'text-warning' : 'text-success' ?>"><?= snow($snowBase) ?></div>
-            <div class="text-xs <?= $thinBase ? 'text-warning' : 'text-base-content/60' ?>"><?= $thinBase ? 'Thin: under ' . snow(W::THIN_BASE) : 'Deep enough: guns optional' ?></div>
+            <div class="text-xs <?= $thinBase ? 'text-warning' : 'text-base-content/70' ?>"><?= $thinBase ? 'Thin: under ' . snow(W::THIN_BASE) : 'Deep enough: guns optional' ?></div>
         </div></div>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Slopes covered today</div>
+            <div class="text-xs text-base-content/70">Slopes covered today</div>
             <div class="text-2xl font-bold <?= $uncovered > 0 && $thinBase ? 'text-warning' : '' ?>"><?= $coveredCount ?> / <?= $openCount ?></div>
-            <div class="text-xs text-base-content/60"><?= count($running) ?> of <?= count($guns) ?> gun<?= count($guns) === 1 ? '' : 's' ?> running · room for <?= $capacity ?></div>
+            <div class="text-xs text-base-content/70"><?= count($running) ?> of <?= count($guns) ?> gun<?= count($guns) === 1 ? '' : 's' ?> running · room for <?= $capacity ?></div>
         </div></div>
     </div>
 
@@ -92,7 +92,7 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
         <div class="grid grid-cols-5 gap-2">
             <?php foreach ($outlook as $o) : ?>
             <div class="bg-base-200 rounded-lg p-2 text-center">
-                <div class="text-xs text-base-content/60">Day <?= $o['day'] ?></div>
+                <div class="text-xs text-base-content/70">Day <?= $o['day'] ?></div>
                 <i class="fa-solid <?= weatherIcon($o['condition']) ?> text-lg my-1" aria-hidden="true"></i>
                 <div class="font-bold text-sm"><?= temp($o['temp']) ?></div>
                 <?php if ($o['snowfall'] > 0) : ?><div class="text-xs text-info">+<?= snow($o['snowfall']) ?></div><?php endif ?>
@@ -101,7 +101,7 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
             </div>
             <?php endforeach ?>
         </div>
-        <p class="text-xs text-base-content/60 mt-2">Hours a standard gun can run. Guns left on simply wait out warm days at no cost.</p>
+        <p class="text-xs text-base-content/70 mt-2">Hours a standard gun can run. Guns left on simply wait out warm days at no cost.</p>
     </div></div>
     <?php endif ?>
 
@@ -111,7 +111,7 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
         <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body text-center py-10">
             <i class="fa-solid fa-snowflake text-5xl text-base-content/20 mb-3" aria-hidden="true"></i>
             <p class="font-semibold">No snow guns yet</p>
-            <p class="text-sm text-base-content/60 mt-1">Each gun covers one or more slopes on cold days. Buy them in the <a href="/equipment" class="link link-primary">equipment shop</a>.</p>
+            <p class="text-sm text-base-content/70 mt-1">Each gun covers one or more slopes on cold days. Buy them in the <a href="/equipment" class="link link-primary">equipment shop</a>.</p>
         </div></div>
     <?php else : ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
@@ -121,19 +121,19 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0">
                             <div class="font-semibold truncate"><?= esc($g['name']) ?></div>
-                            <div class="text-xs text-base-content/60"><?= esc($g['brand']) ?> · works at <?= $tempLimit($g['max_temp']) ?></div>
+                            <div class="text-xs text-base-content/70"><?= esc($g['brand']) ?> · works at <?= $tempLimit($g['max_temp']) ?></div>
                         </div>
                         <span class="badge badge-sm <?= $badge ?> shrink-0"><?= $label ?></span>
                     </div>
 
                     <dl class="grid grid-cols-3 gap-2 text-xs text-center">
-                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/60">Covers</dt><dd class="font-bold"><?= (int) $g['capacity'] ?> slope<?= (int) $g['capacity'] === 1 ? '' : 's' ?></dd></div>
-                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/60">Running cost</dt><dd class="font-bold"><?= currency($g['operating_cost']) ?>/day</dd></div>
-                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/60">Uses</dt><dd class="font-bold"><?= number_format((int) $g['energy_kwh']) ?> kWh · <?= number_format((int) $g['water_liters'] / 1000, 1) ?> m³</dd></div>
+                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/70">Covers</dt><dd class="font-bold"><?= (int) $g['capacity'] ?> slope<?= (int) $g['capacity'] === 1 ? '' : 's' ?></dd></div>
+                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/70">Running cost</dt><dd class="font-bold"><?= currency($g['operating_cost']) ?>/day</dd></div>
+                        <div class="bg-base-200 rounded p-1.5"><dt class="text-base-content/70">Uses</dt><dd class="font-bold"><?= number_format((int) $g['energy_kwh']) ?> kWh · <?= number_format((int) $g['water_liters'] / 1000, 1) ?> m³</dd></div>
                     </dl>
 
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-base-content/60 w-12">Health</span>
+                        <span class="text-xs text-base-content/70 w-12">Health</span>
                         <progress class="progress <?= $cond >= 60 ? 'progress-success' : ($cond >= 30 ? 'progress-warning' : 'progress-error') ?> flex-1 h-1.5" value="<?= $cond ?>" max="100" aria-label="Health <?= $cond ?>%"></progress>
                         <span class="text-xs font-mono w-9 text-right"><?= $cond ?>%</span>
                     </div>
@@ -145,12 +145,12 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
                         <?php elseif ($g['state'] === 'idle') : ?>
                             <span class="text-warning">Waiting for a colder day: no cost or wear today.</span>
                         <?php elseif ($g['state'] === 'off') : ?>
-                            <span class="text-base-content/60">Switched off.</span>
+                            <span class="text-base-content/70">Switched off.</span>
                         <?php else : ?>
                             <span class="text-error">Broken: repair it to use it again.</span>
                         <?php endif ?>
                     </div>
-                    <div class="text-xs text-base-content/60">
+                    <div class="text-xs text-base-content/70">
                         <i class="fa-solid fa-user mr-1" aria-hidden="true"></i><?= $g['crew'] ? 'Crew: ' . esc($g['crew']) . ' (−' . SM::CREW_WEAR_RELIEF . '% wear a day)' : 'No crew assigned' ?>
                     </div>
 
@@ -191,7 +191,7 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
     <?php if ($slopes) : ?>
     <div class="card bg-base-100 shadow-sm mb-6"><div class="card-body p-4">
         <h2 class="font-bold mb-1">Slope coverage today</h2>
-        <p class="text-xs text-base-content/60 mb-3">Each gun takes its priority slope first, then the worst-condition slopes no other gun covers.</p>
+        <p class="text-xs text-base-content/70 mb-3">Each gun takes its priority slope first, then the worst-condition slopes no other gun covers.</p>
         <div class="overflow-x-auto">
             <table class="table table-sm">
                 <thead><tr><th>Slope</th><th>Condition</th><th>Snow gun</th><th class="text-right">Base wear</th></tr></thead>
@@ -201,10 +201,10 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
                         <td><span class="inline-block w-2 h-2 rounded-full mr-2 <?= $diffBadge[$sl['difficulty'] ?? ''] ?? 'bg-base-300' ?>" aria-hidden="true"></span><?= esc($sl['name']) ?></td>
                         <td><span class="<?= (int) $sl['condition_pct'] < 40 ? 'text-error' : ((int) $sl['condition_pct'] < 70 ? 'text-warning' : '') ?>"><?= (int) $sl['condition_pct'] ?>%</span></td>
                         <td>
-                            <?php if (!$isOpen) : ?><span class="text-base-content/60"><?= esc(ucfirst($sl['status'])) ?></span>
+                            <?php if (!$isOpen) : ?><span class="text-base-content/70"><?= esc(ucfirst($sl['status'])) ?></span>
                             <?php elseif ($gunId) : $gun = array_values(array_filter($guns, fn($g) => (int) $g['id'] === $gunId))[0]; ?>
                                 <span class="text-info"><i class="fa-solid fa-snowflake mr-1" aria-hidden="true"></i><?= esc($gun['name']) ?></span><?php if ($gun['priority'] === $id) : ?> <span class="badge badge-xs badge-outline">priority</span><?php endif ?>
-                            <?php else : ?><span class="text-base-content/60">Not covered</span><?php endif ?>
+                            <?php else : ?><span class="text-base-content/70">Not covered</span><?php endif ?>
                         </td>
                         <td class="text-right"><?= !$isOpen ? '' : ($gunId || !$thinBase ? '<span class="text-success">normal</span>' : '<span class="text-warning">+' . G::THIN_BASE_EXTRA . '%/day</span>') ?></td>
                     </tr>
@@ -218,15 +218,15 @@ $diffBadge = ['green' => 'bg-success', 'blue' => 'bg-info', 'red' => 'bg-error',
     <!-- Costs, energy, water -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
-            <div class="text-xs text-base-content/60">Running cost today</div>
+            <div class="text-xs text-base-content/70">Running cost today</div>
             <div class="text-2xl font-bold"><?= currency($operatingCost + $energy['import'] + $water['import']) ?></div>
-            <div class="text-xs text-base-content/60"><?= currency($operatingCost) ?> guns<?= $energy['import'] ? ' + ' . currency($energy['import']) . ' grid power' : '' ?><?= $water['import'] ? ' + ' . currency($water['import']) . ' bought water' : '' ?></div>
+            <div class="text-xs text-base-content/70"><?= currency($operatingCost) ?> guns<?= $energy['import'] ? ' + ' . currency($energy['import']) . ' grid power' : '' ?><?= $water['import'] ? ' + ' . currency($water['import']) . ' bought water' : '' ?></div>
         </div></div>
         <?php foreach (['energy' => ['fa-bolt text-warning', 'Energy', 'kWh', '/energy'], 'water' => ['fa-droplet text-info', 'Water', 'L', '/water']] as $k => [$icon, $title, $unit, $link]) : $r = $$k; if ($r['hidden']) continue;
             $use = $k === 'energy' ? $r['total'] : $r['need']; $ok = $r['supply'] >= $use; ?>
         <div class="card bg-base-100 shadow-sm"><div class="card-body p-4">
             <div class="flex items-center justify-between">
-                <span class="text-xs text-base-content/60"><i class="fa-solid <?= $icon ?> mr-1" aria-hidden="true"></i><?= $title ?> for snowmaking</span>
+                <span class="text-xs text-base-content/70"><i class="fa-solid <?= $icon ?> mr-1" aria-hidden="true"></i><?= $title ?> for snowmaking</span>
                 <a href="<?= $link ?>" class="link link-primary text-xs">Manage</a>
             </div>
             <div class="text-2xl font-bold"><?= number_format($r['need']) ?> <span class="text-sm font-normal"><?= $unit ?></span></div>
