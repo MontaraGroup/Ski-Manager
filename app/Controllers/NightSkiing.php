@@ -14,7 +14,7 @@ class NightSkiing extends BaseController
         $this->lightModel = new NightSkiingModel();
     }
 
-    public function index(): string
+    public function index()
     {
         $locked = checkFeatureUnlock('night_skiing'); if ($locked) return $locked;
         $userId = auth()->id();
@@ -35,23 +35,65 @@ class NightSkiing extends BaseController
         $extraRevenue = round($visitorBonus * 0.3);
 
         $lightTypes = [
-            'basic_flood' => ['name' => 'Basic Floodlight', 'icon' => 'fa-solid fa-lightbulb', 'coverage' => 5, 'energy' => 200, 'cost' => 8000, 'desc' => 'Simple lighting for beginner slopes'],
-            'led_tower' => ['name' => 'LED Tower', 'icon' => 'fa-solid fa-tower-broadcast', 'coverage' => 12, 'energy' => 350, 'cost' => 22000, 'desc' => 'Energy-efficient, bright coverage'],
-            'stadium_light' => ['name' => 'Stadium Light', 'icon' => 'fa-solid fa-bolt', 'coverage' => 20, 'energy' => 600, 'cost' => 45000, 'desc' => 'High-power lighting for large areas'],
-            'smart_led' => ['name' => 'Smart LED System', 'icon' => 'fa-solid fa-microchip', 'coverage' => 25, 'energy' => 400, 'cost' => 65000, 'desc' => 'Auto-dimming, weather-adaptive'],
-            'aurora_system' => ['name' => 'Aurora Display System', 'icon' => 'fa-solid fa-wand-magic-sparkles', 'coverage' => 30, 'energy' => 800, 'cost' => 120000, 'desc' => 'Spectacular colored lighting, boosts prestige'],
+            'basic_flood' => ['name' => 'Basic Floodlight', 'icon' => 'fa-lightbulb', 'coverage' => 5, 'energy' => 200, 'cost' => 8000, 'desc' => 'Simple lighting for beginner slopes'],
+            'led_tower' => ['name' => 'LED Tower', 'icon' => 'fa-tower-broadcast', 'coverage' => 12, 'energy' => 350, 'cost' => 22000, 'desc' => 'Energy-efficient, bright coverage'],
+            'stadium_light' => ['name' => 'Stadium Light', 'icon' => 'fa-bolt', 'coverage' => 20, 'energy' => 600, 'cost' => 45000, 'desc' => 'High-power lighting for large areas'],
+            'smart_led' => ['name' => 'Smart LED System', 'icon' => 'fa-microchip', 'coverage' => 25, 'energy' => 400, 'cost' => 65000, 'desc' => 'Auto-dimming, weather-adaptive'],
+            'aurora_system' => ['name' => 'Aurora Display System', 'icon' => 'fa-wand-magic-sparkles', 'coverage' => 30, 'energy' => 800, 'cost' => 120000, 'desc' => 'Spectacular colored lighting, boosts prestige'],
         ];
 
-        return view('nightskiing/index', [
-            'lights' => $lights,
-            'lightTypes' => $lightTypes,
-            'totalCoverage' => $totalCoverage,
-            'totalEnergy' => $totalEnergy,
-            'visitorBonus' => $visitorBonus,
-            'extraRevenue' => $extraRevenue,
-            'nightHours' => $nightHours,
-            'mechanics' => $mechanics,
-        ]);
+        $page = [
+            'stats' => [
+                'totalCoverage' => (int) $totalCoverage,
+                'extraRevenue' => (int) $extraRevenue,
+                'nightHours' => (int) $nightHours,
+                'activeCount' => count($activeLights),
+                'totalCount' => count($lights),
+                'mechanics' => (int) $mechanics,
+                'totalEnergyText' => currency((int) $totalEnergy),
+            ],
+            'lights' => array_map(function ($l) {
+                $typeKey = $l['light_type'] ?? 'basic_flood';
+                $origCosts = [
+                    'basic_flood'   => 8000,
+                    'led_tower'     => 22000,
+                    'stadium_light' => 45000,
+                    'smart_led'     => 65000,
+                    'aurora_system' => 120000,
+                ];
+                $origCost = $origCosts[$typeKey] ?? 8000;
+                $refund = (int) round($origCost * 0.25);
+
+                return [
+                    'id' => (int) $l['id'],
+                    'name' => (string) $l['light_name'],
+                    'light_type' => (string) $typeKey,
+                    'coverage' => (int) $l['coverage'],
+                    'energy_cost' => (int) $l['energy_cost'],
+                    'energyCostText' => currency((int) $l['energy_cost']),
+                    'status' => (string) $l['status'],
+                    'condition_pct' => (int) $l['condition_pct'],
+                    'repairCostText' => currency(2000),
+                    'refundText' => currency($refund),
+                ];
+            }, $lights),
+            'lightTypes' => array_values(array_map(function ($key, $lt) {
+                $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $lt['icon']);
+                return [
+                    'key' => (string) $key,
+                    'name' => (string) $lt['name'],
+                    'icon' => (string) $icon,
+                    'desc' => (string) $lt['desc'],
+                    'coverage' => (int) $lt['coverage'],
+                    'energy' => (int) $lt['energy'],
+                    'energyText' => currency((int) $lt['energy']),
+                    'cost' => (int) $lt['cost'],
+                    'costText' => currency((int) $lt['cost']),
+                ];
+            }, array_keys($lightTypes), $lightTypes)),
+        ];
+
+        return view('nightskiing/index', ['page' => $page]);
     }
 
     public function buy()

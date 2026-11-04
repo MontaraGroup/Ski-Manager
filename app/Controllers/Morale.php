@@ -12,28 +12,64 @@ class Morale extends BaseController
         $staffModel = new StaffModel();
         $staff = $staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
 
-        $avgMorale = count($staff) > 0 ? round(array_sum(array_column($staff, 'morale')) / count($staff)) : 0;
+        $avgMorale = count($staff) > 0 ? (int) round(array_sum(array_column($staff, 'morale')) / count($staff)) : 0;
         $lowMorale = array_filter($staff, fn($s) => (int) $s['morale'] < 50);
         $highMorale = array_filter($staff, fn($s) => (int) $s['morale'] >= 80);
 
         $boosts = [
-            'bonus_pay' => ['name' => 'Bonus Pay', 'desc' => 'Give all staff a one-time cash bonus. +15 morale.', 'icon' => 'fa-solid fa-money-bill-wave', 'color' => 'text-success', 'morale' => 15, 'cost' => 5000],
-            'team_lunch' => ['name' => 'Team Lunch', 'desc' => 'Treat everyone to a mountain restaurant meal. +10 morale.', 'icon' => 'fa-solid fa-utensils', 'color' => 'text-warning', 'morale' => 10, 'cost' => 2000],
-            'day_off' => ['name' => 'Rest Day', 'desc' => 'Give all staff a day off to recover. +20 morale, but no operations for 1 day.', 'icon' => 'fa-solid fa-bed', 'color' => 'text-info', 'morale' => 20, 'cost' => 0],
-            'training' => ['name' => 'Skills Training', 'desc' => 'Send staff to training workshops. +5 morale, +1 experience.', 'icon' => 'fa-solid fa-graduation-cap', 'color' => 'text-primary', 'morale' => 5, 'cost' => 3000],
-            'new_uniforms' => ['name' => 'New Uniforms', 'desc' => 'Fresh uniforms for the whole team. +8 morale.', 'icon' => 'fa-solid fa-shirt', 'color' => 'text-secondary', 'morale' => 8, 'cost' => 1500],
-            'party' => ['name' => 'Staff Party', 'desc' => 'End-of-week celebration. +25 morale for everyone.', 'icon' => 'fa-solid fa-champagne-glasses', 'color' => 'text-warning', 'morale' => 25, 'cost' => 8000],
-            'raise' => ['name' => 'Salary Raise', 'desc' => 'Increase all salaries by 10%. Permanent +12 morale.', 'icon' => 'fa-solid fa-arrow-trend-up', 'color' => 'text-success', 'morale' => 12, 'cost' => 0, 'salary_increase' => true],
-            'individual_bonus' => ['name' => 'Individual Bonus', 'desc' => 'Reward your lowest morale staff member. +30 morale for them.', 'icon' => 'fa-solid fa-user-check', 'color' => 'text-info', 'morale' => 30, 'cost' => 1000, 'individual' => true],
+            'bonus_pay' => ['name' => 'Bonus Pay', 'desc' => 'Give all staff a one-time cash bonus. +15 morale.', 'icon' => 'fa-money-bill-wave', 'morale' => 15, 'cost' => 5000],
+            'team_lunch' => ['name' => 'Team Lunch', 'desc' => 'Treat everyone to a mountain restaurant meal. +10 morale.', 'icon' => 'fa-utensils', 'morale' => 10, 'cost' => 2000],
+            'day_off' => ['name' => 'Rest Day', 'desc' => 'Give all staff a day off to recover. +20 morale, but no operations for 1 day.', 'icon' => 'fa-bed', 'morale' => 20, 'cost' => 0],
+            'training' => ['name' => 'Skills Training', 'desc' => 'Send staff to training workshops. +5 morale, +1 experience.', 'icon' => 'fa-graduation-cap', 'morale' => 5, 'cost' => 3000],
+            'new_uniforms' => ['name' => 'New Uniforms', 'desc' => 'Fresh uniforms for the whole team. +8 morale.', 'icon' => 'fa-shirt', 'morale' => 8, 'cost' => 1500],
+            'party' => ['name' => 'Staff Party', 'desc' => 'End-of-week celebration. +25 morale for everyone.', 'icon' => 'fa-champagne-glasses', 'morale' => 25, 'cost' => 8000],
+            'raise' => ['name' => 'Salary Raise', 'desc' => 'Increase all salaries by 10%. Permanent +12 morale.', 'icon' => 'fa-arrow-trend-up', 'morale' => 12, 'cost' => 0, 'salary_increase' => true],
+            'individual_bonus' => ['name' => 'Individual Bonus', 'desc' => 'Reward your lowest morale staff member. +30 morale for them.', 'icon' => 'fa-user-check', 'morale' => 30, 'cost' => 1000, 'individual' => true],
         ];
 
-        return view('morale/index', [
-            'staff' => $staff,
-            'avgMorale' => $avgMorale,
-            'lowMorale' => $lowMorale,
-            'highMorale' => $highMorale,
-            'boosts' => $boosts,
-        ]);
+        // Sort staff by morale ascending
+        usort($staff, fn($a, $b) => (int) $a['morale'] - (int) $b['morale']);
+
+        $page = [
+            'stats' => [
+                'avgMorale' => $avgMorale,
+                'totalStaff' => count($staff),
+                'highMoraleCount' => count($highMorale),
+                'lowMoraleCount' => count($lowMorale),
+            ],
+            'boosts' => array_values(array_map(function ($key, $b) {
+                $cost = (int) $b['cost'];
+                $costText = $cost > 0 ? currency($cost) : null;
+                $confirmBody = $cost > 0
+                    ? 'Apply ' . $b['name'] . ' for ' . $costText . '?'
+                    : (!empty($b['salary_increase'])
+                        ? 'Increase all staff salaries by 10% for permanent +' . $b['morale'] . ' morale?'
+                        : 'Apply ' . $b['name'] . ' (+' . $b['morale'] . ' morale)?');
+
+                return [
+                    'key' => (string) $key,
+                    'name' => (string) $b['name'],
+                    'desc' => (string) $b['desc'],
+                    'icon' => (string) $b['icon'],
+                    'morale' => (int) $b['morale'],
+                    'cost' => $cost,
+                    'costText' => $costText,
+                    'confirmBody' => $confirmBody,
+                ];
+            }, array_keys($boosts), $boosts)),
+            'staff' => array_map(function ($s) {
+                return [
+                    'id' => (int) $s['id'],
+                    'name' => (string) $s['name'],
+                    'role' => (string) $s['role'],
+                    'roleLabel' => ucwords(str_replace('_', ' ', (string) $s['role'])),
+                    'morale' => (int) $s['morale'],
+                    'salaryText' => currency((int) ($s['salary'] ?? 0)),
+                ];
+            }, $staff),
+        ];
+
+        return view('morale/index', ['page' => $page]);
     }
 
     public function boost()

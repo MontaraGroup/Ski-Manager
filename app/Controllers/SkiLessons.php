@@ -39,15 +39,46 @@ class SkiLessons extends BaseController
         $lessonsToday = $activeInstructors > 0 ? (int) ceil($activeInstructors * 2.2) : 0;
         $estimatedRev = $activeInstructors > 0 ? (int) round($activeInstructors * 8 * 45) : 0;
 
-        return view('lessons/index', [
-            'instructors' => $instructors,
-            'activeInstructors' => $activeInstructors,
-            'slopes' => $slopes,
-            'dailyCapacity' => $dailyCapacity,
-            'lessonsToday' => $lessonsToday,
-            'estimatedRevenue' => $estimatedRev,
-            'lessonTypes' => self::LESSON_TYPES,
-            'recentLessonLog' => $recentLessonLog,
-        ]);
+        $page = [
+            'stats' => [
+                'activeInstructors' => (int) $activeInstructors,
+                'totalInstructors' => count($instructors),
+                'dailyCapacity' => (int) $dailyCapacity,
+                'lessonsToday' => (int) $lessonsToday,
+                'openSlopesCount' => count($slopes),
+                'estimatedRevenueText' => currency((int) $estimatedRev),
+            ],
+            'recentLessonLog' => $recentLessonLog ? (string) ($recentLessonLog['description'] ?? '') : null,
+            'lessonPrograms' => array_values(array_map(function ($key, $type) {
+                // Extract base icon name
+                $icon = 'fa-person-skiing';
+                if (preg_match('/fa-([a-z0-9-]+)/', $type['icon'], $m)) {
+                    $icon = 'fa-' . $m[1];
+                }
+                return [
+                    'key' => (string) $key,
+                    'name' => (string) $type['name'],
+                    'duration' => (string) $type['duration'],
+                    'price' => (int) $type['price'],
+                    'priceText' => currency((int) $type['price']),
+                    'instructors' => (int) $type['instructors'],
+                    'maxStudents' => (int) $type['max_students'],
+                    'icon' => $icon,
+                ];
+            }, array_keys(self::LESSON_TYPES), self::LESSON_TYPES)),
+            'instructors' => array_map(function ($inst) {
+                return [
+                    'id' => (int) $inst['id'],
+                    'name' => (string) $inst['name'],
+                    'status' => (string) ($inst['status'] ?? 'active'),
+                    'level' => (int) ($inst['level'] ?? 1),
+                    'salaryText' => currency((int) ($inst['salary'] ?? 0)),
+                    'morale' => (int) ($inst['morale'] ?? 100),
+                    'assignedTo' => !empty($inst['assigned_to']) ? (string) $inst['assigned_to'] : null,
+                ];
+            }, $instructors),
+        ];
+
+        return view('lessons/index', ['page' => $page]);
     }
 }
