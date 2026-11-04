@@ -19,15 +19,78 @@ class Parking extends BaseController
         $totalCapacity = ParkingModel::getTotalCapacity($facilities);
         $totalOccupied = array_sum(array_column($facilities, 'occupied'));
         $totalRevenue = array_sum(array_column($facilities, 'daily_revenue'));
+        $cash = (int) ($finances['cash'] ?? 0);
+        $occupancyPct = $totalCapacity > 0 ? (int) round($totalOccupied / $totalCapacity * 100) : 0;
 
-        return view('parking/index', [
-            'facilities' => $facilities,
-            'parkingConfig' => ParkingModel::PARKING_CONFIG,
-            'cash' => $finances['cash'] ?? 0,
-            'totalCapacity' => $totalCapacity,
-            'totalOccupied' => $totalOccupied,
-            'totalRevenue' => $totalRevenue,
-        ]);
+        $formattedFacilities = [];
+        foreach ($facilities as $f) {
+            $fCap = (int) $f['capacity'];
+            $fOcc = (int) $f['occupied'];
+            $fOccPct = $fCap > 0 ? (int) round($fOcc / $fCap * 100) : 0;
+            $rawIcon = ParkingModel::getIcon($f['parking_type']);
+            $icon = preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-square-parking';
+            $cfg = ParkingModel::getConfig($f['parking_type']) ?? [];
+            $defaultFee = (int) ($cfg['default_fee'] ?? 10);
+            $repairCost = (int) round(($cfg['cost'] ?? 0) * 0.10 * (1 - (float) $f['condition_pct'] / 100));
+
+            $formattedFacilities[] = [
+                'id' => (int) $f['id'],
+                'name' => (string) $f['name'],
+                'parking_type' => (string) $f['parking_type'],
+                'typeLabel' => ParkingModel::getLabel($f['parking_type']),
+                'icon' => $icon,
+                'capacity' => $fCap,
+                'capacityText' => number_format($fCap),
+                'occupied' => $fOcc,
+                'occupiedText' => number_format($fOcc),
+                'occupancyPct' => $fOccPct,
+                'dailyRevenue' => (int) $f['daily_revenue'],
+                'dailyRevenueText' => currency((int) $f['daily_revenue']),
+                'condition_pct' => (int) $f['condition_pct'],
+                'status' => (string) $f['status'],
+                'build_days_left' => (int) $f['build_days_left'],
+                'fee_per_day' => (int) $f['fee_per_day'],
+                'defaultFeeText' => currency($defaultFee),
+                'repairCost' => $repairCost,
+                'repairCostText' => currency($repairCost),
+                'canRepair' => (float) $f['condition_pct'] < 100,
+            ];
+        }
+
+        $formattedConfig = [];
+        foreach (ParkingModel::PARKING_CONFIG as $key => $cfg) {
+            $rawIcon = $cfg['icon'] ?? 'fa-square-parking';
+            $icon = preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-square-parking';
+            $formattedConfig[] = [
+                'key' => (string) $key,
+                'label' => (string) $cfg['label'],
+                'icon' => $icon,
+                'capacity' => (int) $cfg['capacity'],
+                'capacityText' => number_format((int) $cfg['capacity']),
+                'cost' => (int) $cfg['cost'],
+                'costText' => currency((int) $cfg['cost']),
+                'originalCostText' => currency((int) ($cfg['cost'] * 1.2)),
+                'upkeepText' => currency((int) $cfg['upkeep']),
+                'build_days' => (int) $cfg['build_days'],
+                'canAfford' => $cash >= (int) $cfg['cost'],
+            ];
+        }
+
+        $page = [
+            'stats' => [
+                'totalCapacity' => $totalCapacity,
+                'totalCapacityText' => number_format($totalCapacity),
+                'totalOccupied' => $totalOccupied,
+                'occupancyPct' => $occupancyPct,
+                'totalRevenueText' => currency($totalRevenue),
+                'facilityCount' => count($facilities),
+                'nearlyFull' => $occupancyPct > 90 && count($facilities) > 0,
+            ],
+            'facilities' => $formattedFacilities,
+            'catalog' => $formattedConfig,
+        ];
+
+        return view('parking/index', ['page' => $page]);
     }
 
     public function build()

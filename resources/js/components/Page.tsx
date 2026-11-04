@@ -36,17 +36,42 @@ export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '
 }
 
 /** A plain surface for one block of content */
-export function Panel({ title, children, className = '' }: { title?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({
+  title,
+  actions,
+  children,
+  className = '',
+}: {
+  title?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <section className={`rounded-xl border border-border bg-surface p-4 ${className}`}>
-      {title && <h2 className="mb-3 font-semibold">{title}</h2>}
+      {(title || actions) && (
+        <div className="mb-3 flex items-center justify-between gap-2">
+          {title ? <h2 className="font-semibold">{title}</h2> : <div />}
+          {actions}
+        </div>
+      )}
       {children}
     </section>
   );
 }
 
 /** A big figure with its label */
-export function Figure({ label, value, tone = '', note }: { label: string; value: ReactNode; tone?: string; note?: ReactNode }) {
+export function Figure({
+  label,
+  value,
+  tone = '',
+  note,
+}: {
+  label: string;
+  value: ReactNode;
+  tone?: string;
+  note?: ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <div className="text-sm text-muted">{label}</div>
@@ -56,19 +81,35 @@ export function Figure({ label, value, tone = '', note }: { label: string; value
   );
 }
 
-function csrf(): { field: string; token: string } {
+export function csrf(): { field: string; token: string } {
   const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
   return { field: meta?.dataset.field || 'csrf_test_name', token: meta?.content || '' };
+}
+
+export function CsrfInput() {
+  const { field, token } = csrf();
+  return <input type="hidden" name={field} value={token} />;
 }
 
 /**
  * A normal form post (the server redirects back and its message shows as a toast). With
  * `confirm`, a dialog asks first; destructive actions say what they remove.
  */
-export function PostButton({ action, children, confirm, variant = 'secondary', size = 'md', className }: {
+export function PostButton({
+  action,
+  children,
+  confirm,
+  data,
+  disabled,
+  variant = 'secondary',
+  size = 'md',
+  className,
+}: {
   action: string;
   children: ReactNode;
   confirm?: { title: string; body: string; confirmLabel: string };
+  data?: Record<string, string | number | boolean>;
+  disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -79,9 +120,15 @@ export function PostButton({ action, children, confirm, variant = 'secondary', s
   return (
     <form ref={form} action={action} method="post" className={className}>
       <input type="hidden" name={field} value={token} />
+      {data &&
+        Object.entries(data).map(([k, v]) => (
+          <input key={k} type="hidden" name={k} value={String(v)} />
+        ))}
       {confirm ? (
         <>
-          <Button variant={variant} size={size} onPress={() => setOpen(true)}>{children}</Button>
+          <Button variant={variant} size={size} isDisabled={disabled} onPress={() => setOpen(true)}>
+            {children}
+          </Button>
           {/* HeroUI's alert dialog ignores Escape by default; Escape means Cancel here (DESIGN.md: dialogs close on Escape) */}
           <AlertDialog.Backdrop isOpen={open} onOpenChange={setOpen} isKeyboardDismissDisabled={false}>
             <AlertDialog.Container>
@@ -91,15 +138,21 @@ export function PostButton({ action, children, confirm, variant = 'secondary', s
                 </AlertDialog.Header>
                 <AlertDialog.Body>{confirm.body}</AlertDialog.Body>
                 <AlertDialog.Footer>
-                  <Button variant="tertiary" onPress={() => setOpen(false)}>Cancel</Button>
-                  <Button variant="danger" onPress={() => form.current?.submit()}>{confirm.confirmLabel}</Button>
+                  <Button variant="tertiary" onPress={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="danger" onPress={() => form.current?.submit()}>
+                    {confirm.confirmLabel}
+                  </Button>
                 </AlertDialog.Footer>
               </AlertDialog.Dialog>
             </AlertDialog.Container>
           </AlertDialog.Backdrop>
         </>
       ) : (
-        <Button type="submit" variant={variant} size={size}>{children}</Button>
+        <Button type="submit" variant={variant} size={size} isDisabled={disabled}>
+          {children}
+        </Button>
       )}
     </form>
   );
