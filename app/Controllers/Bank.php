@@ -61,18 +61,87 @@ class Bank extends BaseController
 
         $lastTick = json_decode((string) ($finance['last_tick'] ?? ''), true) ?: [];
         $maxLoans = $this->maxLoans($userId);
+        $cash = (int) $finance['cash'];
+        $totalDebt = (int) array_sum(array_column($loans, 'remaining'));
+        $totalPayoff = (int) array_sum(array_column($loans, 'payoff'));
+        $dailyPayments = (int) array_sum(array_map(fn($l) => min((int) $l['daily_payment'], (int) $l['remaining']), $loans));
+        $lastIncome = isset($lastTick['income']) ? (int) $lastTick['income'] : null;
+        $loadPct = $lastIncome ? (int) round($dailyPayments / max(1, $lastIncome) * 100) : null;
+        $freeSlots = max(0, $maxLoans - count($loans));
 
-        return view('bank/index', [
-            'cash' => (int) $finance['cash'],
-            'loans' => $loans,
-            'totalDebt' => array_sum(array_column($loans, 'remaining')),
-            'totalPayoff' => array_sum(array_column($loans, 'payoff')),
-            'dailyPayments' => array_sum(array_map(fn($l) => min((int) $l['daily_payment'], (int) $l['remaining']), $loans)),
-            'lastIncome' => isset($lastTick['income']) ? (int) $lastTick['income'] : null,
-            'products' => array_map([self::class, 'terms'], self::PRODUCTS),
-            'maxLoans' => $maxLoans,
-            'hasExtraSlot' => $maxLoans > self::BASE_SLOTS,
-        ]);
+        $formattedLoans = array_map(function ($l) use ($cash) {
+            $payoff = (int) $l['payoff'];
+            $canPay = $cash >= $payoff;
+            return [
+                'id' => (int) $l['id'],
+                'name' => (string) $l['name'],
+                'loan_type' => (string) $l['loan_type'],
+                'principal' => (int) $l['principal'],
+                'principalText' => currency((int) $l['principal']),
+                'interest_rate' => (float) $l['interest_rate'],
+                'remaining' => (int) $l['remaining'],
+                'remainingText' => currency((int) $l['remaining']),
+                'daily_payment' => (int) $l['daily_payment'],
+                'dailyPaymentText' => currency((int) $l['daily_payment']),
+                'days_remaining' => (int) $l['days_remaining'],
+                'days_total' => (int) $l['days_total'],
+                'paid_pct' => (int) $l['paid_pct'],
+                'payoff' => $payoff,
+                'payoffText' => currency($payoff),
+                'saving' => (int) $l['saving'],
+                'savingText' => currency((int) $l['saving']),
+                'canPay' => $canPay,
+                'cashNeededText' => !$canPay ? currency($payoff - $cash) : null,
+            ];
+        }, $loans);
+
+        $productTerms = array_map([self::class, 'terms'], self::PRODUCTS);
+        $formattedProducts = [];
+        foreach ($productTerms as $key => $p) {
+            $rawIcon = $p['icon'] ?? 'fa-coins';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $formattedProducts[] = [
+                'type' => (string) $key,
+                'name' => (string) $p['name'],
+                'amount' => (int) $p['amount'],
+                'amountText' => currency((int) $p['amount']),
+                'interest' => (int) $p['interest'],
+                'interestText' => currency((int) $p['interest']),
+                'rate' => (float) $p['rate'],
+                'days' => (int) $p['days'],
+                'daily_payment' => (int) $p['daily_payment'],
+                'dailyPaymentText' => currency((int) $p['daily_payment']),
+                'total_repay' => (int) $p['total_repay'],
+                'totalRepayText' => currency((int) $p['total_repay']),
+                'icon' => $icon,
+                'isEmergency' => $key === 'emergency',
+            ];
+        }
+
+        $page = [
+            'cash' => [
+                'raw' => $cash,
+                'text' => currency($cash),
+                'isNegative' => $cash < 0,
+            ],
+            'stats' => [
+                'totalDebtText' => currency($totalDebt),
+                'totalDebtRaw' => $totalDebt,
+                'totalPayoffText' => currency($totalPayoff),
+                'dailyPaymentsText' => currency($dailyPayments),
+                'dailyPaymentsRaw' => $dailyPayments,
+                'loadPct' => $loadPct,
+                'lastIncomeText' => $lastIncome !== null ? currency($lastIncome) : null,
+                'activeCount' => count($loans),
+                'maxLoans' => $maxLoans,
+                'freeSlots' => $freeSlots,
+                'hasExtraSlot' => $maxLoans > self::BASE_SLOTS,
+            ],
+            'loans' => $formattedLoans,
+            'products' => $formattedProducts,
+        ];
+
+        return view('bank/index', ['page' => $page]);
     }
 
     public function borrow()

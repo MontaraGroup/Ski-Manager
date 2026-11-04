@@ -1,3 +1,27 @@
+## Release 2026-11-04 22:55
+
+* Merge pull request #11 from Montara-Group/feature/react-phase-3b-institutional (83c3c28)
+* feat(ui): institutional and financial pages in React (phase 3b batch 4) (c9c73b7)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (159ca2a)
+* Merge pull request #10 from Montara-Group/feature/react-phase-3b-buildings (a34bf67)
+* feat(ui): resort buildings in React (phase 3b batch 3) (b1f04a6)
+
+## Release 2026-11-04 22:44
+
+* Merge pull request #10 from Montara-Group/feature/react-phase-3b-buildings (a34bf67)
+* feat(ui): resort buildings in React (phase 3b batch 3) (b1f04a6)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (40fb3ad)
+* Merge pull request #29 from Montara-Group/main (9e560be)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (31fc192)
+
+## Release 2026-11-04 22:35
+
+* Merge pull request #29 from Montara-Group/main (9e560be)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (31fc192)
+* Merge pull request #9 from Montara-Group/feature/react-phase-3b-commercial (7eaf0d7)
+* feat(ui): tickets, marketing, night skiing, ski lessons and morale in React (phase 3b batch 2) (44a9109)
+* Merge pull request #28 from Montara-Group/main (15faa82)
+
 ## Release 2026-11-04 22:32
 
 * Merge pull request #9 from Montara-Group/feature/react-phase-3b-commercial (7eaf0d7)
