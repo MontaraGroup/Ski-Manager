@@ -8,6 +8,7 @@
  */
 @import "tailwindcss" source("../js");
 @import "@heroui/styles";
+@import "./resort-map.css";
 
 @theme {
   /* HeroUI rounds buttons and cards with rounded-3xl (pill-like). DESIGN.md: 0.75rem */
