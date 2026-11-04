@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Models\StaffModel;
 
 class Staff extends BaseController
@@ -296,16 +297,14 @@ class Staff extends BaseController
         if (!$member) return redirect()->back()->with('error', 'Staff not found.');
         if ((int) $member['level'] >= self::maxUsefulLevel($member['role'])) {
             return redirect()->to('/staff')->with('error', $member['role'] === 'groomer'
-                ? esc($member['name']) . ' is already at the level where training stops helping.'
+                ? $member['name'] . ' is already at the level where training stops helping.'
                 : 'Training has no effect for this role: only groomer operators get better with level.');
         }
 
         $cost = self::trainCost($member);
         $db = db_connect();
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cost)
-            ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
-        if ($db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, $cost, 'Staff', 'Trained ' . $member['name'] . ' to level ' . ((int) $member['level'] + 1))) {
             $db->transRollback();
             return redirect()->to('/staff')->with('error', 'Not enough cash: training costs ' . currency($cost) . '.');
         }
@@ -313,15 +312,11 @@ class Staff extends BaseController
         $db->table('staff')->where('id', $id)->where('level', (int) $member['level'])->set('level', 'level + 1', false)->update();
         if ($db->affectedRows() !== 1) {
             $db->transRollback();
-            return redirect()->to('/staff')->with('error', esc($member['name']) . ' was already trained.');
+            return redirect()->to('/staff')->with('error', $member['name'] . ' was already trained.');
         }
-        $db->table('financial_transactions')->insert([
-            'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Staff', 'description' => 'Trained ' . $member['name'] . ' to level ' . ((int) $member['level'] + 1),
-            'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-        ]);
         $db->transComplete();
 
         log_activity($userId, 'Staff', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost), 'fa-solid fa-graduation-cap');
-        return redirect()->to('/staff')->with('success', esc($member['name']) . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost) . '.');
+        return redirect()->to('/staff')->with('success', $member['name'] . ' trained to Lv.' . ((int) $member['level'] + 1) . ' for ' . currency($cost) . '.');
     }
 }

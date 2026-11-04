@@ -1,3 +1,19 @@
+## Release 2026-11-04 21:27
+
+* Merge pull request #5 from Montara-Group/feature/react-foundation (28d7276)
+* Merge pull request #3 from Montara-Group/feature/react-shell (94ecb0b)
+* feat(ui): React + HeroUI shell for signed-in players (phase 2) (1980b25)
+* feat(ui): React + HeroUI 3.2.7 islands foundation (phase 1) (e85ecdb)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (8b7032c)
+
+## Release 2026-11-04 19:19
+
+* Merge pull request #2 from Montara-Group/fix/money-exploits (e38cdf9)
+* Merge main into fix/money-exploits (f84251a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (912ed05)
+* Merge branch 'main' into main (95a00a7)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (4d370b4)
+
 ## Release 2026-11-01 23:58
 
 * Merge branch 'main' into main (95a00a7)

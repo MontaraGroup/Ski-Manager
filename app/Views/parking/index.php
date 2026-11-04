@@ -11,8 +11,6 @@
         </div>
     </div>
 
-    <?php if (session('success')) : ?><div class="alert alert-success mb-4"><span><?= session('success') ?></span></div><?php endif ?>
-    <?php if (session('error')) : ?><div class="alert alert-error mb-4"><span><?= session('error') ?></span></div><?php endif ?>
 
     <!-- Stats -->
     <?php $occupancyPct = $totalCapacity > 0 ? round($totalOccupied / $totalCapacity * 100) : 0; ?>
@@ -36,7 +34,7 @@
     </div>
 
     <?php if ($occupancyPct > 90 && count($facilities) > 0) : ?>
-    <div class="alert alert-warning mb-4"><i class="fa-solid fa-triangle-exclamation"></i><span>Parking is nearly full! Visitors are being turned away. Build more capacity.</span></div>
+    <div class="alert alert-warning mb-4"><i class="fa-solid fa-triangle-exclamation"></i><span>Parking is nearly full: drivers who find no space park elsewhere, and you miss their fees. Build more capacity.</span></div>
     <?php endif ?>
 
     <!-- Existing Facilities -->
@@ -78,9 +76,10 @@
                     <?= csrf_field() ?>
                     <span class="text-xs text-base-content/70">Fee:</span>
                     <input type="number" name="fee" value="<?= $f['fee_per_day'] ?>" min="0" max="100" step="1" class="input input-bordered input-xs w-20">
-                    <span class="text-xs text-base-content/70">/day</span>
-                    <button type="submit" class="btn btn-ghost btn-xs"><i class="fa-solid fa-check text-success"></i></button>
+                    <span class="text-xs text-base-content/70">per car</span>
+                    <button type="submit" class="btn btn-ghost btn-xs" aria-label="Save fee"><i class="fa-solid fa-check text-success"></i></button>
                 </form>
+                <div class="text-xs text-base-content/70 mb-2">Usual fee <?= currency((int) (\App\Models\ParkingModel::getConfig($f['parking_type'])['default_fee'] ?? 10)) ?>: a higher fee parks fewer cars.</div>
                 <div class="flex gap-1">
                     <form action="/parking/toggle/<?= $f['id'] ?>" method="post" class="flex-1"><?= csrf_field() ?>
                         <button class="btn btn-xs w-full <?= $f['status'] === 'open' || $f['status'] === 'full' ? 'btn-ghost' : 'btn-success' ?> gap-1">

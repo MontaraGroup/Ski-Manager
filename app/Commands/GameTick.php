@@ -414,6 +414,11 @@ class GameTick extends BaseCommand
                 ->where('status !=', 'ended')
                 ->get()->getResultArray();
 
+            // Mark running events as active: the cancel button refunds only events that haven't started
+            if ($activeTournaments) {
+                $db->table('tournaments')->whereIn('id', array_column($activeTournaments, 'id'))->where('status', 'upcoming')->update(['status' => 'active']);
+            }
+
             $tournamentVisitors = 0;
             foreach ($activeTournaments as $trn) {
                 $tVisitors = (int) ($trn['visitors_boost'] ?? 0);
@@ -558,10 +563,8 @@ class GameTick extends BaseCommand
                 $liftItem = $db->table('player_items')->where('id', $sl['item_id'])->where('user_id', $userId)->where('status', 'open')->get()->getRowArray();
                 if (!$liftItem) continue;
 
-                $baseRev = (int) ($sl['revenue_per_day'] ?? 1500);
-                // In summer, tourists pay 100% full rate. In winter, sightseeing tourists earn 30% of normal rate.
-                $liftRev = !$isWinter ? $baseRev : (int) round($baseRev * 0.3);
-                $scenicTotalIncome += (int) round($liftRev * $revMult);
+                // Riders x ticket price (fewer ride at higher prices) + upgrades; winter brings fewer tourists
+                $scenicTotalIncome += (int) round(\App\Libraries\Scenic::dailyRevenue($sl, !$isWinter) * $revMult);
             }
             if ($scenicTotalIncome > 0 && $resortOpen) {
                 $dayIncome += $scenicTotalIncome;
@@ -642,9 +645,9 @@ class GameTick extends BaseCommand
                 $lotConditionDecay = $lotConfig['condition_decay'] ?? 0.3;
                 $lotNewCondition = max(0, $lot['condition_pct'] - $lotConditionDecay);
 
-                $lotShare = $totalParkingCapacity > 0 ? round($visitors * ($lot['capacity'] / $totalParkingCapacity)) : 0;
-                $lotOccupied = min($lotShare, $lot['capacity']);
-                $lotDailyRevenue = $lotOccupied * $lot['fee_per_day'];
+                // Cars, not visitors, and fewer when the fee is high (a fee of 100 used to fill the lot anyway)
+                $lotOccupied = \App\Models\ParkingModel::carsParked($lot, $visitors, $totalParkingCapacity);
+                $lotDailyRevenue = (int) round($lotOccupied * (float) $lot['fee_per_day'] * $revMult);
                 $dayIncome += $lotDailyRevenue;
 
                 $lotNewStatus = ($lotOccupied >= $lot['capacity'] && $lot['capacity'] > 0) ? 'full' : 'open';
@@ -654,9 +657,9 @@ class GameTick extends BaseCommand
                 ]);
             }
 
-            if ($totalParkingCapacity > 0 && $visitors > $totalParkingCapacity) {
-                $turnedAway = $visitors - $totalParkingCapacity;
-                log_activity($userId, 'parking_bottleneck', number_format($turnedAway) . ' visitors turned away: not enough parking.');
+            $carsArriving = (int) round($visitors / \App\Models\ParkingModel::PEOPLE_PER_CAR);
+            if ($totalParkingCapacity > 0 && $carsArriving > $totalParkingCapacity) {
+                log_activity($userId, 'parking_bottleneck', number_format($carsArriving - $totalParkingCapacity) . ' cars found no space in your lots: those parking fees were lost.');
             }
 
             // ==============================

@@ -128,6 +128,7 @@
     <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_med.jpg" as="image">
     <?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
+    <?= \App\Libraries\Islands::headTags(auth()->loggedIn()) ?>
     <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -304,87 +305,24 @@ a.link:hover{opacity:0.8}
     <!-- Navbar -->
     <?php
         $__currentPath = '/' . trim(uri_string(), '/');
-        // Same rule as AdminFilter: user #1 or anyone in the admin/superadmin groups
-        $__isAdmin = auth()->loggedIn() && (auth()->id() === 1 || auth()->user()?->inGroup('admin', 'superadmin'));
-
-        $__bonusDue = false;
-        if (auth()->loggedIn()) {
-            $__br = db_connect()->table('daily_bonus')->where('user_id', auth()->id())->get()->getRowArray();
-            $__bonusDue = !$__br || (($__br['last_claim_date'] ?? null) < date('Y-m-d'));
-        }
-
-        $__nav = [
-            'Resort' => ['icon' => 'fa-mountain-sun', 'items' => [
-                ['url' => '/resort',        'label' => 'Overview',      'icon' => 'fa-mountain-sun'],
-                ['url' => '/map',           'label' => 'Trail Map',     'icon' => 'fa-map'],
-                ['url' => '/grooming',      'label' => 'Grooming',      'icon' => 'fa-tractor',          'feature' => 'grooming'],
-                ['url' => '/snowmaking',    'label' => 'Snowmaking',    'icon' => 'fa-snowflake',        'feature' => 'snowmaking'],
-                ['url' => '/night-skiing',  'label' => 'Night Skiing',  'icon' => 'fa-moon',             'feature' => 'night_skiing'],
-                ['url' => '/scenic-lifts',  'label' => 'Scenic Lifts',  'icon' => 'fa-camera',           'feature' => 'scenic_lifts'],
-                ['url' => '/terrain-parks', 'label' => 'Terrain Parks', 'icon' => 'fa-person-snowboarding', 'feature' => 'terrain_parks'],
-                ['url' => '/parking',       'label' => 'Parking',       'icon' => 'fa-square-parking',    'feature' => 'parking'],
-                ['url' => '/resort-analysis','label' => 'Analysis',     'icon' => 'fa-clipboard-check',   'feature' => 'resort_analysis'],
-                ['url' => '/energy',        'label' => 'Energy',        'icon' => 'fa-bolt',             'hide' => 'energy'],
-                ['url' => '/water',         'label' => 'Water',         'icon' => 'fa-droplet',          'hide' => 'water'],
-            ]],
-            'Buildings' => ['icon' => 'fa-building', 'items' => [
-                ['url' => '/hotels',        'label' => 'Hotels',        'icon' => 'fa-hotel'],
-                ['url' => '/restaurants',   'label' => 'Restaurants',   'icon' => 'fa-utensils'],
-                ['url' => '/rentals',       'label' => 'Ski Rentals',   'icon' => 'fa-person-skiing'],
-                ['url' => '/retail',        'label' => 'Retail',        'icon' => 'fa-store',            'feature' => 'retail'],
-                ['url' => '/real-estate',   'label' => 'Real Estate',   'icon' => 'fa-city'],
-                ['url' => '/transportation','label' => 'Transportation','icon' => 'fa-bus',              'feature' => 'transportation'],
-                ['url' => '/off-season',    'label' => 'Off-Season',    'icon' => 'fa-sun',              'feature' => 'off_season'],
-                ['url' => '/ski-patrol',    'label' => 'Ski Patrol',    'icon' => 'fa-shield-halved'],
-            ]],
-            'Operations' => ['icon' => 'fa-coins', 'items' => [
-                ['url' => '/finances',      'label' => 'Finances',      'icon' => 'fa-coins'],
-                ['url' => '/bank',          'label' => 'Bank',          'icon' => 'fa-building-columns'],
-                ['url' => '/tickets',       'label' => 'Lift Tickets',  'icon' => 'fa-ticket'],
-                ['url' => '/staff',         'label' => 'Staff',         'icon' => 'fa-users'],
-                ['url' => '/marketing',     'label' => 'Marketing',     'icon' => 'fa-bullhorn',         'feature' => 'marketing'],
-                ['url' => '/ski-lessons',   'label' => 'Ski School',    'icon' => 'fa-chalkboard-user'],
-                ['url' => '/compliance',    'label' => 'Compliance',    'icon' => 'fa-scale-balanced'],
-                ['url' => '/equipment',     'label' => 'Equipment Shop','icon' => 'fa-shop'],
-                ['url' => '/alliances',     'label' => 'Alliances',     'icon' => 'fa-handshake'],
-            ]],
-            'More' => ['icon' => 'fa-star', 'items' => [
-                ['url' => '/weather',       'label' => 'Weather',       'icon' => 'fa-cloud-sun'],
-                ['url' => '/emergency',     'label' => 'Emergency',     'icon' => 'fa-truck-medical'],
-                ['url' => '/tournaments',   'label' => 'Events',        'icon' => 'fa-trophy',           'feature' => 'tournaments'],
-                ['url' => '/vip-guests',    'label' => 'VIP Guests',    'icon' => 'fa-star'],
-                ['url' => '/achievements',  'label' => 'Achievements',  'icon' => 'fa-award'],
-                ['url' => '/leaderboard',   'label' => 'Leaderboard',   'icon' => 'fa-ranking-star'],
-                ['url' => '/daily-bonus',   'label' => 'Daily Bonus',   'icon' => 'fa-fire',             'badge' => 'bonus'],
-                ['url' => '/genepis',       'label' => 'Génépis',       'icon' => 'fa-seedling'],
-                ['url' => '/activity',      'label' => 'Activity Log',  'icon' => 'fa-clock-rotate-left'],
-                ['url' => '/vote',          'label' => 'Vote Season 4', 'icon' => 'fa-check-to-slot'],
-                ['url' => 'https://wiki.ski-manager.net', 'label' => 'Wiki', 'icon' => 'fa-book', 'ext' => true],
-                ['url' => '/support',       'label' => 'Support',       'icon' => 'fa-headset'],
-                ['url' => '/settings',      'label' => 'Settings',      'icon' => 'fa-gear'],
-            ]],
-        ];
+        $__isAdmin = \App\Libraries\Shell::isAdmin();
+        $__bonusDue = \App\Libraries\Shell::bonusDue();
+        $__nav = \App\Libraries\Shell::NAV;
+        // Signed-in players get the React shell (AppShell, StatsBar, MobileDock islands); this markup
+        // is what guests see, and the fallback shown until the islands mount
+        $__shellIslands = auth()->loggedIn();
+        $__flash = \App\Libraries\Shell::takeFlash();
+        $__shell = $__shellIslands ? \App\Libraries\Shell::props($__currentPath, $__flash) : null;
 
         $__navItem = function (array $it) use ($__isAdmin, $__bonusDue) {
-            if (!empty($it['hide']) && function_exists('isPageHidden') && isPageHidden($it['hide'])) return '';
-            // Feature flags: players don't see switched-off features; admins see them faded so they can still test
-            $__flag = \App\Filters\FeatureGate::flagForPath($it['url']);
-            $flagOff = $__flag !== null && function_exists('featureEnabled') && !featureEnabled($__flag);
-            if ($flagOff && !$__isAdmin) return '';
-            $locked = false;
-            $href = $it['url'];
-            if (!empty($it['feature'])) {
-                $unlocked = $__isAdmin || isFeatureUnlocked($it['feature']);
-                if (!$unlocked) { $locked = true; $href = '/achievements'; }
-            }
-            $ext = !empty($it['ext']);
-            $cls = ($locked || $flagOff) ? 'opacity-40' : '';
-            $badge = (!empty($it['badge']) && $it['badge'] === 'bonus' && $__bonusDue)
-                ? ' <span class="badge badge-warning badge-xs">!</span>' : '';
-            $target = $ext ? ' target="_blank" rel="noopener noreferrer"' : '';
-            $title = $flagOff ? ' title="Switched off for players (feature flag)"' : '';
-            return '<li><a href="' . esc($href, 'attr') . '"' . $target . $title . ' class="' . $cls . '">'
-                . '<i class="fa-solid ' . esc($it['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($it['label']) . $badge . '</a></li>';
+            $r = \App\Libraries\Shell::resolveItem($it, $__isAdmin, $__bonusDue);
+            if ($r === null) return '';
+            $cls = ($r['locked'] || $r['flagOff']) ? 'opacity-40' : '';
+            $badge = $r['bonusDue'] ? ' <span class="badge badge-warning badge-xs">!</span>' : '';
+            $target = $r['external'] ? ' target="_blank" rel="noopener noreferrer"' : '';
+            $title = $r['flagOff'] ? ' title="Switched off for players (feature flag)"' : '';
+            return '<li><a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="' . $cls . '">'
+                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($r['label']) . $badge . '</a></li>';
         };
     ?>
     <?php if (session()->get('is_demo')) : ?>
@@ -418,6 +356,7 @@ a.link:hover{opacity:0.8}
         </div>
     </div>
     <?php endif ?>
+    <?php ob_start() ?>
     <header style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation"><div class="navbar site-nav bg-base-100 border-b border-base-300">
         <div class="navbar-start">
             <div class="dropdown">
@@ -538,6 +477,10 @@ a.link:hover{opacity:0.8}
         </div>
     </div>
     </nav></header>
+    <?php $__legacyHeader = ob_get_clean(); ?>
+    <?php if ($__shellIslands) : ?>
+    <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__legacyHeader) ?></div>
+    <?php else : echo $__legacyHeader; endif ?>
 
     <!-- Content -->
     <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
@@ -547,6 +490,7 @@ a.link:hover{opacity:0.8}
     </div>
     <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
+    <?php ob_start() ?>
     <div class="bg-base-100 border-b border-base-300 px-3 py-1.5 text-xs">
         <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 stats-bar">
             <?php
@@ -561,9 +505,6 @@ a.link:hover{opacity:0.8}
                 $__gameDay = $__weather['game_day'];
                 $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
-                $__openLifts = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->where("item_type", "lift")->where("status", "open")->countAllResults(false) : 0;
-                $__openSlopes = $__fin ? $__db->table("player_items")->where("user_id", auth()->id())->whereIn("item_type", ["slope","downhill","crosscountry","snowpark","luge"])->where("status", "open")->countAllResults(false) : 0;
-                $__visitors = $__openLifts * 80 + $__openSlopes * 40;
             ?>
             <a href="/finances" title="Cash balance: open Finances" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-money-bill-wave"></i>
@@ -581,10 +522,6 @@ a.link:hover{opacity:0.8}
                 <i class="fa-solid fa-calendar-day text-primary"></i>
                 <span>Day <b class="font-bold"><?= $__gameDay ?></b>/<?= getSeasonLength() ?></span>
             </span>
-            <span title="Estimated daily visitors" class="stat-pill text-base-content/80 border-base-300">
-                <i class="fa-solid fa-people-group text-primary"></i>
-                <span id="navVisitors" class="font-bold"><?= number_format($__visitors) ?></span>
-            </span>
             <a href="/genepis" title="Génépis balance: open the Génépis shop" class="stat-pill text-success border-success/20 ">
                 <i class="fa-solid fa-seedling"></i>
                 <span class="font-bold font-mono"><?= number_format($__gbal) ?></span>
@@ -596,20 +533,16 @@ a.link:hover{opacity:0.8}
             </a>
         </div>
     </div>
+    <?= island('StatsBar', $__shell['stats'], ob_get_clean()) ?>
     <?php endif ?>
 
     <?php
-        $__flashError = session('error');
-        $__flashErrors = session('errors');
-        $__flashSuccess = session('success');
-        $__flashWarning = session('warning');
-
-        if ($__flashError) session()->remove('error');
-        if ($__flashErrors) session()->remove('errors');
-        if ($__flashSuccess) session()->remove('success');
-        if ($__flashWarning) session()->remove('warning');
+        $__flashError = $__flash['error'] ?? null;
+        $__flashErrors = $__flash['errors'] ?? null;
+        $__flashSuccess = $__flash['success'] ?? null;
+        $__flashWarning = $__flash['warning'] ?? null;
     ?>
-
+    <?php if ($__shellIslands) : ?><noscript><?php endif ?>
     <?php if ($__flashError || $__flashErrors || $__flashSuccess || $__flashWarning) : ?>
     <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-1">
         <?php if ($__flashError) : ?>
@@ -642,10 +575,10 @@ a.link:hover{opacity:0.8}
         <?php endif ?>
     </div>
     <?php endif ?>
+    <?php if ($__shellIslands) : ?></noscript><?php endif ?>
 
         <?= $this->renderSection('content') ?>
     </main>
-    <div id="liveAppAlertToastStack" class="toast toast-bottom toast-end z-[9999] space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Footer -->
     <footer class="site-footer bg-base-100 border-t border-base-300" role="contentinfo" aria-label="Site footer">
@@ -778,7 +711,7 @@ document.getElementById("confirmYes").addEventListener("click",function(){
 });
 </script>
 <script>
-const searchPages=[{n:"Dashboard",u:"/dashboard",i:"fa-gauge-high"},{n:"Resort",u:"/resort",i:"fa-mountain-sun"},{n:"Alliances",u:"/alliances",i:"fa-handshake"},{n:"Trail Map",u:"/map",i:"fa-map"},{n:"Weather",u:"/weather",i:"fa-cloud-sun"},{n:"Staff",u:"/staff",i:"fa-users"},{n:"Hire Staff",u:"/staff/hire",i:"fa-user-plus"},{n:"Finances",u:"/finances",i:"fa-coins"},{n:"Bank \u0026 Loans",u:"/bank",i:"fa-landmark"},{n:"Tickets",u:"/tickets",i:"fa-ticket"},{n:"Hotels",u:"/hotels",i:"fa-hotel"},{n:"Restaurants",u:"/restaurants",i:"fa-utensils"},{n:"Rentals",u:"/rentals",i:"fa-person-skiing"},{n:"Retail",u:"/retail",i:"fa-shop"},{n:"Real Estate",u:"/real-estate",i:"fa-house"},{n:"Transportation",u:"/transportation",i:"fa-bus"},{n:"Ski Patrol",u:"/ski-patrol",i:"fa-shield-halved"},{n:"Equipment",u:"/equipment",i:"fa-toolbox"},{n:"Snowmaking",u:"/snowmaking",i:"fa-snowflake"},{n:"Night Skiing",u:"/night-skiing",i:"fa-moon"},{n:"Grooming",u:"/grooming",i:"fa-tractor"},{n:"Terrain Parks",u:"/terrain-parks",i:"fa-person-snowboarding"},{n:"Parking",u:"/parking",i:"fa-square-parking"},{n:"Energy",u:"/energy",i:"fa-bolt"},{n:"Water",u:"/water",i:"fa-droplet"},{n:"Scenic Lifts",u:"/scenic-lifts",i:"fa-camera"},{n:"Marketing",u:"/marketing",i:"fa-bullhorn"},{n:"Insurance",u:"/insurance",i:"fa-shield-halved"},{n:"Government",u:"/government",i:"fa-building-columns"},{n:"Environment",u:"/environment",i:"fa-leaf"},{n:"Emergency",u:"/emergency",i:"fa-truck-medical"},{n:"Ski Lessons",u:"/ski-lessons",i:"fa-chalkboard-user"},{n:"Achievements",u:"/achievements",i:"fa-trophy"},{n:"Leaderboard",u:"/leaderboard",i:"fa-ranking-star"},{n:"Tournaments",u:"/tournaments",i:"fa-medal"},{n:"Daily Bonus",u:"/daily-bonus",i:"fa-gift"},{n:"Genepis",u:"/genepis",i:"fa-seedling"},{n:"VIP Guests",u:"/vip-guests",i:"fa-star"},{n:"Resort Analysis",u:"/resort-analysis",i:"fa-clipboard-check"},{n:"Off-Season",u:"/off-season",i:"fa-sun"},{n:"Morale",u:"/morale",i:"fa-face-smile"},{n:"Activity Log",u:"/activity",i:"fa-clock-rotate-left"},{n:"Notifications",u:"/notifications",i:"fa-bell"},{n:"Settings",u:"/settings",i:"fa-gear"},{n:"Account",u:"/account",i:"fa-user-gear"},{n:"About",u:"/about",i:"fa-circle-info"},{n:"FAQ",u:"/faq",i:"fa-circle-question"},{n:"Updates",u:"/updates",i:"fa-newspaper"},{n:"Roadmap",u:"/roadmap",i:"fa-map-location-dot"},{n:"Contact",u:"/contact",i:"fa-envelope"},{n:"Terms",u:"/terms",i:"fa-file-contract"},{n:"Privacy",u:"/privacy",i:"fa-shield-halved"},{n:"Cookies",u:"/cookies",i:"fa-cookie-bite"},{n:"Disclaimer",u:"/disclaimer",i:"fa-circle-info"},{n:"Sitemap",u:"/sitemap",i:"fa-sitemap"}];
+const searchPages=<?= json_encode(array_map(fn($p) => ["n" => $p[0], "u" => $p[1], "i" => $p[2]], \App\Libraries\Shell::SEARCH), JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;
 const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
 if(si){
     si.addEventListener("input",function(){
@@ -901,92 +834,10 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 }
 </script>
 
-<script>
-let processedAlertIds = new Set();
-let skipInitialToasts = true;
-
-function fetchLiveResortAlerts() {
-    fetch("/api/notifications/live")
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(res => {
-            const badgeEl = document.getElementById("navbarNotifBadge");
-            if (badgeEl) {
-                if (res.unread > 0) {
-                    badgeEl.textContent = res.unread > 9 ? "9+" : res.unread;
-                    badgeEl.classList.remove("hidden");
-                } else {
-                    badgeEl.classList.add("hidden");
-                }
-            }
-
-            // Only the very first poll is silent; returning before this left toasts off forever for empty inboxes
-            if (!res.list || res.list.length === 0) { skipInitialToasts = false; return; }
-
-            res.list.forEach(alert => {
-                if (alert.is_read == 1 || processedAlertIds.has(alert.id)) return;
-                processedAlertIds.add(alert.id);
-
-                if (skipInitialToasts) return;
-
-                // Build a modern, tactile DaisyUI Toast component
-                const toast = document.createElement("div");
-                
-                const iconStr = (alert.icon || "").toLowerCase();
-                // No glow: only warnings get a colored border, so the color still means something
-                let toastBorder = "border-base-300";
-                if (iconStr.includes("exclamation") || iconStr.includes("triangle")) toastBorder = "border-error/40";
-
-                toast.className = `alert bg-base-100 p-3.5 flex gap-3 pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0 rounded-xl border ${toastBorder}`;
-
-                let accentColor = "text-primary bg-primary/10";
-                if (iconStr.includes("snowflake")) accentColor = "text-info bg-info/10";
-                else if (iconStr.includes("trophy") || iconStr.includes("medal")) accentColor = "text-accent bg-accent/10";
-                else if (iconStr.includes("exclamation") || iconStr.includes("triangle")) accentColor = "text-error bg-error/10";
-
-                // Built with textContent: titles/messages can contain player-written text (usernames, support messages)
-                const safeIcon = /^[a-z0-9 -]+$/i.test(alert.icon || "") ? alert.icon : "fa-solid fa-bell";
-                const iconWrap = document.createElement("div");
-                iconWrap.className = `w-8 h-8 rounded-lg ${accentColor} flex items-center justify-center shrink-0`;
-                const iconEl = document.createElement("i");
-                iconEl.className = safeIcon + " text-xs";
-                iconWrap.appendChild(iconEl);
-                const body = document.createElement("a");
-                body.className = "flex-1 min-w-0 no-underline text-current";
-                body.href = "/notifications/open/" + parseInt(alert.id, 10);
-                const titleEl = document.createElement("div");
-                titleEl.className = "text-xs font-bold text-base-content truncate";
-                titleEl.textContent = alert.title || "";
-                const msgEl = document.createElement("p");
-                msgEl.className = "text-[11px] text-base-content/70 truncate mt-0.5";
-                msgEl.textContent = alert.message || "";
-                body.append(titleEl, msgEl);
-                toast.append(iconWrap, body);
-
-                const stack = document.getElementById("liveAppAlertToastStack");
-                if (stack) {
-                    stack.appendChild(toast);
-                    setTimeout(() => toast.classList.remove("translate-y-4", "opacity-0"), 50);
-                    setTimeout(() => {
-                        toast.classList.add("opacity-0", "translate-x-4");
-                        setTimeout(() => toast.remove(), 350);
-                    }, 5000);
-                }
-            });
-
-            skipInitialToasts = false;
-        }).catch(() => {});
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    fetchLiveResortAlerts();
-    // Every 30s, and not at all while the tab is in the background
-    setInterval(() => { if (!document.hidden) fetchLiveResortAlerts(); }, 30000);
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchLiveResortAlerts(); });
-});
-</script>
 
 
 <?php if (auth()->loggedIn()) : ?>
+<?php ob_start() ?>
 <!-- Mobile Bottom Navigation Dock -->
 <nav class="mobile-bottom-dock md:hidden" aria-label="Mobile Navigation">
     <div class="grid grid-cols-5 items-center text-center px-1 py-1">
@@ -1063,6 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+<?= island('MobileDock', ['path' => $__currentPath, 'nav' => $__shell['nav'], 'isAdmin' => $__isAdmin, 'bonusDue' => $__bonusDue], ob_get_clean()) ?>
 <?php endif ?>
 
 <!-- Tutorial Widget (Collapsible) -->

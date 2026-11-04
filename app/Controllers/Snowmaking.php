@@ -113,12 +113,12 @@ class Snowmaking extends BaseController
         $userId = auth()->id();
         $eq = $this->gun($id);
         if (!$eq) return redirect()->back()->with('error', 'Snow gun not found.');
-        if ((int) $eq['condition_pct'] <= 0) return redirect()->back()->with('error', esc($eq['name']) . ' is broken: repair it first.');
+        if ((int) $eq['condition_pct'] <= 0) return redirect()->back()->with('error', $eq['name'] . ' is broken: repair it first.');
 
         $newStatus = $eq['status'] === 'active' ? 'off' : 'active';
         db_connect()->table('equipment')->where('id', $id)->update(['status' => $newStatus, 'updated_at' => date('Y-m-d H:i:s')]);
         log_activity($userId, 'Snowmaking', $eq['name'] . ($newStatus === 'active' ? ' switched on' : ' switched off'), 'fa-solid fa-power-off');
-        return redirect()->to('/snowmaking')->with('success', esc($eq['name']) . ($newStatus === 'active' ? ' switched on.' : ' switched off.'));
+        return redirect()->to('/snowmaking')->with('success', $eq['name'] . ($newStatus === 'active' ? ' switched on.' : ' switched off.'));
     }
 
     public function toggleAll()
@@ -140,11 +140,11 @@ class Snowmaking extends BaseController
     {
         $eq = $this->gun($id);
         if (!$eq) return redirect()->back()->with('error', 'Snow gun not found.');
-        if ((int) $eq['condition_pct'] >= 100) return redirect()->back()->with('error', esc($eq['name']) . ' is already in perfect condition.');
+        if ((int) $eq['condition_pct'] >= 100) return redirect()->back()->with('error', $eq['name'] . ' is already in perfect condition.');
 
         $cost = Fleet::repair(auth()->id(), $eq);
-        if ($cost === null) return redirect()->back()->with('error', 'Not enough cash: repairing ' . esc($eq['name']) . ' costs ' . currency(Fleet::repairCost($eq)) . '.');
-        return redirect()->to('/snowmaking')->with('success', esc($eq['name']) . ' repaired for ' . currency($cost) . '.');
+        if ($cost === null) return redirect()->back()->with('error', 'Not enough cash: repairing ' . $eq['name'] . ' costs ' . currency(Fleet::repairCost($eq)) . '.');
+        return redirect()->to('/snowmaking')->with('success', $eq['name'] . ' repaired for ' . currency($cost) . '.');
     }
 
     public function assignCannon()
@@ -161,7 +161,7 @@ class Snowmaking extends BaseController
         $db->table('equipment')->where('id', $eq['id'])->update(['assigned_to' => $slope ? 'slope_' . $slope['id'] : null, 'updated_at' => date('Y-m-d H:i:s')]);
         $msg = $slope ? $eq['name'] . ' now covers ' . $slope['name'] . ' first' : $eq['name'] . ' now covers the worst slopes first';
         log_activity($userId, 'Snowmaking', $msg, 'fa-solid fa-snowflake');
-        return redirect()->to('/snowmaking')->with('success', esc($msg) . '.');
+        return redirect()->to('/snowmaking')->with('success', $msg . '.');
     }
 
     public function sell(int $id)
@@ -169,6 +169,6 @@ class Snowmaking extends BaseController
         $eq = $this->gun($id);
         if (!$eq) return redirect()->back()->with('error', 'Snow gun not found.');
         $refund = Fleet::sell(auth()->id(), $eq);
-        return redirect()->to('/snowmaking')->with('success', esc($eq['name']) . ' sold for ' . currency($refund) . '.');
+        return redirect()->to('/snowmaking')->with('success', $eq['name'] . ' sold for ' . currency($refund) . '.');
     }
 }

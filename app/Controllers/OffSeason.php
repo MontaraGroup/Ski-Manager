@@ -1,5 +1,8 @@
 <?php
 namespace App\Controllers;
+
+use App\Libraries\Ledger;
+
 class OffSeason extends BaseController
 {
     private function getActivityConfig(): array
@@ -75,48 +78,34 @@ class OffSeason extends BaseController
         }
 
         $taskConfig = $tasks[$task];
-        $count = 0;
-        $totalCost = 0;
+        // target => [table, extra where, status a repaired broken item returns to]
+        $targets = [
+            'slopes' => ['player_items', ['item_type' => 'slope'], 'open'],
+            'lifts' => ['player_items', ['item_type' => 'lift'], 'open'],
+            'buildings' => ['buildings', [], 'open'],
+            'equipment' => ['equipment', [], 'off'],
+            'terrain_parks' => ['terrain_parks', [], 'open'],
+        ];
+        if (!isset($targets[$taskConfig['target']])) return redirect()->to('/off-season')->with('error', 'Invalid maintenance task.');
+        [$table, $where, $repairedStatus] = $targets[$taskConfig['target']];
 
-        switch ($taskConfig['target']) {
-            case 'slopes':
-                $items = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('condition_pct <', 100)->get()->getResultArray();
-                $count = count($items);
-                $totalCost = $count * $taskConfig['cost_per_unit'];
-                $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->update(['condition_pct' => 100]);
-                break;
-            case 'lifts':
-                $items = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('condition_pct <', 100)->get()->getResultArray();
-                $count = count($items);
-                $totalCost = $count * $taskConfig['cost_per_unit'];
-                $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->update(['condition_pct' => 100]);
-                break;
-            case 'buildings':
-                $items = $db->table('buildings')->where('user_id', $userId)->where('condition_pct <', 100)->get()->getResultArray();
-                $count = count($items);
-                $totalCost = $count * $taskConfig['cost_per_unit'];
-                $db->table('buildings')->where('user_id', $userId)->update(['condition_pct' => 100]);
-                break;
-            case 'equipment':
-                $items = $db->table('equipment')->where('user_id', $userId)->where('condition_pct <', 100)->get()->getResultArray();
-                $count = count($items);
-                $totalCost = $count * $taskConfig['cost_per_unit'];
-                $db->table('equipment')->where('user_id', $userId)->update(['condition_pct' => 100, 'status' => 'off']);
-                break;
-            case 'terrain_parks':
-                $items = $db->table('terrain_parks')->where('user_id', $userId)->where('condition_pct <', 100)->get()->getResultArray();
-                $count = count($items);
-                $totalCost = $count * $taskConfig['cost_per_unit'];
-                $db->table('terrain_parks')->where('user_id', $userId)->update(['condition_pct' => 100]);
-                break;
-        }
-
+        $q = fn() => $db->table($table)->where('user_id', $userId)->where($where)->where('condition_pct <', 100);
+        $ids = array_column($q()->select('id')->get()->getResultArray(), 'id');
+        $count = count($ids);
         if ($count === 0) return redirect()->to('/off-season')->with('error', 'Nothing needs maintenance in that category.');
+        $totalCost = $count * (int) $taskConfig['cost_per_unit'];
 
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if (($finance['cash'] ?? 0) < $totalCost) return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($totalCost) . '.');
+        // Pay first, in one statement, and only then repair: repairs used to happen before the cash check
+        $db->transStart();
+        if (!Ledger::charge($userId, $totalCost, 'Maintenance', $taskConfig['name'] . ' (' . $count . ' items)')) {
+            $db->transRollback();
+            return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($totalCost) . '.');
+        }
+        // Items keep their on/off state; broken ones (and parks closed for low condition) come back
+        $db->table($table)->whereIn('id', $ids)->whereIn('status', ['broken', 'maintenance'])->update(['status' => $repairedStatus]);
+        $db->table($table)->whereIn('id', $ids)->update(['condition_pct' => 100]);
+        $db->transComplete();
 
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', "cash - {$totalCost}", false)->update();
         log_activity($userId, 'maintenance', $taskConfig['name'] . ": {$count} items serviced for " . currency($totalCost));
         notify($userId, 'maintenance', $taskConfig['name'] . ' complete', "{$count} items restored to perfect condition.", $taskConfig['icon'], '/off-season');
 
@@ -135,12 +124,11 @@ class OffSeason extends BaseController
         }
 
         $cfg = $config[$activityKey];
-        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-        if (($finance['cash'] ?? 0) < $cfg['cost']) {
+        $db->transStart();
+        if (!Ledger::charge($userId, (int) $cfg['cost'], 'Off-Season', 'Built ' . $cfg['name'])) {
+            $db->transRollback();
             return redirect()->to('/off-season')->with('error', 'Not enough cash. Need ' . currency($cfg['cost']) . '.');
         }
-
-        $db->table('player_finances')->where('user_id', $userId)->set('cash', 'cash - ' . $cfg['cost'], false)->update();
         $db->table('buildings')->insert([
             'user_id' => $userId,
             'building_type' => 'off_season',
@@ -153,6 +141,7 @@ class OffSeason extends BaseController
             'status' => 'open',
             'created_at' => date('Y-m-d H:i:s'),
         ]);
+        $db->transComplete();
 
         log_activity($userId, 'Off-Season', 'Built ' . $cfg['name'] . ' for ' . currency($cfg['cost']), 'fa-solid fa-sun');
         notify($userId, 'building', $cfg['name'] . ' built!', 'Your new summer activity is ready for guests.', $cfg['icon'] ?? 'fa-solid fa-sun', '/off-season');

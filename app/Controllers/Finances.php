@@ -89,25 +89,46 @@ class Finances extends BaseController
         $equip = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
         foreach ($equip as $e) { $equipmentCost += (int) ($e['fuel_cost'] ?? $e['daily_cost'] ?? 0); }
 
-        return view('finances/index', [
-            'finance' => $finance,
-            'dailySalaries' => $dailySalaries,
-            'dailyMarketing' => $dailyMarketing,
-            'dailyCannons' => $dailyCannons,
-            'dailyLights' => $dailyLights,
-            'totalDailyExpenses' => $totalDailyExpenses,
-            'transactions' => $recentTransactions,
-            'staffCount' => count($staff),
-            'campaignCount' => count($campaigns),
+        // Totals as the old view worked them out: the rows above are estimates; with economy v2 the
+        // last tick's real totals win and what the rows don't cover shows as "other"
+        $totalIncome = $ticketIncome + $hotelIncome + $restaurantIncome + $rentalIncome;
+        $totalExpenses = $totalDailyExpenses + $equipmentCost + $loanPayments;
+        $otherIncome = $liftSlopeRunning = $otherCosts = null;
+        if (!empty($lastTick)) {
+            $otherIncome = max(0, (int) $lastTick['income'] - $totalIncome);
+            $totalIncome = (int) $lastTick['income'];
+            $liftSlopeRunning = (int) ($lastTick['lift_slope_running'] ?? 0);
+            $otherCosts = max(0, (int) $lastTick['expenses'] - $totalExpenses - $liftSlopeRunning);
+            $totalExpenses = (int) $lastTick['expenses'];
+        }
+        $profit = $totalIncome - $totalExpenses;
+        $cash = (int) $finance['cash'];
+        $lifetime = (int) $finance['total_income'] - (int) $finance['total_expenses'];
+        $signed = fn(int $v) => ($v >= 0 ? '+' : '') . currency($v);
+
+        $income = [['Lift tickets', $ticketIncome], ['Restaurants', $restaurantIncome], ['Hotels', $hotelIncome], ['Rentals', $rentalIncome]];
+        if ($otherIncome !== null) $income[] = ['Other (shops, transport, ski school, parking, VIPs)', $otherIncome];
+        $expenses = [['Staff (' . count($staff) . ')', $dailySalaries, 'fa-users'], ['Equipment', $equipmentCost, 'fa-toolbox'], ['Loans', $loanPayments, 'fa-landmark'],
+            ['Marketing', $dailyMarketing, 'fa-bullhorn'], ['Snowmaking', $dailyCannons, 'fa-snowflake'], ['Night skiing', $dailyLights, 'fa-moon']];
+        if ($liftSlopeRunning !== null) {
+            $expenses[] = ['Lifts and slopes running', $liftSlopeRunning, 'fa-elevator'];
+            $expenses[] = ['Other (upkeep, utilities, insurance, fines)', $otherCosts, 'fa-receipt'];
+        }
+
+        return view('finances/index', ['page' => [
             'gameDay' => $gameDay,
-            'ticketIncome' => $ticketIncome,
-            'hotelIncome' => $hotelIncome,
-            'restaurantIncome' => $restaurantIncome,
-            'rentalIncome' => $rentalIncome,
-            'estimatedIncome' => $estimatedIncome,
-            'loanPayments' => $loanPayments,
-            'equipmentCost' => $equipmentCost,
-            'lastTick' => $lastTick,
-        ]);
+            'cash' => ['text' => currency($cash), 'negative' => $cash < 0],
+            'income' => ['source' => !empty($lastTick) ? 'last game day' : 'estimated', 'total' => currency($totalIncome),
+                'rows' => array_map(fn($r) => ['label' => $r[0], 'amount' => currency((int) $r[1])], $income)],
+            'expenses' => ['total' => currency($totalExpenses),
+                'rows' => array_map(fn($r) => ['label' => $r[0], 'amount' => currency((int) $r[1]), 'icon' => $r[2]], $expenses)],
+            'profit' => ['text' => $signed($profit), 'positive' => $profit >= 0,
+                'note' => $profit < 0 ? floor($cash / abs($profit)) . ' days of cash left at this rate' : ($profit > 0 ? 'Cash is growing' : null)],
+            'lifetime' => ['income' => currency((int) $finance['total_income']), 'expenses' => currency((int) $finance['total_expenses']),
+                'net' => $signed($lifetime), 'positive' => $lifetime >= 0],
+            'transactions' => array_map(fn($t) => ['id' => (int) $t['id'], 'day' => (int) $t['game_day'], 'category' => (string) $t['category'],
+                'description' => (string) $t['description'], 'amount' => ($t['type'] === 'income' ? '+' : '-') . currency((int) $t['amount']),
+                'income' => $t['type'] === 'income'], $recentTransactions),
+        ]]);
     }
 }

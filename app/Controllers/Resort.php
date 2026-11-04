@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
 use App\Models\PlayerItemModel;
 use App\Models\StaffModel;
 use App\Models\BuildingModel;
@@ -95,29 +96,21 @@ class Resort extends BaseController
         $db = db_connect();
         $lift = $db->table('player_items')->where('id', $id)->where('user_id', $userId)->where('item_type', 'lift')->get()->getRowArray();
         if (!$lift) return redirect()->to('/resort')->with('error', 'Lift not found.');
-        if ((int) $lift['condition_pct'] >= 100) return redirect()->to('/resort')->with('error', esc($lift['name']) . ' is already in perfect condition.');
+        if ((int) $lift['condition_pct'] >= 100) return redirect()->to('/resort')->with('error', $lift['name'] . ' is already in perfect condition.');
 
         $cost = self::liftRepairCost($lift);
         $db->transStart();
-        $db->table('player_finances')->where('user_id', $userId)->where('cash >=', $cost)
-            ->set('cash', 'cash - ' . $cost, false)->set('total_expenses', 'total_expenses + ' . $cost, false)->update();
-        if ($cost > 0 && $db->affectedRows() !== 1) {
+        if (!Ledger::charge($userId, $cost, 'Lifts', 'Repaired ' . $lift['name'])) {
             $db->transRollback();
-            return redirect()->to('/resort')->with('error', 'Not enough cash: repairing ' . esc($lift['name']) . ' costs ' . currency($cost) . '.');
+            return redirect()->to('/resort')->with('error', 'Not enough cash: repairing ' . $lift['name'] . ' costs ' . currency($cost) . '.');
         }
         $db->table('player_items')->where('id', $id)->update([
             'condition_pct' => 100, 'status' => $lift['status'] === 'broken' ? 'open' : $lift['status'], 'updated_at' => date('Y-m-d H:i:s'),
         ]);
-        if ($cost > 0) {
-            $db->table('financial_transactions')->insert([
-                'user_id' => $userId, 'game_day' => getGameDay(), 'category' => 'Lifts', 'description' => 'Repaired ' . $lift['name'],
-                'amount' => $cost, 'type' => 'expense', 'created_at' => date('Y-m-d H:i:s'),
-            ]);
-        }
         $db->transComplete();
 
         log_activity($userId, 'Lift', 'Repaired ' . $lift['name'] . ' for ' . currency($cost), 'fa-solid fa-wrench');
-        return redirect()->to('/resort')->with('success', esc($lift['name']) . ' repaired for ' . currency($cost) . ($lift['status'] === 'broken' ? ' and reopened.' : '.'));
+        return redirect()->to('/resort')->with('success', $lift['name'] . ' repaired for ' . currency($cost) . ($lift['status'] === 'broken' ? ' and reopened.' : '.'));
     }
 
     public function toggleItem(int $id)
@@ -128,9 +121,9 @@ class Resort extends BaseController
         if (!$item) return redirect()->back()->with('error', 'Not found.');
         // A broken lift needs a repair, a broken slope needs grooming: switching them on did nothing useful
         if ($item['status'] === 'broken') {
-            return redirect()->to('/resort')->with('error', esc($item['name']) . ' is broken: ' . ($item['item_type'] === 'lift' ? 'repair it first.' : 'groom it to bring it back.'));
+            return redirect()->to('/resort')->with('error', $item['name'] . ' is broken: ' . ($item['item_type'] === 'lift' ? 'repair it first.' : 'groom it to bring it back.'));
         }
-        if (!in_array($item['status'], ['open', 'closed'], true)) return redirect()->to('/resort')->with('error', esc($item['name']) . ' isn\'t ready yet.');
+        if (!in_array($item['status'], ['open', 'closed'], true)) return redirect()->to('/resort')->with('error', $item['name'] . ' isn\'t ready yet.');
 
         $new = $item['status'] === 'open' ? 'closed' : 'open';
         $itemModel->update($id, ['status' => $new]);

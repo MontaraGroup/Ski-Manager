@@ -39,6 +39,7 @@ class Filters extends BaseFilters
         'maintenance'   => \App\Filters\MaintenanceFilter::class,
         'markdown'      => \App\Filters\MarkdownNegotiationFilter::class,
         'cors'          => Cors::class,
+        'apiauth'       => \App\Filters\ApiAuth::class,
 
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
