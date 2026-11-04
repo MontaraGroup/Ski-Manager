@@ -1,3 +1,11 @@
+## Release 2026-11-04 23:29
+
+* Merge branch 'MontaraGroup:main' into main (e69c11f)
+* Merge pull request #14 from Montara-Group/feature/react-phase-3d-dashboard-analysis (9609182)
+* feat(ui): dashboard and resort analysis in React (phase 3d) (db52b06)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (f05ac01)
+* Merge pull request #13 from Montara-Group/feature/react-phase-3c-alliances-support (6dfb3ab)
+
 ## Release 2026-11-04 23:18
 
 * Merge pull request #13 from Montara-Group/feature/react-phase-3c-alliances-support (6dfb3ab)
