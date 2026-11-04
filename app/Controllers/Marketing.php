@@ -31,12 +31,54 @@ class Marketing extends BaseController
         $campaigns = $this->model->where('user_id', $userId)->where('status !=', 'expired')->findAll();
         $activeCampaigns = array_filter($campaigns, fn($c) => $c['status'] === 'active');
 
-        return view('marketing/index', [
-            'campaigns' => $campaigns, 'campaignTypes' => $this->getCampaignTypes(),
-            'totalCost' => array_sum(array_column($activeCampaigns, 'daily_cost')),
-            'totalVisitorBoost' => array_sum(array_column($activeCampaigns, 'visitor_boost')),
-            'totalRepBoost' => array_sum(array_column($activeCampaigns, 'reputation_boost')),
-        ]);
+        $totalCost = array_sum(array_column($activeCampaigns, 'daily_cost'));
+        $totalVisitorBoost = array_sum(array_column($activeCampaigns, 'visitor_boost'));
+        $totalRepBoost = array_sum(array_column($activeCampaigns, 'reputation_boost'));
+
+        $formattedCampaigns = [];
+        foreach ($campaigns as $c) {
+            $formattedCampaigns[] = [
+                'id' => (int) $c['id'],
+                'name' => (string) $c['name'],
+                'campaign_type' => (string) $c['campaign_type'],
+                'status' => (string) $c['status'],
+                'dailyCost' => (int) $c['daily_cost'],
+                'dailyCostText' => currency((int) $c['daily_cost']),
+                'visitor_boost' => (int) $c['visitor_boost'],
+                'reputation_boost' => (int) $c['reputation_boost'],
+                'days_remaining' => (int) $c['days_remaining'],
+            ];
+        }
+
+        $formattedTypes = [];
+        foreach ($this->getCampaignTypes() as $key => $t) {
+            $rawIcon = $t['icon'] ?? 'fa-solid fa-bullhorn';
+            $icon = preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-bullhorn';
+            $formattedTypes[] = [
+                'key' => (string) $key,
+                'name' => (string) $t['name'],
+                'icon' => $icon,
+                'cost' => (int) $t['cost'],
+                'costText' => currency((int) $t['cost']),
+                'visitors' => (int) $t['visitors'],
+                'rep' => (int) $t['rep'],
+                'days' => (int) ($t['days'] ?? 30),
+            ];
+        }
+
+        $page = [
+            'stats' => [
+                'activeCount' => count($activeCampaigns),
+                'totalCampaigns' => count($campaigns),
+                'dailyCostText' => currency($totalCost),
+                'totalVisitorBoost' => $totalVisitorBoost,
+                'totalRepBoost' => $totalRepBoost,
+            ],
+            'campaigns' => $formattedCampaigns,
+            'campaignTypes' => $formattedTypes,
+        ];
+
+        return view('marketing/index', ['page' => $page]);
     }
 
     public function launch()
