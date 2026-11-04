@@ -1,6 +1,6 @@
 {
-  "_Dialog-Ddrx8Ag-.js": {
-    "file": "assets/Dialog-Ddrx8Ag-.js",
+  "_Dialog-5Kt3AyzQ.js": {
+    "file": "assets/Dialog-5Kt3AyzQ.js",
     "name": "Dialog",
     "imports": [
       "_jsx-runtime-BX5dh3L7.js",
@@ -26,8 +26,8 @@
       "_number-CdOzE_xd.js"
     ]
   },
-  "_MenuButton-C1h5wB-O.js": {
-    "file": "assets/MenuButton-C1h5wB-O.js",
+  "_MenuButton-tLM1gLcw.js": {
+    "file": "assets/MenuButton-tLM1gLcw.js",
     "name": "MenuButton",
     "imports": [
       "_jsx-runtime-BX5dh3L7.js",
@@ -38,22 +38,22 @@
       "resources/js/components/NavDrawer.tsx"
     ]
   },
-  "_Modal-DCFFkSOh.js": {
-    "file": "assets/Modal-DCFFkSOh.js",
+  "_Modal-y9ZxHs5k.js": {
+    "file": "assets/Modal-y9ZxHs5k.js",
     "name": "Modal",
     "imports": [
       "_jsx-runtime-BX5dh3L7.js",
       "_compose-Bc5xg1PI.js",
-      "_Dialog-Ddrx8Ag-.js"
+      "_Dialog-5Kt3AyzQ.js"
     ]
   },
-  "_Page-o1abO0TM.js": {
-    "file": "assets/Page-o1abO0TM.js",
+  "_Page-BmhP_zm5.js": {
+    "file": "assets/Page-BmhP_zm5.js",
     "name": "Page",
     "imports": [
       "_compose-Bc5xg1PI.js",
-      "_Dialog-Ddrx8Ag-.js",
-      "_Modal-DCFFkSOh.js",
+      "_Dialog-5Kt3AyzQ.js",
+      "_Modal-y9ZxHs5k.js",
       "_use-overlay-exit-hold-f31bAMNw.js",
       "resources/js/main.tsx",
       "_icons-CU-T_i8_.js",
@@ -76,12 +76,12 @@
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
-  "_disclosure-CilLHT-A.js": {
-    "file": "assets/disclosure-CilLHT-A.js",
+  "_disclosure-BbPB41ZS.js": {
+    "file": "assets/disclosure-BbPB41ZS.js",
     "name": "disclosure",
     "imports": [
       "_compose-Bc5xg1PI.js",
-      "_Dialog-Ddrx8Ag-.js",
+      "_Dialog-5Kt3AyzQ.js",
       "resources/js/main.tsx",
       "_icons-CU-T_i8_.js",
       "_jsx-runtime-BX5dh3L7.js"
@@ -110,13 +110,13 @@
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
-  "_modal-Dkq39rWl.js": {
-    "file": "assets/modal-Dkq39rWl.js",
+  "_modal-O_Af1Stt.js": {
+    "file": "assets/modal-O_Af1Stt.js",
     "name": "modal",
     "imports": [
       "_compose-Bc5xg1PI.js",
-      "_Dialog-Ddrx8Ag-.js",
-      "_Modal-DCFFkSOh.js",
+      "_Dialog-5Kt3AyzQ.js",
+      "_Modal-y9ZxHs5k.js",
       "_use-overlay-exit-hold-f31bAMNw.js",
       "resources/js/main.tsx",
       "_jsx-runtime-BX5dh3L7.js",
@@ -147,31 +147,31 @@
     ]
   },
   "resources/js/components/NavDrawer.tsx": {
-    "file": "assets/NavDrawer-BgIuFPjm.js",
+    "file": "assets/NavDrawer-DzJJ90y6.js",
     "name": "NavDrawer",
     "src": "resources/js/components/NavDrawer.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_compose-Bc5xg1PI.js",
-      "_Dialog-Ddrx8Ag-.js",
-      "_Modal-DCFFkSOh.js",
+      "_Dialog-5Kt3AyzQ.js",
+      "_Modal-y9ZxHs5k.js",
       "resources/js/main.tsx",
       "_jsx-runtime-BX5dh3L7.js",
       "_surface-ClFIcSD9.js",
       "_Icon-BKfsOVLw.js",
-      "_MenuButton-C1h5wB-O.js"
+      "_MenuButton-tLM1gLcw.js"
     ]
   },
   "resources/js/components/SearchDialog.tsx": {
-    "file": "assets/SearchDialog-B0zqZfBX.js",
+    "file": "assets/SearchDialog-BNTe2Mfl.js",
     "name": "SearchDialog",
     "src": "resources/js/components/SearchDialog.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_compose-Bc5xg1PI.js",
-      "_modal-Dkq39rWl.js",
+      "_modal-O_Af1Stt.js",
       "resources/js/main.tsx",
-      "_Dialog-Ddrx8Ag-.js",
+      "_Dialog-5Kt3AyzQ.js",
       "_Label-BD3DTky3.js",
       "_icons-CU-T_i8_.js",
       "_jsx-runtime-BX5dh3L7.js",
@@ -179,7 +179,7 @@
     ]
   },
   "resources/js/islands/AchievementsPage.tsx": {
-    "file": "assets/AchievementsPage-dFYFosu5.js",
+    "file": "assets/AchievementsPage-r2iZUkG4.js",
     "name": "AchievementsPage",
     "src": "resources/js/islands/AchievementsPage.tsx",
     "isDynamicEntry": true,
@@ -187,55 +187,107 @@
       "_compose-Bc5xg1PI.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/ActivityPage.tsx": {
-    "file": "assets/ActivityPage-fHtKpYVF.js",
+    "file": "assets/ActivityPage-DXz_L8gu.js",
     "name": "ActivityPage",
     "src": "resources/js/islands/ActivityPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/AllianceDashboardPage.tsx": {
+    "file": "assets/AllianceDashboardPage-DmNAwR2R.js",
+    "name": "AllianceDashboardPage",
+    "src": "resources/js/islands/AllianceDashboardPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "resources/js/main.tsx",
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/AllianceDirectoryPage.tsx": {
+    "file": "assets/AllianceDirectoryPage-DvXQk_BR.js",
+    "name": "AllianceDirectoryPage",
+    "src": "resources/js/islands/AllianceDirectoryPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "resources/js/main.tsx",
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/AllianceLeaderboardPage.tsx": {
+    "file": "assets/AllianceLeaderboardPage-DSBiqMfg.js",
+    "name": "AllianceLeaderboardPage",
+    "src": "resources/js/islands/AllianceLeaderboardPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/AllianceViewPage.tsx": {
+    "file": "assets/AllianceViewPage-BC9Kvzlg.js",
+    "name": "AllianceViewPage",
+    "src": "resources/js/islands/AllianceViewPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/AppShell.tsx": {
-    "file": "assets/AppShell-DlWdJXoa.js",
+    "file": "assets/AppShell-rXTfnuSI.js",
     "name": "AppShell",
     "src": "resources/js/islands/AppShell.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_compose-Bc5xg1PI.js",
       "resources/js/main.tsx",
-      "_Dialog-Ddrx8Ag-.js",
+      "_Dialog-5Kt3AyzQ.js",
       "_use-overlay-exit-hold-f31bAMNw.js",
       "_jsx-runtime-BX5dh3L7.js",
       "_icons-CU-T_i8_.js",
       "_surface-ClFIcSD9.js",
       "_Icon-BKfsOVLw.js",
-      "_MenuButton-C1h5wB-O.js"
+      "_MenuButton-tLM1gLcw.js"
     ],
     "dynamicImports": [
       "resources/js/components/SearchDialog.tsx"
     ]
   },
   "resources/js/islands/BankPage.tsx": {
-    "file": "assets/BankPage-C4zsRJ7Z.js",
+    "file": "assets/BankPage-Cx4kc6cg.js",
     "name": "BankPage",
     "src": "resources/js/islands/BankPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/BuildingPage.tsx": {
-    "file": "assets/BuildingPage-CGUpwecR.js",
+    "file": "assets/BuildingPage-Cm0uwRbB.js",
     "name": "BuildingPage",
     "src": "resources/js/islands/BuildingPage.tsx",
     "isDynamicEntry": true,
@@ -243,12 +295,12 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/CompliancePage.tsx": {
-    "file": "assets/CompliancePage-BUmXsKEe.js",
+    "file": "assets/CompliancePage-CHXaL1cs.js",
     "name": "CompliancePage",
     "src": "resources/js/islands/CompliancePage.tsx",
     "isDynamicEntry": true,
@@ -257,24 +309,50 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/ContactPage.tsx": {
+    "file": "assets/ContactPage-SroHu-it.js",
+    "name": "ContactPage",
+    "src": "resources/js/islands/ContactPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "resources/js/main.tsx",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/DashboardPage.tsx": {
+    "file": "assets/DashboardPage-Cdz0NJAt.js",
+    "name": "DashboardPage",
+    "src": "resources/js/islands/DashboardPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "resources/js/main.tsx",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/EnvironmentPage.tsx": {
-    "file": "assets/EnvironmentPage-DlXS-lu_.js",
+    "file": "assets/EnvironmentPage-CTbqDPxZ.js",
     "name": "EnvironmentPage",
     "src": "resources/js/islands/EnvironmentPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/EquipmentPage.tsx": {
-    "file": "assets/EquipmentPage-BQyRlt92.js",
+    "file": "assets/EquipmentPage-BKWL__kn.js",
     "name": "EquipmentPage",
     "src": "resources/js/islands/EquipmentPage.tsx",
     "isDynamicEntry": true,
@@ -283,23 +361,23 @@
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/FinancesPage.tsx": {
-    "file": "assets/FinancesPage-D3VHufyT.js",
+    "file": "assets/FinancesPage-CU2iD5lo.js",
     "name": "FinancesPage",
     "src": "resources/js/islands/FinancesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/GovernmentPage.tsx": {
-    "file": "assets/GovernmentPage-q98x54rd.js",
+    "file": "assets/GovernmentPage-kCkGLURJ.js",
     "name": "GovernmentPage",
     "src": "resources/js/islands/GovernmentPage.tsx",
     "isDynamicEntry": true,
@@ -307,12 +385,12 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/GroomingPage.tsx": {
-    "file": "assets/GroomingPage-D7dU0cw7.js",
+    "file": "assets/GroomingPage-A0B4eDuN.js",
     "name": "GroomingPage",
     "src": "resources/js/islands/GroomingPage.tsx",
     "isDynamicEntry": true,
@@ -320,59 +398,59 @@
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/InsurancePage.tsx": {
-    "file": "assets/InsurancePage-BoImpPki.js",
+    "file": "assets/InsurancePage-fMreG_qJ.js",
     "name": "InsurancePage",
     "src": "resources/js/islands/InsurancePage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/LeaderboardPage.tsx": {
-    "file": "assets/LeaderboardPage-wWVLeogR.js",
+    "file": "assets/LeaderboardPage-BblIxRay.js",
     "name": "LeaderboardPage",
     "src": "resources/js/islands/LeaderboardPage.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_disclosure-CilLHT-A.js",
+      "_disclosure-BbPB41ZS.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/MarketingPage.tsx": {
-    "file": "assets/MarketingPage-BPtWcEmm.js",
+    "file": "assets/MarketingPage-DZDTsujx.js",
     "name": "MarketingPage",
     "src": "resources/js/islands/MarketingPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/MobileDock.tsx": {
-    "file": "assets/MobileDock-D5LXPptn.js",
+    "file": "assets/MobileDock-Dn0Spw1N.js",
     "name": "MobileDock",
     "src": "resources/js/islands/MobileDock.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_Icon-BKfsOVLw.js",
-      "_MenuButton-C1h5wB-O.js",
+      "_MenuButton-tLM1gLcw.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/MoralePage.tsx": {
-    "file": "assets/MoralePage-DYebxv_c.js",
+    "file": "assets/MoralePage-CBVuTPCs.js",
     "name": "MoralePage",
     "src": "resources/js/islands/MoralePage.tsx",
     "isDynamicEntry": true,
@@ -380,12 +458,12 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/NightSkiingPage.tsx": {
-    "file": "assets/NightSkiingPage-DvF8xfLx.js",
+    "file": "assets/NightSkiingPage-DFc30bex.js",
     "name": "NightSkiingPage",
     "src": "resources/js/islands/NightSkiingPage.tsx",
     "isDynamicEntry": true,
@@ -393,23 +471,23 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/NotificationsPage.tsx": {
-    "file": "assets/NotificationsPage-DYFYTNdV.js",
+    "file": "assets/NotificationsPage-Bd6xLVzl.js",
     "name": "NotificationsPage",
     "src": "resources/js/islands/NotificationsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/ParkingPage.tsx": {
-    "file": "assets/ParkingPage-NAmQEY3z.js",
+    "file": "assets/ParkingPage-CzZqQ3ce.js",
     "name": "ParkingPage",
     "src": "resources/js/islands/ParkingPage.tsx",
     "isDynamicEntry": true,
@@ -417,24 +495,62 @@
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/RealEstatePage.tsx": {
-    "file": "assets/RealEstatePage-BIToZ1zu.js",
+    "file": "assets/RealEstatePage-BqWxBHTH.js",
     "name": "RealEstatePage",
     "src": "resources/js/islands/RealEstatePage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/ResortAnalysisPage.tsx": {
+    "file": "assets/ResortAnalysisPage-DBu7CHSg.js",
+    "name": "ResortAnalysisPage",
+    "src": "resources/js/islands/ResortAnalysisPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/ResortAnalysisViewPage.tsx": {
+    "file": "assets/ResortAnalysisViewPage-BXsBjzYo.js",
+    "name": "ResortAnalysisViewPage",
+    "src": "resources/js/islands/ResortAnalysisViewPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/RoadmapPage.tsx": {
+    "file": "assets/RoadmapPage-CSuaAEbO.js",
+    "name": "RoadmapPage",
+    "src": "resources/js/islands/RoadmapPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "_Page-BmhP_zm5.js",
+      "resources/js/main.tsx",
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/ScenicLiftsPage.tsx": {
-    "file": "assets/ScenicLiftsPage-CG8Lt9di.js",
+    "file": "assets/ScenicLiftsPage-L0PdG2Jl.js",
     "name": "ScenicLiftsPage",
     "src": "resources/js/islands/ScenicLiftsPage.tsx",
     "isDynamicEntry": true,
@@ -443,24 +559,24 @@
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/SkiLessonsPage.tsx": {
-    "file": "assets/SkiLessonsPage-DE3MsPcC.js",
+    "file": "assets/SkiLessonsPage-CsHhvYa9.js",
     "name": "SkiLessonsPage",
     "src": "resources/js/islands/SkiLessonsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/SnowmakingPage.tsx": {
-    "file": "assets/SnowmakingPage-C49lbgOH.js",
+    "file": "assets/SnowmakingPage-BnLQdxeX.js",
     "name": "SnowmakingPage",
     "src": "resources/js/islands/SnowmakingPage.tsx",
     "isDynamicEntry": true,
@@ -468,12 +584,12 @@
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/StaffHirePage.tsx": {
-    "file": "assets/StaffHirePage-CkyCqiT6.js",
+    "file": "assets/StaffHirePage-DyS7bSv-.js",
     "name": "StaffHirePage",
     "src": "resources/js/islands/StaffHirePage.tsx",
     "isDynamicEntry": true,
@@ -481,14 +597,14 @@
       "_compose-Bc5xg1PI.js",
       "resources/js/main.tsx",
       "_chip-CfhVo8uX.js",
-      "_modal-Dkq39rWl.js",
+      "_modal-O_Af1Stt.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/StaffPage.tsx": {
-    "file": "assets/StaffPage-z-pvhDla.js",
+    "file": "assets/StaffPage-DqT6VT19.js",
     "name": "StaffPage",
     "src": "resources/js/islands/StaffPage.tsx",
     "isDynamicEntry": true,
@@ -498,7 +614,7 @@
       "_chip-CfhVo8uX.js",
       "_meter-DSLZOukk.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
@@ -512,8 +628,21 @@
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
+  "resources/js/islands/SupportPage.tsx": {
+    "file": "assets/SupportPage-DHcoJDW9.js",
+    "name": "SupportPage",
+    "src": "resources/js/islands/SupportPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_compose-Bc5xg1PI.js",
+      "resources/js/main.tsx",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
   "resources/js/islands/TicketsPage.tsx": {
-    "file": "assets/TicketsPage-DcSa5MUh.js",
+    "file": "assets/TicketsPage-CDFWf6O-.js",
     "name": "TicketsPage",
     "src": "resources/js/islands/TicketsPage.tsx",
     "isDynamicEntry": true,
@@ -521,12 +650,24 @@
       "_compose-Bc5xg1PI.js",
       "resources/js/main.tsx",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
+  "resources/js/islands/TournamentsPage.tsx": {
+    "file": "assets/TournamentsPage-DAuHVwVn.js",
+    "name": "TournamentsPage",
+    "src": "resources/js/islands/TournamentsPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/islands/UiKit.tsx": {
-    "file": "assets/UiKit-D-tch6lR.js",
+    "file": "assets/UiKit-BuAlsc_1.js",
     "name": "UiKit",
     "src": "resources/js/islands/UiKit.tsx",
     "isDynamicEntry": true,
@@ -541,20 +682,33 @@
       "_meter-DSLZOukk.js"
     ]
   },
+  "resources/js/islands/VotePage.tsx": {
+    "file": "assets/VotePage-1FYAPo6E.js",
+    "name": "VotePage",
+    "src": "resources/js/islands/VotePage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chip-CfhVo8uX.js",
+      "_meter-DSLZOukk.js",
+      "_Icon-BKfsOVLw.js",
+      "_Page-BmhP_zm5.js",
+      "_jsx-runtime-BX5dh3L7.js"
+    ]
+  },
   "resources/js/islands/WeatherPage.tsx": {
-    "file": "assets/WeatherPage-CJBZ_bxJ.js",
+    "file": "assets/WeatherPage-BI3Apski.js",
     "name": "WeatherPage",
     "src": "resources/js/islands/WeatherPage.tsx",
     "isDynamicEntry": true,
     "imports": [
-      "_disclosure-CilLHT-A.js",
+      "_disclosure-BbPB41ZS.js",
       "_Icon-BKfsOVLw.js",
-      "_Page-o1abO0TM.js",
+      "_Page-BmhP_zm5.js",
       "_jsx-runtime-BX5dh3L7.js"
     ]
   },
   "resources/js/main.tsx": {
-    "file": "assets/islands-C2K5C32y.js",
+    "file": "assets/islands-Bu7xdb2u.js",
     "name": "islands",
     "src": "resources/js/main.tsx",
     "isEntry": true,
@@ -592,10 +746,22 @@
       "resources/js/islands/EnvironmentPage.tsx",
       "resources/js/islands/BankPage.tsx",
       "resources/js/islands/RealEstatePage.tsx",
-      "resources/js/islands/CompliancePage.tsx"
+      "resources/js/islands/CompliancePage.tsx",
+      "resources/js/islands/TournamentsPage.tsx",
+      "resources/js/islands/VotePage.tsx",
+      "resources/js/islands/ContactPage.tsx",
+      "resources/js/islands/RoadmapPage.tsx",
+      "resources/js/islands/SupportPage.tsx",
+      "resources/js/islands/AllianceDashboardPage.tsx",
+      "resources/js/islands/AllianceDirectoryPage.tsx",
+      "resources/js/islands/AllianceLeaderboardPage.tsx",
+      "resources/js/islands/AllianceViewPage.tsx",
+      "resources/js/islands/DashboardPage.tsx",
+      "resources/js/islands/ResortAnalysisPage.tsx",
+      "resources/js/islands/ResortAnalysisViewPage.tsx"
     ],
     "css": [
-      "assets/islands-xG3srRlF.css"
+      "assets/islands-C7nM6moj.css"
     ]
   }
 }

@@ -17,7 +17,27 @@ class Support extends BaseController
         // Newest 100, shown oldest first
         $messages = array_reverse($db->table('support_messages')->where('user_id', $userId)->orderBy('id', 'DESC')->limit(100)->get()->getResultArray());
 
-        return view('support/index', ['messages' => $messages, 'maxLength' => self::MAX_LENGTH]);
+        $formattedMessages = array_map(fn($r) => [
+            'id' => (int) $r['id'],
+            'sender' => (string) $r['sender'],
+            'message' => (string) $r['message'],
+            'time' => date('g:ia', strtotime($r['created_at'])),
+            'date' => date('Y-m-d', strtotime($r['created_at'])),
+            'dateFormatted' => date('Y-m-d', strtotime($r['created_at'])) === date('Y-m-d')
+                ? 'Today'
+                : (date('Y-m-d', strtotime($r['created_at'])) === date('Y-m-d', strtotime('-1 day'))
+                    ? 'Yesterday'
+                    : date('F j, Y', strtotime($r['created_at']))),
+        ], $messages);
+
+        $page = [
+            'messages' => $formattedMessages,
+            'lastId' => $messages ? (int) end($messages)['id'] : 0,
+            'maxLength' => self::MAX_LENGTH,
+            'defaultMessage' => (string) (old('message') ?? ''),
+        ];
+
+        return view('support/index', ['page' => $page]);
     }
 
     /** GET /support/messages?after={id}: new messages for the open chat (polled while the tab is visible) */

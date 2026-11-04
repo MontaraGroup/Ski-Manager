@@ -110,24 +110,279 @@ class Dashboard extends BaseController
         $resortNames = ResortMap::getResortMapNames();
         $resortMapName = $resortNames[$resortMapKey] ?? 'Park City';
 
-        return view('dashboard/index', [
-            'widgets' => $widgets, 'availableWidgets' => $this->availableWidgets,
-            'finance' => $finance, 'weather' => $weather, 'genepis' => $genepis,
-            'slopeCount' => $slopeCount, 'liftCount' => $liftCount,
-            'totalSlopes' => $totalSlopes, 'totalLifts' => $totalLifts, 'slopesByDiff' => $slopesByDiff,
-            'totalLiftCapacity' => $totalLiftCapacity, 'avgSlopeCondition' => $avgSlopeCondition, 'ungroomedCount' => $ungroomedCount,
-            'staffCount' => $staffCount, 'buildingCount' => $buildingCount,
-            'unclaimedAchievements' => $unclaimedAchievements, 'completedAchievements' => $completedAchievements,
-            'inProgressAchievements' => $inProgressAchievements,
-            'recentActivity' => $recentActivity, 'bonusAvailable' => $bonusAvailable, 'gameDay' => $gameDay,
-            'parkingFacilities' => $parkingFacilities, 'terrainParks' => $terrainParks,
-            'staffAll' => $staffAll, 'equipment' => $equipment, 'insurance' => $insurance, 'loans' => $loans, 'marketing' => $marketing,
-            'dailyVisitors' => $dailyVisitors, 'netProfit' => $netProfit,
-            'dailyProfit' => $cashflow['daily_profit'],
-            'cashflow' => $cashflow,
-            'resortMapName' => $resortMapName,
-            'alerts' => $this->getAlerts($userId, $finance, $equipment, $staffAll),
-        ]);
+        $seasonLength = max(1, (int) getSeasonLength());
+        $seasonProgress = min($gameDay, $seasonLength);
+        $seasonNum = (int) getSeasonNumber();
+        $seasonPct = (int) round($seasonProgress / $seasonLength * 100);
+        $winterDays = min(100, $seasonLength);
+        $summerDays = max(0, $seasonLength - $winterDays);
+
+        $cashBalance = (int) ($finance['cash'] ?? 0);
+        $repScore = (int) ($finance['reputation'] ?? 0);
+        $genepisBal = (int) ($genepis['balance'] ?? 0);
+        $resortOpen = (bool) ($finance['resort_open'] ?? 1);
+
+        $rawAlerts = $this->getAlerts($userId, $finance, $equipment, $staffAll);
+        $formattedAlerts = array_map(function ($a) {
+            $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) ($a['icon'] ?? 'fa-circle-exclamation'));
+            $tone = ($a['type'] ?? '') === 'error' ? 'danger' : 'warning';
+            return [
+                'type' => $tone,
+                'icon' => $cleanIcon,
+                'msg'  => (string) ($a['msg'] ?? ''),
+                'link' => (string) ($a['link'] ?? ''),
+            ];
+        }, $rawAlerts);
+
+        $wIcons = [
+            'Sunny'         => 'fa-sun',
+            'Partly Cloudy' => 'fa-cloud-sun',
+            'Cloudy'        => 'fa-cloud',
+            'Light Snow'    => 'fa-snowflake',
+            'Heavy Snow'    => 'fa-snowflake',
+            'Blizzard'      => 'fa-wind',
+            'Freezing Rain' => 'fa-cloud-rain',
+            'Rain'          => 'fa-cloud-showers-heavy',
+        ];
+        $currentWeatherIcon = $weather ? ($wIcons[$weather['condition_name']] ?? 'fa-cloud') : 'fa-cloud';
+
+        $totalIncome = (int) ($cashflow['total_income'] ?? 0);
+        $totalExpenses = (int) ($cashflow['total_expenses'] ?? 0);
+        $dailyProfit = (int) ($cashflow['daily_profit'] ?? 0);
+        $incomePct = ($totalIncome + $totalExpenses) > 0 ? (int) round($totalIncome / ($totalIncome + $totalExpenses) * 100) : 50;
+
+        $totalParkingCap = 0;
+        $totalOccupied = 0;
+        foreach ($parkingFacilities as $pf) {
+            if ($pf['status'] === 'open' || $pf['status'] === 'full') {
+                $totalParkingCap += (int) $pf['capacity'];
+                $totalOccupied += (int) $pf['occupied'];
+            }
+        }
+        $parkingPct = $totalParkingCap > 0 ? (int) round($totalOccupied / $totalParkingCap * 100) : 0;
+
+        $openParks = array_values(array_filter($terrainParks, fn($tp) => ($tp['status'] ?? '') === 'open'));
+        $buildingParks = array_values(array_filter($terrainParks, fn($tp) => ($tp['status'] ?? '') === 'under_construction'));
+        $totalParkVisitors = array_sum(array_column($terrainParks, 'daily_visitors'));
+
+        $rolesCount = [];
+        foreach ($staffAll as $s) {
+            $r = (string) ($s['role'] ?? 'unknown');
+            $rolesCount[$r] = ($rolesCount[$r] ?? 0) + 1;
+        }
+        $formattedRoles = [];
+        foreach ($rolesCount as $roleKey => $rCount) {
+            $formattedRoles[] = [
+                'role' => $roleKey,
+                'roleName' => ucwords(str_replace('_', ' ', $roleKey)),
+                'count' => $rCount,
+            ];
+        }
+        $avgMorale = count($staffAll) > 0 ? (int) round(array_sum(array_column($staffAll, 'morale')) / count($staffAll)) : 0;
+        $activeIns = array_values(array_filter($insurance, fn($i) => ($i['active'] ?? 0) == 1));
+
+        $forecast = $weather ? (is_array($weather['forecast'] ?? null) ? $weather['forecast'] : (json_decode($weather['forecast'] ?? '[]', true) ?? [])) : [];
+        $formattedForecast = [];
+        foreach (array_slice($forecast, 0, 5) as $i => $fc) {
+            $cond = (string) ($fc['condition'] ?? 'Cloudy');
+            $formattedForecast[] = [
+                'label' => $i === 0 ? 'Tmrw' : '+' . ($i + 1) . 'd',
+                'condition' => $cond,
+                'icon' => $wIcons[$cond] ?? 'fa-cloud',
+                'tempFormatted' => temp((int) ($fc['temp'] ?? 0)),
+            ];
+        }
+
+        $formattedInProgressAch = [];
+        foreach (array_slice($inProgressAchievements, 0, 4) as $ach) {
+            $target = max(1, (int) ($ach['target'] ?? 1));
+            $prog = (int) ($ach['progress'] ?? 0);
+            $pct = min(100, (int) round($prog / $target * 100));
+            $formattedInProgressAch[] = [
+                'id' => (int) ($ach['id'] ?? 0),
+                'name' => (string) ($ach['name'] ?? ''),
+                'progress' => $prog,
+                'target' => $target,
+                'progressPct' => $pct,
+                'progressFormatted' => number_format($prog),
+                'targetFormatted' => number_format($target),
+            ];
+        }
+
+        $formattedActivity = [];
+        foreach (array_slice($recentActivity, 0, 6) as $log) {
+            $rawIcon = (string) ($log['icon'] ?? 'fa-solid fa-circle-dot');
+            $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', $rawIcon);
+            $formattedActivity[] = [
+                'id' => (int) ($log['id'] ?? 0),
+                'message' => (string) ($log['message'] ?? ''),
+                'icon' => $cleanIcon,
+                'game_day' => (int) ($log['game_day'] ?? $gameDay),
+            ];
+        }
+
+        $formattedWidgets = array_map(function ($w) {
+            $info = $this->availableWidgets[$w['widget_key']] ?? null;
+            $rawIcon = (string) ($info['icon'] ?? 'fa-solid fa-cube');
+            $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', $rawIcon);
+            return [
+                'widget_key' => (string) $w['widget_key'],
+                'name'       => (string) ($info['name'] ?? $w['widget_key']),
+                'icon'       => $cleanIcon,
+                'size'       => (string) ($w['size'] ?? 'medium'),
+                'visible'    => (bool) $w['visible'],
+                'sort_order' => (int) ($w['sort_order'] ?? 0),
+            ];
+        }, $widgets);
+
+        $formattedAvailableWidgets = [];
+        foreach ($this->availableWidgets as $wKey => $wInfo) {
+            $rawIcon = (string) ($wInfo['icon'] ?? 'fa-solid fa-cube');
+            $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', $rawIcon);
+            $formattedAvailableWidgets[] = [
+                'key'     => (string) $wKey,
+                'name'    => (string) $wInfo['name'],
+                'icon'    => $cleanIcon,
+                'default' => (bool) $wInfo['default'],
+                'size'    => (string) $wInfo['size'],
+            ];
+        }
+
+        $page = [
+            'hero' => [
+                'resortMapKey'       => preg_replace('/[^A-Za-z0-9]/', '', (string) $resortMapKey) ?: 'ParkCity',
+                'resortMapName'      => (string) $resortMapName,
+                'resortOpen'         => $resortOpen,
+                'seasonNum'          => $seasonNum,
+                'gameDay'            => $gameDay,
+                'liftCount'          => $liftCount,
+                'totalLifts'         => $totalLifts,
+                'slopeCount'         => $slopeCount,
+                'totalSlopes'        => $totalSlopes,
+                'repScore'           => $repScore,
+                'repScoreFormatted'  => number_format($repScore),
+                'bonusAvailable'     => $bonusAvailable,
+            ],
+            'alerts' => $formattedAlerts,
+            'unclaimedAchievements' => $unclaimedAchievements,
+            'kpis' => [
+                'cashBalance'               => $cashBalance,
+                'cashBalanceText'           => currency($cashBalance),
+                'cashNegative'              => $cashBalance < 0,
+                'netProfit'                 => $netProfit,
+                'netProfitText'             => ($netProfit >= 0 ? '+' : '') . currency($netProfit),
+                'netProfitPositive'         => $netProfit >= 0,
+                'genepisBal'                => $genepisBal,
+                'genepisBalFormatted'       => number_format($genepisBal),
+                'dailyProfit'               => $dailyProfit,
+                'dailyProfitText'           => ($dailyProfit >= 0 ? '+' : '') . currency($dailyProfit),
+                'dailyProfitPositive'       => $dailyProfit >= 0,
+                'incomePercent'             => $incomePct,
+                'incomeText'                => currency($totalIncome),
+                'expensesText'              => currency($totalExpenses),
+                'dailyVisitors'             => $dailyVisitors,
+                'dailyVisitorsFormatted'    => number_format($dailyVisitors),
+                'ticketPriceText'           => (int) ($cashflow['ticket_price'] ?? 0) > 0 ? currency((int) $cashflow['ticket_price']) : 'Not set',
+                'totalLiftCapacityFormatted'=> number_format($totalLiftCapacity),
+                'weather'                   => [
+                    'condition_name'   => (string) ($weather['condition_name'] ?? 'Clear'),
+                    'tempFormatted'    => $weather ? ($weather['temp_formatted'] ?? temp((int)($weather['temp'] ?? 0))) : '–',
+                    'snowBaseFormatted'=> $weather ? snow($weather['snow_base'] ?? 0) : '–',
+                    'icon'             => $currentWeatherIcon,
+                ],
+            ],
+            'widgets'          => $formattedWidgets,
+            'availableWidgets' => $formattedAvailableWidgets,
+            'data' => [
+                'stats' => [
+                    'revenue'       => currency($totalIncome),
+                    'expenses'      => currency($totalExpenses),
+                    'tickets'       => currency((int) ($cashflow['ticket_income'] ?? 0)),
+                    'buildingsFood' => currency((int) ($cashflow['building_income'] ?? 0)),
+                    'payroll'       => currency((int) ($cashflow['salaries'] ?? 0)),
+                    'runningCosts'  => currency((int) ($cashflow['running_costs'] ?? 0)),
+                    'loanPayments'  => currency((int) ($cashflow['loan_payments'] ?? 0)),
+                    'dailyProfit'   => currency($dailyProfit),
+                    'isProfit'      => $dailyProfit >= 0,
+                ],
+                'overview' => [
+                    'slopeCount'        => $slopeCount,
+                    'totalSlopes'       => $totalSlopes,
+                    'slopesByDiff'      => $slopesByDiff,
+                    'liftCount'         => $liftCount,
+                    'totalLifts'        => $totalLifts,
+                    'staffCount'        => $staffCount,
+                    'buildingCount'     => $buildingCount,
+                    'avgSlopeCondition' => $avgSlopeCondition,
+                    'ungroomedCount'    => $ungroomedCount,
+                    'trailConditionNote'=> ($ungroomedCount ?? 0) > 0 ? ($ungroomedCount . ' need grooming') : 'All groomed',
+                ],
+                'season' => [
+                    'seasonNum'      => $seasonNum,
+                    'seasonProgress' => $seasonProgress,
+                    'seasonLength'   => $seasonLength,
+                    'seasonPct'      => $seasonPct,
+                    'winterDays'     => $winterDays,
+                    'summerDays'     => $summerDays,
+                ],
+                'weather_mini' => [
+                    'tempFormatted'     => $weather ? ($weather['temp_formatted'] ?? temp((int)($weather['temp'] ?? 0))) : '–',
+                    'condition_name'    => (string) ($weather['condition_name'] ?? 'Clear'),
+                    'icon'              => $currentWeatherIcon,
+                    'windFormatted'     => speed((int)($weather['wind'] ?? 0)),
+                    'snowfallFormatted' => snow($weather['snowfall'] ?? 0),
+                    'snowBaseFormatted' => snow($weather['snow_base'] ?? 0),
+                    'forecast'          => $formattedForecast,
+                ],
+                'achievements_mini' => [
+                    'unclaimed'       => $unclaimedAchievements,
+                    'completed'       => $completedAchievements,
+                    'inProgressCount' => count($inProgressAchievements),
+                ],
+                'achievements' => $formattedInProgressAch,
+                'activity'     => $formattedActivity,
+                'parking_mini' => [
+                    'lotsCount'       => count($parkingFacilities),
+                    'spacesFormatted' => number_format($totalParkingCap),
+                    'totalOccupied'   => $totalOccupied,
+                    'totalCap'        => max(1, $totalParkingCap),
+                    'pct'             => $parkingPct,
+                ],
+                'terrain_parks_mini' => [
+                    'openCount'       => count($openParks),
+                    'buildingCount'   => count($buildingParks),
+                    'ridersFormatted' => number_format($totalParkVisitors),
+                ],
+                'finances_mini' => [
+                    'incomeText'    => currency((int) ($finance['total_income'] ?? 0)),
+                    'expensesText'  => currency((int) ($finance['total_expenses'] ?? 0)),
+                    'netProfitText' => ($netProfit >= 0 ? '+' : '') . currency($netProfit),
+                    'isNetPositive' => $netProfit >= 0,
+                ],
+                'staff_mini' => [
+                    'staffCount' => $staffCount,
+                    'roles'      => $formattedRoles,
+                    'avgMorale'  => $avgMorale,
+                    'moraleTone' => $avgMorale >= 60 ? 'success' : ($avgMorale >= 30 ? 'warning' : 'danger'),
+                ],
+                'equipment_mini' => [
+                    'unitsCount' => count($equipment),
+                ],
+                'insurance_mini' => [
+                    'activeCount'    => count($activeIns),
+                    'availableCount' => max(0, count($insurance) - count($activeIns)),
+                ],
+                'loans_mini' => [
+                    'activeCount'  => count($loans),
+                    'totalDebtText'=> currency(array_sum(array_column($loans, 'remaining'))),
+                ],
+                'marketing_mini' => [
+                    'campaignsCount' => count($marketing),
+                ],
+            ],
+        ];
+
+        return view('dashboard/index', ['page' => $page]);
     }
 
     public function toggleWidget()

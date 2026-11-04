@@ -33,16 +33,70 @@ class ResortAnalysis extends BaseController
         $userId = auth()->id();
         $db = db_connect();
         $reports = $db->table('resort_reports')->where('user_id', $userId)->orderBy('id', 'DESC')->get()->getResultArray();
-        foreach ($reports as &$r) $r['data'] = json_decode((string) $r['report_data'], true) ?: [];
-        unset($r);
+        
+        $formattedReports = [];
+        foreach ($reports as $i => $r) {
+            $d = json_decode((string) $r['report_data'], true) ?: [];
+            $score = (int) ($d['overall_score'] ?? 0);
+            $recs = $d['recommendations'] ?? [];
+            $urgent = count(array_filter($recs, fn($x) => ($x['type'] ?? '') === 'critical'));
+            $topRecs = [];
+            if ($i === 0 && !empty($recs)) {
+                foreach (array_slice($recs, 0, 3) as $rec) {
+                    $topRecs[] = [
+                        'type' => (string) ($rec['type'] ?? 'info'),
+                        'text' => (string) ($rec['text'] ?? ''),
+                        'area' => (string) ($rec['area'] ?? ''),
+                        'link' => (string) ($rec['link'] ?? ''),
+                    ];
+                }
+            }
 
-        return view('resort_analysis/index', [
-            'reports' => $reports,
-            'balance' => (int) ($db->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRow()->balance ?? 0),
+            $scoreTone = $score >= 70 ? 'success' : ($score >= 40 ? 'warning' : 'danger');
+
+            $formattedReports[] = [
+                'id' => (int) $r['id'],
+                'game_day' => (int) $r['game_day'],
+                'created_at' => (string) $r['created_at'],
+                'created_date' => date('M j, Y', strtotime($r['created_at'])),
+                'score' => $score,
+                'score_tone' => $scoreTone,
+                'is_latest' => $i === 0,
+                'recommendations_count' => count($recs),
+                'urgent_count' => $urgent,
+                'top_recommendations' => $topRecs,
+            ];
+        }
+
+        $areas = [];
+        foreach (self::AREAS as $key => [$name, $icon, $color]) {
+            $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $icon);
+            $areas[] = [
+                'key' => $key,
+                'name' => $name,
+                'icon' => $cleanIcon,
+                'color' => $color,
+            ];
+        }
+
+        $balance = (int) ($db->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRow()->balance ?? 0);
+        $cost = self::COST_GENEPIS;
+        $todayReport = $this->todayReport($userId);
+
+        $page = [
+            'balance' => $balance,
+            'cost' => $cost,
+            'canAfford' => $balance >= $cost,
             'gameDay' => getGameDay(),
-            'todayReport' => $this->todayReport($userId),
-            'cost' => self::COST_GENEPIS,
-        ]);
+            'todayReport' => $todayReport ? [
+                'id' => (int) $todayReport['id'],
+                'game_day' => (int) $todayReport['game_day'],
+            ] : null,
+            'areas' => $areas,
+            'reports' => $formattedReports,
+        ];
+
+        return view('resort_analysis/index', ['page' => $page]);
     }
 
     /** This season's report for today's game day, if one was ordered */
@@ -86,7 +140,101 @@ class ResortAnalysis extends BaseController
     {
         $report = db_connect()->table('resort_reports')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
         if (!$report) return redirect()->to('/resort-analysis')->with('error', 'Report not found.');
-        return view('resort_analysis/view', ['report' => $report, 'data' => json_decode((string) $report['report_data'], true) ?: []]);
+        $data = json_decode((string) $report['report_data'], true) ?: [];
+
+        $overall = (int) ($data['overall_score'] ?? 0);
+        $scoreTone = $overall >= 70 ? 'success' : ($overall >= 40 ? 'warning' : 'danger');
+        $headline = $overall >= 80 ? 'Running very well' : ($overall >= 60 ? 'Solid, with clear wins available' : ($overall >= 40 ? 'Several things holding you back' : 'Needs attention now'));
+
+        $recs = $data['recommendations'] ?? [];
+        $urgentCount = count(array_filter($recs, fn($r) => ($r['type'] ?? '') === 'critical'));
+        $warningCount = count(array_filter($recs, fn($r) => ($r['type'] ?? '') === 'warning'));
+        $totalRecs = count($recs);
+
+        $formattedRecs = array_map(function ($rec) {
+            $type = (string) ($rec['type'] ?? 'info');
+            $icon = $type === 'critical' ? 'fa-circle-xmark' : ($type === 'warning' ? 'fa-triangle-exclamation' : 'fa-lightbulb');
+            $tone = $type === 'critical' ? 'danger' : ($type === 'warning' ? 'warning' : 'accent');
+            $label = $type === 'critical' ? 'Urgent' : ($type === 'warning' ? 'Important' : 'Idea');
+            return [
+                'type' => $type,
+                'tone' => $tone,
+                'label' => $label,
+                'icon' => $icon,
+                'area' => (string) ($rec['area'] ?? ''),
+                'text' => (string) ($rec['text'] ?? ''),
+                'link' => (string) ($rec['link'] ?? ''),
+            ];
+        }, $recs);
+
+        $formattedSections = [];
+        if (!empty($data['sections'])) {
+            foreach (array_intersect_key(self::AREAS, $data['sections']) as $key => [$name, $icon, $color]) {
+                $sec = $data['sections'][$key];
+                $s = isset($sec['score']) && $sec['score'] !== null ? (int) $sec['score'] : null;
+                $sTone = $s === null ? 'default' : ($s >= 70 ? 'success' : ($s >= 40 ? 'warning' : 'danger'));
+                $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $icon);
+                $formattedSections[] = [
+                    'key' => $key,
+                    'name' => $name,
+                    'icon' => $cleanIcon,
+                    'score' => $s,
+                    'score_tone' => $sTone,
+                    'summary' => (string) ($sec['summary'] ?? ''),
+                    'metrics' => array_map(function ($m) {
+                        return [
+                            'label' => (string) ($m[0] ?? ''),
+                            'value' => (string) ($m[1] ?? ''),
+                        ];
+                    }, $sec['metrics'] ?? []),
+                ];
+            }
+        }
+
+        $v1Labels = [
+            'infrastructure' => ['Infrastructure', 'fa-road'],
+            'staffing' => ['Staffing', 'fa-users'],
+            'finances' => ['Finances', 'fa-coins'],
+            'amenities' => ['Amenities', 'fa-building'],
+            'equipment' => ['Equipment', 'fa-toolbox'],
+            'resources' => ['Resources', 'fa-bolt'],
+            'safety' => ['Safety', 'fa-shield-halved'],
+        ];
+        $legacyScores = [];
+        if (empty($data['sections']) && !empty($data['scores'])) {
+            foreach ($data['scores'] as $cat => $s) {
+                [$cName, $cIcon] = $v1Labels[$cat] ?? [ucfirst($cat), 'fa-circle'];
+                $cleanCIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $cIcon);
+                $legacyScores[] = [
+                    'name' => $cName,
+                    'icon' => $cleanCIcon,
+                    'score' => (int) $s,
+                ];
+            }
+        }
+
+        $page = [
+            'report' => [
+                'id' => (int) $report['id'],
+                'game_day' => (int) $report['game_day'],
+                'created_at' => (string) $report['created_at'],
+                'created_date' => date('M j, Y', strtotime($report['created_at'])),
+                'measured_day' => isset($data['measured_day']) ? (int) $data['measured_day'] : null,
+            ],
+            'overall_score' => $overall,
+            'score_tone' => $scoreTone,
+            'headline' => $headline,
+            'stats_summary' => [
+                'urgent_count' => $urgentCount,
+                'warning_count' => $warningCount,
+                'total_recommendations' => $totalRecs,
+            ],
+            'recommendations' => $formattedRecs,
+            'sections' => $formattedSections,
+            'legacyScores' => $legacyScores,
+        ];
+
+        return view('resort_analysis/view', ['page' => $page]);
     }
 
     private function generateReport(int $userId): array

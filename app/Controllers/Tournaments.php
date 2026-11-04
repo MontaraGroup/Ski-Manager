@@ -40,22 +40,91 @@ class Tournaments extends BaseController
             'kids_cup' => ['name' => "Kids' Cup", 'icon' => 'fa-solid fa-child', 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1, 'desc' => 'Youth skiing competition'],
         ];
 
-        return view('tournaments/index', [
-            'tournaments' => array_map(function($t) use ($gameDay) {
-                $start = (int)($t['start_day'] ?? 0);
-                $end = (int)($t['end_day'] ?? 0);
-                if ($gameDay > $end) $t['status'] = 'ended';
-                elseif ($gameDay >= $start) $t['status'] = 'active';
-                else $t['status'] = 'upcoming';
-                return $t;
-            }, $tournaments),
-            'events' => array_map(function($e) use ($gameDay) {
-                $e['active'] = $gameDay >= (int)$e['game_day'] && $gameDay < (int)$e['game_day'] + (int)$e['duration_days'] ? 1 : 0;
-                return $e;
-            }, $events),
+        $formattedTournaments = array_map(function($t) use ($gameDay) {
+            $start = (int)($t['start_day'] ?? 0);
+            $end = (int)($t['end_day'] ?? 0);
+            $status = $gameDay > $end ? 'ended' : ($gameDay >= $start ? 'active' : 'upcoming');
+            $rawIcon = $t['icon'] ?? 'fa-trophy';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $prize = (int) ($t['prize_pool'] ?? 0);
+            return [
+                'id' => (int) $t['id'],
+                'name' => (string) $t['name'],
+                'description' => (string) ($t['description'] ?? ''),
+                'start_day' => $start,
+                'end_day' => $end,
+                'daysUntil' => max(0, $start - $gameDay),
+                'status' => $status,
+                'visitors_boost' => (int) ($t['visitors_boost'] ?? 0),
+                'reputation_boost' => (int) ($t['reputation_boost'] ?? 0),
+                'prize_pool' => $prize,
+                'prizeText' => currency($prize),
+                'icon' => $icon,
+                'canCancel' => $status === 'upcoming',
+            ];
+        }, $tournaments);
+
+        $eventIcons = [
+            'bonus' => 'fa-gift',
+            'weather' => 'fa-cloud-bolt',
+            'celebrity' => 'fa-star',
+            'sale' => 'fa-tag',
+        ];
+
+        $formattedEvents = array_map(function($e) use ($gameDay, $eventIcons) {
+            $day = (int) $e['game_day'];
+            $duration = (int) $e['duration_days'];
+            $active = $gameDay >= $day && $gameDay < ($day + $duration);
+            $type = (string) ($e['event_type'] ?? 'bonus');
+            $icon = $eventIcons[$type] ?? 'fa-calendar';
+            return [
+                'id' => (int) ($e['id'] ?? 0),
+                'name' => (string) $e['name'],
+                'description' => (string) ($e['description'] ?? ''),
+                'event_type' => $type,
+                'game_day' => $day,
+                'duration_days' => $duration,
+                'active' => $active,
+                'icon' => $icon,
+            ];
+        }, $events);
+
+        $formattedTypes = [];
+        foreach ($tournamentTypes as $key => $type) {
+            $rawIcon = $type['icon'] ?? 'fa-trophy';
+            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
+            $cost = (int) ($type['cost'] ?? 0);
+            $formattedTypes[] = [
+                'key' => (string) $key,
+                'name' => (string) $type['name'],
+                'desc' => (string) ($type['desc'] ?? ''),
+                'icon' => $icon,
+                'visitors' => (int) ($type['visitors'] ?? 0),
+                'reputation' => (int) ($type['reputation'] ?? 0),
+                'duration' => (int) ($type['duration'] ?? 1),
+                'cost' => $cost,
+                'costText' => currency($cost),
+            ];
+        }
+
+        $activeCount = count(array_filter($formattedTournaments, fn($t) => $t['status'] === 'active'));
+        $upcomingCount = count(array_filter($formattedTournaments, fn($t) => $t['status'] === 'upcoming'));
+        $activeEventsCount = count(array_filter($formattedEvents, fn($e) => $e['active']));
+
+        $page = [
             'gameDay' => $gameDay,
-            'tournamentTypes' => $tournamentTypes,
-        ]);
+            'stats' => [
+                'activeTournaments' => $activeCount,
+                'upcomingTournaments' => $upcomingCount,
+                'activeEvents' => $activeEventsCount,
+                'totalHosted' => count($tournaments),
+            ],
+            'tournaments' => $formattedTournaments,
+            'events' => $formattedEvents,
+            'types' => $formattedTypes,
+        ];
+
+        return view('tournaments/index', ['page' => $page]);
     }
 
     public function host()
