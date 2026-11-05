@@ -1,3 +1,11 @@
+## Release 2026-11-04 23:46
+
+* Merge branch 'MontaraGroup:main' into main (fbd889e)
+* Merge pull request #15 from Montara-Group/feature/react-phase-3e-resort-map (59be3d1)
+* feat(ui): resort map in React (phase 3e) (3080bb2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (063ec25)
+* Merge pull request #32 from Montara-Group/main (91459ef)
+
 ## Release 2026-11-04 23:29
 
 * Merge branch 'MontaraGroup:main' into main (e69c11f)
