@@ -83,7 +83,7 @@ jobs:
             python3 scripts/update_changelog_view.py || true
           fi
 
-          git add CHANGELOG.md app/Views/updates/index.php 2>/dev/null || true
+          git add CHANGELOG.md app/Views/updates/index.php app/Views/updates/updates.json 2>/dev/null || true
           git commit -m "chore(changelog): update CHANGELOG.md and updates view [skip ci]" || echo "No changes"
           git push origin main || echo "Changelog push skipped"
 

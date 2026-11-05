@@ -100,7 +100,22 @@ MD;
     /** GET /developers */
     public function index(): string
     {
-        return view('developers', ['base' => rtrim(base_url(), '/')]);
+        $base = rtrim(base_url(), '/');
+        $page = [
+            'base' => $base,
+            'endpoints' => [
+                ['method' => 'GET', 'path' => '/api/resort-data', 'desc' => 'Trail map segments and sectors, the current season and weather. With a ski-manager.net session cookie it also returns your finances, lifts, slopes and buildings; without one, finances are a demo baseline and the player lists are empty.'],
+                ['method' => 'GET', 'path' => '/api/leaderboard', 'desc' => 'The top 50 resorts, ranked by cash plus lifetime income.'],
+                ['method' => 'POST', 'path' => '/api/auth', 'desc' => 'Demo sign-in used by the mobile apps. Returns a random token. It does not check credentials, and no other endpoint needs the token.'],
+                ['method' => 'POST', 'path' => '/api/sync', 'desc' => 'Acknowledges a sync from the mobile apps and echoes back the cash you send. Nothing is saved.'],
+                ['method' => 'GET', 'path' => '/health', 'desc' => 'Database and storage checks. Returns 200 when healthy and 503 when something is down.'],
+            ],
+            'catalogUrl' => $base . '/.well-known/api-catalog',
+            'openapiUrl' => $base . '/openapi.json',
+            'authMdUrl' => $base . '/auth.md',
+        ];
+
+        return view('developers', ['page' => $page]);
     }
 
     private function spec(): array

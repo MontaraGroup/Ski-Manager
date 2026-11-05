@@ -1,0 +1,1207 @@
+[
+  {
+    "id": 50,
+    "version": "v1.4.31",
+    "title": "Release v1.4.31 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": true,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "version": "v1.4.30",
+    "title": "Release v1.4.30 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "version": "v1.4.29",
+    "title": "Release v1.4.29 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "version": "v1.4.28",
+    "title": "Release v1.4.28 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "version": "v1.4.27",
+    "title": "Release v1.4.27 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "version": "v1.4.26",
+    "title": "Release v1.4.26 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "version": "v1.4.25",
+    "title": "Release v1.4.25 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 05, 2026",
+    "releasedAtFormatted": "November 05, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "version": "v1.4.24",
+    "title": "Release v1.4.24 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "version": "v1.4.23",
+    "title": "Release v1.4.23 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "version": "v1.4.22",
+    "title": "Release v1.4.22 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "version": "v1.4.21",
+    "title": "Release v1.4.21 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "version": "v1.4.20",
+    "title": "Release v1.4.20 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "version": "v1.4.19",
+    "title": "Release v1.4.19 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "version": "v1.4.18",
+    "title": "Release v1.4.18 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "version": "v1.4.17",
+    "title": "Release v1.4.17 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "version": "v1.4.16",
+    "title": "Release v1.4.16 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "version": "v1.4.15",
+    "title": "Release v1.4.15 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "version": "v1.4.14",
+    "title": "Release v1.4.14 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "version": "v1.4.13",
+    "title": "Release v1.4.13 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "version": "v1.4.12",
+    "title": "Release v1.4.12 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 04, 2026",
+    "releasedAtFormatted": "November 04, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "version": "v1.4.11",
+    "title": "Release v1.4.11 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 01, 2026",
+    "releasedAtFormatted": "November 01, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "version": "v1.4.3",
+    "title": "Release v1.4.3 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 29, 2026",
+    "releasedAtFormatted": "October 29, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "version": "v1.4.2",
+    "title": "Release v1.4.11 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 28, 2026",
+    "releasedAtFormatted": "October 28, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "version": "v1.4.10",
+    "title": "Release v1.4.10 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "version": "v1.4.9",
+    "title": "Release v1.4.9 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "version": "v1.4.8",
+    "title": "Release v1.4.8 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "version": "v1.4.7",
+    "title": "Release v1.4.7 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "version": "v1.4.6",
+    "title": "Release v1.4.6 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "version": "v1.4.5",
+    "title": "Release v1.4.5 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "version": "v1.4.4",
+    "title": "Release v1.4.4 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 30, 2026",
+    "releasedAtFormatted": "October 30, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "version": "v1.4.3",
+    "title": "Release v1.4.3 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 29, 2026",
+    "releasedAtFormatted": "October 29, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "version": "v1.4.2",
+    "title": "Release v1.4.2 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 28, 2026",
+    "releasedAtFormatted": "October 28, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "version": "v1.4.1",
+    "title": "Release v1.4.1 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "October 28, 2026",
+    "releasedAtFormatted": "October 28, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "version": "v0.33",
+    "title": "Season 2: Park City Expansion (Sector 2 - Advanced Peaks)",
+    "description": "Season 1 enters its final 14-day stretch. On October 19, 2026, Season 2 will automatically launch with full player progress carryover, unlocking Sector 2 on Park City Mountain.",
+    "release_type": "expansion",
+    "released_at": "",
+    "releasedAtFormatted": "",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 16,
+    "version": "v1.4.0",
+    "title": "Season 4 Mountain Vote, Engine Optimization &amp; AI Integration",
+    "description": "Launched the official Season 4 Mountain Selection Vote with live telemetry, overhauled database performance and automated storage maintenance, and deployed AI Agent content negotiation.",
+    "release_type": "major",
+    "released_at": "October 2, 2026",
+    "releasedAtFormatted": "October 2, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "new",
+        "label": "New Features",
+        "icon": "sparkles",
+        "badge": "success",
+        "items": [
+          {
+            "title": "Season 4 Mountain Vote: Community voting for Season 4 with 6 authentic candidate resorts, live mountain telemetry, and custom in-game perks.",
+            "description": ""
+          },
+          {
+            "title": "AI Content Negotiation: Native HTTP Accept: text/markdown negotiation delivering clean, high-density Markdown for AI agents.",
+            "description": ""
+          },
+          {
+            "title": "RFC 9309 Bot Governance: Explicit crawl and Content-Signal policy directives for 20 AI search and training crawlers.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "98% DB Query Reduction: Eliminated 50-user N+1 loops in the Admin dashboard with batch lookups and composite indexing.",
+            "description": ""
+          },
+          {
+            "title": "Automated Storage Pruning: Automated background pruning for historical activity and transaction logs keeps database size optimal.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "fixed",
+        "label": "Bug Fixes",
+        "icon": "wrench",
+        "badge": "warning",
+        "items": [
+          {
+            "title": "Fixed vote modification error by adding self-healing schema migration for updated_at on resort_votes.",
+            "description": ""
+          },
+          {
+            "title": "Guarded division by zero in seasonal helpers and protected nullable offsets in admin and gameplay views.",
+            "description": ""
+          },
+          {
+            "title": "Enforced atomic financial transactions and funds verification across buildings, loans, and night skiing.",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "version": "v1.3.7",
+    "title": "Release v1.3.7 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "July 24, 2026",
+    "releasedAtFormatted": "July 24, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "version": "Release",
+    "title": "Release Update (2026-07-24 23:07)",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "July 24, 2026",
+    "releasedAtFormatted": "July 24, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "version": "v1.3.6",
+    "title": "Season 4 Mountain Vote, Engine Optimization &amp; AI Integration",
+    "description": "Launched the official Season 4 Mountain Selection Vote with live telemetry, overhauled database performance and automated storage maintenance, and deployed AI Agent content negotiation.",
+    "release_type": "major",
+    "released_at": "October 2, 2026",
+    "releasedAtFormatted": "October 2, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "new",
+        "label": "New Features",
+        "icon": "sparkles",
+        "badge": "success",
+        "items": [
+          {
+            "title": "Season 4 Mountain Vote: Community voting for Season 4 with 6 authentic candidate resorts, live mountain telemetry, and custom in-game perks.",
+            "description": ""
+          },
+          {
+            "title": "AI Content Negotiation: Native HTTP Accept: text/markdown negotiation delivering clean, high-density Markdown for AI agents.",
+            "description": ""
+          },
+          {
+            "title": "RFC 9309 Bot Governance: Explicit crawl and Content-Signal policy directives for 20 AI search and training crawlers.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "98% DB Query Reduction: Eliminated 50-user N+1 loops in the Admin dashboard with batch lookups and composite indexing.",
+            "description": ""
+          },
+          {
+            "title": "Automated Storage Pruning: Automated background pruning for historical activity and transaction logs keeps database size optimal.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "fixed",
+        "label": "Bug Fixes",
+        "icon": "wrench",
+        "badge": "warning",
+        "items": [
+          {
+            "title": "Fixed vote modification error by adding self-healing schema migration for updated_at on resort_votes.",
+            "description": ""
+          },
+          {
+            "title": "Guarded division by zero in seasonal helpers and protected nullable offsets in admin and gameplay views.",
+            "description": ""
+          },
+          {
+            "title": "Enforced atomic financial transactions and funds verification across buildings, loans, and night skiing.",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "version": "v1.3.6",
+    "title": "Deployment Automation &amp; System Resilience",
+    "description": "Integrated seamless GitHub webhook CI/CD deployment pipelines, automated writable cache directory recovery, and fixed session persistence boundaries.",
+    "release_type": "major",
+    "released_at": "July 22, 2026",
+    "releasedAtFormatted": "July 22, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "new",
+        "label": "New Features",
+        "icon": "sparkles",
+        "badge": "success",
+        "items": [
+          {
+            "title": "GitHub Webhook Auto-Deploy: Pushing to `main` now triggers instant server-side updates, database migrations, and cache clearing automatically.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Automated Writable Safeguards: Deployment and initialization scripts now self-heal missing cache, session, and log directories with strict permission enforcement.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "fixed",
+        "label": "Bug Fixes",
+        "icon": "wrench",
+        "badge": "warning",
+        "items": [
+          {
+            "title": "Resolved critical `CacheException` 500 errors caused by missing `writable/cache` directory states during cleanups.",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "version": "v1.3.5",
+    "title": "Authentication Infrastructure Overhaul",
+    "description": "A massive under-the-hood refactor to isolate and stabilize user registration pipelines, resolving container session context anomalies and enhancing visual verification entry profiles.",
+    "release_type": "major",
+    "released_at": "July 2, 2026",
+    "releasedAtFormatted": "July 2, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "new",
+        "label": "New Features",
+        "icon": "sparkles",
+        "badge": "success",
+        "items": [
+          {
+            "title": "Tactile DaisyUI OTP Field: Replaced the old standard text box with a modern multi-segmented 6-digit split interface constraint array matching token layouts.",
+            "description": ""
+          },
+          {
+            "title": "Session-Less Activation Bypass: Introduced a standalone transactional background recovery terminal block for heavily blocked system users.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Fault-Tolerant Action Pipelines: Submissions are now dynamically insulated from failing SMTP thread exceptions, preventing layout thread terminations.",
+            "description": ""
+          },
+          {
+            "title": "Secure Cookie Synchronizations: Shifted global cookie persistence properties to explicit HTTPS secure flags to ensure seamless validation transport across isolated host containers.",
+            "description": ""
+          }
+        ]
+      },
+      {
+        "type": "fixed",
+        "label": "Bug Fixes",
+        "icon": "wrench",
+        "badge": "warning",
+        "items": [
+          {
+            "title": "Resolved a critical `PageNotFoundException` (404 Error) thrown during email validation handshakes due to tracking state cookie loss.",
+            "description": ""
+          },
+          {
+            "title": "Fixed a native Shield `LogicException` rule boundary where lingering active workflow states blocked initial logins upon verification execution.",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "version": "v1.3.1",
+    "title": "Operations &amp; Support Overhaul",
+    "description": "Ski Patrol deployment arrives on the mountain, completely shifting the resort vibe alongside upgraded Admin chat infrastructure and unmatched system aura.",
+    "release_type": "minor",
+    "released_at": "June 28, 2026",
+    "releasedAtFormatted": "June 28, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 9,
+    "version": "v1.3",
+    "title": "Polish &amp; Quality-of-Life",
+    "description": "A round of refinements across the site plus important fixes to daily bonuses and the tutorial.",
+    "release_type": "minor",
+    "released_at": "June 14, 2026",
+    "releasedAtFormatted": "June 14, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 8,
+    "version": "v1.2",
+    "title": "UI Overhaul &amp; New Features",
+    "description": "Major UI improvements across all pages, support chat, voting system, compliance hub, equipment shop redesign, and dozens of fixes.",
+    "release_type": "major",
+    "released_at": "June 10, 2026",
+    "releasedAtFormatted": "June 10, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 7,
+    "version": "v1.1",
+    "title": "Economy Rebalance &amp; Systems Overhaul",
+    "description": "Major economy rebalance, improved grooming/snowmaking/weather/finances, PWA support, and dozens of bug fixes.",
+    "release_type": "major",
+    "released_at": "June 9, 2026",
+    "releasedAtFormatted": "June 9, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 6,
+    "version": "v1.0",
+    "title": "Season 1 Launch Update",
+    "description": "Major update rebuilding the trail map, admin panel, unit system, and adding feature flags.",
+    "release_type": "major",
+    "released_at": "June 7, 2026",
+    "releasedAtFormatted": "June 7, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 5,
+    "version": "v0.5",
+    "title": "Season 1: Park City",
+    "description": "Season 1 officially launches June 7, 2026 at 12:00 AM Eastern Time. All players start fresh on Park City Mountain Resort.",
+    "release_type": "major",
+    "released_at": "June 7, 2026",
+    "releasedAtFormatted": "June 7, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 4,
+    "version": "v0.4",
+    "title": "Bug Fixes &amp; Dashboard Improvements",
+    "description": "Bug fixes, dashboard improvements, and developer tooling.",
+    "release_type": "minor",
+    "released_at": "June 4, 2026",
+    "releasedAtFormatted": "June 4, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 3,
+    "version": "v0.3",
+    "title": "Polish &amp; Compliance Update",
+    "description": "Cookie consent, legal pages, analytics setup, cross-system integration, and quality-of-life improvements.",
+    "release_type": "minor",
+    "released_at": "June 3, 2026",
+    "releasedAtFormatted": "June 3, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 2,
+    "version": "v0.2",
+    "title": "Resource Management Update",
+    "description": "Major update bringing resource management, terrain parks, and quality-of-life improvements to Ski Manager.",
+    "release_type": "major",
+    "released_at": "June 1, 2026",
+    "releasedAtFormatted": "June 1, 2026",
+    "isLatest": false,
+    "categories": []
+  },
+  {
+    "id": 1,
+    "version": "v0.1",
+    "title": "Complete Rebuild",
+    "description": "Ski Manager has been completely rebuilt from the ground up with a modern technology stack and dramatically expanded gameplay.",
+    "release_type": "major",
+    "released_at": "May 27, 2026",
+    "releasedAtFormatted": "May 27, 2026",
+    "isLatest": false,
+    "categories": []
+  }
+]
