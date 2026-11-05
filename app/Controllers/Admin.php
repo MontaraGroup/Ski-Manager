@@ -112,17 +112,111 @@ class Admin extends BaseController
             'dbSize' => $dbSizeRow['mb'] ?? 0,
         ];
 
-        return view('admin/index', [
-            'totalUsers' => $totalUsers, 'totalStaff' => $totalStaff,
-            'totalBuildings' => $totalBuildings, 'totalItems' => $totalItems,
-            'totalLoans' => $totalLoans, 'totalCash' => (int) $totalCash,
-            'totalParking' => $totalParking, 'totalParks' => $totalParks,
-            'gameDay' => $gameDay, 'users' => $users, 'weather' => $weather,
-            'recentLogs' => $recentLogs, 'onlineRecent' => $onlineRecent,
-            'newUsers7d' => $newUsers7d, 'bannedUsers' => $bannedUsers,
-            'season' => $season, 'unreadSupport' => $unreadSupport, 'lastTick' => $lastTick,
-            'server' => $server, 'isStaging' => str_contains(ROOTPATH, 'staging'),
-        ]);
+        $seasonLen = max(1, (int) ($season['duration_days'] ?? 135));
+        $seasonPct = min(100, (int) round($gameDay / $seasonLen * 100));
+        $tickAge = $lastTick ? time() - strtotime($lastTick['created_at']) : null;
+        $tickStale = $tickAge === null || $tickAge > 26 * 3600;
+        $activePct = $totalUsers > 0 ? (int) round($onlineRecent / $totalUsers * 100) : 0;
+        $avgCash = $totalUsers > 0 ? (int) ($totalCash / $totalUsers) : 0;
+        $gb = fn($b) => number_format($b / 1073741824, 1) . ' GB';
+
+        $playersFormatted = array_map(function($u) {
+            $lastTs = !empty($u['last_active']) ? strtotime($u['last_active']) : 0;
+            return [
+                'id' => (int) $u['id'],
+                'username' => $u['username'],
+                'cashFormatted' => currency((int) ($u['cash'] ?? 0)),
+                'cashRaw' => (int) ($u['cash'] ?? 0),
+                'staff_count' => (int) ($u['staff_count'] ?? 0),
+                'building_count' => (int) ($u['building_count'] ?? 0),
+                'item_count' => (int) ($u['item_count'] ?? 0),
+                'joinedFormatted' => date('M j', strtotime($u['created_at'])),
+                'created_ts' => strtotime($u['created_at']),
+                'last_active_ts' => $lastTs,
+                'lastActiveFormatted' => $lastTs ? timeAgo($u['last_active']) : 'Never',
+                'isOnline' => $lastTs > strtotime('-15 minutes'),
+                'isBanned' => isset($u['active']) && !$u['active'],
+                'lastActivityMessage' => $u['last_activity']['message'] ?? '',
+            ];
+        }, $users);
+
+        $recentLogsFormatted = array_map(function($l) {
+            return [
+                'id' => (int) ($l['id'] ?? 0),
+                'username' => $l['username'] ?? 'Player',
+                'message' => $l['message'] ?? '',
+                'icon' => str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $l['icon'] ?? 'circle-dot'),
+                'game_day' => (int) ($l['game_day'] ?? 1),
+                'timeAgo' => !empty($l['created_at']) ? timeAgo($l['created_at']) : '',
+            ];
+        }, $recentLogs);
+
+        $page = [
+            'season' => [
+                'name' => $season['name'] ?? 'Season 1',
+                'season_number' => (int) ($season['season_number'] ?? 1),
+                'resort_map' => $season['resort_map'] ?? 'ParkCity',
+                'start_date' => $season['start_date'] ?? 'N/A',
+                'duration_days' => $seasonLen,
+                'game_day' => (int) $gameDay,
+                'days_left' => max(0, $seasonLen - $gameDay),
+                'progress_pct' => $seasonPct,
+                'maintenance' => (bool) ($season['maintenance'] ?? 0),
+            ],
+            'isStaging' => str_contains(ROOTPATH, 'staging'),
+            'isDev' => ENVIRONMENT === 'development',
+            'envWritable' => is_writable(ROOTPATH . '.env'),
+            'serverTime' => date('g:ia'),
+            'serverTimezone' => date_default_timezone_get(),
+            'unreadSupport' => (int) $unreadSupport,
+            'lastTick' => [
+                'timeAgo' => $lastTick ? timeAgo($lastTick['created_at']) : 'never',
+                'created_at' => $lastTick['created_at'] ?? null,
+                'isStale' => $tickStale,
+            ],
+            'kpis' => [
+                'totalUsers' => number_format($totalUsers),
+                'newUsers7d' => (int) $newUsers7d,
+                'bannedUsers' => (int) $bannedUsers,
+                'onlineRecent' => number_format($onlineRecent),
+                'activePct' => $activePct,
+                'totalCashFormatted' => currency((int) $totalCash),
+                'avgCashFormatted' => currency((int) $avgCash),
+                'totalLoans' => number_format($totalLoans),
+                'totalStaff' => number_format($totalStaff),
+                'totalBuildings' => number_format($totalBuildings),
+                'totalItems' => number_format($totalItems),
+                'totalFacilities' => number_format($totalParking + $totalParks),
+                'totalParking' => (int) $totalParking,
+                'totalParks' => (int) $totalParks,
+            ],
+            'players' => $playersFormatted,
+            'recentLogs' => $recentLogsFormatted,
+            'weather' => [
+                'condition_name' => $weather['condition_name'] ?? 'Light Snow',
+                'temp' => (int) ($weather['temp'] ?? -5),
+                'tempFormatted' => temp((int) ($weather['temp'] ?? -5)),
+                'wind' => (int) ($weather['wind'] ?? 15),
+                'snowfall' => (int) ($weather['snowfall'] ?? 0),
+                'snow_base' => (int) ($weather['snow_base'] ?? 50),
+                'conditions' => array_keys(\App\Libraries\Weather::VISIBILITY),
+            ],
+            'server' => [
+                'diskUsedFormatted' => $gb($server['diskUsed']),
+                'diskTotalFormatted' => $gb($server['diskTotal']),
+                'diskPct' => (int) $server['diskPct'],
+                'load' => array_map(fn($l) => round((float)$l, 2), $server['load']),
+                'cores' => (int) $server['cores'],
+                'phpVersion' => PHP_VERSION,
+                'ciVersion' => \CodeIgniter\CodeIgniter::CI_VERSION,
+                'memPeak' => $server['memPeak'],
+                'memLimit' => (string) $server['memLimit'],
+                'dbVersion' => (string) $server['dbVersion'],
+                'dbSize' => $server['dbSize'],
+            ],
+        ];
+
+        return view('admin/index', ['page' => $page]);
     }
 
     public function editUser(int $id): string|\CodeIgniter\HTTP\RedirectResponse

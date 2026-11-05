@@ -113,8 +113,9 @@ class Support extends BaseController
     {
         if (!$this->isAdmin()) return redirect()->to('/dashboard');
         $db = db_connect();
+        helper(['time']);
 
-        $conversations = $db->query("
+        $conversationsRaw = $db->query("
             SELECT sm.user_id, u.username,
                 (SELECT COUNT(*) FROM support_messages WHERE user_id = sm.user_id AND sender = 'player' AND is_read = 0) as unread,
                 (SELECT message FROM support_messages WHERE user_id = sm.user_id ORDER BY created_at DESC LIMIT 1) as last_message,
@@ -125,7 +126,22 @@ class Support extends BaseController
             ORDER BY last_at DESC
         ")->getResultArray();
 
-        return view('support/admin', ['conversations' => $conversations]);
+        $conversations = array_map(function($c) {
+            return [
+                'user_id' => (int) $c['user_id'],
+                'username' => $c['username'] ?? ('User #' . $c['user_id']),
+                'unread' => (int) $c['unread'],
+                'last_message' => $c['last_message'] ?? '',
+                'timeAgo' => !empty($c['last_at']) ? timeAgo($c['last_at']) : '',
+            ];
+        }, $conversationsRaw);
+
+        $page = [
+            'conversations' => $conversations,
+            'totalUnread' => array_sum(array_map(fn($c) => (int) $c['unread'], $conversationsRaw)),
+        ];
+
+        return view('support/admin', ['page' => $page]);
     }
 
     public function adminView(int $userId): string|\CodeIgniter\HTTP\RedirectResponse
@@ -135,10 +151,42 @@ class Support extends BaseController
 
         $db->table('support_messages')->where('user_id', $userId)->where('sender', 'player')->where('is_read', 0)->update(['is_read' => 1]);
 
-        $messages = $db->table('support_messages')->where('user_id', $userId)->orderBy('created_at', 'ASC')->get()->getResultArray();
+        $messagesRaw = $db->table('support_messages')->where('user_id', $userId)->orderBy('created_at', 'ASC')->get()->getResultArray();
         $player = $db->table('users')->where('id', $userId)->get()->getRowArray();
 
-        return view('support/admin_chat', ['messages' => $messages, 'player' => $player, 'chatUserId' => $userId]);
+        $today = date('Y-m-d');
+        $yest = date('Y-m-d', strtotime('-1 day'));
+        $lastDate = null;
+        $messages = [];
+
+        foreach ($messagesRaw as $msg) {
+            $msgDate = date('Y-m-d', strtotime($msg['created_at']));
+            $dateLabel = null;
+            if ($msgDate !== $lastDate) {
+                $lastDate = $msgDate;
+                $dateLabel = $msgDate === $today ? 'Today' : ($msgDate === $yest ? 'Yesterday' : date('F j, Y', strtotime($msg['created_at'])));
+            }
+
+            $messages[] = [
+                'id' => (int) $msg['id'],
+                'sender' => (string) $msg['sender'],
+                'message' => (string) $msg['message'],
+                'is_read' => (bool) $msg['is_read'],
+                'timeFormatted' => date('g:ia', strtotime($msg['created_at'])),
+                'dateLabel' => $dateLabel,
+            ];
+        }
+
+        $page = [
+            'chatUserId' => (int) $userId,
+            'player' => [
+                'id' => (int) ($player['id'] ?? $userId),
+                'username' => $player['username'] ?? ('User #' . $userId),
+            ],
+            'messages' => $messages,
+        ];
+
+        return view('support/admin_chat', ['page' => $page]);
     }
 
     public function adminReply(int $userId)
