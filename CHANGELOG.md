@@ -1,3 +1,11 @@
+## Release 2026-11-05 19:07
+
+* Merge pull request #21 from Montara-Group/feature/react-phase-3g-batch-2 (2668cda)
+* feat(ui): daily bonus, terrain parks, utilities, off-season, and emergency in React (phase 3g batch 2) (a842783)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (99941cc)
+* Merge pull request #36 from Montara-Group/main (f8f3f6b)
+* Merge pull request #20 from Montara-Group/feature/react-phase-3g-batch-1 (80f98d9)
+
 ## Release 2026-11-05 14:01
 
 * Merge pull request #36 from Montara-Group/main (f8f3f6b)
