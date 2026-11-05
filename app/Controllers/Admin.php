@@ -134,25 +134,112 @@ class Admin extends BaseController
         if (!$user) return redirect()->to('/admin')->with('error', 'User not found.');
 
         $finance = $db->table('player_finances')->where('user_id', $id)->get()->getRowArray();
-        $staff = $db->table('staff')->where('user_id', $id)->where('status !=', 'fired')->get()->getResultArray();
-        $buildings = $db->table('buildings')->where('user_id', $id)->get()->getResultArray();
-        $items = $db->table('player_items')->where('user_id', $id)->get()->getResultArray();
-        $loans = $db->table('loans')->where('user_id', $id)->where('status', 'active')->get()->getResultArray();
+        $staffRaw = $db->table('staff')->where('user_id', $id)->where('status !=', 'fired')->get()->getResultArray();
+        $buildingsRaw = $db->table('buildings')->where('user_id', $id)->get()->getResultArray();
+        $itemsRaw = $db->table('player_items')->where('user_id', $id)->get()->getResultArray();
+        $loansRaw = $db->table('loans')->where('user_id', $id)->where('status', 'active')->get()->getResultArray();
         $genepis = $db->table('genepis')->where('user_id', $id)->get()->getRowArray();
-        $logs = $db->table('activity_log')->where('user_id', $id)->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();
+        $logsRaw = $db->table('activity_log')->where('user_id', $id)->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();
         $identity = $db->table('auth_identities')->where('user_id', $id)->where('type', 'email_password')->get()->getRowArray();
         $parking = $db->table('parking')->where('user_id', $id)->get()->getResultArray();
         $terrainParks = $db->table('terrain_parks')->where('user_id', $id)->get()->getResultArray();
-        $achievements = $db->table('achievements')->where('user_id', $id)->get()->getResultArray();
+        $achievementsRaw = $db->table('achievements')->where('user_id', $id)->get()->getResultArray();
         $tutorial = $db->table('tutorial_progress')->where('user_id', $id)->get()->getRowArray();
 
-        return view('admin/user', [
-            'user' => $user, 'finance' => $finance, 'staff' => $staff,
-            'buildings' => $buildings, 'items' => $items, 'loans' => $loans,
-            'genepis' => $genepis, 'logs' => $logs, 'identity' => $identity,
-            'parking' => $parking, 'terrainParks' => $terrainParks,
-            'achievements' => $achievements, 'tutorial' => $tutorial,
-        ]);
+        $staff = array_map(function($s) {
+            return [
+                'id' => (int) ($s['id'] ?? 0),
+                'role' => $s['role'] ?? $s['type'] ?? '',
+                'name' => $s['name'] ?? '',
+                'salaryFormatted' => currency((int) ($s['salary'] ?? $s['daily_salary'] ?? 0)),
+                'morale' => (int) ($s['morale'] ?? 100),
+            ];
+        }, $staffRaw);
+
+        $items = array_map(function($it) {
+            return [
+                'id' => (int) ($it['id'] ?? 0),
+                'name' => $it['name'] ?? 'Unnamed',
+                'type' => $it['item_type'] ?? $it['type'] ?? '',
+                'lengthFormatted' => distance((int) ($it['length_meters'] ?? 0)),
+                'status' => $it['status'] ?? 'open',
+            ];
+        }, $itemsRaw);
+
+        $buildings = array_map(function($b) {
+            return [
+                'id' => (int) ($b['id'] ?? 0),
+                'name' => $b['name'] ?? '',
+                'type' => $b['type'] ?? $b['building_type'] ?? '',
+                'level' => (int) ($b['level'] ?? 1),
+            ];
+        }, $buildingsRaw);
+
+        $loans = array_map(function($l) {
+            return [
+                'id' => (int) ($l['id'] ?? 0),
+                'type' => $l['loan_type'] ?? 'Loan',
+                'remainingFormatted' => currency((int) ($l['remaining'] ?? $l['amount'] ?? 0)),
+                'daysRemaining' => (int) ($l['days_remaining'] ?? 0),
+            ];
+        }, $loansRaw);
+
+        $logs = array_map(function($l) {
+            return [
+                'icon' => str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $l['icon'] ?? 'circle-dot'),
+                'message' => $l['message'] ?? '',
+                'game_day' => (int) ($l['game_day'] ?? 1),
+            ];
+        }, $logsRaw);
+
+        $achievements = array_map(function($a) {
+            return [
+                'key' => $a['achievement_key'] ?? $a['name'] ?? (string) $a['id'],
+            ];
+        }, $achievementsRaw);
+
+        $page = [
+            'user' => [
+                'id' => (int) $user['id'],
+                'username' => $user['username'],
+                'active' => isset($user['active']) ? (bool) $user['active'] : true,
+                'isOwner' => ((int) $user['id'] === 1),
+                'createdFormatted' => date('M j, Y', strtotime($user['created_at'])),
+                'email' => $identity['secret'] ?? 'N/A',
+            ],
+            'finance' => [
+                'cashRaw' => (int) ($finance['cash'] ?? 0),
+                'cashFormatted' => currency((int) ($finance['cash'] ?? 0)),
+                'reputation' => (int) ($finance['reputation'] ?? 50),
+                'difficulty' => $finance['difficulty'] ?? 'standard',
+                'units' => $finance['units'] ?? 'metric',
+                'resortMap' => $finance['resort_map'] ?? 'ParkCity',
+                'resortOpen' => (bool) ($finance['resort_open'] ?? true),
+            ],
+            'genepis' => [
+                'balance' => (int) ($genepis['balance'] ?? 0),
+                'balanceFormatted' => number_format((int) ($genepis['balance'] ?? 0)),
+            ],
+            'stats' => [
+                'staffCount' => count($staff),
+                'buildingCount' => count($buildings),
+                'itemCount' => count($items),
+                'loanCount' => count($loans),
+                'achievementCount' => count($achievements),
+                'facilityCount' => count($parking) + count($terrainParks),
+            ],
+            'staff' => $staff,
+            'items' => $items,
+            'buildings' => $buildings,
+            'loans' => $loans,
+            'achievements' => $achievements,
+            'tutorial' => $tutorial ? [
+                'step' => (int) ($tutorial['current_step'] ?? 1),
+            ] : null,
+            'logs' => $logs,
+        ];
+
+        return view('admin/user', ['page' => $page]);
     }
 
     public function updateCash()
@@ -425,7 +512,7 @@ class Admin extends BaseController
         return view('admin/settings', ['page' => $page]);
     }
 
-    public function activityLog(): string
+    public function activityLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $db = db_connect();
@@ -441,12 +528,31 @@ class Admin extends BaseController
         if ($userFilter) $query->where('al.user_id', (int) $userFilter);
 
         $total = $query->countAllResults(false);
-        $logs = $query->orderBy('al.created_at', 'DESC')->limit($perPage, $offset)->get()->getResultArray();
+        $logsRaw = $query->orderBy('al.created_at', 'DESC')->limit($perPage, $offset)->get()->getResultArray();
+        $logs = array_map(function($l) {
+            return [
+                'id' => (int) ($l['id'] ?? 0),
+                'user_id' => (int) ($l['user_id'] ?? 0),
+                'username' => $l['username'] ?? 'System',
+                'game_day' => (int) ($l['game_day'] ?? 1),
+                'category' => $l['category'] ?? 'General',
+                'message' => $l['message'] ?? '',
+                'icon' => str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $l['icon'] ?? 'circle-dot'),
+                'timeFormatted' => isset($l['created_at']) ? date('M d H:i', strtotime($l['created_at'])) : '-',
+            ];
+        }, $logsRaw);
 
-        return view('admin/activity', [
-            'logs' => $logs, 'total' => $total, 'page' => $page,
-            'perPage' => $perPage, 'filter' => $filter, 'userFilter' => $userFilter,
-        ]);
+        $pageData = [
+            'logs' => $logs,
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage,
+            'totalPages' => max(1, (int) ceil($total / $perPage)),
+            'filter' => $filter,
+            'userFilter' => $userFilter,
+        ];
+
+        return view('admin/activity', ['page' => $pageData]);
     }
 
     public function economy(): string|\CodeIgniter\HTTP\RedirectResponse
@@ -549,10 +655,16 @@ class Admin extends BaseController
         $lines = [];
         if (file_exists($file)) {
             $all = file($file, FILE_IGNORE_NEW_LINES);
-            $lines = array_filter($all, fn($l) => !str_contains($l, 'DEBUG') && !str_contains($l, 'Session:'));
-            $lines = array_slice(array_values($lines), -30);
+            $filtered = array_filter($all, fn($l) => !str_contains($l, 'DEBUG') && !str_contains($l, 'Session:'));
+            $lines = array_slice(array_values($filtered), -50);
         }
-        return view('admin/errors', ['lines' => $lines]);
+
+        $page = [
+            'lines' => $lines,
+            'today' => date('M j, Y'),
+        ];
+
+        return view('admin/errors', ['page' => $page]);
     }
 
     public function impersonate(int $id)
@@ -646,39 +758,77 @@ class Admin extends BaseController
     public function viewAuditLog(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $logs = db_connect()->table('admin_audit_log a')
+        $logsRaw = db_connect()->table('admin_audit_log a')
             ->select('a.*, u.username as admin_name, t.username as target_name')
             ->join('users u', 'u.id = a.admin_id', 'left')
             ->join('users t', 't.id = a.target_user_id', 'left')
             ->orderBy('a.created_at', 'DESC')->limit(100)->get()->getResultArray();
-        return view('admin/audit', ['logs' => $logs]);
+
+        $logs = array_map(function($l) {
+            return [
+                'id' => (int) ($l['id'] ?? 0),
+                'timeFormatted' => isset($l['created_at']) ? date('M j H:i', strtotime($l['created_at'])) : '-',
+                'admin_name' => $l['admin_name'] ?? 'System',
+                'action' => $l['action'] ?? '',
+                'target_name' => $l['target_name'] ?? null,
+                'target_user_id' => isset($l['target_user_id']) ? (int) $l['target_user_id'] : null,
+                'details' => $l['details'] ?? '',
+            ];
+        }, $logsRaw);
+
+        $page = ['logs' => $logs];
+
+        return view('admin/audit', ['page' => $page]);
     }
 
     public function playerComparison(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
-        $users = $db->table('users')->select('id, username')->orderBy('username')->get()->getResultArray();
+        $usersRaw = $db->table('users')->select('id, username')->orderBy('username')->get()->getResultArray();
+        $users = array_map(fn($u) => ['id' => (int) $u['id'], 'username' => $u['username']], $usersRaw);
+
         $a = $this->request->getGet('a');
         $b = $this->request->getGet('b');
         $dataA = $dataB = null;
         if ($a) {
-            $dataA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray() ?: [];
+            $rawA = $db->table('player_finances')->where('user_id', $a)->get()->getRowArray() ?: [];
             $userA = $db->table('users')->where('id', $a)->get()->getRowArray();
-            $dataA['username'] = $userA['username'] ?? '';
-            $dataA['staff'] = $db->table('staff')->where('user_id', $a)->where('status !=', 'fired')->countAllResults();
-            $dataA['buildings'] = $db->table('buildings')->where('user_id', $a)->countAllResults();
-            $dataA['items'] = $db->table('player_items')->where('user_id', $a)->countAllResults();
+            $dataA = [
+                'id' => (int) $a,
+                'username' => $userA['username'] ?? '',
+                'cashFormatted' => currency((int) ($rawA['cash'] ?? 0)),
+                'difficulty' => $rawA['difficulty'] ?? '-',
+                'resort_map' => $rawA['resort_map'] ?? '-',
+                'staff' => $db->table('staff')->where('user_id', $a)->where('status !=', 'fired')->countAllResults(),
+                'buildings' => $db->table('buildings')->where('user_id', $a)->countAllResults(),
+                'items' => $db->table('player_items')->where('user_id', $a)->countAllResults(),
+            ];
         }
         if ($b) {
-            $dataB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray() ?: [];
+            $rawB = $db->table('player_finances')->where('user_id', $b)->get()->getRowArray() ?: [];
             $userB = $db->table('users')->where('id', $b)->get()->getRowArray();
-            $dataB['username'] = $userB['username'] ?? '';
-            $dataB['staff'] = $db->table('staff')->where('user_id', $b)->where('status !=', 'fired')->countAllResults();
-            $dataB['buildings'] = $db->table('buildings')->where('user_id', $b)->countAllResults();
-            $dataB['items'] = $db->table('player_items')->where('user_id', $b)->countAllResults();
+            $dataB = [
+                'id' => (int) $b,
+                'username' => $userB['username'] ?? '',
+                'cashFormatted' => currency((int) ($rawB['cash'] ?? 0)),
+                'difficulty' => $rawB['difficulty'] ?? '-',
+                'resort_map' => $rawB['resort_map'] ?? '-',
+                'staff' => $db->table('staff')->where('user_id', $b)->where('status !=', 'fired')->countAllResults(),
+                'buildings' => $db->table('buildings')->where('user_id', $b)->countAllResults(),
+                'items' => $db->table('player_items')->where('user_id', $b)->countAllResults(),
+            ];
         }
-        return view('admin/compare', ['users' => $users, 'dataA' => $dataA, 'dataB' => $dataB, 'a' => $a, 'b' => $b]);
+
+        $page = [
+            'users' => $users,
+            'dataA' => $dataA,
+            'dataB' => $dataB,
+            'selectedA' => $a ? (int) $a : null,
+            'selectedB' => $b ? (int) $b : null,
+        ];
+
+        return view('admin/compare', ['page' => $page]);
     }
 
     public function exportPlayers()
@@ -843,7 +993,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
-        $suspects = $db->query("
+        $suspectsRaw = $db->query("
             SELECT u.id, u.username, f.cash, f.difficulty,
                 (SELECT COUNT(*) FROM admin_audit_log WHERE target_user_id = u.id AND action = 'flagged') as times_flagged,
                 (SELECT message FROM activity_log WHERE user_id = u.id AND message LIKE '%income%' ORDER BY created_at DESC LIMIT 1) as last_income
@@ -860,7 +1010,18 @@ class Admin extends BaseController
             LIMIT 20
         ")->getResultArray();
 
-        $recent = $db->query("
+        $suspects = array_map(function($s) {
+            return [
+                'id' => (int) $s['id'],
+                'username' => $s['username'],
+                'cashFormatted' => currency((int) $s['cash']),
+                'difficulty' => $s['difficulty'] ?? 'standard',
+                'times_flagged' => (int) ($s['times_flagged'] ?? 0),
+                'last_income' => $s['last_income'] ?? '-',
+            ];
+        }, $suspectsRaw);
+
+        $recentRaw = $db->query("
             SELECT u.id, u.username, f.cash, f.difficulty,
                 a1.message as latest, a1.created_at
             FROM users u
@@ -871,7 +1032,22 @@ class Admin extends BaseController
             LIMIT 10
         ")->getResultArray();
 
-        return view('admin/suspicious', ['suspects' => $suspects, 'recent' => $recent]);
+        $recent = array_map(function($r) {
+            return [
+                'id' => (int) $r['id'],
+                'username' => $r['username'],
+                'cashFormatted' => currency((int) ($r['cash'] ?? 0)),
+                'latest' => $r['latest'] ?? '',
+                'timeFormatted' => isset($r['created_at']) ? date('M j H:i', strtotime($r['created_at'])) : '-',
+            ];
+        }, $recentRaw);
+
+        $page = [
+            'suspects' => $suspects,
+            'recent' => $recent,
+        ];
+
+        return view('admin/suspicious', ['page' => $page]);
     }
 
     public function createSeason()
