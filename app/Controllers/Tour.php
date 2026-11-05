@@ -53,22 +53,75 @@ class Tour extends BaseController
             }
         }
 
-        return view('tour/index', [
-            'owner' => $owner,
-            'alliance' => $alliance,
-            'finance' => $finance,
-            'slopes' => $slopes,
-            'lifts' => $lifts,
-            'openSlopes' => count($openSlopes),
-            'openLifts' => count($openLifts),
-            'staffCount' => $staffCount,
-            'buildingCount' => $buildingCount,
-            'parks' => $parks,
-            'sectors' => $sectors,
+        $formattedSectors = [];
+        foreach ($sectors as $secNum => $sec) {
+            $formattedSlopes = array_map(function($slope) {
+                return [
+                    'id' => (int) $slope['id'],
+                    'name' => $slope['name'],
+                    'difficulty' => $slope['difficulty'] ?? 'blue',
+                    'difficultyLabel' => ucfirst($slope['difficulty'] ?? 'blue'),
+                    'condition_pct' => (int) ($slope['condition_pct'] ?? 100),
+                    'snow_depth_formatted' => snow((int) ($slope['snow_depth'] ?? 0)),
+                    'snow_quality' => $slope['snow_quality'] ?? 'groomed',
+                    'status' => $slope['status'],
+                ];
+            }, $sec['slopes']);
+
+            $formattedLifts = array_map(function($lift) {
+                return [
+                    'id' => (int) $lift['id'],
+                    'name' => $lift['name'],
+                    'subtype' => $lift['subtype'] ?? 'chairlift',
+                    'subtypeName' => ucwords(str_replace('_', ' ', $lift['subtype'] ?? 'chairlift')),
+                    'condition_pct' => (int) ($lift['condition_pct'] ?? 100),
+                    'status' => $lift['status'],
+                ];
+            }, $sec['lifts']);
+
+            $formattedSectors[] = [
+                'sectorNum' => (int) $secNum,
+                'slopes' => $formattedSlopes,
+                'lifts' => $formattedLifts,
+            ];
+        }
+
+        $cleanCrestIcon = !empty($alliance['crest_icon'])
+            ? str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $alliance['crest_icon'])
+            : 'shield';
+
+        $page = [
+            'owner' => [
+                'id' => (int) $owner['id'],
+                'username' => $owner['username'],
+            ],
+            'alliance' => $alliance ? [
+                'id' => (int) $alliance['id'],
+                'name' => $alliance['name'],
+                'tag' => $alliance['tag'],
+                'crest_icon' => $cleanCrestIcon,
+                'crest_color' => $alliance['crest_color'] ?? '#3b82f6',
+                'member_role' => $alliance['member_role'] ?? 'Member',
+            ] : null,
+            'stats' => [
+                'openSlopes' => count($openSlopes),
+                'openLifts' => count($openLifts),
+                'staffCount' => $staffCount,
+                'buildingCount' => $buildingCount,
+                'parks' => $parks,
+            ],
+            'sectors' => $formattedSectors,
             'likeCount' => $likeCount,
             'hasLiked' => $hasLiked,
-            'rating' => $rating,
-        ]);
+            'isSelf' => $currentUser && ($currentUser->id == $userId),
+            'rating' => [
+                'stars' => (int) ($rating['stars'] ?? 0),
+                'score' => (int) ($rating['score'] ?? 0),
+                'max' => (int) ($rating['max'] ?? 200),
+            ],
+        ];
+
+        return view('tour/index', ['page' => $page]);
     }
 
     public function like(int $userId)

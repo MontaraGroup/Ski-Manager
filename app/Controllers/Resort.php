@@ -44,16 +44,85 @@ class Resort extends BaseController
         }
         ksort($sectors);
 
-        return view('resort/index', [
-            'resort' => $resort,
-            'lifts' => $lifts,
-            'slopes' => $slopes,
-            'openLifts' => count($openLifts),
-            'openSlopes' => count($openSlopes),
-            'staffCount' => $staffCount,
-            'buildingCount' => $buildingCount,
-            'sectors' => $sectors,
-        ]);
+        $weather = getCurrentWeather();
+        $cash = (int) ($finance['cash'] ?? 0);
+
+        $allConditions = array_map(fn($i) => (int) ($i['condition_pct'] ?? 100), $items);
+        $avgCond = count($allConditions) > 0 ? (int) round(array_sum($allConditions) / count($allConditions)) : 100;
+
+        $formattedSectors = [];
+        foreach ($sectors as $secNum => $sec) {
+            $formattedLifts = array_map(function($lift) use ($cash) {
+                $repairCost = self::liftRepairCost($lift);
+                return [
+                    'id' => (int) $lift['id'],
+                    'name' => $lift['name'],
+                    'subtype' => $lift['subtype'] ?? 'chairlift',
+                    'subtypeName' => ucwords(str_replace('_', ' ', $lift['subtype'] ?? 'chairlift')),
+                    'status' => $lift['status'],
+                    'condition_pct' => (int) ($lift['condition_pct'] ?? 100),
+                    'repair_cost' => $repairCost,
+                    'repair_cost_formatted' => currency($repairCost),
+                    'canAffordRepair' => $cash >= $repairCost,
+                    'length_meters' => (int) ($lift['length_meters'] ?? 0),
+                ];
+            }, $sec['lifts']);
+
+            $formattedSlopes = array_map(function($slope) {
+                return [
+                    'id' => (int) $slope['id'],
+                    'name' => $slope['name'],
+                    'difficulty' => $slope['difficulty'] ?? 'blue',
+                    'difficultyLabel' => ucfirst($slope['difficulty'] ?? 'blue'),
+                    'status' => $slope['status'],
+                    'condition_pct' => (int) ($slope['condition_pct'] ?? 100),
+                    'snow_depth' => (int) ($slope['snow_depth'] ?? 0),
+                    'snow_depth_formatted' => snow((int) ($slope['snow_depth'] ?? 0)),
+                    'snow_quality' => $slope['snow_quality'] ?? 'groomed',
+                ];
+            }, $sec['slopes']);
+
+            $formattedSectors[] = [
+                'sectorNum' => (int) $secNum,
+                'name' => $sec['name'] ?? ('Sector ' . $secNum),
+                'lifts' => $formattedLifts,
+                'slopes' => $formattedSlopes,
+            ];
+        }
+
+        $page = [
+            'resort' => [
+                'name' => $resort['name'] ?? 'My Resort',
+                'location' => $resort['location'] ?: 'Park City, Utah',
+                'description' => $resort['description'] ?? '',
+                'altitude' => $resort['altitude'] ?? 'medium',
+                'aspect' => $resort['aspect'] ?? 'north',
+                'is_open' => (bool) $resort['is_open'],
+            ],
+            'stats' => [
+                'openSlopes' => count($openSlopes),
+                'totalSlopes' => count($slopes),
+                'openLifts' => count($openLifts),
+                'totalLifts' => count($lifts),
+                'staffCount' => $staffCount,
+                'buildingCount' => $buildingCount,
+                'avgCondition' => $avgCond,
+            ],
+            'weather' => [
+                'temp' => (int) $weather['temp'],
+                'tempFormatted' => temp((int) $weather['temp']),
+                'snowBase' => (int) $weather['snow_base'],
+                'snowBaseFormatted' => snow((int) $weather['snow_base']),
+                'condition' => $weather['condition_name'] ?? 'Clear',
+                'windSpeed' => (int) ($weather['wind_speed'] ?? 0),
+                'windSpeedFormatted' => speed((int) ($weather['wind_speed'] ?? 0)),
+            ],
+            'cash' => $cash,
+            'cashFormatted' => currency($cash),
+            'sectors' => $formattedSectors,
+        ];
+
+        return view('resort/index', ['page' => $page]);
     }
 
     public function edit()
@@ -78,7 +147,18 @@ class Resort extends BaseController
             'altitude' => 'medium', 'aspect' => 'north', 'is_open' => (bool) ($finance['resort_open'] ?? 1),
         ];
 
-        return view('resort/edit', ['resort' => $resort]);
+        $page = [
+            'resort' => [
+                'name' => $resort['name'] ?? 'My Resort',
+                'location' => $resort['location'] ?? '',
+                'description' => $resort['description'] ?? '',
+                'altitude' => $resort['altitude'] ?? 'medium',
+                'aspect' => $resort['aspect'] ?? 'north',
+                'is_open' => (bool) ($resort['is_open'] ?? true),
+            ],
+        ];
+
+        return view('resort/edit', ['page' => $page]);
     }
 
     /** Repairing a lift from 0% costs this share of what it cost to build, less as condition is higher */
