@@ -70,6 +70,9 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AdminIndexPage: () => import('./islands/AdminIndexPage'),
   AdminSupportInboxPage: () => import('./islands/AdminSupportInboxPage'),
   AdminSupportChatPage: () => import('./islands/AdminSupportChatPage'),
+  SettingsPage: () => import('./islands/SettingsPage'),
+  GenepisPage: () => import('./islands/GenepisPage'),
+  VipGuestsPage: () => import('./islands/VipGuestsPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {

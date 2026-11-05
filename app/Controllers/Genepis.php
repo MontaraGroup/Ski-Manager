@@ -46,28 +46,62 @@ class Genepis extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
+        helper(['time']);
         $genepis = $this->getOrCreate($userId);
-        $log = $db->table('genepis_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(20)->get()->getResultArray();
-
+        $logRaw = $db->table('genepis_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(20)->get()->getResultArray();
         $activeBoosts = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
 
+        $activeBoostMap = [];
+        foreach ($activeBoosts as $b) {
+            $activeBoostMap[$b['boost_type']] = $b['expires_at'];
+        }
+
+        $shopItems = [];
+        foreach ($this->getShopItems() as $key => $item) {
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $item['icon']);
+            $shopItems[] = [
+                'key' => $key,
+                'name' => $item['name'],
+                'desc' => $item['desc'],
+                'cost' => (int) $item['cost'],
+                'icon' => $cleanIcon,
+                'color' => $item['color'],
+                'duration' => $item['duration'],
+                'category' => $item['category'],
+                'isActive' => isset($activeBoostMap[$key]),
+                'expiresAt' => $activeBoostMap[$key] ?? null,
+            ];
+        }
+
         $earnMethods = [
-            ['name' => 'Daily Login Bonus', 'desc' => 'Earn Génépis from your daily streak', 'amount' => '1-5/day', 'icon' => 'fa-solid fa-fire', 'link' => '/daily-bonus'],
-            ['name' => 'Achievements', 'desc' => 'Complete achievements for rewards', 'amount' => 'Varies', 'icon' => 'fa-solid fa-award', 'link' => '/achievements'],
-            ['name' => 'Tournaments', 'desc' => 'Win tournaments to earn Génépis', 'amount' => '10-100', 'icon' => 'fa-solid fa-trophy', 'link' => '/tournaments'],
-            ['name' => 'Eco Score', 'desc' => 'Maintain 80+ eco score', 'amount' => '2/day', 'icon' => 'fa-solid fa-leaf', 'link' => '/environment'],
-            ['name' => 'Full Compliance', 'desc' => 'Stay compliant with all regulations', 'amount' => '1/day', 'icon' => 'fa-solid fa-building-columns', 'link' => '/government'],
-            ['name' => 'VIP Guests', 'desc' => 'Attract VIP visitors to your resort', 'amount' => '5-20', 'icon' => 'fa-solid fa-star', 'link' => '/vip-guests'],
-            ['name' => 'Resort Tours', 'desc' => 'Get likes on your resort from other players', 'amount' => '1/like', 'icon' => 'fa-solid fa-heart', 'link' => '/settings'],
+            ['name' => 'Daily Login Bonus', 'desc' => 'Earn Génépis from your daily streak', 'amount' => '1-5/day', 'icon' => 'fa-fire', 'link' => '/dailybonus'],
+            ['name' => 'Achievements', 'desc' => 'Complete achievements for rewards', 'amount' => 'Varies', 'icon' => 'fa-award', 'link' => '/achievements'],
+            ['name' => 'Tournaments', 'desc' => 'Win tournaments to earn Génépis', 'amount' => '10-100', 'icon' => 'fa-trophy', 'link' => '/tournaments'],
+            ['name' => 'Eco Score', 'desc' => 'Maintain 80+ eco score', 'amount' => '2/day', 'icon' => 'fa-leaf', 'link' => '/environment'],
+            ['name' => 'Full Compliance', 'desc' => 'Stay compliant with all regulations', 'amount' => '1/day', 'icon' => 'fa-building-columns', 'link' => '/government'],
+            ['name' => 'VIP Guests', 'desc' => 'Attract VIP visitors to your resort', 'amount' => '5-20', 'icon' => 'fa-star', 'link' => '/vip-guests'],
+            ['name' => 'Resort Tours', 'desc' => 'Get likes on your resort from other players', 'amount' => '1/like', 'icon' => 'fa-heart', 'link' => '/settings'],
         ];
 
-        return view('genepis/index', [
-            'genepis' => $genepis,
-            'log' => $log,
-            'shopItems' => $this->getShopItems(),
+        $page = [
+            'balance' => (int) $genepis['balance'],
+            'balanceFormatted' => number_format((int) $genepis['balance']),
+            'totalEarned' => number_format((int) $genepis['total_earned']),
+            'totalSpent' => number_format((int) $genepis['total_spent']),
+            'rateFormatted' => currency(1000),
+            'shopItems' => $shopItems,
             'earnMethods' => $earnMethods,
-            'activeBoosts' => $activeBoosts,
-        ]);
+            'logs' => array_map(function($l) {
+                return [
+                    'amount' => (int) $l['amount'],
+                    'type' => $l['type'],
+                    'reason' => $l['reason'],
+                    'timeAgo' => !empty($l['created_at']) ? timeAgo($l['created_at']) : '',
+                ];
+            }, $logRaw),
+        ];
+
+        return view('genepis/index', ['page' => $page]);
     }
 
     public function buy()
