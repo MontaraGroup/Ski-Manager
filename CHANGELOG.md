@@ -1,3 +1,11 @@
+## Release 2026-11-05 19:33
+
+* Merge pull request #23 from Montara-Group/feature/react-phase-3h-about-legal (d54be13)
+* feat(ui): about ski manager and legal pages in React (phase 3h) (a46752c)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (58cc638)
+* Merge pull request #22 from Montara-Group/feature/react-phase-3g-batch-3 (2003143)
+* feat(ui): resort showcase, tour, updates, api docs, faq, and guides in React (phase 3g batch 3) (33487dc)
+
 ## Release 2026-11-05 19:24
 
 * Merge pull request #22 from Montara-Group/feature/react-phase-3g-batch-3 (2003143)
