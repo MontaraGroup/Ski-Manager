@@ -8,6 +8,7 @@ class Settings extends BaseController
     {
         $userId = auth()->id();
         $db = db_connect();
+        $user = auth()->user();
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
         $units = $finance['units'] ?? session()->get('units') ?? 'metric';
         $resort = session()->get('resort') ?? ['name' => 'My Resort', 'location' => '', 'description' => ''];
@@ -15,13 +16,35 @@ class Settings extends BaseController
         $notifCount = $db->table('notifications')->where('user_id', $userId)->countAllResults();
         $activityCount = $db->table('activity_log')->where('user_id', $userId)->countAllResults();
 
-        return view('settings/index', [
-            'units' => $units, 'finance' => $finance,
-            'resort' => $resort,
-            'tutorial' => $tutorial,
-            'notifCount' => $notifCount,
-            'activityCount' => $activityCount,
-        ]);
+        $identity = $db->table('auth_identities')->where('user_id', $userId)->where('type', 'email_password')->get()->getRowArray();
+        $googleId = $db->table('auth_identities')->where('user_id', $userId)->where('type', 'google')->get()->getRowArray();
+        $code = session('account_code');
+        $codeFor = is_array($code) && ($code['expires'] ?? 0) > time() ? ($code['purpose'] ?? null) : null;
+        $isDemo = \App\Controllers\Demo::isDemoUser();
+
+        $page = [
+            'user' => [
+                'id' => (int) $userId,
+                'username' => $user->username ?? '',
+                'email' => $identity['secret'] ?? '',
+                'hasGoogle' => !empty($googleId),
+                'isDemo' => $isDemo,
+            ],
+            'resort' => [
+                'name' => $resort['name'] ?? 'My Resort',
+            ],
+            'codeFor' => $codeFor,
+            'units' => $units,
+            'difficulty' => $finance['difficulty'] ?? 'standard',
+            'allowTours' => (bool) ($finance['allow_tours'] ?? true),
+            'tutorial' => $tutorial ? [
+                'step' => (int) ($tutorial['current_step'] ?? 1),
+            ] : null,
+            'notifCount' => (int) $notifCount,
+            'activityCount' => (int) $activityCount,
+        ];
+
+        return view('settings/index', ['page' => $page]);
     }
 
     public function save()

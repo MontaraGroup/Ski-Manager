@@ -1,3 +1,35 @@
+## Release 2026-11-05 02:40
+
+* Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
+* feat(ui): main admin dashboard and support helpdesk in React (phase 3f batch 3) (f4449a1)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (bbc271a)
+* Merge pull request #18 from Montara-Group/feature/react-phase-3f-admin-batch-2 (bd656ca)
+* Merge branch 'main' into feature/react-phase-3f-admin-batch-2 (2759576)
+
+## Release 2026-11-05 01:57
+
+* Merge pull request #18 from Montara-Group/feature/react-phase-3f-admin-batch-2 (bd656ca)
+* Merge branch 'main' into feature/react-phase-3f-admin-batch-2 (2759576)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (eaa7cd1)
+* Merge branch 'MontaraGroup:main' into main (6eaf720)
+* feat(ui): admin logs, monitoring and player tools in React (phase 3f batch 2) (bec24cd)
+
+## Release 2026-11-05 01:45
+
+* Merge branch 'MontaraGroup:main' into main (6eaf720)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (f4925f6)
+* Merge pull request #35 from Montara-Group/main (8c59ad5)
+* Merge branch 'MontaraGroup:main' into main (048a5ba)
+* Merge pull request #17 from Montara-Group/feature/react-phase-3f-admin-batch-1 (674f302)
+
+## Release 2026-11-05 00:59
+
+* Merge branch 'MontaraGroup:main' into main (048a5ba)
+* Merge pull request #17 from Montara-Group/feature/react-phase-3f-admin-batch-1 (674f302)
+* feat(ui): admin system tools in React (phase 3f batch 1) (3fabfcb)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (2ea866b)
+* Merge pull request #34 from Montara-Group/main (13469d9)
+
 ## Release 2026-11-05 00:34
 
 * Merge pull request #16 from Montara-Group/feature/dashboard-customize-mode-revamp (203c270)

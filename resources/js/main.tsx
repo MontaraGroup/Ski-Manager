@@ -61,6 +61,18 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AdminSeasonsPage: () => import('./islands/AdminSeasonsPage'),
   AdminBroadcastPage: () => import('./islands/AdminBroadcastPage'),
   AdminChangelogsPage: () => import('./islands/AdminChangelogsPage'),
+  AdminSuspiciousPage: () => import('./islands/AdminSuspiciousPage'),
+  AdminComparePage: () => import('./islands/AdminComparePage'),
+  AdminActivityPage: () => import('./islands/AdminActivityPage'),
+  AdminAuditPage: () => import('./islands/AdminAuditPage'),
+  AdminErrorsPage: () => import('./islands/AdminErrorsPage'),
+  AdminUserPage: () => import('./islands/AdminUserPage'),
+  AdminIndexPage: () => import('./islands/AdminIndexPage'),
+  AdminSupportInboxPage: () => import('./islands/AdminSupportInboxPage'),
+  AdminSupportChatPage: () => import('./islands/AdminSupportChatPage'),
+  SettingsPage: () => import('./islands/SettingsPage'),
+  GenepisPage: () => import('./islands/GenepisPage'),
+  VipGuestsPage: () => import('./islands/VipGuestsPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {
