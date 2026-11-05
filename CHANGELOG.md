@@ -1,3 +1,11 @@
+## Release 2026-11-05 02:40
+
+* Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
+* feat(ui): main admin dashboard and support helpdesk in React (phase 3f batch 3) (f4449a1)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (bbc271a)
+* Merge pull request #18 from Montara-Group/feature/react-phase-3f-admin-batch-2 (bd656ca)
+* Merge branch 'main' into feature/react-phase-3f-admin-batch-2 (2759576)
+
 ## Release 2026-11-05 01:57
 
 * Merge pull request #18 from Montara-Group/feature/react-phase-3f-admin-batch-2 (bd656ca)
