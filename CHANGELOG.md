@@ -1,3 +1,11 @@
+## Release 2026-11-05 19:24
+
+* Merge pull request #22 from Montara-Group/feature/react-phase-3g-batch-3 (2003143)
+* feat(ui): resort showcase, tour, updates, api docs, faq, and guides in React (phase 3g batch 3) (33487dc)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (5496599)
+* Merge pull request #21 from Montara-Group/feature/react-phase-3g-batch-2 (2668cda)
+* feat(ui): daily bonus, terrain parks, utilities, off-season, and emergency in React (phase 3g batch 2) (a842783)
+
 ## Release 2026-11-05 19:07
 
 * Merge pull request #21 from Montara-Group/feature/react-phase-3g-batch-2 (2668cda)
