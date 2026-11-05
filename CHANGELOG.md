@@ -1,3 +1,11 @@
+## Release 2026-11-05 14:01
+
+* Merge pull request #36 from Montara-Group/main (f8f3f6b)
+* Merge pull request #20 from Montara-Group/feature/react-phase-3g-batch-1 (80f98d9)
+* feat(ui): settings, genepis and vip guests in React (phase 3g batch 1) (57c48ab)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d1f33b3)
+* Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
+
 ## Release 2026-11-05 02:40
 
 * Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
