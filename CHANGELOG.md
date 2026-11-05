@@ -1,3 +1,11 @@
+## Release 2026-11-05 00:34
+
+* Merge pull request #16 from Montara-Group/feature/dashboard-customize-mode-revamp (203c270)
+* Merge branch 'MontaraGroup:main' into main (73e1061)
+* feat(dashboard): revamp customize mode with presets, library drawer, touch controls and reset (78498c8)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (619b042)
+* Merge pull request #33 from Montara-Group/main (5728346)
+
 ## Release 2026-11-04 23:46
 
 * Merge branch 'MontaraGroup:main' into main (fbd889e)
