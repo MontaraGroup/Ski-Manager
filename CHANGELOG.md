@@ -1,3 +1,11 @@
+## Release 2026-11-05 01:45
+
+* Merge branch 'MontaraGroup:main' into main (6eaf720)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (f4925f6)
+* Merge pull request #35 from Montara-Group/main (8c59ad5)
+* Merge branch 'MontaraGroup:main' into main (048a5ba)
+* Merge pull request #17 from Montara-Group/feature/react-phase-3f-admin-batch-1 (674f302)
+
 ## Release 2026-11-05 00:59
 
 * Merge branch 'MontaraGroup:main' into main (048a5ba)
