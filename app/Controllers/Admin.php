@@ -232,10 +232,11 @@ class Admin extends BaseController
         return redirect()->to('/admin')->with('success', 'User deleted.');
     }
 
-    public function broadcast(): string
+    public function broadcast(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
-        return view('admin/broadcast');
+        $page = [];
+        return view('admin/broadcast', ['page' => $page]);
     }
 
     public function sendBroadcast()
@@ -362,23 +363,66 @@ class Admin extends BaseController
         $this->auditLog("genepis_all", null, "+" . $amount . " to all players");
         return redirect()->to("/admin")->with("success", number_format($amount) . " Genepis added to all players.");
     }
-    public function gameSettings(): string
+    public function gameSettings(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $db = db_connect();
-        $weather = $db->table('weather')->orderBy('game_day', 'DESC')->limit(7)->get()->getResultArray();
-        $segments = $db->table('map_segments')->where('active', 1)->get()->getResultArray();
-        $tournaments = $db->table('tournaments')->orderBy('created_at', 'DESC')->limit(10)->get()->getResultArray();
-        $events = $db->table('special_events')->orderBy('game_day', 'DESC')->limit(10)->get()->getResultArray();
+        $weatherRaw = $db->table('weather')->orderBy('game_day', 'DESC')->limit(7)->get()->getResultArray();
+        $weather = array_map(function($w) {
+            return [
+                'game_day' => (int) $w['game_day'],
+                'condition_name' => $w['condition_name'],
+                'tempFormatted' => temp($w['temp']),
+                'windFormatted' => speed($w['wind']),
+                'snowBaseFormatted' => snow($w['snow_base']),
+            ];
+        }, $weatherRaw);
+
+        $season = $db->table('seasons')->where('active', 1)->get()->getRowArray();
+        $resortMap = $season['resort_map'] ?? 'ParkCity';
+        $sectorsRaw = $db->table('resort_sectors')->where('resort_map', $resortMap)->orderBy('sort_order')->get()->getResultArray();
+        $sectors = array_map(function($s) {
+            return [
+                'id' => (int) $s['id'],
+                'name' => $s['name'],
+                'color' => $s['color'] ?? '#3b82f6',
+                'visible' => (bool) $s['visible'],
+                'released' => (bool) $s['released'],
+            ];
+        }, $sectorsRaw);
+
+        $segCount = $db->table('map_segments')->where('active', 1)->where('resort_map', $resortMap)->countAllResults();
+
+        $tournamentsRaw = $db->table('tournaments')->orderBy('created_at', 'DESC')->limit(10)->get()->getResultArray();
+        $tournaments = array_map(function($t) {
+            return [
+                'id' => (int) $t['id'],
+                'name' => $t['name'],
+                'status' => $t['status'] ?? 'upcoming',
+            ];
+        }, $tournamentsRaw);
 
         $startDate = getSeasonStartDate();
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
-        return view('admin/settings', [
-            'weather' => $weather, 'segments' => $segments,
-            'tournaments' => $tournaments, 'events' => $events,
+        $page = [
+            'season' => $season ? [
+                'id' => (int) $season['id'],
+                'name' => $season['name'],
+                'season_number' => (int) $season['season_number'],
+                'resort_map' => $season['resort_map'],
+                'start_date' => $season['start_date'],
+                'duration_days' => (int) $season['duration_days'],
+                'winter_days' => (int) $season['winter_days'],
+            ] : null,
+            'sectors' => $sectors,
+            'segmentCount' => $segCount,
+            'weather' => $weather,
+            'tournaments' => $tournaments,
             'gameDay' => $gameDay,
-        ]);
+        ];
+
+        return view('admin/settings', ['page' => $page]);
     }
 
     public function activityLog(): string
@@ -405,7 +449,7 @@ class Admin extends BaseController
         ]);
     }
 
-    public function economy(): string
+    public function economy(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $db = db_connect();
@@ -416,18 +460,43 @@ class Admin extends BaseController
         $totalExpenses = array_sum(array_column($finances, 'total_expenses'));
         $avgCash = count($finances) > 0 ? round($totalCash / count($finances)) : 0;
 
-        $richest = $db->query("SELECT pf.*, u.username FROM player_finances pf JOIN users u ON u.id = pf.user_id ORDER BY pf.cash DESC LIMIT 10")->getResultArray();
-        $recentTransactions = $db->table('financial_transactions')->orderBy('created_at', 'DESC')->limit(30)->get()->getResultArray();
+        $richestRaw = $db->query("SELECT pf.*, u.username FROM player_finances pf JOIN users u ON u.id = pf.user_id ORDER BY pf.cash DESC LIMIT 10")->getResultArray();
+        $richest = array_map(function($r) {
+            return [
+                'user_id' => (int) $r['user_id'],
+                'username' => $r['username'],
+                'cashFormatted' => currency($r['cash']),
+                'incomeFormatted' => currency($r['total_income']),
+                'expensesFormatted' => currency($r['total_expenses']),
+            ];
+        }, $richestRaw);
+
+        $recentTransactionsRaw = $db->table('financial_transactions')->orderBy('created_at', 'DESC')->limit(30)->get()->getResultArray();
+        $recentTransactions = array_map(function($t) {
+            return [
+                'id' => (int) $t['id'],
+                'type' => $t['type'] === 'income' ? 'income' : 'expense',
+                'amountFormatted' => ($t['type'] === 'income' ? '+' : '-') . currency(abs($t['amount'])),
+                'description' => $t['description'],
+                'game_day' => (int) $t['game_day'],
+            ];
+        }, $recentTransactionsRaw);
 
         $loanStats = $db->table('loans')->where('status', 'active')->get()->getResultArray();
         $totalDebt = array_sum(array_column($loanStats, 'remaining'));
 
-        return view('admin/economy', [
-            'totalCash' => $totalCash, 'totalIncome' => $totalIncome,
-            'totalExpenses' => $totalExpenses, 'avgCash' => $avgCash,
-            'richest' => $richest, 'recentTransactions' => $recentTransactions,
-            'totalDebt' => $totalDebt, 'playerCount' => count($finances),
-        ]);
+        $page = [
+            'totalCashFormatted' => currency($totalCash),
+            'avgCashFormatted' => currency($avgCash),
+            'totalIncomeFormatted' => currency($totalIncome),
+            'totalExpensesFormatted' => currency($totalExpenses),
+            'totalDebtFormatted' => currency($totalDebt),
+            'playerCount' => count($finances),
+            'richest' => $richest,
+            'recentTransactions' => $recentTransactions,
+        ];
+
+        return view('admin/economy', ['page' => $page]);
     }
 
     public function toggleMaintenance()
@@ -633,8 +702,24 @@ class Admin extends BaseController
     public function changelogManager(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $entries = db_connect()->table('changelogs')->orderBy('created_at', 'DESC')->get()->getResultArray();
-        return view('admin/changelogs', ['entries' => $entries]);
+        $entriesRaw = db_connect()->table('changelogs')->orderBy('created_at', 'DESC')->get()->getResultArray();
+        $entries = array_map(function($e) {
+            return [
+                'id' => (int) $e['id'],
+                'version' => $e['version'],
+                'title' => $e['title'],
+                'content' => $e['content'],
+                'published' => (bool) $e['published'],
+                'created_at' => $e['created_at'],
+                'dateFormatted' => date('M j, Y', strtotime($e['created_at'])),
+            ];
+        }, $entriesRaw);
+
+        $page = [
+            'entries' => $entries,
+        ];
+
+        return view('admin/changelogs', ['page' => $page]);
     }
 
     public function saveChangelog()
@@ -661,8 +746,42 @@ class Admin extends BaseController
     public function featureFlags(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $flags = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
-        return view('admin/features', ['flags' => $flags, 'usage' => $this->featureFlagUsage()]);
+        $flagsRaw = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
+        $usage = $this->featureFlagUsage();
+
+        $flags = [];
+        $counts = ['everyone' => 0, 'admins' => 0, 'off' => 0, 'unused' => 0];
+
+        foreach ($flagsRaw as $f) {
+            $lvl = (int) $f['enabled'];
+            if ($lvl === 2) $counts['everyone']++;
+            elseif ($lvl === 1) $counts['admins']++;
+            else $counts['off']++;
+
+            $isUnused = empty($usage[$f['flag_key']]);
+            if ($isUnused) $counts['unused']++;
+
+            $cleanName = str_replace('[BETA] ', '', $f['name']);
+            $isBeta = str_starts_with($f['flag_key'], 'beta_');
+
+            $flags[] = [
+                'id' => (int) $f['id'],
+                'name' => $f['name'],
+                'cleanName' => $cleanName,
+                'flag_key' => $f['flag_key'],
+                'description' => $f['description'] ?? '',
+                'enabled' => $lvl,
+                'isBeta' => $isBeta,
+                'usage' => $usage[$f['flag_key']] ?? null,
+            ];
+        }
+
+        $page = [
+            'flags' => $flags,
+            'counts' => $counts,
+        ];
+
+        return view('admin/features', ['page' => $page]);
     }
 
     /**
@@ -776,8 +895,29 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $db = db_connect();
-        $seasons = $db->table('seasons')->orderBy('season_number')->get()->getResultArray();
-        return view('admin/seasons', ['seasons' => $seasons, 'resortMaps' => \App\Controllers\ResortMap::getResortMapNames()]);
+        $seasonsRaw = $db->table('seasons')->orderBy('season_number')->get()->getResultArray();
+        $seasons = array_map(function($s) {
+            return [
+                'id' => (int) $s['id'],
+                'season_number' => (int) $s['season_number'],
+                'name' => $s['name'],
+                'resort_map' => $s['resort_map'],
+                'start_date' => $s['start_date'],
+                'duration_days' => (int) $s['duration_days'],
+                'winter_days' => (int) $s['winter_days'],
+                'active' => (bool) $s['active'],
+            ];
+        }, $seasonsRaw);
+
+        $resortMaps = \App\Controllers\ResortMap::getResortMapNames();
+
+        $page = [
+            'seasons' => $seasons,
+            'resortMaps' => $resortMaps,
+            'nextSeasonNumber' => count($seasons) + 1,
+        ];
+
+        return view('admin/seasons', ['page' => $page]);
     }
 
     public function activateSeason(int $id)
