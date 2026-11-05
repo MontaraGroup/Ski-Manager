@@ -1,3 +1,11 @@
+## Release 2026-11-05 19:43
+
+* Merge pull request #24 from Montara-Group/feature/react-phase-4-auth-home (9ad351c)
+* feat(ui): home landing page, login, and registration in React (phase 4) (9548629)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (147ef6a)
+* Merge pull request #23 from Montara-Group/feature/react-phase-3h-about-legal (d54be13)
+* feat(ui): about ski manager and legal pages in React (phase 3h) (a46752c)
+
 ## Release 2026-11-05 19:33
 
 * Merge pull request #23 from Montara-Group/feature/react-phase-3h-about-legal (d54be13)
