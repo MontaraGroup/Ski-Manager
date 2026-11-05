@@ -160,6 +160,8 @@ $routes->post("/admin/trigger-tick", "Admin::triggerTick");
 $routes->post("/admin/optimize-storage", "Admin::optimizeStorage");
 $routes->post("/dashboard/reorder-widgets", "Dashboard::reorderWidgets");
 $routes->post("/dashboard/resize-widget", "Dashboard::resizeWidget");
+$routes->post("/dashboard/reset-widgets", "Dashboard::resetWidgets");
+$routes->post("/dashboard/batch-update-widgets", "Dashboard::batchUpdateWidgets");
 $routes->post("/map/build", "ResortMap::buildItem");
 $routes->post("/map/demolish/(:num)", "ResortMap::demolishItem/$1");
 $routes->match(['get', 'head'], '/api/map-image/(:segment)', 'MapImage::serve/$1');

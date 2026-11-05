@@ -474,6 +474,59 @@ class Dashboard extends BaseController
         return redirect()->to('/dashboard');
     }
 
+    public function resetWidgets()
+    {
+        $userId = (int) auth()->id();
+        if (!$userId) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthenticated', 'csrf_hash' => csrf_hash()]);
+        }
+        $db = db_connect();
+        $db->table('dashboard_widgets')->where('user_id', $userId)->delete();
+        $order = 0;
+        foreach ($this->availableWidgets as $key => $w) {
+            $db->table('dashboard_widgets')->insert([
+                'user_id' => $userId,
+                'widget_key' => $key,
+                'visible' => $w['default'] ? 1 : 0,
+                'size' => $w['size'],
+                'sort_order' => $order++,
+            ]);
+        }
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true, 'csrf_hash' => csrf_hash()]);
+        }
+        return redirect()->to('/dashboard')->with('success', 'Dashboard reset to default layout.');
+    }
+
+    public function batchUpdateWidgets()
+    {
+        $userId = (int) auth()->id();
+        if (!$userId) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Unauthenticated', 'csrf_hash' => csrf_hash()]);
+        }
+        $data = $this->request->getJSON(true) ?? $this->request->getPost();
+        $widgets = $data['widgets'] ?? [];
+        if (is_array($widgets)) {
+            $db = db_connect();
+            foreach ($widgets as $w) {
+                $key = $w['widget_key'] ?? null;
+                if ($key && isset($this->availableWidgets[$key])) {
+                    $update = [];
+                    if (isset($w['visible'])) $update['visible'] = $w['visible'] ? 1 : 0;
+                    if (isset($w['size']) && in_array($w['size'], ['small', 'medium', 'large'], true)) $update['size'] = $w['size'];
+                    if (isset($w['sort_order'])) $update['sort_order'] = (int) $w['sort_order'];
+                    if (!empty($update)) {
+                        $db->table('dashboard_widgets')->where('user_id', $userId)->where('widget_key', $key)->update($update);
+                    }
+                }
+            }
+        }
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true, 'csrf_hash' => csrf_hash()]);
+        }
+        return redirect()->to('/dashboard');
+    }
+
     public function recentActivity()
     {
         $userId = auth()->id();

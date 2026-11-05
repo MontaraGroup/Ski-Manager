@@ -1,7 +1,230 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react';
-import { Button, Chip } from '@heroui/react';
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { csrf } from '@/components/Page';
+
+export type WidgetCategory = 'operations' | 'financial' | 'activity';
+
+export interface WidgetMeta {
+  name: string;
+  category: WidgetCategory;
+  categoryLabel: string;
+  icon: string;
+  description: string;
+  defaultSize: 'small' | 'medium' | 'large';
+}
+
+export const WIDGET_META: Record<string, WidgetMeta> = {
+  overview: {
+    name: 'Mountain Overview',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-mountain-sun',
+    description: 'Slopes, lifts, trail status, buildings, and grooming condition breakdown.',
+    defaultSize: 'large',
+  },
+  season: {
+    name: 'Season Progress',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-calendar',
+    description: 'Current season progress calendar with winter vs summer days breakdown.',
+    defaultSize: 'large',
+  },
+  weather_mini: {
+    name: 'Live Weather',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-cloud-sun',
+    description: 'Real-time temperature, snow base, wind velocity, and 4-day forecast.',
+    defaultSize: 'medium',
+  },
+  actions: {
+    name: 'Quick Actions',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-bolt',
+    description: 'Fast shortcuts for grooming, ticket pricing, snowmaking, and lifts.',
+    defaultSize: 'medium',
+  },
+  parking_mini: {
+    name: 'Parking Capacity',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-square-parking',
+    description: 'Real-time lot occupancy, total vehicle stalls, and fill percentage.',
+    defaultSize: 'small',
+  },
+  terrain_parks_mini: {
+    name: 'Terrain Parks',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-person-snowboarding',
+    description: 'Open park count, freestyle feature structures, and daily rider attendance.',
+    defaultSize: 'small',
+  },
+  equipment_mini: {
+    name: 'Fleet & Equipment',
+    category: 'operations',
+    categoryLabel: 'Operations',
+    icon: 'fa-toolbox',
+    description: 'Grooming snowcats, service snowmobiles, and maintenance fleet status.',
+    defaultSize: 'small',
+  },
+  stats: {
+    name: 'Financial Ledger',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-chart-bar',
+    description: 'Comprehensive breakdown of revenue, tickets, payroll, loans, and profit.',
+    defaultSize: 'large',
+  },
+  finances_mini: {
+    name: 'Finances Summary',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-coins',
+    description: 'Snapshot of day revenue, operating expenditures, and net balance.',
+    defaultSize: 'medium',
+  },
+  staff_mini: {
+    name: 'Staff & Morale',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-users',
+    description: 'Workforce headcount, key department distribution, and morale health.',
+    defaultSize: 'medium',
+  },
+  insurance_mini: {
+    name: 'Insurance Policies',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-shield-halved',
+    description: 'Active liability policies and casualty insurance coverage status.',
+    defaultSize: 'small',
+  },
+  loans_mini: {
+    name: 'Bank Loans & Debt',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-landmark',
+    description: 'Active commercial debt obligations, principal balances, and interest.',
+    defaultSize: 'small',
+  },
+  marketing_mini: {
+    name: 'Marketing Campaigns',
+    category: 'financial',
+    categoryLabel: 'Finances',
+    icon: 'fa-bullhorn',
+    description: 'Active promotional campaigns driving daily resort visitor turnout.',
+    defaultSize: 'small',
+  },
+  achievements_mini: {
+    name: 'Achievement Alerts',
+    category: 'activity',
+    categoryLabel: 'Achievements',
+    icon: 'fa-bell',
+    description: 'Pending milestones, claimable Genepi rewards, and status alerts.',
+    defaultSize: 'large',
+  },
+  achievements: {
+    name: 'Featured Achievements',
+    category: 'activity',
+    categoryLabel: 'Achievements',
+    icon: 'fa-award',
+    description: 'Top priority achievements tracked with active progress meters.',
+    defaultSize: 'medium',
+  },
+  activity: {
+    name: 'Live Activity Log',
+    category: 'activity',
+    categoryLabel: 'Activity',
+    icon: 'fa-clock-rotate-left',
+    description: 'Chronological telemetry of resort events, guest feedback, and incidents.',
+    defaultSize: 'medium',
+  },
+};
+
+export type PresetKey = 'default' | 'operations' | 'financial' | 'compact';
+
+export interface LayoutPreset {
+  id: PresetKey;
+  name: string;
+  badge: string;
+  icon: string;
+  desc: string;
+  widgets: {
+    key: string;
+    size: 'small' | 'medium' | 'large';
+  }[];
+}
+
+export const PRESETS: LayoutPreset[] = [
+  {
+    id: 'default',
+    name: 'Balanced',
+    badge: 'Default',
+    icon: 'fa-table-cells-large',
+    desc: 'Standard operations, stats, calendar, weather, actions, and recent activity.',
+    widgets: [
+      { key: 'stats', size: 'large' },
+      { key: 'season', size: 'large' },
+      { key: 'weather_mini', size: 'medium' },
+      { key: 'achievements_mini', size: 'large' },
+      { key: 'actions', size: 'medium' },
+      { key: 'overview', size: 'large' },
+      { key: 'achievements', size: 'medium' },
+      { key: 'activity', size: 'medium' },
+    ],
+  },
+  {
+    id: 'operations',
+    name: 'Operations',
+    badge: 'Mountain',
+    icon: 'fa-mountain-sun',
+    desc: 'Focus on trails, snow, weather, grooming fleet, lifts, and park status.',
+    widgets: [
+      { key: 'overview', size: 'large' },
+      { key: 'weather_mini', size: 'medium' },
+      { key: 'season', size: 'medium' },
+      { key: 'actions', size: 'medium' },
+      { key: 'equipment_mini', size: 'small' },
+      { key: 'terrain_parks_mini', size: 'small' },
+      { key: 'parking_mini', size: 'small' },
+      { key: 'activity', size: 'medium' },
+    ],
+  },
+  {
+    id: 'financial',
+    name: 'Financial',
+    badge: 'Executive',
+    icon: 'fa-chart-line',
+    desc: 'Cash flow, payroll, loans, insurance, marketing campaigns, and resort ledger.',
+    widgets: [
+      { key: 'stats', size: 'large' },
+      { key: 'finances_mini', size: 'medium' },
+      { key: 'staff_mini', size: 'medium' },
+      { key: 'loans_mini', size: 'small' },
+      { key: 'insurance_mini', size: 'small' },
+      { key: 'marketing_mini', size: 'small' },
+      { key: 'overview', size: 'large' },
+      { key: 'actions', size: 'medium' },
+    ],
+  },
+  {
+    id: 'compact',
+    name: 'Compact',
+    badge: 'Minimal',
+    icon: 'fa-compress',
+    desc: 'Minimal high-speed layout with mountain overview, weather, stats, and quick actions.',
+    widgets: [
+      { key: 'overview', size: 'medium' },
+      { key: 'weather_mini', size: 'medium' },
+      { key: 'stats', size: 'medium' },
+      { key: 'actions', size: 'medium' },
+    ],
+  },
+];
 
 export type DashboardHero = {
   resortMapKey: string;
@@ -197,7 +420,22 @@ export default function DashboardPage({
   const [widgets, setWidgets] = useState<DashboardWidgetItem[]>(initialWidgets);
   const [editMode, setEditMode] = useState(false);
   const [activityLogs, setActivityLogs] = useState(data.activity);
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryCategory, setLibraryCategory] = useState<'all' | 'operations' | 'financial' | 'activity'>('all');
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'info' | 'warning' | 'error' } | null>(null);
   const dragItem = useRef<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ msg, type });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, 3200);
+  };
 
   // Poll recent activity every 30 seconds
   useEffect(() => {
@@ -251,12 +489,19 @@ export default function DashboardPage({
     setWidgets((prev) =>
       prev.map((w) => (w.widget_key === key ? { ...w, size } : w)),
     );
+    showToast(`Resized '${WIDGET_META[key]?.name || key}' to ${size}`, 'info');
     await sendPost('/dashboard/resize-widget', { widget_key: key, size });
   };
 
   const handleToggle = async (key: string, visible: boolean) => {
     setWidgets((prev) =>
       prev.map((w) => (w.widget_key === key ? { ...w, visible } : w)),
+    );
+    showToast(
+      visible
+        ? `Added '${WIDGET_META[key]?.name || key}' to dashboard`
+        : `Hidden '${WIDGET_META[key]?.name || key}'`,
+      'info',
     );
     await sendPost('/dashboard/toggle-widget', { widget_key: key });
   };
@@ -278,7 +523,7 @@ export default function DashboardPage({
 
     setWidgets((prev) => {
       const hiddenOnes = prev.filter((w) => !w.visible);
-      return [...reordered, ...hiddenOnes];
+      return [...reordered, ...hiddenOnes].map((w, idx) => ({ ...w, sort_order: idx }));
     });
 
     await sendPost('/dashboard/reorder-widgets', { order: newOrderKeys });
@@ -286,14 +531,21 @@ export default function DashboardPage({
 
   const handleDragStart = (key: string) => {
     dragItem.current = key;
+    setDraggingKey(key);
   };
 
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
+  const handleDragEnd = () => {
+    dragItem.current = null;
+    setDraggingKey(null);
+    setDragOverKey(null);
   };
 
   const handleDrop = async (targetKey: string) => {
     const sourceKey = dragItem.current;
+    setDraggingKey(null);
+    setDragOverKey(null);
+    dragItem.current = null;
+
     if (!sourceKey || sourceKey === targetKey) return;
 
     const visibleWidgets = widgets.filter((w) => w.visible);
@@ -309,12 +561,120 @@ export default function DashboardPage({
 
     setWidgets((prev) => {
       const hiddenOnes = prev.filter((w) => !w.visible);
-      return [...reordered, ...hiddenOnes];
+      return [...reordered, ...hiddenOnes].map((w, idx) => ({ ...w, sort_order: idx }));
     });
 
-    dragItem.current = null;
+    showToast(`Moved ${WIDGET_META[sourceKey]?.name || sourceKey}`, 'info');
     await sendPost('/dashboard/reorder-widgets', { order: newOrderKeys });
   };
+
+  const handleApplyPreset = async (preset: LayoutPreset) => {
+    const presetMap = new Map(preset.widgets.map((p, idx) => [p.key, { size: p.size, order: idx }]));
+
+    const newWidgets: DashboardWidgetItem[] = [];
+
+    // Add preset widgets in exact preset order
+    for (const p of preset.widgets) {
+      const existing = widgets.find((w) => w.widget_key === p.key);
+      const aw = availableWidgets.find((a) => a.key === p.key);
+      if (existing) {
+        newWidgets.push({
+          ...existing,
+          visible: true,
+          size: p.size,
+          sort_order: newWidgets.length,
+        });
+      } else if (aw) {
+        newWidgets.push({
+          widget_key: aw.key,
+          name: aw.name,
+          icon: aw.icon,
+          size: p.size,
+          visible: true,
+          sort_order: newWidgets.length,
+        });
+      }
+    }
+
+    // Add remaining widgets marked hidden
+    for (const w of widgets) {
+      if (!presetMap.has(w.widget_key)) {
+        newWidgets.push({
+          ...w,
+          visible: false,
+          sort_order: newWidgets.length,
+        });
+      }
+    }
+
+    setWidgets(newWidgets);
+    showToast(`Applied "${preset.name}" preset layout`, 'success');
+
+    await sendPost('/dashboard/batch-update-widgets', {
+      widgets: newWidgets.map((w) => ({
+        widget_key: w.widget_key,
+        visible: w.visible ? 1 : 0,
+        size: w.size,
+        sort_order: w.sort_order,
+      })),
+    });
+  };
+
+  const handleResetLayout = async () => {
+    const res = await sendPost('/dashboard/reset-widgets', {});
+    if (res?.success || res?.csrf_hash) {
+      const resetWidgets: DashboardWidgetItem[] = availableWidgets.map((aw, idx) => ({
+        widget_key: aw.key,
+        name: aw.name,
+        icon: aw.icon,
+        size: (aw.size as 'small' | 'medium' | 'large') || 'medium',
+        visible: Boolean(aw.default),
+        sort_order: idx,
+      }));
+      setWidgets(resetWidgets);
+      showToast('Dashboard reset to default layout', 'success');
+    } else {
+      showToast('Failed to reset dashboard', 'error');
+    }
+  };
+
+  const handleRestoreAll = async () => {
+    const allVisible = widgets.map((w, idx) => ({
+      ...w,
+      visible: true,
+      sort_order: idx,
+    }));
+    setWidgets(allVisible);
+    showToast('All widgets added to dashboard', 'success');
+
+    await sendPost('/dashboard/batch-update-widgets', {
+      widgets: allVisible.map((w) => ({
+        widget_key: w.widget_key,
+        visible: 1,
+        size: w.size,
+        sort_order: w.sort_order,
+      })),
+    });
+  };
+
+  const filteredLibraryWidgets = useMemo(() => {
+    return widgets.filter((w) => {
+      const meta = WIDGET_META[w.widget_key];
+      if (libraryCategory !== 'all') {
+        if (!meta || meta.category !== libraryCategory) {
+          return false;
+        }
+      }
+      if (librarySearch.trim()) {
+        const query = librarySearch.toLowerCase().trim();
+        const nameMatch = w.name.toLowerCase().includes(query);
+        const descMatch = meta?.description.toLowerCase().includes(query) ?? false;
+        const catMatch = meta?.categoryLabel.toLowerCase().includes(query) ?? false;
+        return nameMatch || descMatch || catMatch;
+      }
+      return true;
+    });
+  }, [widgets, libraryCategory, librarySearch]);
 
   const visibleWidgets = widgets.filter((w) => w.visible);
   const hiddenWidgets = widgets.filter((w) => !w.visible);
@@ -392,19 +752,76 @@ export default function DashboardPage({
         </div>
       </header>
 
-      {/* Customize Mode Banner */}
+      {/* Sticky Floating Command Bar */}
       {editMode && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3.5 text-xs text-foreground">
-          <div className="flex items-center gap-2">
-            <Icon name="fa-sliders" className="text-accent text-sm" />
-            <span>
-              <strong>Customize Mode:</strong> Drag widgets or use arrows to reorder. Use S / M / L
-              to resize or the hide button to move widgets to the tray.
-            </span>
+        <div className="sticky top-3 z-30 mb-2 rounded-2xl border border-accent/40 bg-surface/95 p-3.5 shadow-xl backdrop-blur-md">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            {/* Status chip & widget counter */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent">
+                <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                Customize Mode
+              </span>
+              <span className="text-xs text-muted">
+                <strong className="font-mono text-foreground">{visibleWidgets.length}</strong> active &middot;{' '}
+                <strong className="font-mono text-foreground">{hiddenWidgets.length}</strong> hidden
+              </span>
+            </div>
+
+            {/* Presets */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-muted mr-1 hidden sm:inline">Presets:</span>
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleApplyPreset(p)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:bg-accent/10"
+                >
+                  <Icon name={p.icon} className="text-accent text-[11px]" />
+                  <span>{p.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => setLibraryOpen(true)}
+                className="font-semibold text-xs"
+              >
+                <Icon name="fa-plus" className="mr-1 text-accent text-xs" />
+                Add Widgets
+                {hiddenWidgets.length > 0 && (
+                  <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.2 font-mono text-[10px] font-bold text-accent">
+                    {hiddenWidgets.length}
+                  </span>
+                )}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={handleResetLayout}
+                className="font-semibold text-xs"
+              >
+                <Icon name="fa-rotate-left" className="mr-1 text-muted text-xs" />
+                Reset Defaults
+              </Button>
+
+              <Button
+                size="sm"
+                variant="primary"
+                onPress={() => setEditMode(false)}
+                className="font-bold text-xs"
+              >
+                <Icon name="fa-check" className="mr-1 text-xs" />
+                Done
+              </Button>
+            </div>
           </div>
-          <Button size="sm" variant="primary" onPress={() => setEditMode(false)}>
-            Done
-          </Button>
         </div>
       )}
 
@@ -528,6 +945,44 @@ export default function DashboardPage({
         </div>
       </section>
 
+      {/* Empty State */}
+      {visibleWidgets.length === 0 && (
+        <div className="rounded-2xl border-2 border-dashed border-border bg-surface p-10 text-center shadow-xs">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+            <Icon name="fa-table-cells" className="text-2xl" />
+          </div>
+          <h3 className="mt-4 text-base font-bold text-foreground">
+            No Widgets Currently Visible
+          </h3>
+          <p className="mx-auto mt-1 max-w-md text-xs text-muted">
+            All widgets are hidden. Choose a preset layout above, reset to default, or open the widget library to choose which ones to display.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onPress={handleResetLayout}
+              className="font-bold text-xs"
+            >
+              <Icon name="fa-rotate-left" className="mr-1 text-xs" />
+              Restore Default Layout
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => {
+                setEditMode(true);
+                setLibraryOpen(true);
+              }}
+              className="font-semibold text-xs"
+            >
+              <Icon name="fa-plus" className="mr-1 text-accent text-xs" />
+              Browse Widget Library
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Widget Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {visibleWidgets.map((w, idx) => {
@@ -538,58 +993,86 @@ export default function DashboardPage({
                 ? 'sm:col-span-2'
                 : 'sm:col-span-1';
 
+          const isDropTarget = dragOverKey === w.widget_key && draggingKey !== w.widget_key;
+          const isDragging = draggingKey === w.widget_key;
+
           return (
             <div
               key={w.widget_key}
               draggable={editMode}
               onDragStart={() => handleDragStart(w.widget_key)}
-              onDragOver={handleDragOver}
+              onDragEnter={() => setDragOverKey(w.widget_key)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (dragOverKey !== w.widget_key) setDragOverKey(w.widget_key);
+              }}
+              onDragEnd={handleDragEnd}
               onDrop={() => handleDrop(w.widget_key)}
-              className={`flex flex-col justify-between rounded-2xl border bg-surface p-4 shadow-sm transition-all ${colSpan} ${
-                editMode ? 'border-dashed border-accent/60' : 'border-border'
+              className={`flex flex-col justify-between rounded-2xl border bg-surface p-4 shadow-sm transition-all duration-150 ${colSpan} ${
+                isDropTarget
+                  ? 'ring-2 ring-accent border-accent bg-accent/5 scale-[1.01]'
+                  : isDragging
+                    ? 'opacity-40 border-dashed border-accent scale-[0.99]'
+                    : editMode
+                      ? 'border-dashed border-accent/40 hover:border-accent'
+                      : 'border-border'
               }`}
             >
               {/* Header */}
               <div className="mb-3 border-b border-border pb-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 font-semibold text-foreground">
+                    {editMode && (
+                      <span
+                        className="cursor-grab active:cursor-grabbing text-muted hover:text-foreground flex items-center gap-1.5"
+                        title="Drag to reorder"
+                      >
+                        <Icon name="fa-grip-vertical" className="text-xs" />
+                        <span className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted">
+                          #{idx + 1}
+                        </span>
+                      </span>
+                    )}
                     <Icon name={w.icon} className="text-accent text-xs" />
                     <span className="text-sm">{w.name}</span>
                   </div>
 
                   {/* Normal mode shortcut link or customize controls */}
                   {editMode ? (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       {/* Move Up/Down buttons for accessible mobile reorder */}
-                      <button
-                        type="button"
-                        onClick={() => handleMove(w.widget_key, 'up')}
-                        disabled={idx === 0}
-                        title="Move Up"
-                        className="rounded p-1 text-muted hover:bg-default disabled:opacity-30"
-                      >
-                        <Icon name="fa-chevron-up" className="text-xs" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMove(w.widget_key, 'down')}
-                        disabled={idx === visibleWidgets.length - 1}
-                        title="Move Down"
-                        className="rounded p-1 text-muted hover:bg-default disabled:opacity-30"
-                      >
-                        <Icon name="fa-chevron-down" className="text-xs" />
-                      </button>
+                      <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface-raised p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleMove(w.widget_key, 'up')}
+                          disabled={idx === 0}
+                          aria-label={`Move ${w.name} up`}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                        >
+                          <Icon name="fa-chevron-up" className="text-[10px]" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMove(w.widget_key, 'down')}
+                          disabled={idx === visibleWidgets.length - 1}
+                          aria-label={`Move ${w.name} down`}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                        >
+                          <Icon name="fa-chevron-down" className="text-[10px]" />
+                        </button>
+                      </div>
 
                       {/* Size buttons */}
-                      <div className="ml-1 inline-flex rounded-lg border border-border p-0.5 text-[10px]">
+                      <div className="inline-flex items-center rounded-lg border border-border bg-surface-raised p-0.5 text-[10px]">
                         {(['small', 'medium', 'large'] as const).map((sz) => (
                           <button
                             key={sz}
                             type="button"
                             onClick={() => handleResize(w.widget_key, sz)}
-                            className={`rounded px-1.5 py-0.5 font-bold uppercase transition-colors ${
+                            aria-label={`Resize ${w.name} to ${sz}`}
+                            className={`rounded px-1.5 py-0.5 font-bold uppercase transition-all ${
                               w.size === sz
-                                ? 'bg-accent text-accent-foreground'
+                                ? 'bg-accent text-accent-foreground shadow-xs'
                                 : 'text-muted hover:text-foreground'
                             }`}
                           >
@@ -602,8 +1085,8 @@ export default function DashboardPage({
                       <button
                         type="button"
                         onClick={() => handleToggle(w.widget_key, false)}
-                        title="Hide widget"
-                        className="ml-1 rounded p-1 text-muted hover:text-danger"
+                        aria-label={`Hide ${w.name} widget`}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                       >
                         <Icon name="fa-eye-slash" className="text-xs" />
                       </button>
@@ -1262,10 +1745,21 @@ export default function DashboardPage({
       {/* Hidden Widgets Tray (visible in Edit Mode) */}
       {editMode && hiddenWidgets.length > 0 && (
         <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-4">
-          <h2 className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
-            <Icon name="fa-eye-slash" className="text-muted" />
-            <span>Hidden Widgets ({hiddenWidgets.length}) &middot; Click to Restore</span>
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <Icon name="fa-eye-slash" className="text-muted" />
+              <span>Hidden Widgets ({hiddenWidgets.length}) &middot; Click to Restore</span>
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setLibraryOpen(true)}
+              className="h-7 text-xs font-semibold"
+            >
+              <Icon name="fa-table-cells" className="mr-1 text-accent text-xs" />
+              Browse Full Library
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {hiddenWidgets.map((w) => (
               <Button
@@ -1280,6 +1774,193 @@ export default function DashboardPage({
               </Button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Slide-Over Widget Library Drawer */}
+      {libraryOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setLibraryOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Slide-over panel */}
+          <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
+            <div className="w-screen max-w-md border-l border-border bg-surface shadow-2xl flex flex-col">
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between border-b border-border p-4 sm:p-5">
+                <div className="space-y-0.5">
+                  <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+                    <Icon name="fa-table-cells" className="text-accent" />
+                    Widget Library
+                  </h2>
+                  <p className="text-xs text-muted">
+                    Toggle widgets and configure your command dashboard.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLibraryOpen(false)}
+                  aria-label="Close widget library"
+                  className="rounded-lg p-2 text-muted hover:bg-surface-raised hover:text-foreground transition-colors"
+                >
+                  <Icon name="fa-xmark" className="text-base" />
+                </button>
+              </div>
+
+              {/* Search & Category Filter */}
+              <div className="border-b border-border bg-surface-raised/40 p-4 space-y-3">
+                <div className="relative">
+                  <Icon
+                    name="fa-magnifying-glass"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted"
+                  />
+                  <input
+                    type="text"
+                    value={librarySearch}
+                    onChange={(e) => setLibrarySearch(e.target.value)}
+                    placeholder="Search widgets by name or topic..."
+                    className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      { id: 'all', label: 'All' },
+                      { id: 'operations', label: 'Operations' },
+                      { id: 'financial', label: 'Finances' },
+                      { id: 'activity', label: 'Activity' },
+                    ] as const
+                  ).map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setLibraryCategory(cat.id)}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+                        libraryCategory === cat.id
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted hover:bg-surface-raised hover:text-foreground'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scrollable Widget Cards */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {filteredLibraryWidgets.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted">
+                    No widgets match "{librarySearch}".
+                  </div>
+                ) : (
+                  filteredLibraryWidgets.map((w) => {
+                    const meta = WIDGET_META[w.widget_key];
+                    return (
+                      <div
+                        key={w.widget_key}
+                        className="flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 space-y-2.5 shadow-xs transition-colors hover:border-accent/40"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2.5">
+                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                              <Icon name={w.icon} className="text-sm" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-foreground">{w.name}</span>
+                                <span className="rounded bg-surface-raised px-1.5 py-0.5 text-[10px] font-semibold text-muted uppercase">
+                                  {meta?.categoryLabel || 'Widget'}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-muted leading-tight">
+                                {meta?.description || 'Mountain management widget.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-border/50 text-[11px]">
+                          <div className="flex items-center gap-1 text-muted">
+                            <span>Size:</span>
+                            <span className="font-mono font-bold uppercase text-foreground">
+                              {w.size}
+                            </span>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant={w.visible ? 'outline' : 'primary'}
+                            onPress={() => handleToggle(w.widget_key, !w.visible)}
+                            className="h-7 text-xs font-semibold"
+                          >
+                            <Icon
+                              name={w.visible ? 'fa-eye-slash' : 'fa-plus'}
+                              className="mr-1 text-[11px]"
+                            />
+                            {w.visible ? 'Hide from Board' : 'Add to Board'}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="border-t border-border p-4 bg-surface-raised/40 flex items-center justify-between gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onPress={handleRestoreAll}
+                  className="text-xs font-semibold"
+                >
+                  <Icon name="fa-arrows-rotate" className="mr-1 text-accent" />
+                  Add All ({widgets.length})
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={() => setLibraryOpen(false)}
+                  className="text-xs font-bold"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 shadow-2xl text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-150 ${
+            toast.type === 'success'
+              ? 'border-emerald-600/40 bg-emerald-950/95 text-emerald-200'
+              : toast.type === 'error'
+                ? 'border-red-600/40 bg-red-950/95 text-red-200'
+                : 'border-accent/40 bg-slate-900/95 text-white'
+          }`}
+        >
+          <Icon
+            name={
+              toast.type === 'success'
+                ? 'fa-circle-check'
+                : toast.type === 'error'
+                  ? 'fa-triangle-exclamation'
+                  : 'fa-circle-info'
+            }
+            className="text-sm shrink-0"
+          />
+          <span>{toast.msg}</span>
         </div>
       )}
     </div>
