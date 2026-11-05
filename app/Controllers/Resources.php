@@ -72,22 +72,115 @@ class Resources extends BaseController
         }
         unset($s);
 
-        return view('resources/page', [
-            'owned' => array_count_values(array_column($sources, 'source_type')),
+        $isEnergy = $category === 'energy';
+        $fmt = fn(int $n) => number_format($n) . ' ' . $meta['unit'];
+        $tariff = $isEnergy ? Utilities::GRID_TARIFF : Utilities::WATER_TARIFF;
+        $tariffLabel = $isEnergy
+            ? (isImperial() ? '$' . number_format($tariff, 2) : number_format($tariff, 2, ',', '') . ' €') . ' per kWh'
+            : currency((int) round($tariff * 1000)) . ' per 1,000 L';
+
+        $labels = [
+            'snowmaking' => ['label' => 'Snowmaking', 'icon' => 'snowflake'],
+            'night_skiing' => ['label' => 'Night skiing', 'icon' => 'moon'],
+            'lifts' => ['label' => 'Lifts', 'icon' => 'cable-car'],
+            'buildings' => ['label' => 'Buildings', 'icon' => 'building'],
+        ];
+
+        $demandParts = [];
+        foreach ($demand as $k => $val) {
+            if ($k === 'total') continue;
+            $cleanIcon = $labels[$k]['icon'] ?? 'bolt';
+            $demandParts[] = [
+                'key' => $k,
+                'label' => $labels[$k]['label'] ?? ucfirst(str_replace('_', ' ', $k)),
+                'icon' => $cleanIcon,
+                'value' => (int) $val,
+                'valueFormatted' => $fmt((int) $val),
+            ];
+        }
+
+        $cash = (int) $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash');
+        $importCost = Utilities::importCost($category, $deficit);
+
+        $formattedSources = array_map(function($s) use ($config, $costMult, $meta, $fmt, $cash) {
+            $cfg = $config[$s['source_type']] ?? ['upkeep' => (int) $s['cost_per_day'], 'cost' => 0, 'icon' => '', 'label' => $s['source_type']];
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $cfg['icon'] ?? 'bolt');
+            $repairCost = (int) ($s['repair_cost'] ?? 0);
+
+            return [
+                'id' => (int) $s['id'],
+                'name' => $s['name'],
+                'source_type' => $s['source_type'],
+                'typeLabel' => $cfg['label'] ?? ucfirst($s['source_type']),
+                'icon' => $cleanIcon,
+                'status' => $s['status'],
+                'condition_pct' => (int) round((float) $s['condition_pct']),
+                'output' => (int) $s[$meta['output']],
+                'outputFormatted' => $fmt((int) $s[$meta['output']]),
+                'used_output' => (int) ($s['used_output'] ?? 0),
+                'upkeep' => (int) $s['upkeep'],
+                'upkeepFormatted' => currency((int) $s['upkeep']),
+                'repair_cost' => $repairCost,
+                'repair_cost_formatted' => currency($repairCost),
+                'canAffordRepair' => $cash >= $repairCost,
+                'build_days_left' => (int) ($s['build_days_left'] ?? 0),
+                'dailyValueFormatted' => isset($s['value']) ? currency((int) $s['value']) : null,
+            ];
+        }, $sources);
+
+        $ownedCounts = array_count_values(array_column($sources, 'source_type'));
+        $availableSources = [];
+        foreach ($config as $typeKey => $cfg) {
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $cfg['icon'] ?? 'bolt');
+            $limit = Utilities::LIMIT[$typeKey] ?? null;
+            $owned = $ownedCounts[$typeKey] ?? 0;
+            $upkeepVal = (int) round($cfg['upkeep'] * $costMult);
+            $costVal = (int) $cfg['cost'];
+
+            $availableSources[] = [
+                'type' => $typeKey,
+                'label' => $cfg['label'],
+                'icon' => $cleanIcon,
+                'cost' => $costVal,
+                'costFormatted' => currency($costVal),
+                'upkeep' => $upkeepVal,
+                'upkeepFormatted' => currency($upkeepVal),
+                'output' => (int) $cfg['output'],
+                'outputFormatted' => $fmt((int) $cfg['output']),
+                'build_days' => (int) $cfg['build_days'],
+                'owned' => $owned,
+                'limit' => $limit,
+                'canAfford' => $cash >= $costVal,
+                'atLimit' => $limit !== null && $owned >= $limit,
+            ];
+        }
+
+        $page = [
             'category' => $category,
             'unit' => $meta['unit'],
-            'outputCol' => $meta['output'],
-            'sources' => $sources,
-            'config' => $config,
-            'costMult' => $costMult,
-            'demand' => $demand,
+            'tariffLabel' => $tariffLabel,
+            'cash' => $cash,
+            'cashFormatted' => currency($cash),
+            'demand' => [
+                'total' => (int) $demand['total'],
+                'totalFormatted' => $fmt((int) $demand['total']),
+                'parts' => $demandParts,
+            ],
             'output' => $output,
-            'upkeep' => $upkeep,
+            'outputFormatted' => $fmt($output),
             'deficit' => $deficit,
-            'importCost' => Utilities::importCost($category, $deficit),
-            'tariff' => $category === 'energy' ? Utilities::GRID_TARIFF : Utilities::WATER_TARIFF,
-            'cash' => (int) $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash'),
-        ]);
+            'deficitFormatted' => $fmt($deficit),
+            'upkeep' => $upkeep,
+            'upkeepFormatted' => currency($upkeep),
+            'importCost' => $importCost,
+            'importCostFormatted' => currency($importCost),
+            'totalDailyCost' => $importCost + $upkeep,
+            'totalDailyCostFormatted' => currency($importCost + $upkeep),
+            'sources' => $formattedSources,
+            'availableSources' => $availableSources,
+        ];
+
+        return view('resources/page', ['page' => $page]);
     }
 
     public function buildEnergy()

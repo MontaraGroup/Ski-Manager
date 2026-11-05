@@ -21,13 +21,111 @@ class TerrainParks extends BaseController
         $slopes = $itemModel->where('user_id', $userId)->where('item_type', 'slope')->findAll();
         $finances = model('FinanceModel')->where('user_id', $userId)->first();
 
-        return view('terrain_parks/index', [
-            'parks' => $parks,
-            'parkCrew' => $parkCrew,
-            'slopes' => $slopes,
-            'parkConfig' => TerrainParkModel::loadParkConfig(),
-            'cash' => $finances['cash'] ?? 0,
-        ]);
+        $rawConfig = TerrainParkModel::loadParkConfig();
+        $cash = (int) ($finances['cash'] ?? 0);
+
+        $slopesMap = [];
+        foreach ($slopes as $sl) {
+            $slopesMap[$sl['id']] = $sl['name'] ?? ('Slope #' . $sl['id']);
+        }
+
+        $formattedParks = array_map(function($p) use ($rawConfig, $slopesMap, $cash) {
+            $typeKey = $p['park_type'];
+            $sizeKey = $p['size'];
+            $cfg = $rawConfig[$typeKey]['sizes'][$sizeKey] ?? ['cost' => 0, 'upkeep' => 0, 'capacity' => 0];
+            $cost = (int) ($cfg['cost'] ?? 0);
+            $cond = (float) $p['condition_pct'];
+            $repairCost = (int) round($cost * 0.15 * (1 - $cond / 100));
+            $refundAmount = (int) round($cost * 0.25);
+            $iconRaw = $rawConfig[$typeKey]['icon'] ?? 'mountain';
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $iconRaw);
+
+            return [
+                'id' => (int) $p['id'],
+                'name' => $p['name'],
+                'park_type' => $typeKey,
+                'typeLabel' => $rawConfig[$typeKey]['label'] ?? ucfirst($typeKey),
+                'icon' => $cleanIcon,
+                'size' => $sizeKey,
+                'status' => $p['status'],
+                'condition_pct' => (int) round($cond),
+                'popularity' => (int) ($p['popularity'] ?? 50),
+                'daily_visitors' => (int) ($p['daily_visitors'] ?? 0),
+                'build_days_left' => (int) ($p['build_days_left'] ?? 0),
+                'slope_id' => $p['slope_id'] ? (int) $p['slope_id'] : null,
+                'slope_name' => $p['slope_id'] ? ($slopesMap[$p['slope_id']] ?? null) : null,
+                'upkeepFormatted' => currency((int) ($cfg['upkeep'] ?? 0)),
+                'repair_cost' => $repairCost,
+                'repair_cost_formatted' => currency($repairCost),
+                'refund_amount' => $refundAmount,
+                'refund_formatted' => currency($refundAmount),
+                'canAffordRepair' => $cash >= $repairCost,
+            ];
+        }, $parks);
+
+        $formattedCrew = array_map(function($c) {
+            return [
+                'id' => (int) $c['id'],
+                'name' => $c['name'],
+                'level' => (int) ($c['level'] ?? 1),
+                'morale' => (int) ($c['morale'] ?? 100),
+                'salary' => (int) ($c['salary'] ?? 0),
+                'salaryFormatted' => currency((int) ($c['salary'] ?? 0)),
+            ];
+        }, $parkCrew);
+
+        $formattedSlopes = array_map(function($s) {
+            return [
+                'id' => (int) $s['id'],
+                'name' => $s['name'] ?? ('Slope #' . $s['id']),
+            ];
+        }, $slopes);
+
+        $cleanConfig = [];
+        foreach ($rawConfig as $key => $typeData) {
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $typeData['icon'] ?? 'mountain');
+            $sizes = [];
+            foreach ($typeData['sizes'] as $sz => $szData) {
+                $sizes[$sz] = [
+                    'cost' => (int) $szData['cost'],
+                    'costFormatted' => currency((int) $szData['cost']),
+                    'upkeep' => (int) $szData['upkeep'],
+                    'upkeepFormatted' => currency((int) $szData['upkeep']),
+                    'build_days' => (int) $szData['build_days'],
+                    'capacity' => (int) $szData['capacity'],
+                    'popularity_base' => (int) ($szData['popularity_base'] ?? 50),
+                ];
+            }
+            $cleanConfig[$key] = [
+                'key' => $key,
+                'label' => $typeData['label'],
+                'icon' => $cleanIcon,
+                'sizes' => $sizes,
+            ];
+        }
+
+        $openParks = array_filter($parks, fn($p) => $p['status'] === 'open');
+        $buildingParks = array_filter($parks, fn($p) => $p['status'] === 'under_construction');
+        $totalVisitors = array_sum(array_column($parks, 'daily_visitors'));
+        $avgCondition = count($parks) > 0 ? (int) round(array_sum(array_column($parks, 'condition_pct')) / count($parks)) : 0;
+
+        $page = [
+            'parks' => $formattedParks,
+            'parkCrew' => $formattedCrew,
+            'slopes' => $formattedSlopes,
+            'parkConfig' => $cleanConfig,
+            'cash' => $cash,
+            'cashFormatted' => currency($cash),
+            'stats' => [
+                'openCount' => count($openParks),
+                'buildingCount' => count($buildingParks),
+                'dailyVisitors' => $totalVisitors,
+                'crewCount' => count($parkCrew),
+                'avgCondition' => $avgCondition,
+            ],
+        ];
+
+        return view('terrain_parks/index', ['page' => $page]);
     }
 
     public function build()
