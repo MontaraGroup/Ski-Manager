@@ -1,3 +1,11 @@
+## Release 2026-11-05 01:57
+
+* Merge pull request #18 from Montara-Group/feature/react-phase-3f-admin-batch-2 (bd656ca)
+* Merge branch 'main' into feature/react-phase-3f-admin-batch-2 (2759576)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (eaa7cd1)
+* Merge branch 'MontaraGroup:main' into main (6eaf720)
+* feat(ui): admin logs, monitoring and player tools in React (phase 3f batch 2) (bec24cd)
+
 ## Release 2026-11-05 01:45
 
 * Merge branch 'MontaraGroup:main' into main (6eaf720)
