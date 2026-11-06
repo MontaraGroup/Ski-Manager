@@ -29,10 +29,7 @@ class NightSkiing extends BaseController
         $activeLights = array_filter($lights, fn($l) => $l['status'] === 'active');
         $totalCoverage = array_sum(array_column($activeLights, 'coverage'));
         $totalEnergy = array_sum(array_column($activeLights, 'energy_cost'));
-
-        $nightHours = 5;
-        $visitorBonus = min(100, $totalCoverage);
-        $extraRevenue = round($visitorBonus * 0.3);
+        $avgCondition = count($lights) > 0 ? (int) round(array_sum(array_column($lights, 'condition_pct')) / count($lights)) : 100;
 
         $lightTypes = [
             'basic_flood' => ['name' => 'Basic Floodlight', 'icon' => 'fa-lightbulb', 'coverage' => 5, 'energy' => 200, 'cost' => 8000, 'desc' => 'Simple lighting for beginner slopes'],
@@ -44,12 +41,11 @@ class NightSkiing extends BaseController
 
         $page = [
             'stats' => [
-                'totalCoverage' => (int) $totalCoverage,
-                'extraRevenue' => (int) $extraRevenue,
-                'nightHours' => (int) $nightHours,
-                'activeCount' => count($activeLights),
-                'totalCount' => count($lights),
-                'mechanics' => (int) $mechanics,
+                'totalCoverage'   => (int) $totalCoverage,
+                'avgCondition'    => (int) $avgCondition,
+                'activeCount'     => count($activeLights),
+                'totalCount'      => count($lights),
+                'mechanics'       => (int) $mechanics,
                 'totalEnergyText' => currency((int) $totalEnergy),
             ],
             'lights' => array_map(function ($l) {
