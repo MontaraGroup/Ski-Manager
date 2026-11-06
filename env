@@ -72,4 +72,4 @@
 # SENTRY OBSERVABILITY
 #--------------------------------------------------------------------
 
-SENTRY_DSN = 'https://c2891eb7f1bd5f0b4f9ad8f08f4ae137@o4511424329220096.ingest.us.sentry.io/4512337095032832'
+# SENTRY_DSN = ''

@@ -30,8 +30,8 @@ if (! function_exists('initSentry')) {
                 'dsn'                  => $sentryDsn,
                 'environment'          => defined('ENVIRONMENT') ? ENVIRONMENT : (getenv('CI_ENVIRONMENT') ?: 'production'),
                 'release'              => 'ski-manager@' . (getenv('APP_REVISION') ?: '1.0.0'),
-                'traces_sample_rate'   => 1.0,
-                'profiles_sample_rate' => 1.0,
+                'traces_sample_rate'   => 0.1,
+                'profiles_sample_rate' => 0.1,
                 'send_default_pii'     => false,
                 'ignore_exceptions'    => [
                     \CodeIgniter\Exceptions\PageNotFoundException::class,
