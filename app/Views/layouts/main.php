@@ -212,6 +212,9 @@ body { font-family: var(--sign); }
     .site-nav .brand { gap: 0.4rem; }
     .brand-name { font-size: 1rem; }
 }
+.site-nav .menu-horizontal { overflow: visible !important; }
+.site-nav .menu-horizontal details { overflow: visible !important; }
+.site-nav .menu-horizontal details > ul { z-index: 50; }
 .site-nav .menu-horizontal > li > a,
 .site-nav .menu-horizontal > li > details > summary { font-weight: 500; border-radius: 6px; }
 .site-nav .menu-horizontal > li > a.active { background: color-mix(in oklab, var(--color-base-content) 8%, transparent); color: var(--color-base-content); font-weight: 600; }
