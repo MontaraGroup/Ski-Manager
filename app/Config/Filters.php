@@ -40,6 +40,7 @@ class Filters extends BaseFilters
         'markdown'      => \App\Filters\MarkdownNegotiationFilter::class,
         'cors'          => Cors::class,
         'apiauth'       => \App\Filters\ApiAuth::class,
+        'tokens'        => \CodeIgniter\Shield\Filters\TokenAuth::class,
 
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
@@ -84,7 +85,7 @@ class Filters extends BaseFilters
         'before' => [
             'maintenance',
             // 'honeypot',
-            'csrf' => ['except' => ['roadmap/vote/*']],
+            'csrf' => ['except' => ['roadmap/vote/*', 'api/auth', 'api/sync']],
             'invalidchars',
         ],
         'after' => [
