@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\Ledger;
+use App\Libraries\StaffEffects;
 use App\Models\StaffModel;
 
 class Staff extends BaseController
@@ -110,16 +111,16 @@ class Staff extends BaseController
 
     /** What each role does in the nightly tick (GameTick), shown on the hire page */
     public const EFFECTS = [
-        'ski_patrol' => 'Assigned to a slope: +2% skiers each, and fewer accidents (each costs 2,500–8,000 €).',
-        'instructor' => 'Assigned to a slope: +3% skiers each, and up to 10 ski lessons a day at 50 € (about 8% of your skiers want one).',
-        'mechanic' => 'Assigned to a lift: that lift wears 1% a day less, so it needs repairs less often. One mechanic per lift.',
-        'groomer' => 'Drives one groomer each night, restoring your worst slopes; higher levels restore more.',
-        'snowmaker' => 'Assigned to a snow gun: that gun wears 1% a day less.',
-        'receptionist' => 'Assigned to a hotel: hotels earn up to 15% more with one receptionist per hotel.',
-        'chef' => 'Assigned to a restaurant: restaurants earn up to 15% more with one chef per restaurant.',
-        'medic' => 'Assigned to a patrol station: the biggest single cut in accidents.',
-        'manager' => 'Assigned: +5% skiers each, and better odds of VIP guests.',
-        'park_crew' => 'Assigned to a terrain park: parks wear 0.4% a day less each (up to 1.5%).',
+        'ski_patrol'   => 'Assigned to a slope: +' . StaffEffects::SKI_PATROL_SKIER_BOOST . '% skiers each, and fewer accidents (each costs ' . StaffEffects::ACCIDENT_COST_MIN_FORMATTED . '–' . StaffEffects::ACCIDENT_COST_MAX_FORMATTED . ' €).',
+        'instructor'   => 'Assigned to a slope: +' . StaffEffects::INSTRUCTOR_SKIER_BOOST . '% skiers each, and up to ' . StaffEffects::LESSONS_PER_INSTRUCTOR . ' ski lessons a day at ' . StaffEffects::LESSON_FEE . ' € (about ' . StaffEffects::LESSON_DEMAND_PCT . '% of your skiers want one).',
+        'mechanic'     => 'Assigned to a lift: that lift wears ' . StaffEffects::MECHANIC_LIFT_WEAR_RELIEF . '% a day less, so it needs repairs less often. One mechanic per lift.',
+        'groomer'      => 'Drives one groomer each night, restoring your worst slopes; higher levels restore more.',
+        'snowmaker'    => 'Assigned to a snow gun: that gun wears 1% a day less.',
+        'receptionist' => 'Assigned to a hotel: hotels earn up to ' . StaffEffects::RECEPTIONIST_REVENUE_BOOST_PCT . '% more with one receptionist per hotel.',
+        'chef'         => 'Assigned to a restaurant: restaurants earn up to ' . StaffEffects::CHEF_REVENUE_BOOST_PCT . '% more with one chef per restaurant.',
+        'medic'        => 'Assigned to a patrol station: the biggest single cut in accidents.',
+        'manager'      => 'Assigned: +' . StaffEffects::MANAGER_SKIER_BOOST . '% skiers each, and better odds of VIP guests.',
+        'park_crew'    => 'Assigned to a terrain park: parks wear ' . StaffEffects::PARK_CREW_WEAR_RELIEF . '% a day less each (up to ' . StaffEffects::PARK_CREW_CAP . '%).',
     ];
 
     public function hire(): string

@@ -48,7 +48,7 @@ class Economy
     ];
     /** Summer tourists (hikers, bikers) as a share of the winter skier demand; only off-season buildings serve them */
     public const SUMMER_TOURIST_SHARE = 0.4;
-    public const STAFFED_BONUS = ['hotel' => ['receptionist', 0.15], 'restaurant' => ['chef', 0.15]];
+    public const STAFFED_BONUS = ['hotel' => ['receptionist', StaffEffects::RECEPTIONIST_REVENUE_BOOST], 'restaurant' => ['chef', StaffEffects::CHEF_REVENUE_BOOST]];
 
     public const LEGACY_PER_DECADE = 50000;
     public const LEGACY_CAP = 250000;

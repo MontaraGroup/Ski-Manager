@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use App\Libraries\StaffEffects;
 
 class GameTick extends BaseCommand
 {
@@ -134,8 +135,8 @@ class GameTick extends BaseCommand
                 $type = $b['building_type'];
 
                 // Staff assignment bonuses: +15% revenue per assigned staff
-                if ($type === 'hotel') $revenue = (int) round($revenue * (1 + $countAssigned('receptionist') * 0.15));
-                if ($type === 'restaurant') $revenue = (int) round($revenue * (1 + $countAssigned('chef') * 0.10));
+                if ($type === 'hotel') $revenue = (int) round($revenue * (1 + $countAssigned('receptionist') * StaffEffects::RECEPTIONIST_REVENUE_BOOST));
+                if ($type === 'restaurant') $revenue = (int) round($revenue * (1 + $countAssigned('chef') * StaffEffects::CHEF_REVENUE_BOOST));
 
                 // v2 pays building revenue after visitors are known (it depends on how full they are)
                 if ($resortOpen && !$v2) $dayIncome += (int) round($revenue * $revMult); // closed resort: no guests, upkeep still due
@@ -273,7 +274,7 @@ class GameTick extends BaseCommand
             foreach ($items as $item) {
                 $decay = rand(0, 2);
                 if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
-                    $decay = max(0, $decay - 1);
+                    $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
                 }
                 // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
                 if ($v2 && $item['item_type'] === 'slope') {
@@ -357,11 +358,11 @@ class GameTick extends BaseCommand
             $baseVisitors = ($openSlopes * 50) + ($openLifts * 30);
             $marketingBoost = array_sum(array_column($campaigns, 'visitor_boost'));
             // Manager boost: +5% per assigned manager
-            $managerBoost = $countAssigned('manager') * 5;
+            $managerBoost = $countAssigned('manager') * StaffEffects::MANAGER_SKIER_BOOST;
             // Instructor boost: attracts families
-            $instructorBoost = $countAssigned('instructor') * 3;
+            $instructorBoost = $countAssigned('instructor') * StaffEffects::INSTRUCTOR_SKIER_BOOST;
             // Patrol boost: safety reputation
-            $patrolBoost = $countAssigned('ski_patrol') * 2;
+            $patrolBoost = $countAssigned('ski_patrol') * StaffEffects::SKI_PATROL_SKIER_BOOST;
 
             $snowQualityBonus = 0; foreach ($todayQualities as $sq) { $snowQualityBonus += match($sq) { "powder" => 3, "groomed" => 2, "packed" => 0, "icy" => -2, "bare" => -5, default => 0 }; }
 
@@ -542,11 +543,11 @@ class GameTick extends BaseCommand
             // ==============================
             $instructorCount = $countAssigned('instructor');
             if ($instructorCount > 0 && $visitors > 0 && $openSlopes > 0) {
-                $lessonCapacity = $instructorCount * 10;
-                $lessonDemand = (int) round($visitors * 0.08);
+                $lessonCapacity = $instructorCount * StaffEffects::LESSONS_PER_INSTRUCTOR;
+                $lessonDemand = (int) round($visitors * StaffEffects::LESSON_DEMAND_SHARE);
                 $studentsTaught = min($lessonCapacity, $lessonDemand);
                 if ($studentsTaught > 0) {
-                    $avgLessonFee = 50;
+                    $avgLessonFee = StaffEffects::LESSON_FEE;
                     $lessonRevenue = (int) round($studentsTaught * $avgLessonFee * $revMult);
                     $dayIncome += $lessonRevenue;
                     $classesTaught = (int) ceil($studentsTaught / 5);
@@ -596,7 +597,7 @@ class GameTick extends BaseCommand
 
                 $parkCrewCount = $countAssigned('park_crew');
                 $tpBaseDecay = 2.0;
-                $tpCrewReduction = min($parkCrewCount * 0.4, 1.5);
+                $tpCrewReduction = min($parkCrewCount * StaffEffects::PARK_CREW_WEAR_RELIEF, StaffEffects::PARK_CREW_CAP);
                 $tpDecay = max(0.3, $tpBaseDecay - $tpCrewReduction);
                 $tpNewCondition = max(0, $park['condition_pct'] - $tpDecay);
 
@@ -817,7 +818,7 @@ class GameTick extends BaseCommand
                 if ($isMinor && ($medicCount > 0 || $patrolStaffCount > 0)) {
                     log_activity($userId, 'rescue', 'Ski patrol & medics promptly treated an injured skier on Slope #' . rand(1, max(1, $openSlopes)) . '. Fast response prevented liability.', 'fa-solid fa-kit-medical');
                 } else {
-                    $accidentCost = rand(2500, 8000);
+                    $accidentCost = rand(StaffEffects::ACCIDENT_COST_MIN, StaffEffects::ACCIDENT_COST_MAX);
                     $liabilityPolicy = $db->table('insurance')->where('user_id', $userId)->where('active', 1)
                         ->groupStart()->where('policy_type', 'liability')->orLike('name', 'Liability')->groupEnd()
                         ->get()->getRowArray();
