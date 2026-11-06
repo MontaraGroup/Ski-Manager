@@ -1,35 +1,20 @@
+<?php
+$actionUrl = function_exists('url_to') ? (function() { try { return url_to('magic-link'); } catch (\Throwable $e) { return site_url('login/magic-link'); } })() : site_url('login/magic-link');
+$loginUrl = function_exists('url_to') ? (function() { try { return url_to('login'); } catch (\Throwable $e) { return site_url('login'); } })() : site_url('login');
+
+$page = [
+    'actionUrl' => $actionUrl,
+    'loginUrl'  => $loginUrl,
+    'csrfToken' => csrf_hash(),
+    'csrfField' => csrf_token(),
+    'oldEmail'  => old('email') ?? '',
+    'error'     => session('error'),
+    'errors'    => session('errors'),
+    'message'   => session('message'),
+];
+?>
 <?= $this->extend('layouts/main') ?>
-
-<?= $this->section('title') ?>Magic Link<?= $this->endSection() ?>
-
+<?= $this->section('title') ?>Login via Magic Link<?= $this->endSection() ?>
 <?= $this->section('content') ?>
-<div class="min-h-[80vh] flex items-center justify-center px-4">
-    <div class="card bg-base-100 shadow-xl w-full max-w-md">
-        <div class="card-body">
-            <h2 class="card-title text-2xl font-bold justify-center mb-4">Login via Magic Link</h2>
-            <p class="text-center text-base-content/70 mb-4">Enter your email and we'll send you a link to log in instantly.</p>
-
-            <form action="<?= url_to('magic-link') ?>" method="post">
-                <?= csrf_field() ?>
-
-                <div class="form-control mb-4">
-                    <label class="label" for="email">
-                        <span class="label-text">Email</span>
-                    </label>
-                    <input type="email" name="email" id="email" class="input input-bordered w-full" placeholder="you@example.com" value="<?= old('email') ?>" required autofocus aria-required="true" autocomplete="email">
-                </div>
-
-                <div class="form-control mt-6">
-                    <button type="submit" class="btn btn-primary w-full">Send Magic Link</button>
-                </div>
-            </form>
-
-            <div class="divider"></div>
-
-            <p class="text-center text-sm text-base-content/70">
-                <a href="<?= url_to('login') ?>" class="link link-primary">Back to Login</a>
-            </p>
-        </div>
-    </div>
-</div>
+<?= island('MagicLinkFormPage', $page, '<p class="max-w-md mx-auto p-8 text-center text-sm">Loading magic link form…</p>') ?>
 <?= $this->endSection() ?>

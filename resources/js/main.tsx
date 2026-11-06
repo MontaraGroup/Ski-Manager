@@ -91,6 +91,12 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   HomePage: () => import('./islands/HomePage'),
   LoginPage: () => import('./islands/LoginPage'),
   RegisterPage: () => import('./islands/RegisterPage'),
+  MagicLinkFormPage: () => import('./islands/MagicLinkFormPage'),
+  MagicLinkMessagePage: () => import('./islands/MagicLinkMessagePage'),
+  CompleteProfilePage: () => import('./islands/CompleteProfilePage'),
+  Email2FAShowPage: () => import('./islands/Email2FAShowPage'),
+  Email2FAVerifyPage: () => import('./islands/Email2FAVerifyPage'),
+  CountdownPage: () => import('./islands/CountdownPage'),
 };
 
 function readProps(el: HTMLElement): Record<string, unknown> {

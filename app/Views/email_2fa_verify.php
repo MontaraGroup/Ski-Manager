@@ -1,32 +1,18 @@
-<?= $this->extend(config('Auth')->views['layout']) ?>
+<?php
+$actionUrl = function_exists('url_to') ? (function() { try { return url_to('auth-action-verify'); } catch (\Throwable $e) { return site_url('auth/a/verify'); } })() : site_url('auth/a/verify');
+$resendUrl = function_exists('url_to') ? (function() { try { return url_to('auth-action-show'); } catch (\Throwable $e) { return site_url('auth/a/show'); } })() : site_url('auth/a/show');
 
-<?= $this->section('title') ?><?= lang('Auth.email2FATitle') ?> <?= $this->endSection() ?>
-
-<?= $this->section('main') ?>
-
-<div class="container d-flex justify-content-center p-5">
-    <div class="card col-12 col-md-5 shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-5"><?= lang('Auth.emailEnterCode') ?></h5>
-
-            <p><?= lang('Auth.emailConfirmCode') ?></p>
-
-            <form action="<?= url_to('auth-action-verify') ?>" method="post">
-                <?= csrf_field() ?>
-
-                <!-- Code -->
-                <div class="mb-2">
-                    <input type="number" class="form-control" name="token" placeholder="000000"
-                        inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required>
-                </div>
-
-                <div class="d-grid col-8 mx-auto m-3">
-                    <button type="submit" class="btn btn-primary btn-block"><?= lang('Auth.confirm') ?></button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-</div>
-
+$page = [
+    'actionUrl' => $actionUrl,
+    'resendUrl' => $resendUrl,
+    'csrfToken' => csrf_hash(),
+    'csrfField' => csrf_token(),
+    'error'     => session('error'),
+    'errors'    => session('errors'),
+];
+?>
+<?= $this->extend('layouts/main') ?>
+<?= $this->section('title') ?>Enter Verification Code<?= $this->endSection() ?>
+<?= $this->section('content') ?>
+<?= island('Email2FAVerifyPage', $page, '<p class="max-w-md mx-auto p-8 text-center text-sm">Loading code verification…</p>') ?>
 <?= $this->endSection() ?>
