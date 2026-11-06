@@ -78,4 +78,18 @@ jobs:
         run: |
           test -x scripts/deploy.sh || chmod +x scripts/deploy.sh
           test -x scripts/update_changelog_view.py || chmod +x scripts/update_changelog_view.py
+          test -x scripts/check_antislop.py || chmod +x scripts/check_antislop.py
+          test -x scripts/check_bundle_budget.py || chmod +x scripts/check_bundle_budget.py
           echo "Automation scripts verified."
+
+      - name: Setup Node.js & React Island Quality Gate
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Run React Islands & Antislop Quality Gate
+        run: npm test

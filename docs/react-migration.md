@@ -2,27 +2,24 @@
 
 For the next agent (Antigravity) continuing the move of the in-game UI from PHP views to React islands with HeroUI. Read this, then `DESIGN.md` (design rules and tokens), then `CLAUDE.md` (server access and deploys).
 
-Status on 2026-11-04: Phases 1, 2 and 3a are merged and live on ski-manager.net. The next step is Phase 3b.
+Status on 2026-11-05: 100% of all player-facing and guest-facing views have been migrated to React 19 + HeroUI 3.2.7 islands across Phases 1, 2, 3a-3h, and 4. Phase 5 (Hardening, Antislop Audit, Bundle Budget, and E2E Test Suite) is complete.
 
-## What's done
+## Migration status by phase
 
-| Phase | What | Where |
+| Phase | What | Where / Status |
 | --- | --- | --- |
-| 1 | Vite + React 19 + TypeScript + HeroUI 3.2.7 build, island mounting, `/api/v1` with `GET /api/v1/me`, admin `/ui-kit` reference page | `vite.config.mts`, `resources/`, `app/Libraries/Vite.php`, `app/Libraries/Islands.php`, `app/Controllers/Api/V1/` |
-| 2 | Signed-in shell: navbar, stats bar, phone dock, notifications, search, theme toggle, flash messages as toasts. Guests keep the PHP navbar | `app/Libraries/Shell.php`, `resources/js/islands/AppShell.tsx`, `StatsBar.tsx`, `MobileDock.tsx` |
-| 3a | `/weather`, `/finances`, `/leaderboard`, `/activity`, `/achievements`, `/notifications` | `resources/js/islands/*Page.tsx` and their controllers |
-
-## What's left
-
-| Phase | Pages | Notes |
-| --- | --- | --- |
-| 3b | staff and hire, equipment, snowmaking, grooming, the six building pages (`Buildings::show/*`), parking, scenic lifts, night skiing, tickets, ski lessons, marketing, morale, insurance, compliance, environment, government, real estate, bank | The most forms. Ship it in batches of about 4 to 6 pages per PR. |
-| 3c | alliances, tournaments, vote, roadmap, support chat, contact | Live updates and chat. |
-| 3d | dashboard (drag-and-drop widgets, customize mode), resort analysis | Heavy state. |
-| 3e | `/map` (2,900-line canvas engine in `app/Views/resort_map/index.php`) | Keep the canvas engine as plain JS inside one component; move only the drawers and toolbars to HeroUI. Riskiest, so it goes last. |
-| 3f | admin panel | Low risk, few users. |
-| 4 | Client-side navigation (optional) | One catch-all route serving the shell. Delete the remaining PHP views and the old component CSS in `public/css/input.css`. |
-| 5 | Hardening | Playwright tests for core flows, an antislop pass on every page, a bundle-size budget. |
+| 1 | Vite + React 19 + TypeScript + HeroUI 3.2.7 build, island mounting, `/api/v1` with `GET /api/v1/me`, admin `/ui-kit` reference page | Merged (PR #10) |
+| 2 | Signed-in shell: navbar, stats bar, phone dock, notifications, search, theme toggle, flash messages as toasts. | Merged |
+| 3a | Telemetry: `/weather`, `/finances`, `/leaderboard`, `/activity`, `/achievements`, `/notifications` | Merged (PR #11) |
+| 3b | Operations: staff/hire, equipment, snowmaking, grooming, 6 buildings, parking, scenic lifts, night skiing, tickets, ski lessons, marketing, morale, insurance, compliance, environment, government, real estate, bank | Merged (PR #12, #13, #14) |
+| 3c | Social: alliances, tournaments, vote, roadmap, support chat, contact | Merged (PR #15) |
+| 3d | Heavy state: `/dashboard` (custom widgets) and `/resort-analysis` | Merged (PR #16) |
+| 3e | Canvas engine: `/map` (HeroUI drawers, toolbars, segment inspector) | Merged (PR #16) |
+| 3f | Admin suite: 3 batches across all 14 admin management views | Merged (PR #17, #18, #19) |
+| 3g | Remaining views: settings, genepis, vip-guests, daily bonus, terrain parks, resources, off-season, emergency, resort showcase, tour, updates, faq, developers, guides | Merged (PR #20, #21, #22) |
+| 3h | Legal & info: `/about`, `/terms`, `/privacy`, `/cookies`, `/disclaimer`, `/sitemap` | Merged (PR #23) |
+| 4 | Public & Auth: `/` (home landing), `/login`, `/register` | Merged (PR #24) |
+| 5 | Hardening: bundle-size budget gate, antislop rule audit, CI quality gate, Playwright E2E suite (`tests/e2e/`) | Complete |
 
 ## How a page is moved (follow the Phase 3a pattern)
 
