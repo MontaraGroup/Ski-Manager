@@ -1,1 +1,0 @@
-import{L as e}from"./compose-Bc5xg1PI.js";function t(t,n){let{id:r,"aria-label":i,"aria-labelledby":a}=t;return r=e(r),a&&i?a=[...new Set([r,...a.trim().split(/\s+/)])].join(` `):a&&=a.trim().split(/\s+/).join(` `),!i&&!a&&n&&(i=n),{id:r,"aria-label":i,"aria-labelledby":a}}function n(e,t=-1/0,n=1/0){return Math.min(Math.max(e,t),n)}export{t as n,n as t};

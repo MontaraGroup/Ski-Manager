@@ -45,25 +45,119 @@ class OffSeason extends BaseController
         $equipment = $db->table('equipment')->where('user_id', $userId)->get()->getResultArray();
         $terrainParks = $db->table('terrain_parks')->where('user_id', $userId)->get()->getResultArray();
 
-        $avgSlopeCond = count($slopes) > 0 ? round(array_sum(array_column($slopes, 'condition_pct')) / count($slopes)) : 100;
-        $avgLiftCond = count($lifts) > 0 ? round(array_sum(array_column($lifts, 'condition_pct')) / count($lifts)) : 100;
-        $avgEquipCond = count($equipment) > 0 ? round(array_sum(array_column($equipment, 'condition_pct')) / count($equipment)) : 100;
-        $avgParkCond = count($terrainParks) > 0 ? round(array_sum(array_column($terrainParks, 'condition_pct')) / count($terrainParks)) : 100;
+        $avgSlopeCond = count($slopes) > 0 ? (int) round(array_sum(array_column($slopes, 'condition_pct')) / count($slopes)) : 100;
+        $avgLiftCond = count($lifts) > 0 ? (int) round(array_sum(array_column($lifts, 'condition_pct')) / count($lifts)) : 100;
+        $avgEquipCond = count($equipment) > 0 ? (int) round(array_sum(array_column($equipment, 'condition_pct')) / count($equipment)) : 100;
+        $avgParkCond = count($terrainParks) > 0 ? (int) round(array_sum(array_column($terrainParks, 'condition_pct')) / count($terrainParks)) : 100;
 
-        return view('off_season/index', [
-            'gameDay' => $gameDay, 'seasonDay' => $seasonDay,
-            'isWinter' => $isWinter, 'isSummer' => $isSummer,
-            'summerDay' => $isSummer ? $seasonDay - getWinterDays() : 0,
-            'daysUntilWinter' => $isSummer ? getSeasonLength() - $seasonDay + 1 : 0,
-            'daysUntilSummer' => $isWinter ? 100 - $seasonDay + 1 : 0,
-            'finance' => $finance, 'summerActivities' => $summerActivities,
-            'activityConfig' => $this->getActivityConfig(),
-            'maintenanceTasks' => $this->getMaintenanceTasks(),
-            'slopes' => $slopes, 'lifts' => $lifts, 'buildings' => $buildings,
-            'equipment' => $equipment, 'terrainParks' => $terrainParks,
-            'avgSlopeCond' => $avgSlopeCond, 'avgLiftCond' => $avgLiftCond,
-            'avgEquipCond' => $avgEquipCond, 'avgParkCond' => $avgParkCond,
-        ]);
+        $cash = (int) ($finance['cash'] ?? 0);
+        $tasksConfig = $this->getMaintenanceTasks();
+        $formattedTasks = [];
+        foreach ($tasksConfig as $key => $task) {
+            $itemCount = 0;
+            $needsRepair = 0;
+            switch ($task['target']) {
+                case 'slopes':
+                    $itemCount = count($slopes);
+                    $needsRepair = count(array_filter($slopes, fn($s) => (int) $s['condition_pct'] < 100));
+                    break;
+                case 'lifts':
+                    $itemCount = count($lifts);
+                    $needsRepair = count(array_filter($lifts, fn($l) => (int) $l['condition_pct'] < 100));
+                    break;
+                case 'buildings':
+                    $itemCount = count($buildings);
+                    $needsRepair = count(array_filter($buildings, fn($b) => (int) $b['condition_pct'] < 100));
+                    break;
+                case 'equipment':
+                    $itemCount = count($equipment);
+                    $needsRepair = count(array_filter($equipment, fn($e) => (int) $e['condition_pct'] < 100));
+                    break;
+                case 'terrain_parks':
+                    $itemCount = count($terrainParks);
+                    $needsRepair = count(array_filter($terrainParks, fn($p) => (int) $p['condition_pct'] < 100));
+                    break;
+            }
+
+            $totalCost = $needsRepair * (int) $task['cost_per_unit'];
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $task['icon'] ?? 'wrench');
+
+            $formattedTasks[] = [
+                'key' => $key,
+                'name' => $task['name'],
+                'icon' => $cleanIcon,
+                'desc' => $task['desc'],
+                'target' => $task['target'],
+                'cost_per_unit' => (int) $task['cost_per_unit'],
+                'cost_per_unit_formatted' => currency((int) $task['cost_per_unit']),
+                'total_items' => $itemCount,
+                'needs_repair' => $needsRepair,
+                'total_cost' => $totalCost,
+                'total_cost_formatted' => currency($totalCost),
+                'canAfford' => $cash >= $totalCost,
+            ];
+        }
+
+        $formattedActivities = array_map(function($act) use ($isSummer) {
+            return [
+                'id' => (int) $act['id'],
+                'name' => $act['name'],
+                'specialty' => $act['specialty'] ?? '',
+                'revenueFormatted' => currency((int) ($act['revenue_per_day'] ?? 0)),
+                'upkeepFormatted' => currency((int) ($act['upkeep_per_day'] ?? 0)),
+                'capacity' => (int) ($act['capacity'] ?? 0),
+                'status' => $act['status'] ?? 'open',
+                'isActive' => $isSummer && ($act['status'] ?? 'open') === 'open',
+            ];
+        }, $summerActivities);
+
+        $activityConfig = $this->getActivityConfig();
+        $formattedCatalog = [];
+        foreach ($activityConfig as $key => $cfg) {
+            $cleanIcon = str_replace(['fa-solid ', 'fa-regular ', 'fa-brands '], '', $cfg['icon'] ?? 'sun');
+            $cost = (int) $cfg['cost'];
+            $formattedCatalog[] = [
+                'key' => $key,
+                'name' => $cfg['name'],
+                'icon' => $cleanIcon,
+                'desc' => $cfg['desc'],
+                'cost' => $cost,
+                'costFormatted' => currency($cost),
+                'revenueFormatted' => currency((int) $cfg['revenue']),
+                'upkeepFormatted' => currency((int) $cfg['upkeep']),
+                'capacity' => (int) $cfg['capacity'],
+                'canAfford' => $cash >= $cost,
+            ];
+        }
+
+        $page = [
+            'season' => [
+                'gameDay' => $gameDay,
+                'seasonDay' => $seasonDay,
+                'isWinter' => $isWinter,
+                'isSummer' => $isSummer,
+                'summerDay' => $isSummer ? $seasonDay - getWinterDays() : 0,
+                'daysUntilWinter' => $isSummer ? getSeasonLength() - $seasonDay + 1 : 0,
+                'daysUntilSummer' => $isWinter ? 100 - $seasonDay + 1 : 0,
+                'winterDays' => getWinterDays(),
+                'summerDays' => getSummerDays(),
+                'seasonLength' => getSeasonLength(),
+            ],
+            'cash' => $cash,
+            'cashFormatted' => currency($cash),
+            'health' => [
+                'slopes' => ['count' => count($slopes), 'avgCondition' => $avgSlopeCond],
+                'lifts' => ['count' => count($lifts), 'avgCondition' => $avgLiftCond],
+                'buildings' => ['count' => count($buildings), 'avgCondition' => 100],
+                'equipment' => ['count' => count($equipment), 'avgCondition' => $avgEquipCond],
+                'terrainParks' => ['count' => count($terrainParks), 'avgCondition' => $avgParkCond],
+            ],
+            'maintenanceTasks' => $formattedTasks,
+            'summerActivities' => $formattedActivities,
+            'catalogActivities' => $formattedCatalog,
+        ];
+
+        return view('off_season/index', ['page' => $page]);
     }
 
     public function runMaintenance()

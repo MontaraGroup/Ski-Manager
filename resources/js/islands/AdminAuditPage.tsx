@@ -94,11 +94,11 @@ export default function AdminAuditPage({ logs = [] }: AdminAuditPageProps) {
                           {l.target_name} <span className="font-mono text-muted text-[11px]">#{l.target_user_id}</span>
                         </a>
                       ) : (
-                        <span className="text-muted/60">—</span>
+                        <span className="text-muted/60">–</span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-muted sm:pr-6 max-w-xs sm:max-w-md truncate" title={l.details}>
-                      {l.details || '—'}
+                      {l.details || '–'}
                     </td>
                   </tr>
                 ))}

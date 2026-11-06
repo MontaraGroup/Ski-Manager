@@ -64,16 +64,48 @@ class DailyBonus extends BaseController
             $days[] = self::rewardFor($s, $cycle) + ['streak' => $s, 'done' => $s <= $streak, 'next' => !$claimedToday && $s === $streak + 1];
         }
 
-        return view('dailybonus/index', [
-            'row' => $row,
+        $formattedDays = array_map(function($d) {
+            return [
+                'day' => (int) $d['day'],
+                'week' => (int) $d['week'],
+                'streak' => (int) $d['streak'],
+                'multiplier' => (float) $d['multiplier'],
+                'cash' => (int) $d['cash'],
+                'cashFormatted' => currency((int) $d['cash']),
+                'genepis' => (int) $d['genepis'],
+                'done' => (bool) $d['done'],
+                'next' => (bool) $d['next'],
+            ];
+        }, $days);
+
+        $nextMultPct = (int) round(($next['multiplier'] - 1) * 100);
+
+        $page = [
             'streak' => $streak,
-            'lostStreak' => !$onStreak && (int) $row['streak'] > 1 ? (int) $row['streak'] : 0,
+            'bestStreak' => max((int) $row['best_streak'], $streak),
+            'totalClaimed' => (int) $row['total_claimed'],
+            'totalClaimedFormatted' => currency((int) $row['total_claimed']),
             'claimedToday' => $claimedToday,
-            'next' => $next,
-            'days' => $days,
-            'secondsToReset' => strtotime('tomorrow') - time(),
-            'cycle' => $cycle,
-        ]);
+            'lostStreak' => !$onStreak && (int) $row['streak'] > 1 ? (int) $row['streak'] : 0,
+            'secondsToReset' => max(0, strtotime('tomorrow') - time()),
+            'next' => [
+                'day' => (int) $next['day'],
+                'week' => (int) $next['week'],
+                'cash' => (int) $next['cash'],
+                'cashFormatted' => currency((int) $next['cash']),
+                'genepis' => (int) $next['genepis'],
+                'multPct' => $nextMultPct,
+            ],
+            'currentWeek' => $days[0]['week'] ?? 1,
+            'weekMultiplier' => (float) ($days[0]['multiplier'] ?? 1.0),
+            'days' => $formattedDays,
+            'cycleAmounts' => array_values(array_map('currency', $cycle)),
+            'weekBonusPct' => (int) round(self::WEEK_BONUS * 100),
+            'maxMultiplier' => self::MAX_MULTIPLIER,
+            'weeklyGenepis' => self::WEEKLY_GENEPIS,
+        ];
+
+        return view('dailybonus/index', ['page' => $page]);
     }
 
     public function claim()

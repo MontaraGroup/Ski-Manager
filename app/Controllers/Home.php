@@ -14,9 +14,85 @@ class Home extends BaseController
             '</sitemap.xml>; rel="describedby"; type="text/xml"',
         ]));
 
-        $data = $this->getHomepageStats();
+        $raw = $this->getHomepageStats();
 
-        return view('home', $data);
+        $weather = $raw['weather'] ?? null;
+        $snowfall = $weather ? (int) ($weather['snowfall'] ?? 0) : 0;
+        $weatherFormatted = null;
+
+        if ($weather) {
+            $weatherFormatted = [
+                'condition' => $weather['condition'] ?? '',
+                'conditionName' => $weather['condition_name'] ?? ($weather['condition'] ?? 'Clear'),
+                'temp' => isset($weather['temp']) ? temp((int) $weather['temp']) : '–',
+                'snowBase' => isset($weather['snow_base']) ? snow((int) $weather['snow_base']) : '–',
+                'snowfallText' => $snowfall > 0 ? (snow($snowfall) . ' new snow') : 'No new snow',
+                'windText' => isset($weather['wind_speed']) ? speed((int) $weather['wind_speed']) : '–',
+            ];
+        }
+
+        $topPlayer = null;
+        if (!empty($raw['topPlayer'])) {
+            $topPlayer = [
+                'username' => $raw['topPlayer']['username'] ?? 'Player',
+                'cashText' => currency((int) ($raw['topPlayer']['cash'] ?? 0)),
+            ];
+        }
+
+        $standings = [];
+        if (!empty($raw['standings'])) {
+            foreach ($raw['standings'] as $idx => $s) {
+                $standings[] = [
+                    'rank' => $idx + 1,
+                    'username' => $s['username'] ?? '',
+                    'resortName' => $s['resort_name'] ?? '',
+                    'totalLifts' => (int) ($s['total_lifts'] ?? 0),
+                    'totalSlopes' => (int) ($s['total_slopes'] ?? 0),
+                    'cashText' => currency((int) ($s['cash'] ?? 0)),
+                ];
+            }
+        }
+
+        $recent = [];
+        if (!empty($raw['recent'])) {
+            foreach ($raw['recent'] as $r) {
+                $recent[] = [
+                    'username' => $r['username'] ?? '',
+                    'name' => $r['name'] ?? '',
+                    'itemType' => $r['item_type'] ?? 'slope',
+                    'difficulty' => $r['difficulty'] ?? 'blue',
+                    'timeAgoText' => function_exists('timeAgo') ? timeAgo($r['created_at']) : '',
+                ];
+            }
+        }
+
+        $page = [
+            'isLoggedIn' => (bool) (function_exists('auth') && auth()->loggedIn()),
+            'playerCount' => (int) $raw['playerCount'],
+            'playerCountFormatted' => number_format((int) $raw['playerCount']),
+            'totalSlopes' => (int) $raw['totalSlopes'],
+            'totalSlopesFormatted' => number_format((int) $raw['totalSlopes']),
+            'topPlayer' => $topPlayer,
+            'weather' => $weatherFormatted,
+            'season' => [
+                'current' => (int) $raw['currentSeasonNum'],
+                'day' => (int) $raw['seasonDay'],
+                'length' => (int) $raw['seasonLen'],
+                'daysRemaining' => (int) $raw['daysRemaining'],
+                'startDateFormatted' => date('F j, Y', $raw['seasonStart']),
+            ],
+            's2' => [
+                'live' => (bool) $raw['s2Live'],
+                'justOpened' => (bool) $raw['s2JustOpened'],
+                'runs' => (int) $raw['s2Runs'],
+                'lifts' => (int) $raw['s2Lifts'],
+                'steep' => (int) $raw['s2Steep'],
+            ],
+            'standings' => $standings,
+            'recent' => $recent,
+        ];
+
+        return view('home', ['page' => $page]);
     }
 
     /**

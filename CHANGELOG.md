@@ -1,3 +1,51 @@
+## Release 2026-11-06 03:34
+
+* Merge pull request #25 from Montara-Group/feature/react-phase-5-hardening (8c31af9)
+* feat(test): playwright e2e tests, antislop and bundle-size quality gates (phase 5) (5ad9ea6)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (799eeaa)
+* Merge pull request #24 from Montara-Group/feature/react-phase-4-auth-home (9ad351c)
+* feat(ui): home landing page, login, and registration in React (phase 4) (9548629)
+
+## Release 2026-11-05 19:43
+
+* Merge pull request #24 from Montara-Group/feature/react-phase-4-auth-home (9ad351c)
+* feat(ui): home landing page, login, and registration in React (phase 4) (9548629)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (147ef6a)
+* Merge pull request #23 from Montara-Group/feature/react-phase-3h-about-legal (d54be13)
+* feat(ui): about ski manager and legal pages in React (phase 3h) (a46752c)
+
+## Release 2026-11-05 19:33
+
+* Merge pull request #23 from Montara-Group/feature/react-phase-3h-about-legal (d54be13)
+* feat(ui): about ski manager and legal pages in React (phase 3h) (a46752c)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (58cc638)
+* Merge pull request #22 from Montara-Group/feature/react-phase-3g-batch-3 (2003143)
+* feat(ui): resort showcase, tour, updates, api docs, faq, and guides in React (phase 3g batch 3) (33487dc)
+
+## Release 2026-11-05 19:24
+
+* Merge pull request #22 from Montara-Group/feature/react-phase-3g-batch-3 (2003143)
+* feat(ui): resort showcase, tour, updates, api docs, faq, and guides in React (phase 3g batch 3) (33487dc)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (5496599)
+* Merge pull request #21 from Montara-Group/feature/react-phase-3g-batch-2 (2668cda)
+* feat(ui): daily bonus, terrain parks, utilities, off-season, and emergency in React (phase 3g batch 2) (a842783)
+
+## Release 2026-11-05 19:07
+
+* Merge pull request #21 from Montara-Group/feature/react-phase-3g-batch-2 (2668cda)
+* feat(ui): daily bonus, terrain parks, utilities, off-season, and emergency in React (phase 3g batch 2) (a842783)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (99941cc)
+* Merge pull request #36 from Montara-Group/main (f8f3f6b)
+* Merge pull request #20 from Montara-Group/feature/react-phase-3g-batch-1 (80f98d9)
+
+## Release 2026-11-05 14:01
+
+* Merge pull request #36 from Montara-Group/main (f8f3f6b)
+* Merge pull request #20 from Montara-Group/feature/react-phase-3g-batch-1 (80f98d9)
+* feat(ui): settings, genepis and vip guests in React (phase 3g batch 1) (57c48ab)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d1f33b3)
+* Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
+
 ## Release 2026-11-05 02:40
 
 * Merge pull request #19 from Montara-Group/feature/react-phase-3f-admin-batch-3 (9ee8535)
