@@ -140,7 +140,7 @@ export default function SupportPage({
               <Icon name="fa-headset" className="text-4xl text-muted/40 mb-3" />
               <div className="font-semibold text-base">What can we help with?</div>
               <p className="text-xs text-muted mt-1 mb-4">
-                Pick a topic to get started, or write your message below.
+                Pick a topic, or write your message below.
               </p>
               <div className="flex flex-wrap justify-center gap-1.5">
                 {TOPICS.map((t) => (
