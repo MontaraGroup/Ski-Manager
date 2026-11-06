@@ -266,6 +266,9 @@ $routes->get('/guides', 'Guides::index');
 $routes->get('/guides/(:segment)', 'Guides::show/$1');
 $routes->get("/disclaimer", "Legal::disclaimer");
 service("auth")->routes($routes);
+$routes->get('magic-link', static function () {
+    return redirect()->to(site_url('login/magic-link'));
+}, ['as' => 'magic-link-redirect']);
 $routes->get("/sitemap", "Legal::sitemap");
 $routes->post("/off-season/maintenance", "OffSeason::runMaintenance");
 $routes->post("/off-season/build", "OffSeason::buildActivity");

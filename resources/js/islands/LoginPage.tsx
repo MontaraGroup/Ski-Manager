@@ -9,6 +9,7 @@ interface LoginPageProps {
   oldEmail?: string;
   allowRemember: boolean;
   allowMagicLink: boolean;
+  magicLinkUrl?: string;
   allowDiscord: boolean;
   error?: string | null;
   errors?: string[] | null;
@@ -27,6 +28,7 @@ export default function LoginPage({
   oldEmail = '',
   allowRemember,
   allowMagicLink,
+  magicLinkUrl = '/login/magic-link',
   allowDiscord,
   error,
   errors,
@@ -200,7 +202,7 @@ export default function LoginPage({
                     Password
                   </label>
                   {allowMagicLink && (
-                    <a href="/magic-link" className="text-xs text-link hover:underline min-h-11 sm:min-h-0 flex items-center">
+                    <a href={magicLinkUrl || '/login/magic-link'} className="text-xs text-link hover:underline min-h-11 sm:min-h-0 flex items-center">
                       Forgot password?
                     </a>
                   )}
