@@ -1,3 +1,11 @@
+## Release 2026-11-06 03:34
+
+* Merge pull request #25 from Montara-Group/feature/react-phase-5-hardening (8c31af9)
+* feat(test): playwright e2e tests, antislop and bundle-size quality gates (phase 5) (5ad9ea6)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (799eeaa)
+* Merge pull request #24 from Montara-Group/feature/react-phase-4-auth-home (9ad351c)
+* feat(ui): home landing page, login, and registration in React (phase 4) (9548629)
+
 ## Release 2026-11-05 19:43
 
 * Merge pull request #24 from Montara-Group/feature/react-phase-4-auth-home (9ad351c)
