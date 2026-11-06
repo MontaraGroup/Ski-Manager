@@ -9,18 +9,6 @@
             <h2 class="card-title text-2xl font-bold justify-center mb-4">Login via Magic Link</h2>
             <p class="text-center text-base-content/70 mb-4">Enter your email and we'll send you a link to log in instantly.</p>
 
-            <?php if (session('error')) : ?>
-                <div class="alert alert-error mb-4" role="alert">
-                    <span><?= session('error') ?></span>
-                </div>
-            <?php endif ?>
-
-            <?php if (session('message')) : ?>
-                <div class="alert alert-success mb-4" role="status">
-                    <span><?= session('message') ?></span>
-                </div>
-            <?php endif ?>
-
             <form action="<?= url_to('magic-link') ?>" method="post">
                 <?= csrf_field() ?>
 
