@@ -16,6 +16,7 @@ $page = [
     'oldEmail' => (string) old('email', ''),
     'allowRemember' => (bool) (setting('Auth.sessionConfig')['allowRemembering'] ?? true),
     'allowMagicLink' => (bool) (setting('Auth.allowMagicLinkLogins') ?? false),
+    'magicLinkUrl' => site_url('login/magic-link'),
     'allowDiscord' => (string) env('DISCORD_CLIENT_ID', '') !== '',
     'error' => session('error'),
     'errors' => session('errors') ? (array) session('errors') : null,

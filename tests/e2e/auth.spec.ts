@@ -24,6 +24,12 @@ test.describe('Authentication Pages', () => {
     // OAuth buttons
     await expect(page.locator('a[href="/auth/google"]')).toBeVisible();
     await expect(page.locator('a[href="/auth/discord"]')).toBeVisible();
+
+    // Forgot password link (magic link)
+    const forgotLink = page.locator('a:has-text("Forgot password?")');
+    if (await forgotLink.count() > 0) {
+      await expect(forgotLink).toHaveAttribute('href', '/login/magic-link');
+    }
   });
 
   test('register page mounts with difficulty options and terms checkbox', async ({ page }) => {
@@ -51,6 +57,19 @@ test.describe('Authentication Pages', () => {
     await expect(termsCheck).not.toBeChecked();
 
     // Submit button
+    await expect(page.locator('button[type="submit"]')).toBeVisible();
+  });
+
+  test('magic link page mounts and /magic-link alias redirects to /login/magic-link', async ({ page }) => {
+    const response = await page.goto('/magic-link');
+    expect(response?.status()).toBeLessThan(400);
+    expect(page.url()).toContain('/login/magic-link');
+
+    const island = page.locator('[data-island="MagicLinkFormPage"]');
+    await expect(island).toBeVisible();
+
+    const emailInput = page.locator('input[name="email"]');
+    await expect(emailInput).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 });
