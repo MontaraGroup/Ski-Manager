@@ -163,7 +163,7 @@ class Api extends BaseController
                 (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type IN ('slope','downhill','crosscountry','snowpark','luge')) as slope_count,
                 (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type = 'lift') as lift_count,
                 (CAST(pf.total_income AS SIGNED) - CAST(pf.total_expenses AS SIGNED)) as net_profit,
-                (pf.cash + pf.total_income) as score
+                (CAST(pf.cash AS SIGNED) + CAST(pf.total_income AS SIGNED)) as score
             FROM users u
             LEFT JOIN player_finances pf ON pf.user_id = u.id
             WHERE u.id NOT IN (1, 3)
@@ -204,47 +204,118 @@ class Api extends BaseController
 
     /**
      * Bidirectional synchronization endpoint: receives client telemetry and returns confirmed server state.
+     * Requires Shield personal access token authentication. Client-sent cash values are ignored.
      */
     public function sync(): ResponseInterface
     {
-        $raw = $this->request->getJSON(true) ?? $this->request->getPost();
+        if ($this->request->getMethod(true) === 'OPTIONS') {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setStatusCode(200);
+        }
+
+        $user = (function_exists('auth') && auth('tokens')->loggedIn())
+            ? auth('tokens')->user()
+            : (function_exists('auth') && auth()->loggedIn() ? auth()->user() : null);
+
+        if (! $user) {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setStatusCode(401)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => 'Unauthorized',
+                ]);
+        }
+
+        $userId = (int) $user->id;
         $db = db_connect();
 
-        $cash = isset($raw['cash']) ? (int) $raw['cash'] : null;
-        $gameDay = isset($raw['game_day']) ? (int) $raw['game_day'] : (function_exists('getGameDay') ? getGameDay() : 42);
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $confirmedCash = $fin ? (int) $fin['cash'] : 250000;
+        $gameDay = function_exists('getGameDay') ? getGameDay() : 42;
 
         return $this->response
             ->setHeader('Access-Control-Allow-Origin', '*')
             ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
             ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
             ->setJSON([
-                'status'         => 'success',
-                'synced_at'      => date('Y-m-d H:i:s'),
-                'server_time'    => time(),
-                'server_game_day'=> $gameDay,
-                'confirmed_cash' => $cash ?? 250000,
-                'message'        => 'Resort telemetry synchronized with ski-manager.net',
+                'status'          => 'success',
+                'synced_at'       => date('Y-m-d H:i:s'),
+                'server_time'     => time(),
+                'server_game_day' => $gameDay,
+                'confirmed_cash'  => $confirmedCash,
+                'message'         => 'Resort telemetry synchronized with ski-manager.net',
             ]);
     }
 
     /**
-     * Mobile authentication check / demo session registration
+     * Mobile authentication: verifies email/password with Shield and issues a personal access token.
      */
     public function auth(): ResponseInterface
     {
+        if ($this->request->getMethod(true) === 'OPTIONS') {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setStatusCode(200);
+        }
+
         $raw = $this->request->getJSON(true) ?? $this->request->getPost();
-        $username = trim($raw['username'] ?? 'Director Guest');
+        $identity = trim($raw['email'] ?? $raw['username'] ?? '');
+        $password = (string) ($raw['password'] ?? '');
+
+        if ($identity === '' || $password === '' || ! function_exists('auth')) {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setStatusCode(401)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => 'Invalid credentials',
+                ]);
+        }
+
+        $checkField = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $result = auth()->check([$checkField => $identity, 'password' => $password]);
+
+        if (! $result->isOK() && $checkField === 'username') {
+            // Also check email if input was not standard email format
+            $result = auth()->check(['email' => $identity, 'password' => $password]);
+        }
+
+        if (! $result->isOK()) {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setStatusCode(401)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => 'Invalid credentials',
+                ]);
+        }
+
+        /** @var \CodeIgniter\Shield\Entities\User $user */
+        $user = $result->extraInfo();
+        $token = $user->generateAccessToken('mobile');
 
         return $this->response
             ->setHeader('Access-Control-Allow-Origin', '*')
             ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
             ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
             ->setJSON([
-                'status'       => 'authenticated',
-                'token'        => bin2hex(random_bytes(16)),
-                'username'     => $username,
-                'director_name'=> $username,
-                'server'       => 'https://ski-manager.net',
+                'status'        => 'authenticated',
+                'token'         => $token->raw_token,
+                'username'      => $user->username,
+                'director_name' => $user->username,
+                'server'        => 'https://ski-manager.net',
             ]);
     }
 }

@@ -106,13 +106,26 @@ class Finances extends BaseController
         $lifetime = (int) $finance['total_income'] - (int) $finance['total_expenses'];
         $signed = fn(int $v) => ($v >= 0 ? '+' : '') . currency($v);
 
-        $income = [['Lift tickets', $ticketIncome], ['Restaurants', $restaurantIncome], ['Hotels', $hotelIncome], ['Rentals', $rentalIncome]];
-        if ($otherIncome !== null) $income[] = ['Other (shops, transport, ski school, parking, VIPs)', $otherIncome];
-        $expenses = [['Staff (' . count($staff) . ')', $dailySalaries, 'fa-users'], ['Equipment', $equipmentCost, 'fa-toolbox'], ['Loans', $loanPayments, 'fa-landmark'],
-            ['Marketing', $dailyMarketing, 'fa-bullhorn'], ['Snowmaking', $dailyCannons, 'fa-snowflake'], ['Night skiing', $dailyLights, 'fa-moon']];
+        $income = [
+            ['Lift tickets (estimated)', $ticketIncome],
+            ['Restaurants (estimated)', $restaurantIncome],
+            ['Hotels (estimated)', $hotelIncome],
+            ['Rentals (estimated)', $rentalIncome],
+        ];
+        if ($otherIncome !== null) {
+            $income[] = ['Other (variance between category estimates and recorded tick total)', $otherIncome];
+        }
+        $expenses = [
+            ['Staff (' . count($staff) . ') (estimated)', $dailySalaries, 'fa-users'],
+            ['Equipment (estimated)', $equipmentCost, 'fa-toolbox'],
+            ['Loans (estimated)', $loanPayments, 'fa-landmark'],
+            ['Marketing (estimated)', $dailyMarketing, 'fa-bullhorn'],
+            ['Snowmaking (estimated)', $dailyCannons, 'fa-snowflake'],
+            ['Night skiing (estimated)', $dailyLights, 'fa-moon'],
+        ];
         if ($liftSlopeRunning !== null) {
-            $expenses[] = ['Lifts and slopes running', $liftSlopeRunning, 'fa-elevator'];
-            $expenses[] = ['Other (upkeep, utilities, insurance, fines)', $otherCosts, 'fa-receipt'];
+            $expenses[] = ['Lifts and slopes running (estimated)', $liftSlopeRunning, 'fa-elevator'];
+            $expenses[] = ['Other (variance between category estimates and recorded tick total)', $otherCosts, 'fa-receipt'];
         }
 
         return view('finances/index', ['page' => [

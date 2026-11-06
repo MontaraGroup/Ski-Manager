@@ -332,12 +332,26 @@ class Demo extends BaseController
         $email    = trim($this->request->getPost('email'));
         $password = $this->request->getPost('password');
 
+        $db->transBegin();
+
+        // Lock demo user record to prevent concurrent cleanup purge race
+        $lockedUser = $db->query("SELECT id FROM users WHERE id = ? AND status = 'demo' FOR UPDATE", [$userId])->getRow();
+        if (!$lockedUser) {
+            $db->transRollback();
+            if (function_exists('auth')) {
+                auth()->logout();
+            }
+            session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
+            return redirect()->to('/register')->with('error', 'Your demo session has expired or been removed. Please register a new account.');
+        }
+
         // Check if username is already taken by another user
         $existingUser = $db->table('users')
             ->where('username', $username)
             ->where('id !=', $userId)
             ->get()->getRow();
         if ($existingUser) {
+            $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'That username is already taken. Please choose another.');
         }
 
@@ -347,6 +361,7 @@ class Demo extends BaseController
             ->where('user_id !=', $userId)
             ->get()->getRow();
         if ($existingEmail) {
+            $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'An account with that email already exists. Please log in or use a different email.');
         }
 
@@ -363,6 +378,8 @@ class Demo extends BaseController
             'secret2'    => password_hash($password, PASSWORD_DEFAULT),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
+
+        $db->transCommit();
 
         // Remove demo tags from session
         session()->remove(['is_demo', 'demo_token', 'demo_created_at']);

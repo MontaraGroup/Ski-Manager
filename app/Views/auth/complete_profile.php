@@ -7,10 +7,6 @@
             <h2 class="card-title text-2xl font-bold justify-center mb-2">Welcome to Ski Manager!</h2>
             <p class="text-center text-base-content/70 mb-4">Set up your resort before you start playing.</p>
 
-            <?php if (session('error')) : ?>
-                <div class="alert alert-error mb-4"><span><?= session('error') ?></span></div>
-            <?php endif ?>
-
             <form action="/complete-profile" method="post">
                 <?= csrf_field() ?>
 

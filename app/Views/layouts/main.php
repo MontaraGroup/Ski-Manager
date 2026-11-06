@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <!-- Sentry Observability & Session Replay -->
-    <?php $__sentryDsn = getenv('SENTRY_DSN') ?: 'https://c2891eb7f1bd5f0b4f9ad8f08f4ae137@o4511424329220096.ingest.us.sentry.io/4512337095032832'; ?>
+    <?php $__sentryDsn = function_exists('env') ? env('SENTRY_DSN') : getenv('SENTRY_DSN'); ?>
     <?php if (!empty($__sentryDsn)) : ?>
     <!-- Deferred so it never holds up the first paint. The init runs from the bundle's own onload:
          by then window.Sentry is the full SDK, not a stub another Sentry script may have set first -->
@@ -15,12 +15,9 @@
           environment: <?= json_encode(ENVIRONMENT ?? 'production') ?>,
           integrations: [
             Sentry.browserTracingIntegration(),
-            Sentry.replayIntegration({
-              maskAllText: false,
-              blockAllMedia: false,
-            }),
+            Sentry.replayIntegration(),
           ],
-          tracesSampleRate: 1.0,
+          tracesSampleRate: 0.1,
           replaysSessionSampleRate: 0.1,
           replaysOnErrorSampleRate: 1.0,
           beforeSend: function (event, hint) {
@@ -129,7 +126,6 @@
     <?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
     <?= \App\Libraries\Islands::headTags(auth()->loggedIn()) ?>
-    <script defer src="https://js.sentry-cdn.com/67d62e71889bb1702e60a6c3130aff40.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

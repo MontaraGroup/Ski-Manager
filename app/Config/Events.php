@@ -102,7 +102,6 @@ Events::on('post_controller_constructor', static function () {
         \Sentry\configureScope(static function (\Sentry\State\Scope $scope) use ($user): void {
             $scope->setUser([
                 'id'       => (string) $user->id,
-                'email'    => $user->email ?? 'unknown',
                 'username' => $user->username ?? 'unknown',
             ]);
         });
