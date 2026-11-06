@@ -710,6 +710,7 @@ body {
   flex-direction: row;
   align-items: center;
   flex-wrap: wrap;
+  overflow: visible;
 }
 .menu-horizontal > li {
   display: inline-flex;
@@ -792,6 +793,7 @@ ul.menu-horizontal details > ul {
   position: absolute;
   top: 100%;
   left: 0;
+  z-index: 50;
   margin-top: 0.25rem;
   padding: 0.5rem;
   border: 1px solid color-mix(in oklab, var(--color-base-content) 12%, transparent);

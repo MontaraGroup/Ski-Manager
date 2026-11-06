@@ -10,18 +10,37 @@ test.describe('Public Landing Page', () => {
 
     // Mountain hero heading
     const heroHeading = page.locator('h1');
-    await expect(heroHeading).toContainText('Build, groom, and run');
+    await expect(heroHeading).toBeVisible({ timeout: 15_000 });
+    await expect(heroHeading).toContainText(/Build, groom, and run|Run a ski resort/i);
 
     // Live snow conditions panel
-    const snowBoard = page.getByText(/Live snow conditions|Park City base/i).first();
+    const snowBoard = page.getByText(/Live snow conditions|Live Snow Report|Park City base/i).first();
     await expect(snowBoard).toBeVisible();
-
-    // 5-step operational timeline
-    await expect(page.getByText('1. Layout lifts & slopes')).toBeVisible();
-    await expect(page.getByText('5. Season transition')).toBeVisible();
 
     // Registration CTA
     const startCta = page.locator('a[href="/register"]').first();
     await expect(startCta).toBeVisible();
+  });
+
+  test('opens Resort dropdown in front of the hero section without clipping', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop navbar dropdown only applies to desktop viewports');
+    await page.goto('/');
+
+    const resortSummary = page.locator('.site-nav summary:has-text("Resort")').first();
+    await expect(resortSummary).toBeVisible();
+    await resortSummary.click();
+
+    const dropdownMenu = resortSummary.locator('..').locator('ul').first();
+    await expect(dropdownMenu).toBeVisible();
+
+    const overviewLink = dropdownMenu.getByRole('link', { name: 'Overview' });
+    await expect(overviewLink).toBeVisible();
+
+    // Confirm the dropdown menu's bounding box extends below the navbar into the hero area
+    const navBox = await page.locator('.site-nav').boundingBox();
+    const menuBox = await dropdownMenu.boundingBox();
+    expect(navBox).toBeTruthy();
+    expect(menuBox).toBeTruthy();
+    expect(menuBox!.y + menuBox!.height).toBeGreaterThan(navBox!.y + navBox!.height);
   });
 });

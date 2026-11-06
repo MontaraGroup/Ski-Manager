@@ -128,6 +128,15 @@
   outline-offset: revert-layer !important;
 }
 
+/*
+ * HeroUI's .menu component defines overflow: clip. Prevent that rule from clipping DaisyUI horizontal
+ * navbars (.menu-horizontal) outside islands, allowing dropdown menus to extend downward over content.
+ */
+.site-nav .menu-horizontal,
+ul.menu-horizontal {
+  overflow: visible !important;
+}
+
 /* Touch screens: 44px tap targets (DESIGN.md, Layout) */
 @media (pointer: coarse) {
   :is([data-island], [data-island-layer]) .button {
