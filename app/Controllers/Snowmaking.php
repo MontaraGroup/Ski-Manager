@@ -154,6 +154,9 @@ class Snowmaking extends BaseController
             ];
         }
 
+        // Hours a standard gun can run today (0 = too warm)
+        $standardHours = SM::hours(['model_key' => ''], $baseTemp);
+
         $totalOperatingCost = array_sum(array_column($running, 'operating_cost'));
         $page = [
             'overview' => [
