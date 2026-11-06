@@ -1,3 +1,11 @@
+## Release 2026-11-06 15:05
+
+* Merge pull request #38 from Montara-Group/main (49a8783)
+* Merge pull request #27 from Montara-Group/fix/open-issues (1630503)
+* Merge pull request #26 from Montara-Group/fix/leaderboard-signed-score-overflow (d63695a)
+* fix(views): remove redundant flash message blocks already rendered by layout (adf1037)
+* fix(night-skiing): remove inaccurate revenue boost and extra hours claims (fc83633)
+
 ## Release 2026-11-06 03:34
 
 * Merge pull request #25 from Montara-Group/feature/react-phase-5-hardening (8c31af9)
