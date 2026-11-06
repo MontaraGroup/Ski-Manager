@@ -250,8 +250,10 @@ class Buildings extends BaseController
             'domain' => $typeData,
         ];
 
-        $viewFile = file_exists(APPPATH . 'Views/buildings/' . $type . '.php') ? 'buildings/' . $type : 'buildings/index';
-        return view($viewFile, ['page' => $page]);
+        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        return view('buildings/' . $type, ['page' => $page]);
     }
 
     public function build()

@@ -1,19 +1,14 @@
-<?= $this->extend(config('Auth')->views['layout']) ?>
+<?php
+$loginUrl = function_exists('url_to') ? (function() { try { return url_to('login'); } catch (\Throwable $e) { return site_url('login'); } })() : site_url('login');
 
-<?= $this->section('title') ?><?= lang('Auth.useMagicLink') ?> <?= $this->endSection() ?>
-
-<?= $this->section('main') ?>
-
-<div class="container d-flex justify-content-center p-5">
-    <div class="card col-12 col-md-5 shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title mb-5"><?= lang('Auth.useMagicLink') ?></h5>
-
-            <p><b><?= lang('Auth.checkYourEmail') ?></b></p>
-
-            <p><?= lang('Auth.magicLinkDetails', [setting('Auth.magicLinkLifetime') / 60]) ?></p>
-        </div>
-    </div>
-</div>
-
+$page = [
+    'loginUrl'        => $loginUrl,
+    'lifetimeMinutes' => (int) round((int) setting('Auth.magicLinkLifetime') / 60),
+    'message'         => session('message'),
+];
+?>
+<?= $this->extend('layouts/main') ?>
+<?= $this->section('title') ?>Check Your Email<?= $this->endSection() ?>
+<?= $this->section('content') ?>
+<?= island('MagicLinkMessagePage', $page, '<p class="max-w-md mx-auto p-8 text-center text-sm">Loading confirmation…</p>') ?>
 <?= $this->endSection() ?>
