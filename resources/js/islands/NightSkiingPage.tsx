@@ -30,8 +30,7 @@ export type LightTypeItem = {
 export type NightSkiingPageProps = {
   stats: {
     totalCoverage: number;
-    extraRevenue: number;
-    nightHours: number;
+    avgCondition: number;
     activeCount: number;
     totalCount: number;
     mechanics: number;
@@ -47,7 +46,7 @@ export default function NightSkiingPage({ stats, lights, lightTypes }: NightSkii
       title="Night skiing"
       icon="fa-moon"
       iconTone="text-accent"
-      subtitle="Extend operating hours with lighting systems to boost visitors and revenue"
+      subtitle="Maintain and power slope lighting systems across your resort"
       width="max-w-6xl"
       actions={
         stats.totalCount > 0 ? (
@@ -73,10 +72,10 @@ export default function NightSkiingPage({ stats, lights, lightTypes }: NightSkii
           note={stats.totalCoverage >= 100 ? 'Full coverage' : `${Math.max(0, 100 - stats.totalCoverage)}% unlit`}
         />
         <Figure
-          label="Revenue boost"
-          value={`+${stats.extraRevenue}%`}
-          tone="text-success"
-          note={`${stats.nightHours}h extra per day`}
+          label="Avg condition"
+          value={`${stats.avgCondition}%`}
+          tone={stats.avgCondition >= 60 ? 'text-success' : stats.avgCondition >= 30 ? 'text-warning' : 'text-danger'}
+          note="Decays 0–2% daily"
         />
         <Figure
           label="Lights active"
@@ -97,7 +96,7 @@ export default function NightSkiingPage({ stats, lights, lightTypes }: NightSkii
           <Icon name="fa-triangle-exclamation" className="text-warning mt-0.5 text-base shrink-0" />
           <div>
             <div className="font-semibold text-foreground">Low coverage</div>
-            <div className="text-muted">Coverage below 50% limits night skiing. Install more lights to attract evening visitors.</div>
+            <div className="text-muted">Coverage below 50%. Install more lights to illuminate additional mountain sectors.</div>
           </div>
         </div>
       )}
@@ -106,7 +105,7 @@ export default function NightSkiingPage({ stats, lights, lightTypes }: NightSkii
           <Icon name="fa-circle-check" className="text-success mt-0.5 text-base shrink-0" />
           <div>
             <div className="font-semibold text-foreground">Full coverage</div>
-            <div className="text-muted">Your slopes are fully lit for maximum night skiing revenue.</div>
+            <div className="text-muted">Your slopes are fully covered by active lighting systems.</div>
           </div>
         </div>
       )}

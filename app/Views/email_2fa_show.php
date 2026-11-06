@@ -14,13 +14,6 @@
                 Confirm your identity. Enter the 6-digit authentication token sent to your email profile.
             </p>
 
-            <?php if (session('error')) : ?>
-                <div class="alert alert-error shadow-sm text-sm justify-start text-left w-full">
-                    <i class="fas fa-circle-exclamation shrink-0"></i>
-                    <span><?= session('error') ?></span>
-                </div>
-            <?php endif ?>
-
             <form action="<?= url_to('auth-action-verify') ?>" method="post" id="otp-form" class="w-full mt-2">
                 <?= csrf_field() ?>
 

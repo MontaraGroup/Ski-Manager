@@ -132,7 +132,8 @@ $routes->get('/maintenance', 'Home::maintenance');
 $routes->get('/api/resort-data', 'Api::resortData');
 $routes->options('/api/resort-data', 'Api::resortData');
 $routes->match(['get', 'options'], '/api/leaderboard', 'Api::leaderboard');
-$routes->match(['post', 'options'], '/api/sync', 'Api::sync');
+$routes->options('/api/sync', 'Api::sync');
+$routes->post('/api/sync', 'Api::sync', ['filter' => 'tokens']);
 $routes->match(['post', 'options'], '/api/auth', 'Api::auth');
 // JSON API for the React islands: signed-in session, CSRF on writes (resources/js/lib/api.ts)
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'apiauth'], static function ($routes) {

@@ -41,11 +41,30 @@ class DemoCleanup extends BaseCommand
         if ($dryRun) return;
 
         $deleted = 0;
+        $db = db_connect();
         foreach ($ids as $id) {
             try {
-                AccountPurge::purge($id);
-                $deleted++;
+                $db->transBegin();
+                $eligible = $db->query("
+                    SELECT u.id FROM users u
+                    LEFT JOIN player_finances pf ON pf.user_id = u.id
+                    WHERE u.id = ?
+                      AND u.status = 'demo'
+                      AND NOT EXISTS (SELECT 1 FROM auth_identities i WHERE i.user_id = u.id AND i.type = 'email_password'
+                                      AND i.secret NOT LIKE 'guest\\_%@demo.ski-manager.net')
+                      AND (
+                        (u.created_at < NOW() - INTERVAL ? DAY AND (u.last_active IS NULL OR u.last_active < NOW() - INTERVAL ? DAY))
+                        OR (pf.user_id IS NULL AND u.created_at < NOW() - INTERVAL 1 HOUR)
+                      )
+                    FOR UPDATE", [$id, $days, $days])->getRow();
+
+                if ($eligible) {
+                    AccountPurge::purge($id);
+                    $deleted++;
+                }
+                $db->transCommit();
             } catch (\Throwable $e) {
+                $db->transRollback();
                 CLI::error('  #' . $id . ': ' . $e->getMessage());
             }
         }
