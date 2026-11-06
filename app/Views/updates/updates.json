@@ -1,5 +1,29 @@
 [
   {
+    "id": 55,
+    "version": "v1.4.36",
+    "title": "Release v1.4.36 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 06, 2026",
+    "releasedAtFormatted": "November 06, 2026",
+    "isLatest": true,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": 54,
     "version": "v1.4.35",
     "title": "Release v1.4.35 Update",
@@ -7,7 +31,7 @@
     "release_type": "patch",
     "released_at": "November 06, 2026",
     "releasedAtFormatted": "November 06, 2026",
-    "isLatest": true,
+    "isLatest": false,
     "categories": [
       {
         "type": "improved",
