@@ -1,3 +1,11 @@
+## Release 2026-11-06 23:52
+
+* Merge pull request #30 from Montara-Group/fix/nav-dropdown-overflow (1904c81)
+* fix(nav): prevent HeroUI menu styles from clipping DaisyUI navbar dropdowns (b4b2f2e)
+* Merge pull request #43 from Montara-Group/main (c40944b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (86c856a)
+* Merge pull request #29 from Montara-Group/fix/magic-link-404 (4b65a94)
+
 ## Release 2026-11-06 23:13
 
 * Merge pull request #29 from Montara-Group/fix/magic-link-404 (4b65a94)
