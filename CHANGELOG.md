@@ -1,3 +1,19 @@
+## Release 2026-11-06 23:13
+
+* Merge pull request #29 from Montara-Group/fix/magic-link-404 (4b65a94)
+* Merge branch 'MontaraGroup:main' into main (a347950)
+* fix(auth): redirect /magic-link to /login/magic-link and fix forgot password link (df00dcc)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (a0acd82)
+* Merge pull request #40 from Montara-Group/main (0850588)
+
+## Release 2026-11-06 20:33
+
+* Merge pull request #28 from Montara-Group/feature/react-final-views (fe9edde)
+* feat(ui): migrate auth, 2FA, and countdown views to React islands and remove dead fallbacks (339a563)
+* Merge pull request #39 from Montara-Group/main (652371b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c529ad7)
+* Merge pull request #38 from Montara-Group/main (49a8783)
+
 ## Release 2026-11-06 15:05
 
 * Merge pull request #38 from Montara-Group/main (49a8783)
