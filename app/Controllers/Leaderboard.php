@@ -33,7 +33,7 @@ class Leaderboard extends BaseController
         $rows = $db->query("
             SELECT u.id, u.username, u.created_at, pf.cash, pf.difficulty, pf.daily_visitors, pf.resort_name,
                    CAST(pf.total_income AS SIGNED) - CAST(pf.total_expenses AS SIGNED) AS net_profit,
-                   pf.cash + pf.total_income AS score,
+                   CAST(pf.cash AS SIGNED) + CAST(pf.total_income AS SIGNED) AS score,
                    COALESCE(it.slopes, 0) AS slope_count, COALESCE(it.lifts, 0) AS lift_count,
                    COALESCE(b.n, 0) AS building_count, COALESCE(st.n, 0) AS staff_count
             FROM users u

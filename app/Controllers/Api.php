@@ -163,7 +163,7 @@ class Api extends BaseController
                 (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type IN ('slope','downhill','crosscountry','snowpark','luge')) as slope_count,
                 (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type = 'lift') as lift_count,
                 (CAST(pf.total_income AS SIGNED) - CAST(pf.total_expenses AS SIGNED)) as net_profit,
-                (pf.cash + pf.total_income) as score
+                (CAST(pf.cash AS SIGNED) + CAST(pf.total_income AS SIGNED)) as score
             FROM users u
             LEFT JOIN player_finances pf ON pf.user_id = u.id
             WHERE u.id NOT IN (1, 3)
