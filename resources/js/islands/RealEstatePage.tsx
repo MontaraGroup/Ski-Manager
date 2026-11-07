@@ -282,7 +282,7 @@ export default function RealEstatePage({
                 data={{ level: pr.level }}
                 variant="primary"
                 size="sm"
-                className="w-full"
+                className="w-full min-h-11 sm:min-h-9 font-semibold text-xs"
                 disabled={plots.free <= 0 || !pr.canAfford}
                 confirm={{
                   title: `Develop ${pr.name}`,
@@ -370,6 +370,7 @@ export default function RealEstatePage({
                           action={`/real-estate/sell/${p.id}`}
                           variant="secondary"
                           size="sm"
+                          className="min-h-11 sm:min-h-8 text-xs font-semibold"
                           confirm={{
                             title: `Sell ${p.name}`,
                             body: `Sell ${p.name} on the open market for ${p.saleNowText}? The unit will remain on its plot and generate ${p.feeText}/day in ongoing management fees.`,
@@ -384,6 +385,7 @@ export default function RealEstatePage({
                           action={`/real-estate/toggle/${p.id}`}
                           variant="tertiary"
                           size="sm"
+                          className="min-h-11 sm:min-h-8 text-xs font-semibold"
                         >
                           {p.state === 'leased' ? 'Make vacant' : 'Lease out'}
                         </PostButton>
@@ -395,6 +397,7 @@ export default function RealEstatePage({
                         action={`/real-estate/repair/${p.id}`}
                         variant="primary"
                         size="sm"
+                        className="min-h-11 sm:min-h-8 text-xs font-semibold"
                         disabled={!p.canRepair}
                         confirm={{
                           title: `Repair ${p.name}`,
