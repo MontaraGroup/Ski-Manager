@@ -639,13 +639,15 @@ a.link:hover{opacity:0.8}
     <script>
         (function() {
             var toggle = document.getElementById('themeToggle');
-            var current = document.documentElement.getAttribute('data-theme');
-            toggle.checked = (current === 'winter');
-            toggle.addEventListener('change', function() {
-                var theme = this.checked ? 'winter' : 'carboncloud';
-                document.documentElement.setAttribute('data-theme', theme);
-                localStorage.setItem('theme', theme);
-            });
+            if (toggle) {
+                var current = document.documentElement.getAttribute('data-theme');
+                toggle.checked = (current === 'winter');
+                toggle.addEventListener('change', function() {
+                    var theme = this.checked ? 'winter' : 'carboncloud';
+                    document.documentElement.setAttribute('data-theme', theme);
+                    localStorage.setItem('theme', theme);
+                });
+            }
         })();
     </script>
 
@@ -920,23 +922,23 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 <?php if (auth()->loggedIn()) : ?>
 <div id="tutorialWidgetContainer" style="position:fixed;bottom:4.5rem;right:1rem;z-index:9980;" class="hidden md:bottom-6 md:right-6">
     <!-- Collapsed Pill Badge -->
-    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer badge badge-primary gap-2 p-3 shadow-2xl hover:scale-105 transition-transform flex items-center">
+    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer badge badge-primary gap-2 p-3 min-h-11 shadow-2xl flex items-center">
         <i class="fa-solid fa-graduation-cap text-sm"></i>
         <span class="font-bold text-xs" id="tutPillText">Tutorial</span>
-        <i class="fa-solid fa-chevron-up text-[10px] opacity-70"></i>
+        <i class="fa-solid fa-chevron-up text-xs opacity-70"></i>
     </div>
 
     <!-- Expanded Card -->
-    <div id="tutorialWidget" class="card bg-base-100 shadow-2xl w-80 border border-base-300">
+    <div id="tutorialWidget" class="card bg-base-100 shadow-2xl w-[calc(100vw-2rem)] max-w-sm md:w-80 border border-base-300">
         <div class="card-body p-4">
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                    <div class="badge badge-primary badge-sm" id="tutStep">1/10</div>
+                    <div class="badge badge-primary text-xs" id="tutStep">1/10</div>
                     <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs text-base-content/70 " title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
-                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs text-base-content/70 hover:text-error" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
+                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 text-base-content/70 flex items-center justify-center" aria-label="Minimize tutorial" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 text-base-content/70 hover:text-error flex items-center justify-center" aria-label="Skip tutorial" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="flex gap-3">
@@ -952,11 +954,11 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
                 </div>
             </div>
             <div class="flex items-center justify-between mt-3">
-                <progress class="progress progress-primary w-32" id="tutProgress" value="0" max="10"></progress>
+                <progress class="progress progress-primary w-28 sm:w-32" id="tutProgress" value="0" max="10"></progress>
                 <div class="flex gap-1">
-                    <a id="tutGoBtn" href="/dashboard" class="btn btn-primary btn-xs gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
-                    <button id="tutNextBtn" onclick="advanceTutorial()" class="btn btn-primary btn-xs gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
-                    <button id="tutDoneBtn" onclick="advanceTutorial()" class="btn btn-success btn-xs gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
+                    <a id="tutGoBtn" href="/dashboard" class="btn btn-primary btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
+                    <button id="tutNextBtn" onclick="advanceTutorial()" class="btn btn-primary btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
+                    <button id="tutDoneBtn" onclick="advanceTutorial()" class="btn btn-success btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
                 </div>
             </div>
         </div>

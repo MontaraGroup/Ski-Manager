@@ -128,7 +128,7 @@ export default function ResortPage({
               type="submit"
               size="sm"
               variant={resort.is_open ? 'danger' : 'primary'}
-              className="font-semibold text-xs min-h-[36px] gap-1.5"
+              className="font-semibold text-xs min-h-11 sm:min-h-[36px] gap-1.5"
             >
               <Icon name={resort.is_open ? 'fa-door-closed' : 'fa-door-open'} />
               {resort.is_open ? 'Close Resort' : 'Open Resort'}
@@ -136,13 +136,13 @@ export default function ResortPage({
           </form>
 
           <a href="/resort/edit">
-            <Button variant="outline" size="sm" className="font-semibold text-xs min-h-[36px] gap-1.5">
+            <Button variant="outline" size="sm" className="font-semibold text-xs min-h-11 sm:min-h-[36px] gap-1.5">
               <Icon name="fa-pen-to-square" /> Edit Profile
             </Button>
           </a>
 
           <a href="/map">
-            <Button variant="primary" size="sm" className="font-semibold text-xs min-h-[36px] gap-1.5">
+            <Button variant="primary" size="sm" className="font-semibold text-xs min-h-11 sm:min-h-[36px] gap-1.5">
               <Icon name="fa-map" /> Trail Map
             </Button>
           </a>
@@ -168,13 +168,13 @@ export default function ResortPage({
           <div className="flex items-center gap-2">
             <form action="/resort/open-all" method="post">
               <CsrfInput />
-              <Button type="submit" size="sm" variant="secondary" className="text-xs min-h-[32px] gap-1">
+              <Button type="submit" size="sm" variant="secondary" className="text-xs min-h-11 sm:min-h-[32px] gap-1">
                 <Icon name="fa-door-open" /> Open All Slopes & Lifts
               </Button>
             </form>
             <form action="/resort/close-all" method="post">
               <CsrfInput />
-              <Button type="submit" size="sm" variant="outline" className="text-xs min-h-[32px] gap-1">
+              <Button type="submit" size="sm" variant="outline" className="text-xs min-h-11 sm:min-h-[32px] gap-1">
                 <Icon name="fa-door-closed" /> Close All
               </Button>
             </form>
@@ -341,7 +341,7 @@ export default function ResortPage({
                                   type="submit"
                                   size="sm"
                                   variant={slope.status === 'open' ? 'secondary' : 'primary'}
-                                  className="min-h-[28px] text-[11px] font-semibold"
+                                  className="min-h-11 sm:min-h-7 text-xs font-semibold px-3"
                                 >
                                   {slope.status === 'open' ? 'Close' : 'Open'}
                                 </Button>
@@ -433,7 +433,7 @@ export default function ResortPage({
                                       size="sm"
                                       variant="outline"
                                       isDisabled={!lift.canAffordRepair}
-                                      className="min-h-[28px] text-[11px] font-semibold text-info"
+                                      className="min-h-11 sm:min-h-7 text-xs font-semibold text-info px-3"
                                     >
                                       Repair ({lift.repair_cost_formatted})
                                     </Button>
@@ -447,7 +447,7 @@ export default function ResortPage({
                                     size="sm"
                                     variant={lift.status === 'open' ? 'secondary' : 'primary'}
                                     isDisabled={lift.status === 'broken'}
-                                    className="min-h-[28px] text-[11px] font-semibold"
+                                    className="min-h-11 sm:min-h-7 text-xs font-semibold px-3"
                                   >
                                     {lift.status === 'open' ? 'Close' : 'Open'}
                                   </Button>
