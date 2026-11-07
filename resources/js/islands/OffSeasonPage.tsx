@@ -276,7 +276,7 @@ export default function OffSeasonPage({
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-bold text-xs text-foreground truncate">{t.name}</h4>
-                        <p className="text-[11px] text-muted">{t.cost_per_unit_formatted} / item</p>
+                        <p className="text-xs text-muted">{t.cost_per_unit_formatted} / item</p>
                       </div>
                     </div>
 
@@ -314,7 +314,7 @@ export default function OffSeasonPage({
                         type="submit"
                         size="sm"
                         variant={allGood ? 'secondary' : 'primary'}
-                        className="w-full min-h-[36px] font-semibold text-xs gap-1.5"
+                        className="w-full min-h-11 sm:min-h-8 font-semibold text-xs gap-1.5"
                         isDisabled={allGood || !t.canAfford}
                       >
                         <Icon name="fa-wrench" />
@@ -353,7 +353,7 @@ export default function OffSeasonPage({
                     <div className="flex items-center gap-2">
                       <h4 className="font-bold text-sm text-foreground">{act.name}</h4>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                           act.isActive
                             ? 'bg-success/20 text-success'
                             : 'bg-muted/20 text-muted'
@@ -431,7 +431,7 @@ export default function OffSeasonPage({
                       type="submit"
                       variant="primary"
                       size="sm"
-                      className="w-full min-h-[36px] font-semibold text-xs gap-1.5"
+                      className="w-full min-h-11 sm:min-h-8 font-semibold text-xs gap-1.5"
                       isDisabled={!cfg.canAfford}
                     >
                       <Icon name="fa-hammer" />

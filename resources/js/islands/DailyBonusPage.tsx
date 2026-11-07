@@ -232,7 +232,7 @@ export default function DailyBonusPage({
                       : 'border-border/60 bg-base-200/40'
                   }`}
                 >
-                  <div className="text-[11px] font-semibold text-muted">Day {d.streak}</div>
+                  <div className="text-xs font-semibold text-muted">Day {d.streak}</div>
 
                   <div className="my-2">
                     <Icon
@@ -260,7 +260,7 @@ export default function DailyBonusPage({
                       {d.cashFormatted}
                     </div>
                     {d.genepis > 0 && (
-                      <div className="text-[10px] font-semibold text-success tabular-nums mt-0.5">
+                      <div className="text-xs font-semibold text-success tabular-nums mt-0.5">
                         +{d.genepis} Génépis
                       </div>
                     )}
