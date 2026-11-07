@@ -530,15 +530,15 @@ export default function BuildingPage({
                     <div className="grid grid-cols-4 gap-2 text-center text-xs pt-2 border-t border-border">
                       <div className="rounded-lg bg-surface-secondary p-1.5 border border-border">
                         <div className="font-semibold tabular-nums text-foreground">{b.capacity}</div>
-                        <div className="text-muted text-[10px]">{capacityLabel}</div>
+                        <div className="text-muted text-xs">{capacityLabel}</div>
                       </div>
                       <div className="rounded-lg bg-surface-secondary p-1.5 border border-border">
                         <div className="font-semibold tabular-nums text-success">{b.revenueText}</div>
-                        <div className="text-muted text-[10px]">Revenue / day</div>
+                        <div className="text-muted text-xs">Revenue / day</div>
                       </div>
                       <div className="rounded-lg bg-surface-secondary p-1.5 border border-border">
                         <div className="font-semibold tabular-nums text-danger">{b.upkeepText}</div>
-                        <div className="text-muted text-[10px]">Upkeep / day</div>
+                        <div className="text-muted text-xs">Upkeep / day</div>
                       </div>
                       <div className="rounded-lg bg-surface-secondary p-1.5 border border-border">
                         <div
@@ -552,7 +552,7 @@ export default function BuildingPage({
                         >
                           {b.condition_pct}%
                         </div>
-                        <div className="text-muted text-[10px]">Condition</div>
+                        <div className="text-muted text-xs">Condition</div>
                       </div>
                     </div>
 
@@ -636,15 +636,15 @@ export default function BuildingPage({
                   <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
                     <div className="rounded-lg bg-surface p-1.5 border border-border">
                       <div className="font-semibold tabular-nums">{tier.capacity}</div>
-                      <div className="text-muted text-[10px]">{capacityLabel}</div>
+                      <div className="text-muted text-xs">{capacityLabel}</div>
                     </div>
                     <div className="rounded-lg bg-surface p-1.5 border border-border">
                       <div className="font-semibold tabular-nums text-success">{tier.revenueText}</div>
-                      <div className="text-muted text-[10px]">Rev / day</div>
+                      <div className="text-muted text-xs">Rev / day</div>
                     </div>
                     <div className="rounded-lg bg-surface p-1.5 border border-border">
                       <div className="font-semibold tabular-nums text-danger">{tier.upkeepText}</div>
-                      <div className="text-muted text-[10px]">Upkeep / day</div>
+                      <div className="text-muted text-xs">Upkeep / day</div>
                     </div>
                   </div>
 
@@ -653,7 +653,7 @@ export default function BuildingPage({
                     data={{ type, level: tier.level }}
                     variant="primary"
                     size="sm"
-                    className="w-full mt-1"
+                    className="w-full mt-1 min-h-11 sm:min-h-8"
                   >
                     <Icon name="fa-plus" className="mr-1" />
                     Construct for {tier.costText}
@@ -678,7 +678,7 @@ export default function BuildingPage({
                   className="text-xs text-link flex items-center gap-1 hover:underline pointer-coarse:min-h-11 pointer-coarse:flex pointer-coarse:items-center"
                 >
                   Hire staff
-                  <Icon name="fa-arrow-right" className="text-[10px]" />
+                  <Icon name="fa-arrow-right" className="text-xs" />
                 </a>
               }
             >
@@ -687,11 +687,11 @@ export default function BuildingPage({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-xs text-foreground">Ski patrol</div>
-                      <div className="text-[11px] text-muted">{domain.patrolCount} on duty</div>
+                      <div className="text-xs text-muted">{domain.patrolCount} on duty</div>
                     </div>
                     <a
                       href="/staff/hire"
-                      className="inline-flex min-h-8 items-center rounded-lg border border-border px-2.5 text-xs font-medium hover:bg-default"
+                      className="inline-flex min-h-11 sm:min-h-8 items-center rounded-lg border border-border px-3 text-xs font-medium hover:bg-default"
                     >
                       Hire
                     </a>
@@ -701,7 +701,7 @@ export default function BuildingPage({
                       {domain.patrolStaff.map((p: any) => (
                         <span
                           key={p.name}
-                          className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted border border-border"
+                          className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-xs text-muted border border-border"
                         >
                           {p.name} Lv.{p.level}
                         </span>
@@ -714,11 +714,11 @@ export default function BuildingPage({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold text-xs text-foreground">Medics</div>
-                      <div className="text-[11px] text-muted">{domain.medicCount} on standby</div>
+                      <div className="text-xs text-muted">{domain.medicCount} on standby</div>
                     </div>
                     <a
                       href="/staff/hire"
-                      className="inline-flex min-h-8 items-center rounded-lg border border-border px-2.5 text-xs font-medium hover:bg-default"
+                      className="inline-flex min-h-11 sm:min-h-8 items-center rounded-lg border border-border px-3 text-xs font-medium hover:bg-default"
                     >
                       Hire
                     </a>
@@ -728,7 +728,7 @@ export default function BuildingPage({
                       {domain.medics.map((m: any) => (
                         <span
                           key={m.name}
-                          className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted border border-border"
+                          className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-xs text-muted border border-border"
                         >
                           {m.name} Lv.{m.level}
                         </span>
