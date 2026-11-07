@@ -139,8 +139,15 @@ ul.menu-horizontal {
 
 /* Touch screens: 44px tap targets (DESIGN.md, Layout) */
 @media (pointer: coarse) {
-  :is([data-island], [data-island-layer]) .button {
+  :is([data-island], [data-island-layer]) :is(.button, button, a[role="button"]) {
     min-height: 2.75rem;
+  }
+
+  .leaflet-touch .leaflet-bar a,
+  .leaflet-bar a {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    line-height: 2.75rem !important;
   }
 }
 

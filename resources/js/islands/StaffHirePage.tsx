@@ -116,6 +116,7 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
                       <Button
                         variant="primary"
                         size="sm"
+                        className="min-h-11 sm:min-h-8 text-xs font-semibold"
                         onPress={() => setActiveModalRole(r.key)}
                       >
                         <Icon name="fa-user-plus" className="mr-1" />
@@ -135,10 +136,11 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
       {/* Filter tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
         <h2 className="text-lg font-semibold">Available roles</h2>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant={filter === 'all' ? 'primary' : 'secondary'}
             size="sm"
+            className="min-h-11 sm:min-h-8 text-xs font-medium"
             onPress={() => setFilter('all')}
           >
             All
@@ -146,6 +148,7 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
           <Button
             variant={filter === 'useful' ? 'primary' : 'secondary'}
             size="sm"
+            className="min-h-11 sm:min-h-8 text-xs font-medium"
             onPress={() => setFilter('useful')}
           >
             Worth hiring
@@ -153,6 +156,7 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
           <Button
             variant={filter === 'slopes' ? 'primary' : 'secondary'}
             size="sm"
+            className="min-h-11 sm:min-h-8 text-xs font-medium"
             onPress={() => setFilter('slopes')}
           >
             Slopes & lifts
@@ -160,6 +164,7 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
           <Button
             variant={filter === 'guests' ? 'primary' : 'secondary'}
             size="sm"
+            className="min-h-11 sm:min-h-8 text-xs font-medium"
             onPress={() => setFilter('guests')}
           >
             Guests & buildings
@@ -256,13 +261,14 @@ export default function StaffHirePage({ stats, roles, candidates, maxGroomerLeve
                   <Button
                     variant={dim ? 'secondary' : 'primary'}
                     size="sm"
+                    className="min-h-11 sm:min-h-8 text-xs font-semibold"
                     onPress={() => setActiveModalRole(r.key)}
                   >
                     <Icon name="fa-user-plus" className="mr-1" />
                     Candidates ({cands.length})
                   </Button>
                 ) : (
-                  <Button variant="secondary" size="sm" isDisabled>
+                  <Button variant="secondary" size="sm" className="min-h-11 sm:min-h-8 text-xs" isDisabled>
                     None left today
                   </Button>
                 )}
