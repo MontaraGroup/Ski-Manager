@@ -26,6 +26,11 @@ export default function AppShell(props: ShellProps) {
           <AccountMenu username={props.user.username} />
         </div>
       </nav>
+      {props.seasonVote?.showPrompt && (
+        <Suspense fallback={null}>
+          <SeasonVoteDialog state={props.seasonVote} />
+        </Suspense>
+      )}
     </header>
   );
 }
@@ -104,6 +109,7 @@ function DesktopMenus({ nav, path, user }: ShellProps) {
 }
 
 const SearchDialog = lazy(() => import('@/components/SearchDialog'));
+const SeasonVoteDialog = lazy(() => import('@/components/SeasonVoteDialog'));
 
 /** The search dialog's code loads the first time it opens */
 function Search({ pages }: { pages: ShellProps['search'] }) {

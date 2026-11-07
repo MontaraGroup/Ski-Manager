@@ -183,6 +183,7 @@ class Shell
                 ], $notifs),
             ],
             'flash' => $flash,
+            'seasonVote' => SeasonVote::state($userId, $currentPath),
         ];
     }
 }

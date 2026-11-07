@@ -1273,4 +1273,40 @@ class Admin extends BaseController
         $this->auditLog('optimize_storage', null, "Cleaned {$deletedFiles} temp files and optimized tables.");
         return redirect()->to('/admin')->with('success', "Storage maintenance complete: optimized tables and cleaned {$deletedFiles} orphaned temporary files.");
     }
+
+    /** Season format vote: results, comments, and the close date */
+    public function seasonVote(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $closes = \App\Libraries\SeasonVote::closesAt();
+        $level = featureLevel('season_mode_vote');
+        $flag = db_connect()->table('feature_flags')->select('id')->where('flag_key', 'season_mode_vote')->get()->getRowArray();
+
+        $page = [
+            'flagLevel' => $level,
+            'flagId' => $flag ? (int) $flag['id'] : null,
+            'closesAt' => $closes ? date('Y-m-d\\TH:i', strtotime($closes)) : '',
+            'closesLabel' => \App\Libraries\SeasonVote::closesLabel($closes),
+            'open' => $level > 0 && $closes !== null && strtotime($closes) > time(),
+            'closed' => $closes !== null && strtotime($closes) <= time(),
+            'results' => \App\Libraries\SeasonVote::results(true),
+        ];
+        return view('admin/season_vote', ['page' => $page]);
+    }
+
+    public function saveSeasonVote(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $raw = trim((string) $this->request->getPost('closes_at'));
+        if ($raw === '') {
+            setting()->forget('SeasonVote.closesAt');
+            $this->auditLog('season_vote_close_date', null, 'removed');
+            return redirect()->to('/admin/season-vote')->with('success', 'Close date removed. The vote is closed.');
+        }
+        $ts = strtotime($raw);
+        if (!$ts) return redirect()->to('/admin/season-vote')->with('error', 'That date could not be read. Use the date picker.');
+        setting('SeasonVote.closesAt', date('Y-m-d H:i:s', $ts));
+        $this->auditLog('season_vote_close_date', null, date('Y-m-d H:i', $ts));
+        return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
+    }
 }

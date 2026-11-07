@@ -9,7 +9,7 @@ function featureViewerIsAdmin(): bool
 }
 
 /** Flags that stay off until their row exists (they change game rules, so a missing row mustn't switch them on) */
-const FEATURE_DEFAULT_OFF = ['economy_v2'];
+const FEATURE_DEFAULT_OFF = ['economy_v2', 'season_mode_vote'];
 
 /**
  * Flag levels: 0 = off, 1 = admins only, 2 = everyone.
