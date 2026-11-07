@@ -1,3 +1,19 @@
+## Release 2026-11-07 01:21
+
+* Merge pull request #34 from Montara-Group/fix/mobile-batch-3-ops-settings (3ce03d4)
+* fix(mobile): optimize touch targets and inputs for operations and settings pages (batch 3) (16e5644)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (47eccdc)
+* Merge pull request #32 from Montara-Group/fix/mobile-batch-2-map-resort (64b4337)
+* fix(mobile): enhance touch targets and mobile ergonomics for map, resort, and staff hire (Batch 2) (aabb10b)
+
+## Release 2026-11-07 01:16
+
+* Merge pull request #32 from Montara-Group/fix/mobile-batch-2-map-resort (64b4337)
+* fix(mobile): enhance touch targets and mobile ergonomics for map, resort, and staff hire (Batch 2) (aabb10b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (5a2972c)
+* Merge pull request #31 from Montara-Group/fix/mobile-batch-1-shell (5d5b9af)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (703b319)
+
 ## Release 2026-11-07 01:05
 
 * Merge pull request #31 from Montara-Group/fix/mobile-batch-1-shell (5d5b9af)

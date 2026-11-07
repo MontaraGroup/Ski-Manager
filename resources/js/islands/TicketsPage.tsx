@@ -224,7 +224,7 @@ function TicketRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
         <div className="flex items-center gap-1.5">
           <input
             type="number"
@@ -233,25 +233,25 @@ function TicketRow({
             max={9999}
             value={price}
             onChange={(e) => setPrice(Number(e.target.value))}
-            className="w-24 rounded-lg border border-border bg-surface px-2.5 py-1 text-right font-mono text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-24 min-h-11 sm:min-h-8 rounded-lg border border-border bg-surface px-2.5 py-1 text-right font-mono text-base sm:text-sm text-foreground outline-none focus:ring-1 focus:ring-accent"
           />
           <span className="text-sm font-medium text-muted">{currencySymbol}</span>
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer select-none">
+        <label className="flex min-h-11 sm:min-h-8 items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
             name="active"
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
-            className="size-4 rounded border-border accent-accent"
+            className="size-5 sm:size-4 rounded border-border accent-accent"
           />
           <span className={`text-xs font-medium ${active ? 'text-success' : 'text-muted'}`}>
             {active ? 'On sale' : 'Off'}
           </span>
         </label>
 
-        <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save ticket price">
+        <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save ticket price" className="size-11 sm:size-8 flex items-center justify-center">
           <Icon name="fa-floppy-disk" />
         </Button>
       </div>

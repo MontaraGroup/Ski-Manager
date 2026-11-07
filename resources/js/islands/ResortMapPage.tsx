@@ -826,7 +826,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                 size="sm"
                 variant="ghost"
                 onPress={handleCloseBuildDrawer}
-                className="size-8 p-0 text-muted hover:text-foreground"
+                className="size-11 sm:size-8 p-0 text-muted hover:text-foreground flex items-center justify-center"
                 aria-label="Close"
               >
                 <Icon name="fa-xmark" />
@@ -843,7 +843,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                     setActiveTab('lift');
                     engineRef.current?.setBuildMode('lift');
                   }}
-                  className={`flex items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
                     activeTab === 'lift'
                       ? 'bg-surface text-foreground shadow-sm'
                       : 'text-muted hover:text-foreground'
@@ -861,7 +861,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                     setActiveTab('slope');
                     engineRef.current?.setBuildMode('slope');
                   }}
-                  className={`flex items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
                     activeTab === 'slope'
                       ? 'bg-surface text-foreground shadow-sm'
                       : 'text-muted hover:text-foreground'
@@ -894,7 +894,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                         size="sm"
                         variant="ghost"
                         onPress={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
-                        className="size-7 p-0 text-xs text-muted hover:text-foreground"
+                        className="size-11 sm:size-7 p-0 text-xs text-muted hover:text-foreground flex items-center justify-center"
                         aria-label="Center map on this run"
                       >
                         <Icon name="fa-location-crosshairs" />
@@ -906,7 +906,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                           setSelectedSeg(null);
                           engineRef.current?.deselectSegment();
                         }}
-                        className="size-7 p-0 text-xs text-muted hover:text-foreground"
+                        className="size-11 sm:size-7 p-0 text-xs text-muted hover:text-foreground flex items-center justify-center"
                         aria-label="Deselect"
                       >
                         <Icon name="fa-xmark" />
@@ -1073,7 +1073,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by name"
-                    className="h-9 w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-3 text-xs text-foreground outline-none focus:border-accent"
+                    className="h-11 sm:h-9 w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-3 text-base sm:text-xs text-foreground outline-none focus:border-accent"
                   />
                 </div>
 
@@ -1082,7 +1082,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                     <select
                       value={diffFilter}
                       onChange={(e) => setDiffFilter(e.target.value)}
-                      className="h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-xs text-foreground outline-none"
+                      className="h-11 sm:h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-base sm:text-xs text-foreground outline-none"
                     >
                       <option value="">All grades</option>
                       <option value="green">● Green (Easy)</option>
@@ -1095,7 +1095,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value as any)}
-                    className="h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-xs text-foreground outline-none"
+                    className="h-11 sm:h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-base sm:text-xs text-foreground outline-none"
                   >
                     <option value="cost_asc">Sort: Cheapest first</option>
                     <option value="cost_desc">Sort: Expensive first</option>

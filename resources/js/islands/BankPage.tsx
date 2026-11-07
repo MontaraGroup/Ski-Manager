@@ -108,7 +108,7 @@ export default function BankPage({ cash, stats, loans, products }: BankPageProps
             stats.hasExtraSlot ? (
               'Includes extra slot perk'
             ) : (
-              <a href="/genepis" className="text-accent underline hover:opacity-80">
+              <a href="/genepis" className="text-accent underline hover:opacity-80 inline-flex min-h-11 sm:min-h-0 items-center">
                 Extra slot with Génépis
               </a>
             )
@@ -291,7 +291,7 @@ export default function BankPage({ cash, stats, loans, products }: BankPageProps
                   variant={p.isEmergency ? 'danger' : 'primary'}
                   size="sm"
                   disabled={stats.freeSlots <= 0}
-                  className="w-full"
+                  className="w-full min-h-11 sm:min-h-9"
                   confirm={{
                     title: `Confirm ${p.name}`,
                     body: `Borrow ${p.amountText} now and repay ${p.dailyPaymentText} per day over ${p.days} days (${p.totalRepayText} total)?`,

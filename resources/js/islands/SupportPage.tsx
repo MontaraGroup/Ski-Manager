@@ -148,9 +148,9 @@ export default function SupportPage({
                     key={t.label}
                     type="button"
                     onClick={() => handleTopic(t.template)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-secondary/60 px-3 py-1 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                    className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border bg-surface-secondary/60 px-3.5 py-1 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
                   >
-                    <Icon name={t.icon} className="text-[11px]" />
+                    <Icon name={t.icon} className="text-xs" />
                     <span>{t.label}</span>
                   </button>
                 ))}
@@ -206,9 +206,9 @@ export default function SupportPage({
                   key={t.label}
                   type="button"
                   onClick={() => handleTopic(t.template)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-0.5 text-[11px] font-medium text-muted hover:text-primary hover:border-primary transition-colors"
+                  className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted hover:text-primary hover:border-primary transition-colors"
                 >
-                  <Icon name={t.icon} className="text-[10px]" />
+                  <Icon name={t.icon} className="text-xs" />
                   <span>{t.label}</span>
                 </button>
               ))}
@@ -226,7 +226,7 @@ export default function SupportPage({
               onChange={(e) => setText(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Write a message to support…"
-              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none min-h-12 max-h-36"
+              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none min-h-12 max-h-36"
             />
             <Button
               type="submit"
