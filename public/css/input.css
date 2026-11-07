@@ -270,6 +270,29 @@ body {
   .menu li > a, .menu li > button, .menu li > details > summary {
     min-height: 2.75rem;
   }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea,
+  .input, .input-sm, .input-xs, .select, .select-sm, .select-xs {
+    min-height: 2.75rem;
+  }
+}
+
+/* Phones: form controls use 16px font-size to prevent iOS Safari auto-zoom on focus */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea,
+  .input,
+  .input-sm,
+  .input-xs,
+  .select,
+  .select-sm,
+  .select-xs,
+  .textarea,
+  .textarea-sm {
+    font-size: 16px !important;
+  }
 }
 
 /* Badges */
