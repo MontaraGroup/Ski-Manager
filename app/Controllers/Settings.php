@@ -42,6 +42,12 @@ class Settings extends BaseController
             ] : null,
             'notifCount' => (int) $notifCount,
             'activityCount' => (int) $activityCount,
+            // Players see the results only once voting has closed
+            'seasonVote' => \App\Libraries\SeasonVote::state((int) $userId) + [
+                'closed' => \App\Libraries\SeasonVote::isClosed(),
+                'myComment' => (string) (\App\Libraries\SeasonVote::row((int) $userId)['comment'] ?? ''),
+                'results' => \App\Libraries\SeasonVote::isClosed() ? \App\Libraries\SeasonVote::results() : null,
+            ],
         ];
 
         return view('settings/index', ['page' => $page]);

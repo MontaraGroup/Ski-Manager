@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Button } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel, PostButton } from '@/components/Page';
+import { SeasonChoiceFields } from '@/components/SeasonChoiceFields';
+import { ApiError } from '@/lib/api';
+import { SEASON_OPTIONS, sendVote, type SeasonChoice, type SeasonVoteResults, type SeasonVoteState } from '@/lib/seasonVote';
 
 export type UserMeta = {
   id: number;
@@ -29,6 +32,7 @@ export type SettingsPageProps = {
   tutorial: TutorialProgress;
   notifCount: number;
   activityCount: number;
+  seasonVote?: SeasonVoteState & { closed: boolean; myComment: string; results: SeasonVoteResults | null };
 };
 
 export default function SettingsPage({
@@ -41,6 +45,7 @@ export default function SettingsPage({
   tutorial,
   notifCount = 0,
   activityCount = 0,
+  seasonVote,
 }: SettingsPageProps) {
   const [usernameVal, setUsernameVal] = useState(user?.username ?? '');
   const [emailVal, setEmailVal] = useState(user?.email ?? '');
@@ -404,6 +409,8 @@ export default function SettingsPage({
           </div>
         </Panel>
 
+        {seasonVote && (seasonVote.open || (seasonVote.closed && seasonVote.results)) && <SeasonVoteSection vote={seasonVote} />}
+
         {/* Delete Account (Danger Zone) */}
         <Panel
           className="border-danger/30 bg-danger/5"
@@ -491,5 +498,56 @@ export default function SettingsPage({
         </Panel>
       </div>
     </Page>
+  );
+}
+
+function SeasonVoteSection({ vote }: { vote: NonNullable<SettingsPageProps['seasonVote']> }) {
+  const [choice, setChoice] = useState<SeasonChoice | null>(vote.myChoice);
+  const [saved, setSaved] = useState<SeasonChoice | null>(vote.myChoice);
+  const [comment, setComment] = useState(vote.myComment);
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (!choice) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await sendVote(choice, comment.trim());
+      setSaved(choice);
+      toast.success('Your vote is saved.');
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 422) setError(e.message);
+      else toast.danger(e instanceof ApiError && e.status === 403 ? e.message : "Your vote didn't save. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Panel
+      title={
+        <span className="flex items-center gap-2">
+          <Icon name="fa-check-to-slot" className="text-accent" />
+          Season format vote
+        </span>
+      }
+    >
+      {vote.open ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted">
+            {saved ? `Your vote: ${SEASON_OPTIONS[saved].title}.` : "You haven't voted yet."} You can change it until {vote.closesLabel}.
+          </p>
+          <SeasonChoiceFields order={vote.order} choice={choice} onChoice={(c) => { setChoice(c); setError(undefined); }} comment={comment} onComment={setComment} error={error} />
+          <Button variant="primary" className="min-h-11 self-start" onPress={save} isDisabled={!choice || busy} isPending={busy}>
+            Save my vote
+          </Button>
+        </div>
+      ) : vote.results && (
+        <p className="text-sm">
+          Voting closed on {vote.closesLabel}. Shared season {vote.results.shared.pct}%, your own pace {vote.results.individual.pct}% ({vote.results.votes} {vote.results.votes === 1 ? 'vote' : 'votes'}).
+        </p>
+      )}
+    </Panel>
   );
 }
