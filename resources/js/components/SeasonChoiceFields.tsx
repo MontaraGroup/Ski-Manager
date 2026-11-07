@@ -5,7 +5,7 @@ import { COMMENT_MAX, SEASON_OPTIONS, type SeasonChoice } from '@/lib/seasonVote
 
 /**
  * The two option cards and the comment field, shared by the popup and Settings.
- * compact: tighter cards and the comment field behind a button, so the popup fits a phone screen.
+ * compact: tighter cards side by side from sm up, and the comment field behind a button, so the popup fits without scrolling.
  * locked: the options can't be picked yet (the popup unlocks them once both have been scrolled past).
  */
 export function SeasonChoiceFields({ order, choice, onChoice, comment, onComment, error, compact = false, locked = false }: {
@@ -22,7 +22,7 @@ export function SeasonChoiceFields({ order, choice, onChoice, comment, onComment
   const [showComment, setShowComment] = useState(!compact || comment !== '');
   return (
     <div className={`flex flex-col ${compact ? 'gap-3' : 'gap-4'}`}>
-      <fieldset className={`flex flex-col ${compact ? 'gap-2' : 'gap-3'}`} disabled={locked} aria-describedby={locked ? `${id}-locked` : undefined}>
+      <fieldset className={`flex flex-col ${compact ? 'gap-2 sm:grid sm:grid-cols-2 sm:gap-3' : 'gap-3'}`} disabled={locked} aria-describedby={locked ? `${id}-locked` : undefined}>
         <legend className="sr-only">Season format</legend>
         {order.map((key) => {
           const opt = SEASON_OPTIONS[key];

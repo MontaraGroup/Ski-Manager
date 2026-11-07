@@ -78,8 +78,8 @@ export default function SeasonVoteDialog({ state }: { state: SeasonVoteState }) 
 
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={close} isDismissable>
-      <Modal.Container placement="center" size="lg" scroll="inside">
-        <Modal.Dialog aria-labelledby="season-vote-title">
+      <Modal.Container placement="center" size="lg" scroll="inside" className="sm:p-3">
+        <Modal.Dialog aria-labelledby="season-vote-title" className="sm:max-w-4xl sm:px-6 sm:py-4">
           <Modal.Header className="flex flex-col items-start gap-1">
             <Modal.Heading id="season-vote-title" className="text-lg font-semibold">How should seasons work?</Modal.Heading>
             {!done && (
