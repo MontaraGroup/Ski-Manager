@@ -183,6 +183,7 @@ export default function TournamentsPage({
                           action={`/tournaments/cancel/${t.id}`}
                           variant="ghost"
                           size="sm"
+                          className="size-11 sm:size-8 flex items-center justify-center"
                           confirm={{
                             title: `Cancel ${t.name}`,
                             body: 'Cancel this scheduled tournament? If it has not yet started, an 80% refund of the prize pool will be returned to your cash balance.',
@@ -295,6 +296,7 @@ export default function TournamentsPage({
                       data={{ type: type.key }}
                       variant="primary"
                       size="sm"
+                      className="min-h-11 sm:min-h-8 font-semibold text-xs"
                       confirm={{
                         title: `Host ${type.name}`,
                         body: `Host ${type.name} starting tomorrow for ${type.costText}? The event runs for ${type.duration} day${type.duration > 1 ? 's' : ''} and brings +${type.visitors.toLocaleString()} visitors.`,

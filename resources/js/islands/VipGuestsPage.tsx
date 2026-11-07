@@ -160,7 +160,7 @@ export default function VipGuestsPage({
                       </div>
 
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                           isVisiting
                             ? 'bg-success/20 text-success'
                             : 'bg-warning/20 text-warning'
@@ -175,20 +175,20 @@ export default function VipGuestsPage({
                         <div className="font-bold text-success text-sm tabular-nums">
                           {vip.rewardFormatted}
                         </div>
-                        <div className="text-[10px] text-muted uppercase font-medium">Reward</div>
+                        <div className="text-xs text-muted uppercase font-medium">Reward</div>
                       </div>
                       <div className="bg-base-200/60 rounded-lg p-2 text-center">
                         <div className="font-bold text-warning text-sm tabular-nums">
                           +{vip.reputation_bonus}
                         </div>
-                        <div className="text-[10px] text-muted uppercase font-medium">
+                        <div className="text-xs text-muted uppercase font-medium">
                           Reputation
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-1.5 pt-2 border-t border-border/40 text-xs">
-                      <div className="flex items-center justify-between text-muted text-[11px]">
+                      <div className="flex items-center justify-between text-muted text-xs">
                         <span>Stay Duration</span>
                         <span className="font-semibold text-foreground">
                           {vip.days_remaining} {vip.days_remaining === 1 ? 'day' : 'days'} left
@@ -203,7 +203,7 @@ export default function VipGuestsPage({
                         />
                       </div>
                       {vip.requirements && (
-                        <div className="text-[11px] text-muted mt-2">
+                        <div className="text-xs text-muted mt-2">
                           <span className="font-semibold text-foreground">Demands: </span>
                           {vip.requirements}
                         </div>
@@ -243,7 +243,7 @@ export default function VipGuestsPage({
                         <div className="font-bold text-xs text-foreground truncate">{type.name}</div>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${getRarityBadge(
+                        className={`px-2 py-0.5 rounded text-xs font-bold border uppercase tracking-wider ${getRarityBadge(
                           type.rarityLabel
                         )}`}
                       >
@@ -253,19 +253,19 @@ export default function VipGuestsPage({
 
                     <div className="grid grid-cols-3 gap-1.5 text-center my-2.5 p-2 rounded-lg bg-base-100 border border-border/40">
                       <div>
-                        <div className="text-[10px] text-muted">Reward</div>
+                        <div className="text-xs text-muted">Reward</div>
                         <div className="text-xs font-bold text-success tabular-nums">
                           {type.rewardFormatted}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-muted">Rep</div>
+                        <div className="text-xs text-muted">Rep</div>
                         <div className="text-xs font-bold text-warning tabular-nums">
                           +{type.rep_bonus}
                         </div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-muted">Stay</div>
+                        <div className="text-xs text-muted">Stay</div>
                         <div className="text-xs font-bold text-foreground tabular-nums">
                           {type.duration}d
                         </div>
@@ -273,7 +273,7 @@ export default function VipGuestsPage({
                     </div>
                   </div>
 
-                  <div className="text-[11px] text-muted pt-2 border-t border-border/40">
+                  <div className="text-xs text-muted pt-2 border-t border-border/40">
                     <span className="font-semibold text-foreground">Needs: </span>
                     {type.requirements || 'Standard facilities'}
                   </div>
@@ -296,7 +296,7 @@ export default function VipGuestsPage({
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-border text-muted uppercase text-[10px] font-bold">
+                  <tr className="border-b border-border text-muted uppercase text-xs font-bold">
                     <th className="py-2.5 px-3">Guest</th>
                     <th className="py-2.5 px-3">Type</th>
                     <th className="py-2.5 px-3">Result</th>
@@ -318,7 +318,7 @@ export default function VipGuestsPage({
                         <td className="py-2.5 px-3 text-muted">{vip.typeName}</td>
                         <td className="py-2.5 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                               vip.isSatisfied
                                 ? 'bg-success/20 text-success'
                                 : 'bg-danger/20 text-danger'

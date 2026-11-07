@@ -1,3 +1,11 @@
+## Release 2026-11-07 03:53
+
+* Merge pull request #37 from Montara-Group/fix/mobile-batch-6-community (8b38db1)
+* Merge branch 'origin/main' into fix/mobile-batch-6-community (87cb5e6)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (b8d78b3)
+* Merge branch 'origin/main' into fix/mobile-batch-6-community (b19839f)
+* Merge branch 'MontaraGroup:main' into main (560fd37)
+
 ## Release 2026-11-07 03:37
 
 * Merge branch 'MontaraGroup:main' into main (560fd37)

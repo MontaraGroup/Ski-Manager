@@ -42,7 +42,7 @@ export default function AchievementsPage(p: Props) {
           <div className="text-sm text-muted">Ready to claim</div>
           <div className="text-2xl font-semibold tabular-nums text-warning">{p.readyReward}</div>
           {p.readyCount > 0 ? (
-            <PostButton action="/achievements/claim-all" variant="primary" size="sm" className="mt-2">Claim all {p.readyCount}</PostButton>
+            <PostButton action="/achievements/claim-all" variant="primary" size="sm" className="mt-2 min-h-11 sm:min-h-8 font-semibold text-xs">Claim all {p.readyCount}</PostButton>
           ) : (
             <div className="text-sm text-muted">Nothing waiting</div>
           )}
@@ -122,7 +122,7 @@ function AchievementCard({ a }: { a: Item }) {
                 {a.state === 'claimed' ? 'Unlocked' : 'Unlocks'}: {a.unlocks}
               </span>
             )}
-            {a.state === 'ready' && <PostButton action={`/achievements/claim/${a.id}`} variant="primary" size="sm" className="ml-auto">Claim</PostButton>}
+            {a.state === 'ready' && <PostButton action={`/achievements/claim/${a.id}`} variant="primary" size="sm" className="ml-auto min-h-11 sm:min-h-8 font-semibold text-xs">Claim</PostButton>}
             {a.state === 'claimed' && <span className="ml-auto flex items-center gap-1 text-sm text-success"><Icon name="fa-check" />Claimed</span>}
           </div>
         </div>
