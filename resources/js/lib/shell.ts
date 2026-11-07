@@ -1,4 +1,5 @@
 // Props the PHP layout passes to the shell islands (App\Libraries\Shell::props)
+import type { SeasonVoteState } from './seasonVote';
 
 export type NavItem = {
   href: string;
@@ -37,6 +38,7 @@ export type ShellProps = {
   stats: Stats;
   notifications: { unread: number; latest: Notice[] };
   flash: Flash;
+  seasonVote?: SeasonVoteState;
 };
 
 /** The two site themes (DESIGN.md): stored the same way the head script reads them */

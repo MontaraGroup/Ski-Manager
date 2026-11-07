@@ -218,6 +218,7 @@ export default function AdminIndexPage({
         { href: '/admin/settings', icon: 'fa-gear', label: 'Settings' },
         { href: '/admin/economy', icon: 'fa-chart-line', label: 'Economy' },
         { href: '/admin/seasons', icon: 'fa-calendar-plus', label: 'Seasons' },
+        { href: '/admin/season-vote', icon: 'fa-check-to-slot', label: 'Season vote' },
         { href: '/admin/features', icon: 'fa-toggle-on', label: 'Flags' },
         { href: '/admin/changelogs', icon: 'fa-newspaper', label: 'Changelogs' },
       ],

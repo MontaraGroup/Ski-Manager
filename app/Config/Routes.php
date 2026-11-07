@@ -30,6 +30,8 @@ $routes->get("/admin/seasons", "Admin::seasonPlanner");
 $routes->post("/admin/seasons/create", "Admin::createSeason");
 $routes->post("/admin/seasons/activate/(:num)", "Admin::activateSeason/$1");
 $routes->get("/admin/economy", "Admin::economy");
+$routes->get("/admin/season-vote", "Admin::seasonVote");
+$routes->post("/admin/season-vote/settings", "Admin::saveSeasonVote");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");
 $routes->get("auth/google/callback", "GoogleAuth::callback");
@@ -138,6 +140,8 @@ $routes->match(['post', 'options'], '/api/auth', 'Api::auth');
 // JSON API for the React islands: signed-in session, CSRF on writes (resources/js/lib/api.ts)
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'apiauth'], static function ($routes) {
     $routes->get('me', 'Me::index');
+    $routes->post('season-vote', 'SeasonVote::vote');
+    $routes->post('season-vote/snooze', 'SeasonVote::snooze');
 });
 $routes->get('/ui-kit', 'UiKit::index', ['filter' => 'admin']);
 $routes->match(['get', 'head'], '/roadmap', 'Roadmap::index');
