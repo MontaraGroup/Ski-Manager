@@ -111,7 +111,7 @@ export default function ResourcesPage({
       } at ${tariffLabel}`}
       actions={
         <a href={otherRoute}>
-          <Button variant="outline" size="sm" className="font-semibold gap-1.5 min-h-[36px]">
+          <Button variant="outline" size="sm" className="font-semibold gap-1.5 min-h-11 sm:min-h-[36px]">
             <Icon name={otherIcon} /> {otherLabel}
           </Button>
         </a>
@@ -341,7 +341,7 @@ export default function ResourcesPage({
                               size="sm"
                               variant="outline"
                               isDisabled={!s.canAffordRepair}
-                              className="min-h-[32px] text-xs font-semibold gap-1 text-info hover:text-info"
+                              className="min-h-11 sm:min-h-8 text-xs font-semibold gap-1 text-info hover:text-info"
                             >
                               <Icon name="fa-wrench" /> Repair ({s.repair_cost_formatted})
                             </Button>
@@ -355,7 +355,7 @@ export default function ResourcesPage({
                             size="sm"
                             variant={isActive ? 'secondary' : 'primary'}
                             isDisabled={isBroken}
-                            className="min-h-[32px] text-xs font-semibold"
+                            className="min-h-11 sm:min-h-8 text-xs font-semibold"
                           >
                             {isActive ? 'Turn Off' : 'Turn On'}
                           </Button>
@@ -434,13 +434,13 @@ export default function ResourcesPage({
                       onChange={(e) => handleNameChange(avail.type, e.target.value)}
                       placeholder={avail.label}
                       maxLength={60}
-                      className="w-full h-8 px-2.5 rounded border border-border bg-base-100 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full min-h-11 sm:min-h-9 px-3 rounded-lg border border-border bg-base-100 text-base sm:text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <Button
                       type="submit"
                       variant="primary"
                       size="sm"
-                      className="w-full min-h-[36px] font-semibold text-xs"
+                      className="w-full min-h-11 sm:min-h-[36px] font-semibold text-xs"
                       isDisabled={!avail.canAfford || avail.atLimit}
                     >
                       {avail.atLimit
