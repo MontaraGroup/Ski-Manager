@@ -138,7 +138,7 @@ export default function SkiLessonsPage({
                   <td className="py-3 px-4 text-muted">{prog.duration}</td>
                   <td className="py-3 px-4 font-semibold text-success tabular-nums">{prog.priceText}</td>
                   <td className="py-3 px-4">
-                    <Chip size="sm" variant="soft">
+                    <Chip size="sm" variant="soft" className="text-xs">
                       {prog.instructors} instructor{prog.instructors !== 1 ? 's' : ''}
                     </Chip>
                   </td>

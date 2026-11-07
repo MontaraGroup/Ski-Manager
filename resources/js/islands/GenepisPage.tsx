@@ -160,13 +160,13 @@ export default function GenepisPage({
                       placeholder={`Max ${balance}`}
                       disabled={balance < 1}
                       required
-                      className="w-full h-10 px-3 rounded-lg border border-border bg-base-100 text-sm focus:outline-none focus:ring-2 focus:ring-success"
+                      className="w-full min-h-11 h-11 px-3 rounded-lg border border-border bg-base-100 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-success"
                     />
                     {balance > 0 && (
                       <button
                         type="button"
                         onClick={() => setExchangeAmount(balance)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[11px] font-semibold uppercase bg-muted/20 hover:bg-muted/30 rounded text-foreground transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 min-h-8 px-2.5 py-1 text-xs font-semibold uppercase bg-muted/20 hover:bg-muted/30 rounded text-foreground transition-colors"
                       >
                         Max
                       </button>
@@ -349,7 +349,7 @@ export default function GenepisPage({
                                     : 'danger'
                                 }
                                 isDisabled={!canAfford}
-                                className="min-h-[36px] font-semibold"
+                                className="min-h-11 sm:min-h-8 font-semibold text-xs"
                               >
                                 {item.isActive ? 'Extend' : 'Buy'}
                               </Button>
