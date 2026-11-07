@@ -105,10 +105,10 @@ export default function SettingsPage({
                   maxLength={30}
                   required
                   autoComplete="username"
-                  className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                  className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                 />
               </div>
-              <Button type="submit" variant="primary" size="sm" className="shrink-0">
+              <Button type="submit" variant="primary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                 Update Username
               </Button>
             </form>
@@ -126,10 +126,10 @@ export default function SettingsPage({
                     onChange={(e) => setEmailVal(e.target.value)}
                     required
                     autoComplete="email"
-                    className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                   />
                 </div>
-                <Button type="submit" variant="primary" size="sm" className="shrink-0">
+                <Button type="submit" variant="primary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                   Update Email
                 </Button>
               </form>
@@ -165,7 +165,7 @@ export default function SettingsPage({
                     placeholder="6-digit code"
                     required
                     autoComplete="one-time-code"
-                    className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 font-mono text-xs text-foreground focus:border-focus focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 font-mono text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                   />
                 </div>
               ) : (
@@ -176,7 +176,7 @@ export default function SettingsPage({
                     name="current_password"
                     required
                     autoComplete="current-password"
-                    className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                   />
                 </div>
               )}
@@ -189,7 +189,7 @@ export default function SettingsPage({
                   minLength={8}
                   required
                   autoComplete="new-password"
-                  className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                  className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                 />
               </div>
 
@@ -201,13 +201,13 @@ export default function SettingsPage({
                   minLength={8}
                   required
                   autoComplete="new-password"
-                  className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                  className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <Button type="submit" variant="primary" size="sm">
+              <Button type="submit" variant="primary" size="sm" className="min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                 {codeFor === 'password' ? 'Set New Password' : 'Change Password'}
               </Button>
 
@@ -249,10 +249,10 @@ export default function SettingsPage({
                   onChange={(e) => setResortNameVal(e.target.value)}
                   maxLength={50}
                   required
-                  className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-focus focus:outline-none"
+                  className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-focus focus:outline-none"
                 />
               </div>
-              <Button type="submit" variant="primary" size="sm" className="shrink-0">
+              <Button type="submit" variant="primary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                 Rename Resort
               </Button>
             </form>
@@ -267,12 +267,12 @@ export default function SettingsPage({
                     <select
                       name="units"
                       defaultValue={units}
-                      className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:outline-none"
+                      className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:outline-none"
                     >
                       <option value="metric">Metric (Meters, km/h, °C, EUR €)</option>
                       <option value="imperial">Imperial (Feet, mph, °F, USD $)</option>
                     </select>
-                    <Button type="submit" variant="secondary" size="sm" className="shrink-0">
+                    <Button type="submit" variant="secondary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                       Save
                     </Button>
                   </div>
@@ -286,13 +286,13 @@ export default function SettingsPage({
                     <select
                       name="difficulty"
                       defaultValue={difficulty}
-                      className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground capitalize focus:outline-none"
+                      className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground capitalize focus:outline-none"
                     >
                       <option value="easy">Easy (Higher income, relaxed costs)</option>
                       <option value="standard">Standard (Balanced simulation)</option>
                       <option value="hard">Hard (Strict expenses, challenging weather)</option>
                     </select>
-                    <Button type="submit" variant="secondary" size="sm" className="shrink-0">
+                    <Button type="submit" variant="secondary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                       Save
                     </Button>
                   </div>
@@ -440,7 +440,7 @@ export default function SettingsPage({
                     placeholder="6-digit code from email"
                     required
                     autoComplete="one-time-code"
-                    className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 font-mono text-xs text-foreground focus:border-danger focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 font-mono text-base sm:text-xs text-foreground focus:border-danger focus:outline-none"
                   />
                 </div>
               ) : (
@@ -452,7 +452,7 @@ export default function SettingsPage({
                     placeholder="Enter current password"
                     required
                     autoComplete="current-password"
-                    className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-danger focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-danger focus:outline-none"
                   />
                 </div>
               )}
@@ -467,7 +467,7 @@ export default function SettingsPage({
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   autoComplete="off"
                   required
-                  className="w-full rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground focus:border-danger focus:outline-none font-mono"
+                  className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:border-danger focus:outline-none font-mono"
                 />
               </div>
             </div>
@@ -477,6 +477,7 @@ export default function SettingsPage({
                 type="submit"
                 variant="danger"
                 size="sm"
+                className="min-h-11 sm:min-h-8 text-xs font-semibold px-4"
                 isDisabled={deleteConfirmText !== 'DELETE'}
               >
                 Permanently Delete Account
