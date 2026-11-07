@@ -26,15 +26,15 @@ test.describe('Public Landing Page', () => {
     test.skip(isMobile, 'Desktop navbar dropdown only applies to desktop viewports');
     await page.goto('/');
 
-    const resortSummary = page.locator('.site-nav summary:has-text("Resort")').first();
-    await expect(resortSummary).toBeVisible();
-    await resortSummary.click();
+    const resortTrigger = page.locator('.site-nav button:has-text("Resort"), .site-nav summary:has-text("Resort")').first();
+    await expect(resortTrigger).toBeVisible();
+    await resortTrigger.click();
 
-    const dropdownMenu = resortSummary.locator('..').locator('ul').first();
+    const dropdownMenu = page.locator('[role="menu"], .site-nav details[open] > div, .site-nav details[open] > ul').first();
     await expect(dropdownMenu).toBeVisible();
 
-    const overviewLink = dropdownMenu.getByRole('link', { name: 'Overview' });
-    await expect(overviewLink).toBeVisible();
+    const overviewItem = dropdownMenu.getByText('Overview').first();
+    await expect(overviewItem).toBeVisible();
 
     // Confirm the dropdown menu's bounding box extends below the navbar into the hero area
     const navBox = await page.locator('.site-nav').boundingBox();

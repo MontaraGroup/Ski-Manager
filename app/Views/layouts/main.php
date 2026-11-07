@@ -198,8 +198,6 @@ body { font-family: var(--sign); }
 .brand-name { font-family: var(--sign); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
 /* Keep brand + Log in + Play free on one line without overflowing small phones */
 @media (max-width: 420px) {
-    .site-nav .navbar-end { gap: 0.25rem; }
-    .site-nav .navbar-end > .btn-sm:not(.btn-circle) { padding-left: 0.5rem; padding-right: 0.5rem; }
     .site-nav .brand { padding: 0 0.25rem; gap: 0.4rem; }
     .brand-name { font-size: 1.125rem; }
 }
@@ -212,12 +210,6 @@ body { font-family: var(--sign); }
     .site-nav .brand { gap: 0.4rem; }
     .brand-name { font-size: 1rem; }
 }
-.site-nav .menu-horizontal { overflow: visible !important; }
-.site-nav .menu-horizontal details { overflow: visible !important; }
-.site-nav .menu-horizontal details > ul { z-index: 50; }
-.site-nav .menu-horizontal > li > a,
-.site-nav .menu-horizontal > li > details > summary { font-weight: 500; border-radius: 6px; }
-.site-nav .menu-horizontal > li > a.active { background: color-mix(in oklab, var(--color-base-content) 8%, transparent); color: var(--color-base-content); font-weight: 600; }
 
 /* Resort stats bar under the navbar */
 .stats-bar { gap: 0 !important; }
@@ -248,17 +240,6 @@ body { font-family: var(--sign); }
 .animate-scale-in{animation:scaleIn 0.3s ease-out both}
 .animate-pulse-soft{animation:pulse-soft 2s ease-in-out infinite}
 
-.card{transition:transform 0.15s ease,box-shadow 0.15s ease}
-.card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-.btn{transition:transform 0.1s ease,box-shadow 0.1s ease}
-.btn:active{transform:scale(0.97)}
-.badge{transition:all 0.2s ease}
-.progress{transition:value 0.5s ease}
-.alert{animation:fadeInUp 0.3s ease-out both}
-.stat-value,.text-2xl.font-bold,.text-3xl.font-bold{transition:color 0.3s ease}
-a.link{transition:opacity 0.15s ease}
-a.link:hover{opacity:0.8}
-.dropdown-content{animation:scaleIn 0.15s ease-out both}
 
 /* Accessible Motion: Respect user preference for reduced motion without breaking functional UI */
 @media (prefers-reduced-motion: reduce) {
@@ -270,15 +251,8 @@ a.link:hover{opacity:0.8}
     .animate-slide-in-right,
     .animate-scale-in,
     .animate-pulse-soft,
-    .dropdown-content,
-    .alert {
+    .dropdown-content {
         animation: none !important;
-    }
-    .card:hover, .btn:active {
-        transform: none !important;
-    }
-    .card, .btn, .badge, .progress, a.link {
-        transition-duration: 0.01ms !important;
     }
 }
 </style>
@@ -307,37 +281,36 @@ a.link:hover{opacity:0.8}
         $__isAdmin = \App\Libraries\Shell::isAdmin();
         $__bonusDue = \App\Libraries\Shell::bonusDue();
         $__nav = \App\Libraries\Shell::NAV;
-        // Signed-in players get the React shell (AppShell, StatsBar, MobileDock islands); this markup
-        // is what guests see, and the fallback shown until the islands mount
-        $__shellIslands = auth()->loggedIn();
+        // The React AppShell island (HeroUI 3.2.7) renders for all players (guests and signed-in)
+        $__shellIslands = true;
         $__flash = \App\Libraries\Shell::takeFlash();
-        $__shell = $__shellIslands ? \App\Libraries\Shell::props($__currentPath, $__flash) : null;
+        $__shell = \App\Libraries\Shell::props($__currentPath, $__flash);
 
         $__navItem = function (array $it) use ($__isAdmin, $__bonusDue) {
             $r = \App\Libraries\Shell::resolveItem($it, $__isAdmin, $__bonusDue);
             if ($r === null) return '';
-            $cls = ($r['locked'] || $r['flagOff']) ? 'opacity-40' : '';
-            $badge = $r['bonusDue'] ? ' <span class="badge badge-warning badge-xs">!</span>' : '';
+            $cls = ($r['locked'] || $r['flagOff']) ? 'text-muted' : 'text-foreground';
+            $badge = $r['bonusDue'] ? ' <span class="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>' : '';
             $target = $r['external'] ? ' target="_blank" rel="noopener noreferrer"' : '';
             $title = $r['flagOff'] ? ' title="Switched off for players (feature flag)"' : '';
-            return '<li><a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="' . $cls . '">'
-                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($r['label']) . $badge . '</a></li>';
+            return '<a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors ' . $cls . '">'
+                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw text-accent"></i><span>' . esc($r['label']) . '</span>' . $badge . '</a>';
         };
     ?>
     <?php if (session()->get('is_demo')) : ?>
-    <div class="bg-primary-fill text-primary-content px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
+    <div class="bg-primary text-primary-foreground px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
         <div class="flex items-center gap-2">
-            <span class="badge badge-warning badge-sm font-bold font-mono text-neutral">DEMO SANDBOX</span>
+            <span class="inline-flex items-center rounded-md bg-amber-400 px-2 py-0.5 text-xs font-bold font-mono text-neutral-900">DEMO SANDBOX</span>
             <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
         </div>
         <div class="flex items-center gap-2">
-            <a href="/demo/reset" class="btn btn-ghost btn-xs text-primary-content hover:bg-white/10" onclick="return confirm('Reset mountain to starting template?')">
+            <a href="/demo/reset" class="inline-flex min-h-8 items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-white/10" onclick="return confirm('Reset mountain to starting template?')">
                 <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
             </a>
-            <a href="/demo/save" class="btn btn-warning btn-xs font-bold gap-1 shadow-sm text-neutral">
+            <a href="/demo/save" class="inline-flex min-h-8 items-center gap-1 rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold shadow-sm text-neutral-900 hover:bg-amber-300">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Save My Resort & Claim Capital
             </a>
-            <a href="/demo/exit" class="btn btn-ghost btn-xs text-primary-content/80 hover:text-white" title="Exit Demo">
+            <a href="/demo/exit" class="inline-flex size-8 items-center justify-center rounded-lg text-primary-foreground/80 hover:text-white hover:bg-white/10" title="Exit Demo">
                 <i class="fa-solid fa-xmark"></i>
             </a>
         </div>
@@ -350,136 +323,62 @@ a.link:hover{opacity:0.8}
             <span><strong>MAINTENANCE ACTIVE (Season 2 In-Dev):</strong> Public site is paused for 4 days with HTTP 503. You are browsing with admin clearance.</span>
         </div>
         <div class="flex items-center gap-2">
-            <span class="badge badge-sm border-0 bg-black/25 text-white font-bold">Admin Clearance</span>
-            <a href="/admin" class="btn btn-xs btn-neutral text-white">Admin Controls</a>
+            <span class="inline-flex items-center rounded-md bg-black/25 px-2 py-0.5 text-xs text-white font-bold">Admin Clearance</span>
+            <a href="/admin" class="inline-flex min-h-8 items-center rounded-lg bg-neutral-900 px-3 py-1 text-xs font-semibold text-white hover:bg-neutral-800">Admin Controls</a>
         </div>
     </div>
     <?php endif ?>
     <?php ob_start() ?>
-    <header style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation"><div class="navbar site-nav bg-base-100 border-b border-base-300">
-        <div class="navbar-start">
-            <div class="dropdown">
-                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></div>
-                <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-64 p-2 shadow max-h-[80vh] overflow-y-auto">
-                    <li><a href="/dashboard"><i class="fa-solid fa-gauge-high fa-fw mr-2"></i>Dashboard</a></li>
+    <header class="site-nav border-b border-border bg-background" style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation" class="mx-auto flex min-h-14 max-w-7xl items-center gap-1 px-2 sm:px-4">
+        <div class="lg:hidden">
+            <details class="relative">
+                <summary class="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-default cursor-pointer list-none" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></summary>
+                <div class="absolute left-0 mt-2 w-64 rounded-xl border border-border bg-popover p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                    <a href="/dashboard" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors"><i class="fa-solid fa-gauge-high fa-fw mr-1 text-accent"></i>Dashboard</a>
                     <?php foreach ($__nav as $__secName => $__sec) : ?>
-                        <li class="menu-title text-xs mt-1"><?= esc($__secName) ?></li>
+                        <div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1"><?= esc($__secName) ?></div>
                         <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
                     <?php endforeach ?>
-                    <?php if ($__isAdmin) : ?><li class="menu-title text-xs mt-1">Admin</li><li><a href="/admin"><i class="fa-solid fa-shield-halved fa-fw mr-2 text-error"></i>Admin Panel</a></li><?php endif ?>
-                </ul>
-            </div>
-            <a href="/" class="brand" aria-label="Ski Manager home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg><span class="brand-name">Ski Manager</span></a>
-        </div>
-        <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1 gap-1">
-                <li><a href="/" class="<?= $__currentPath === '/' ? 'active' : '' ?>">Home</a></li>
-                <li><a href="/dashboard" class="<?= $__currentPath === '/dashboard' ? 'active' : '' ?>">Dashboard</a></li>
-                <?php foreach ($__nav as $__secName => $__sec) : ?>
-                <li>
-                    <details>
-                        <summary><?= esc($__secName) ?></summary>
-                        <ul class="bg-base-100 rounded-box shadow-lg border border-base-300 w-56 z-50">
-                            <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
-                        </ul>
-                    </details>
-                </li>
-                <?php endforeach ?>
-                <?php if ($__isAdmin) : ?><li><a href="/admin" class="text-error">Admin</a></li><?php endif ?>
-            </ul>
-        </div>
-        <div class="navbar-end gap-2">
-            <?php if (auth()->loggedIn()) : ?>
-            <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle" aria-label="Search"><i class="fa-solid fa-search" aria-hidden="true"></i></button>
-            <dialog id="searchModal" class="modal modal-top" closedby="any" aria-label="Quick Search">
-                <div class="modal-box max-w-lg mx-auto mt-20 p-0">
-                    <search class="flex items-center gap-2 p-3 border-b border-base-300">
-                        <i class="fa-solid fa-search text-base-content/30" aria-hidden="true"></i>
-                        <input type="search" id="globalSearch" placeholder="Search pages, features, settings..." class="input input-ghost input-sm flex-1 focus:outline-none" autocomplete="off" autofocus />
-                        <kbd class="kbd kbd-xs">Esc</kbd>
-                    </search>
-                    <div id="searchResults" class="max-h-80 overflow-y-auto p-2"></div>
-                    <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/70">
-                        <i class="fa-solid fa-compass text-2xl mb-2" aria-hidden="true"></i>
-                        <p>Type to search pages and features</p>
-                    </div>
+                    <?php if ($__isAdmin) : ?><div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1">Admin</div><a href="/admin" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-danger hover:bg-default transition-colors"><i class="fa-solid fa-shield-halved fa-fw mr-1"></i>Admin Panel</a><?php endif ?>
                 </div>
-                <form method="dialog" class="modal-backdrop"><button>close</button></form>
-            </dialog>
-            <?php endif ?>
-            <label class="swap swap-rotate btn btn-ghost btn-sm btn-circle" aria-label="Toggle light or dark theme">
-                <input type="checkbox" id="themeToggle" value="winter" class="theme-controller" />
-                <svg aria-hidden="true" class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>
-                <svg aria-hidden="true" class="swap-off fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/></svg>
-            </label>
-            <?php if (auth()->loggedIn()) : ?>
-                <?php $__notifCount = unreadNotificationCount(auth()->id()); ?>
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-circle indicator" aria-label="Notifications">
-                        <i class="fa-solid fa-bell text-base-content/80"></i>
-                        <span id="navbarNotifBadge" class="indicator-item badge badge-error badge-xs <?php echo $__notifCount == 0 ? "hidden" : ""; ?>"><?= $__notifCount > 9 ? "9+" : $__notifCount ?></span>
-                    </div>
-                    <div tabindex="0" class="dropdown-content card bg-base-100 shadow-2xl z-50 w-80 mt-2 border border-base-200/50">
-                        <div class="card-body p-3">
-                            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-base-100">
-                                <span class="font-semibold text-sm">Notifications</span>
-                                <?php if ($__notifCount > 0) : ?>
-                                    <form action="/notifications/read-all" method="post"><?= csrf_field() ?><button class="link link-primary text-xs no-underline">Mark all read</button></form>
-                                <?php endif ?>
-                            </div>
-                            <div id="navbarNotifTargetList" class="space-y-1 max-h-64 overflow-y-auto">
-                                <?php $__notifs = db_connect()->table("notifications")->where("user_id", auth()->id())->orderBy("created_at", "DESC")->limit(5)->get()->getResultArray(); ?>
-                                <?php if (empty($__notifs)) : ?>
-                                    <p class="text-xs text-base-content/70 text-center py-4">No notifications</p>
-                                <?php else : ?>
-                                    <?php foreach ($__notifs as $__n) : ?>
-                                        <?php 
-                                            $isRead = (bool)($__n["is_read"] ?? false);
-                                            $iconColor = "text-base-content/40";
-                                            $bgAccent = "bg-base-200/50";
-                                            
-                                            if (!$isRead) {
-                                                $iconStr = strtolower($__n["icon"] ?? "");
-                                                $titleStr = strtolower($__n["title"] ?? "");
-                                                if (strpos($iconStr, "snowflake") !== false || strpos($titleStr, "weather") !== false) { $iconColor = "text-info"; $bgAccent = "bg-info/10"; }
-                                                elseif (strpos($iconStr, "trophy") !== false || strpos($iconStr, "medal") !== false) { $iconColor = "text-accent"; $bgAccent = "bg-accent/10"; }
-                                                elseif (strpos($iconStr, "exclamation") !== false || strpos($iconStr, "triangle") !== false) { $iconColor = "text-error"; $bgAccent = "bg-error/10"; }
-                                                else { $iconColor = "text-primary"; $bgAccent = "bg-primary/10"; }
-                                            }
-                                        ?>
-                                        <a href="/notifications/open/<?= (int) $__n["id"] ?>" class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-base-200/70 transition-all <?= $isRead ? "opacity-60" : "font-medium" ?>">
-                                            <div class="w-7 h-7 rounded-lg <?= $bgAccent ?> shrink-0 flex items-center justify-center">
-                                                <i class="<?= esc($__n["icon"] ?? "fa-solid fa-bell") ?> text-[11px] <?= $iconColor ?>"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="text-[11px] text-base-content font-bold truncate"><?= esc($__n["title"]) ?></div>
-                                                <div class="text-[10px] text-base-content/70 truncate mt-0.5"><?= esc($__n["message"]) ?></div>
-                                            </div>
-                                            <?php if (!$isRead) : ?>
-                                                <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
-                                            <?php endif; ?>
-                                        </a>
-                                    <?php endforeach ?>
-                                <?php endif ?>
-                            </div>
-                            <div class="border-t border-base-100 pt-2 mt-1">
-                                <a href="/notifications" class="btn btn-ghost btn-xs w-full text-[11px]">View All</a>
-                            </div>
-                        </div>
-                    </div>
+            </details>
+        </div>
+        <a href="/" class="brand flex min-h-11 items-center gap-2 rounded-lg px-2 font-semibold" aria-label="Ski Manager home">
+            <svg class="brand-mark size-7 shrink-0" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span class="brand-name hidden text-lg tracking-tight sm:inline">Ski Manager</span>
+        </a>
+        <div class="hidden items-center gap-1 lg:flex">
+            <a href="/" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Home</a>
+            <a href="/dashboard" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/dashboard' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Dashboard</a>
+            <?php foreach ($__nav as $__secName => $__sec) : ?>
+            <details class="relative">
+                <summary class="flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium hover:bg-default cursor-pointer list-none select-none transition-colors">
+                    <span><?= esc($__secName) ?></span>
+                    <i class="fa-solid fa-chevron-down text-xs text-muted"></i>
+                </summary>
+                <div class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-2xl z-50">
+                    <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
                 </div>
-                <div class="dropdown dropdown-end"><div tabindex="0" role="button" class="btn btn-ghost btn-sm"><i class="fa-solid fa-user-circle mr-1"></i><?= auth()->user()->username ?></div><ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow w-48 z-50 mt-2"><li><a href="/dashboard"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li><li><a href="/settings"><i class="fa-solid fa-gear mr-1"></i>Settings</a></li><li><a href="/logout" class="text-error"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</a></li></ul></div>
+            </details>
+            <?php endforeach ?>
+            <?php if ($__isAdmin) : ?><a href="/admin" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium text-danger hover:bg-default transition-colors">Admin</a><?php endif ?>
+        </div>
+        <div class="ml-auto flex items-center gap-1">
+            <?php if (auth()->loggedIn()) : ?>
+                <a href="/settings" class="flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-medium hover:bg-default transition-colors">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span><?= esc(auth()->user()->username ?? 'Account') ?></span>
+                </a>
             <?php else : ?>
-                <a href="/login" class="btn btn-ghost btn-sm">Log in</a>
-                <a href="/register" class="btn btn-primary btn-sm">Play free</a>
+                <div class="flex items-center gap-1.5 ml-1">
+                    <a href="/login" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg px-3 text-xs sm:text-sm font-medium hover:bg-default transition-colors">Log in</a>
+                    <a href="/register" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg bg-primary px-3 text-xs sm:text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">Play free</a>
+                </div>
             <?php endif ?>
         </div>
-    </div>
     </nav></header>
-    <?php $__legacyHeader = ob_get_clean(); ?>
-    <?php if ($__shellIslands) : ?>
-    <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__legacyHeader) ?></div>
-    <?php else : echo $__legacyHeader; endif ?>
+    <?php $__fallbackHeader = ob_get_clean(); ?>
+    <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__fallbackHeader) ?></div>
 
     <!-- Content -->
     <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
@@ -545,14 +444,14 @@ a.link:hover{opacity:0.8}
     <?php if ($__flashError || $__flashErrors || $__flashSuccess || $__flashWarning) : ?>
     <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-1">
         <?php if ($__flashError) : ?>
-            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
+            <div class="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger/10 p-3 text-danger shadow-sm mb-3" role="alert">
                 <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
                 <span class="text-sm font-medium"><?= esc($__flashError) ?></span>
             </div>
         <?php endif ?>
         <?php if ($__flashErrors && is_array($__flashErrors)) : ?>
-            <div class="alert alert-error shadow-sm mb-3 border border-error/30" role="alert">
-                <i class="fa-solid fa-circle-exclamation text-lg shrink-0"></i>
+            <div class="flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-3 text-danger shadow-sm mb-3" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-lg shrink-0 mt-0.5"></i>
                 <div class="text-sm space-y-1">
                     <?php foreach ($__flashErrors as $__err) : ?>
                         <div><?= esc($__err) ?></div>
@@ -561,13 +460,13 @@ a.link:hover{opacity:0.8}
             </div>
         <?php endif ?>
         <?php if ($__flashSuccess) : ?>
-            <div class="alert alert-success shadow-sm mb-3 border border-success/30" role="status">
+            <div class="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 p-3 text-success shadow-sm mb-3" role="status">
                 <i class="fa-solid fa-circle-check text-lg shrink-0"></i>
                 <span class="text-sm font-medium"><?= esc($__flashSuccess) ?></span>
             </div>
         <?php endif ?>
         <?php if ($__flashWarning) : ?>
-            <div class="alert alert-warning shadow-sm mb-3 border border-warning/30" role="alert">
+            <div class="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-3 text-warning shadow-sm mb-3" role="alert">
                 <i class="fa-solid fa-triangle-exclamation text-lg shrink-0"></i>
                 <span class="text-sm font-medium"><?= esc($__flashWarning) ?></span>
             </div>
@@ -588,8 +487,8 @@ a.link:hover{opacity:0.8}
                     <a href="/" class="brand mb-3" style="padding:0"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg><span class="brand-name">Ski Manager</span></a>
                     <p class="text-sm text-base-content/70 mb-4">A free ski resort management game. Build lifts and runs on real mountains and try to keep the place profitable.</p>
                     <div class="flex gap-3">
-                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="Discord" aria-label="Ski Manager on Discord"><i class="fa-brands fa-discord text-lg" aria-hidden="true"></i></a>
-                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm btn-circle" title="GitHub" aria-label="Ski Manager source code on GitHub"><i class="fa-brands fa-github text-lg" aria-hidden="true"></i></a>
+                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="Discord" aria-label="Ski Manager on Discord"><i class="fa-brands fa-discord text-lg" aria-hidden="true"></i></a>
+                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="GitHub" aria-label="Ski Manager source code on GitHub"><i class="fa-brands fa-github text-lg" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <!-- Game -->
@@ -652,47 +551,32 @@ a.link:hover{opacity:0.8}
     </script>
 
 <script>
-document.querySelectorAll(".navbar details").forEach(function(det) {
+document.querySelectorAll(".site-nav details").forEach(function(det) {
     det.addEventListener("toggle", function() {
         if (this.open) {
-            document.querySelectorAll(".navbar details").forEach(function(other) {
+            document.querySelectorAll(".site-nav details").forEach(function(other) {
                 if (other !== det) other.removeAttribute("open");
             });
         }
     });
 });
 document.addEventListener("click", function(e) {
-    // Close navbar details menus if clicked outside
-    if (!e.target.closest(".navbar details")) {
-        document.querySelectorAll(".navbar details[open]").forEach(function(d) {
+    if (!e.target.closest(".site-nav details")) {
+        document.querySelectorAll(".site-nav details[open]").forEach(function(d) {
             d.removeAttribute("open");
-        });
-    }
-    // Dropdown open/close support for click and touch devices
-    const trigger = e.target.closest(".dropdown > [tabindex=\"0\"]");
-    const dropdown = trigger ? trigger.closest(".dropdown") : null;
-    document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
-        if (d !== dropdown) d.classList.remove("dropdown-open");
-    });
-    if (trigger && dropdown) {
-        dropdown.classList.toggle("dropdown-open");
-    } else if (!e.target.closest(".dropdown-content")) {
-        document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
-            d.classList.remove("dropdown-open");
         });
     }
 });
 </script>
-<dialog id="confirmModal" class="modal modal-bottom sm:modal-middle" closedby="any" aria-labelledby="confirmTitle">
-    <div class="modal-box">
+<dialog id="confirmModal" class="fixed inset-0 m-auto p-0 max-w-md w-[calc(100vw-2rem)] rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm" aria-labelledby="confirmTitle">
+    <div class="p-6 space-y-4">
         <h3 class="text-lg font-bold" id="confirmTitle">Confirm</h3>
-        <p class="py-4 text-sm text-base-content/70" id="confirmMessage"></p>
-        <div class="modal-action">
-            <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancel</button>
-            <button class="btn btn-primary btn-sm" id="confirmYes">Confirm</button>
+        <p class="text-sm text-muted" id="confirmMessage"></p>
+        <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold hover:bg-default" onclick="closeConfirm()">Cancel</button>
+            <button type="button" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:bg-primary/90" id="confirmYes">Confirm</button>
         </div>
     </div>
-    <div class="modal-backdrop" role="button" tabindex="-1" onclick="closeConfirm()" onkeydown="if(event.key==='Enter'||event.key===' ')closeConfirm()"></div>
 </dialog>
 <script>
 let pendingForm=null;
@@ -735,10 +619,10 @@ if(si){
     });
 }
 </script>
-<button id="backToTop" type="button" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.75rem;height:2.75rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="btn btn-circle btn-sm btn-primary"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+<button id="backToTop" type="button" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.75rem;height:2.75rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
 <script>window.addEventListener("scroll",function(){document.getElementById("backToTop").style.display=window.scrollY>300?"flex":"none";});</script>
 <script>
-document.querySelectorAll(".alert-success").forEach(function(el){
+document.querySelectorAll("[role='status']").forEach(function(el){
     if (el.closest(".card-body") || el.closest("form")) return;
     setTimeout(function(){
         el.style.transition = "opacity 0.5s ease, transform 0.5s ease";
@@ -752,7 +636,7 @@ document.querySelectorAll(".alert-success").forEach(function(el){
 document.querySelectorAll("form").forEach(function(f){
     f.addEventListener("submit",function(){
         var btn=f.querySelector("button[type=submit],button:not([type])");
-        if(btn&&!f.dataset.confirm){btn.classList.add("loading");btn.disabled=true;}
+        if(btn&&!f.dataset.confirm){btn.disabled=true;}
     });
 });
 </script>
@@ -768,9 +652,9 @@ document.querySelectorAll("[data-count]").forEach(function(el){
     <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-sm text-base-content/80">We use cookies for analytics and advertising. You can choose which to accept.</p>
         <div class="flex gap-2 shrink-0">
-            <button onclick="acceptCookies('all')" class="btn btn-primary btn-sm">Accept All</button>
-            <button onclick="acceptCookies('analytics')" class="btn btn-outline btn-sm">Analytics Only</button>
-            <button onclick="acceptCookies('none')" class="btn btn-ghost btn-sm">Reject All</button>
+            <button onclick="acceptCookies('all')" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:bg-primary/90">Accept All</button>
+            <button onclick="acceptCookies('analytics')" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-semibold hover:bg-default">Analytics Only</button>
+            <button onclick="acceptCookies('none')" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold hover:bg-default">Reject All</button>
         </div>
     </div>
 </div>
@@ -871,18 +755,18 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 </nav>
 
 <!-- Mobile More Operations Sheet -->
-<dialog id="mobileMenuDrawer" class="modal modal-bottom md:modal-middle" closedby="any" aria-label="Resort Menu">
-    <div class="modal-box max-h-[85vh] p-4 bg-base-100 rounded-t-2xl md:rounded-2xl">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-base-200">
+<dialog id="mobileMenuDrawer" class="hidden" closedby="any" aria-label="Resort Menu">
+    <div class="max-h-[85vh] p-4 bg-background rounded-t-2xl md:rounded-2xl border border-border">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-border">
             <div class="flex items-center gap-2 font-bold text-base">
                 <i class="fa-solid fa-mountain-sun text-primary"></i> Resort Menu
             </div>
-            <form method="dialog"><button class="btn btn-sm btn-ghost btn-circle" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button></form>
+            <form method="dialog"><button class="flex size-8 items-center justify-center rounded-lg hover:bg-default" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button></form>
         </div>
         <div class="space-y-4 overflow-y-auto max-h-[65vh] pr-1">
             <?php foreach ($__nav as $__secName => $__sec) : ?>
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-base-content/70 mb-2 flex items-center gap-1.5">
+                <p class="text-xs font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
                     <i class="fa-solid <?= esc($__sec['icon']) ?> text-[11px]"></i> <?= esc($__secName) ?>
                 </p>
                 <div class="grid grid-cols-2 gap-2">
@@ -897,23 +781,23 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
                             $isAct = $__currentPath === $__it['url'];
                             $bDue = !empty($__it['badge']) && $__it['badge'] === 'bonus' && $__bonusDue;
                         ?>
-                        <a href="<?= esc($href) ?>" class="flex items-center gap-2 p-2 rounded-lg border border-base-200 hover:border-primary/40 hover:bg-base-200/50 text-xs transition-all <?= $isAct ? 'bg-primary/10 border-primary text-primary font-semibold' : ($locked ? 'opacity-40' : '') ?>">
+                        <a href="<?= esc($href) ?>" class="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-primary/40 hover:bg-default text-xs transition-all <?= $isAct ? 'bg-primary/10 border-primary text-primary font-semibold' : ($locked ? 'opacity-40' : '') ?>">
                             <i class="fa-solid <?= esc($__it['icon']) ?> w-4 text-center text-primary/80"></i>
                             <span class="truncate"><?= esc($__it['label']) ?></span>
-                            <?php if ($bDue) : ?><span class="badge badge-warning badge-xs ml-auto">!</span><?php endif ?>
+                            <?php if ($bDue) : ?><span class="inline-flex items-center rounded bg-amber-400 px-1 text-[10px] font-bold text-neutral-900 ml-auto">!</span><?php endif ?>
                         </a>
                     <?php endforeach ?>
                 </div>
             </div>
             <?php endforeach ?>
             <?php if ($__isAdmin) : ?>
-            <div class="pt-2 border-t border-base-200">
-                <a href="/admin" class="btn btn-sm btn-outline btn-error w-full gap-2"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</a>
+            <div class="pt-2 border-t border-border">
+                <a href="/admin" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl border border-danger/40 text-danger hover:bg-danger/10 w-full text-xs font-semibold"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</a>
             </div>
             <?php endif ?>
         </div>
     </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    <form method="dialog"><button>close</button></form>
 </dialog>
 <?= island('MobileDock', ['path' => $__currentPath, 'nav' => $__shell['nav'], 'isAdmin' => $__isAdmin, 'bonusDue' => $__bonusDue], ob_get_clean()) ?>
 <?php endif ?>
@@ -922,29 +806,29 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 <?php if (auth()->loggedIn()) : ?>
 <div id="tutorialWidgetContainer" style="position:fixed;bottom:4.5rem;right:1rem;z-index:9980;" class="hidden md:bottom-6 md:right-6">
     <!-- Collapsed Pill Badge -->
-    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer badge badge-primary gap-2 p-3 min-h-11 shadow-2xl flex items-center">
+    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3.5 py-2.5 text-xs font-semibold shadow-2xl min-h-11">
         <i class="fa-solid fa-graduation-cap text-sm"></i>
         <span class="font-bold text-xs" id="tutPillText">Tutorial</span>
         <i class="fa-solid fa-chevron-up text-xs opacity-70"></i>
     </div>
 
     <!-- Expanded Card -->
-    <div id="tutorialWidget" class="card bg-base-100 shadow-2xl w-[calc(100vw-2rem)] max-w-sm md:w-80 border border-base-300">
-        <div class="card-body p-4">
+    <div id="tutorialWidget" class="w-[calc(100vw-2rem)] max-w-sm md:w-80 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl p-4">
+        <div>
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                    <div class="badge badge-primary text-xs" id="tutStep">1/10</div>
+                    <div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-bold font-mono" id="tutStep">1/10</div>
                     <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
                 </div>
                 <div class="flex items-center gap-1">
-                    <button onclick="toggleTutCollapse(true)" class="btn btn-ghost btn-xs min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 text-base-content/70 flex items-center justify-center" aria-label="Minimize tutorial" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
-                    <button onclick="skipTutorial()" class="btn btn-ghost btn-xs min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 text-base-content/70 hover:text-error flex items-center justify-center" aria-label="Skip tutorial" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
+                    <button onclick="toggleTutCollapse(true)" class="inline-flex min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" aria-label="Minimize tutorial" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
+                    <button onclick="skipTutorial()" class="inline-flex min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-danger" aria-label="Skip tutorial" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="flex gap-3">
                 <i class="fa-solid fa-mountain-sun text-primary text-xl mt-0.5" id="tutIcon"></i>
                 <div class="flex-1">
-                    <p class="text-xs text-base-content/70 leading-relaxed" id="tutText"></p>
+                    <p class="text-xs text-muted leading-relaxed" id="tutText"></p>
                     <div id="tutAction" class="mt-2 hidden">
                         <div class="flex items-center gap-1 text-xs">
                             <i class="fa-solid fa-arrow-right text-primary"></i>
@@ -954,11 +838,11 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
                 </div>
             </div>
             <div class="flex items-center justify-between mt-3">
-                <progress class="progress progress-primary w-28 sm:w-32" id="tutProgress" value="0" max="10"></progress>
+                <progress class="w-28 sm:w-32 h-2 rounded-full overflow-hidden bg-default accent-primary [&::-webkit-progress-bar]:bg-default [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary" id="tutProgress" value="0" max="10"></progress>
                 <div class="flex gap-1">
-                    <a id="tutGoBtn" href="/dashboard" class="btn btn-primary btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
-                    <button id="tutNextBtn" onclick="advanceTutorial()" class="btn btn-primary btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
-                    <button id="tutDoneBtn" onclick="advanceTutorial()" class="btn btn-success btn-xs min-h-9 sm:min-h-7 gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
+                    <a id="tutGoBtn" href="/dashboard" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-xs font-semibold hover:bg-primary/90 gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
+                    <button id="tutNextBtn" onclick="advanceTutorial()" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-xs font-semibold hover:bg-primary/90 gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
+                    <button id="tutDoneBtn" onclick="advanceTutorial()" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-success text-success-foreground px-2.5 py-1 text-xs font-semibold hover:bg-success/90 gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
                 </div>
             </div>
         </div>
@@ -1045,7 +929,7 @@ function renderTutStep(d) {
             nextBtn.classList.remove('hidden');
             nextBtn.disabled = true;
             nextBtn.textContent = 'Complete the action above';
-            nextBtn.classList.replace('btn-primary', 'btn-ghost');
+            nextBtn.className = 'inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-default/40 text-muted px-2.5 py-1 text-xs font-semibold gap-1 cursor-not-allowed';
         }
     } else {
         actionDiv.classList.add('hidden');
@@ -1067,8 +951,8 @@ function advanceTutorial() {
             tutWidget.classList.add('hidden');
             if (d.completed) {
                 const toast = document.createElement('div');
-                toast.className = 'toast toast-end z-50';
-                toast.innerHTML = '<div class="alert alert-success"><i class="fa-solid fa-trophy"></i><span>Tutorial complete! You\'re ready to run your resort.</span></div>';
+                toast.className = 'fixed top-4 right-4 z-50';
+                toast.innerHTML = '<div class="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 text-success p-3 shadow-lg text-sm font-semibold"><i class="fa-solid fa-trophy"></i><span>Tutorial complete! You\'re ready to run your resort.</span></div>';
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 4000);
             }

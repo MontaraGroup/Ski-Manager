@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>
         body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .btn { transition: none !important; }
     </style>
 </head>
 <body class="bg-base-200 text-base-content">
@@ -27,14 +26,14 @@
             <?php endif ?>
         </p>
         <div class="flex flex-col sm:flex-row gap-2 justify-center">
-            <a href="javascript:history.back()" class="btn btn-outline btn-sm gap-2">
+            <a href="javascript:history.back()" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl border border-border bg-transparent px-4 py-2 text-sm font-semibold hover:bg-default">
                 <i class="fa-solid fa-arrow-left"></i>Go Back
             </a>
-            <a href="/dashboard" class="btn btn-primary btn-sm gap-2">
+            <a href="/dashboard" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:bg-primary/90">
                 <i class="fa-solid fa-gauge-high"></i>Back to Lodge
             </a>
             <?php if (!session()->get('logged_in')) : ?>
-                <a href="/login" class="btn btn-secondary btn-sm gap-2">
+                <a href="/login" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl bg-secondary text-secondary-foreground px-4 py-2 text-sm font-semibold hover:bg-secondary/90">
                     <i class="fa-solid fa-right-to-bracket"></i>Log In
                 </a>
             <?php endif ?>

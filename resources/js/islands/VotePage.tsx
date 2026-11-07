@@ -82,6 +82,7 @@ export default function VotePage({
             action="/vote/retract"
             variant="tertiary"
             size="sm"
+            className="min-h-11 sm:min-h-8 font-semibold text-xs"
             confirm={{
               title: 'Retract your vote',
               body: `Retract your active ballot for ${userVote.resortName}? You can vote again at any time before Season ${season.number} ends.`,
@@ -210,7 +211,7 @@ export default function VotePage({
 
               {/* Difficulty breakdown */}
               <div className="mb-4">
-                <div className="text-[11px] uppercase tracking-wider text-muted font-medium mb-1.5">
+                <div className="text-xs uppercase tracking-wider text-muted font-medium mb-1.5">
                   Trail difficulty balance
                 </div>
                 <div className="flex gap-1.5 text-xs">
@@ -249,7 +250,7 @@ export default function VotePage({
               variant={opt.isUserVote ? 'secondary' : 'primary'}
               size="md"
               disabled={opt.isUserVote}
-              className="w-full"
+              className="w-full min-h-11 font-semibold text-xs"
               confirm={
                 !opt.isUserVote
                   ? {

@@ -97,7 +97,7 @@ if [ -f "package.json" ]; then
     if command -v npm &>/dev/null; then
         echo "Running 'npm install' on host in $(pwd)..."
         npm install --no-audit --no-fund || npm update || true
-        echo "Active DaisyUI package: $(npm list --depth=0 2>/dev/null | grep daisyui || true)"
+        echo "Active HeroUI package: $(npm list --depth=0 2>/dev/null | grep heroui || true)"
         if grep -q '"build":' package.json; then
             echo "Rebuilding project assets ('npm run build')..."
             npm run build || true

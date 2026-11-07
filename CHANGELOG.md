@@ -1,3 +1,35 @@
+## Release 2026-11-07 03:53
+
+* Merge pull request #37 from Montara-Group/fix/mobile-batch-6-community (8b38db1)
+* Merge branch 'origin/main' into fix/mobile-batch-6-community (87cb5e6)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (b8d78b3)
+* Merge branch 'origin/main' into fix/mobile-batch-6-community (b19839f)
+* Merge branch 'MontaraGroup:main' into main (560fd37)
+
+## Release 2026-11-07 03:37
+
+* Merge branch 'MontaraGroup:main' into main (560fd37)
+* Merge pull request #36 from Montara-Group/fix/mobile-batch-5-buildings (f9fb641)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (73890ec)
+* Merge branch 'origin/main' into fix/mobile-batch-5-buildings (5efb2ca)
+* Merge pull request #35 from Montara-Group/fix/mobile-batch-4-infra-ops (916c4a5)
+
+## Release 2026-11-07 03:35
+
+* Merge pull request #35 from Montara-Group/fix/mobile-batch-4-infra-ops (916c4a5)
+* Merge branch 'origin/main' into fix/mobile-batch-4-infra-ops (ab1b9a7)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (0c4a6a9)
+* Merge branch 'MontaraGroup:main' into main (d924e6b)
+* Merge pull request #38 from Montara-Group/fix/season-vote-fit (b3f00f5)
+
+## Release 2026-11-07 01:31
+
+* Merge branch 'MontaraGroup:main' into main (d924e6b)
+* Merge pull request #38 from Montara-Group/fix/season-vote-fit (b3f00f5)
+* Merge origin/main into fix/season-vote-fit (c20f239)
+* fix(vote): show both options side by side on desktop (b98387d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (194425f)
+
 ## Release 2026-11-07 01:21
 
 * Merge pull request #34 from Montara-Group/fix/mobile-batch-3-ops-settings (3ce03d4)
