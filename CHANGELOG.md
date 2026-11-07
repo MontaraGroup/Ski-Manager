@@ -1,3 +1,11 @@
+## Release 2026-11-07 01:05
+
+* Merge pull request #31 from Montara-Group/fix/mobile-batch-1-shell (5d5b9af)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (703b319)
+* Merge branch 'MontaraGroup:main' into main (cf88c7f)
+* Merge pull request #33 from Montara-Group/feature/season-mode-vote (654f632)
+* feat(vote): site-wide season format vote (117ab91)
+
 ## Release 2026-11-07 00:45
 
 * Merge branch 'MontaraGroup:main' into main (cf88c7f)
