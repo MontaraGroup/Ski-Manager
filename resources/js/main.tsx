@@ -97,6 +97,8 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   CompleteProfilePage: () => import('./islands/CompleteProfilePage'),
   Email2FAShowPage: () => import('./islands/Email2FAShowPage'),
   Email2FAVerifyPage: () => import('./islands/Email2FAVerifyPage'),
+  EmailActivateShowPage: () => import('./islands/EmailActivateShowPage'),
+  LockedPage: () => import('./islands/LockedPage'),
   CountdownPage: () => import('./islands/CountdownPage'),
 };
 

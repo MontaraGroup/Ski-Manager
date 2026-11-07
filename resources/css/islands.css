@@ -111,30 +111,10 @@
   --warning-hover: color-mix(in oklab, var(--warning) 88%, black);
 }
 
-/*
- * The site's own CSS (public/css/input.css) has classes with the same names as HeroUI's:
- * alert, avatar, badge, card, checkbox, dropdown, input, kbd, label, link, menu, radio,
- * select, tabs, toast. Those rules are unlayered, so they would beat HeroUI's layered ones on
- * every island. Inside an island, in the overlay layer, and in the toast region (React Aria
- * portals that one straight into <body>), revert-layer drops them back to the layered
- * (HeroUI + Tailwind) values. The list goes away once those pages are React.
- */
-:is([data-island], [data-island-layer], .toast-region) :is(.alert, .avatar, .badge, .card, .checkbox, .dropdown, .input, .kbd, .label, .link, .menu, .radio, .select, .tabs, .toast) {
-  all: revert-layer;
-}
-/* the site's global focus outline would double HeroUI's focus ring */
+/* The site's global focus outline would double HeroUI's focus ring */
 :is([data-island], [data-island-layer], .toast-region) *:focus-visible {
   outline: revert-layer !important;
   outline-offset: revert-layer !important;
-}
-
-/*
- * HeroUI's .menu component defines overflow: clip. Prevent that rule from clipping DaisyUI horizontal
- * navbars (.menu-horizontal) outside islands, allowing dropdown menus to extend downward over content.
- */
-.site-nav .menu-horizontal,
-ul.menu-horizontal {
-  overflow: visible !important;
 }
 
 /* Touch screens: 44px tap targets (DESIGN.md, Layout) */

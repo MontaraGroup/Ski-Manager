@@ -149,11 +149,11 @@
 
         <!-- Community Call-to-Action -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
-            <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="btn btn-primary bg-indigo-600 hover:bg-indigo-500 border-indigo-600 hover:border-indigo-500 text-white w-full sm:w-auto px-6 gap-2 shadow-lg shadow-indigo-600/20">
+            <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium min-h-11 py-2.5 px-6 gap-2 shadow-lg shadow-indigo-600/20 transition-colors w-full sm:w-auto">
                 <i class="fa-brands fa-discord text-lg" aria-hidden="true"></i>
                 <span>Join Official Discord</span>
             </a>
-            <button onclick="window.location.reload()" class="btn btn-outline border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white w-full sm:w-auto px-6 gap-2">
+            <button onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white font-medium min-h-11 py-2.5 px-6 gap-2 transition-colors w-full sm:w-auto">
                 <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                 <span>Check Status</span>
             </button>

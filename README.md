@@ -26,7 +26,7 @@ A free-to-play browser-based ski resort management simulation game. Build slopes
 |-------|-----------|
 | Backend | [CodeIgniter 4.7](https://codeigniter.com/) (PHP 8.5) |
 | Auth | [CodeIgniter Shield](https://codeigniter4.github.io/shield/) |
-| Frontend | [Tailwind CSS 4](https://tailwindcss.com/) + [DaisyUI 5](https://daisyui.com/) |
+| Frontend | [Tailwind CSS 4](https://tailwindcss.com/) + [HeroUI](https://heroui.com/) |
 | Trail Map | [Leaflet.js](https://leafletjs.com/) with [Mapsynergy](https://www.skimap.org/) imagery |
 | Icons | [Font Awesome 6](https://fontawesome.com/) |
 | PDF | [Dompdf](https://github.com/dompdf/dompdf) + [qpdf](https://github.com/qpdf/qpdf) |
