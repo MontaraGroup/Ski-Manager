@@ -245,17 +245,17 @@ export default function AllianceDirectoryPage({
                           {a.min_reputation}+ Rep
                         </Chip>
                       ) : (
-                        <span className="text-[11px] text-muted">None</span>
+                        <span className="text-xs text-muted">None</span>
                       )}
                     </td>
                     <td className="py-2.5 text-right">
                       {a.isFull ? (
-                        <span className="rounded bg-default px-2 py-1 text-[11px] text-muted">
+                        <span className="rounded bg-default px-2 py-1 text-xs text-muted">
                           Full
                         </span>
                       ) : !a.meetsRep ? (
                         <span
-                          className="rounded bg-danger/10 px-2 py-1 text-[11px] text-danger"
+                          className="rounded bg-danger/10 px-2 py-1 text-xs text-danger"
                           title={`Requires ${a.min_reputation} reputation`}
                         >
                           Low Rep
@@ -309,8 +309,8 @@ export default function AllianceDirectoryPage({
             <form action="/alliances/create" method="post" className="space-y-3.5 text-xs">
               <CsrfInput />
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
                   <label className="mb-1 block font-medium text-foreground">Alliance Name</label>
                   <input
                     type="text"
@@ -319,7 +319,7 @@ export default function AllianceDirectoryPage({
                     minLength={3}
                     maxLength={30}
                     placeholder="e.g. Summit Alpine Syndicate"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div>
@@ -331,7 +331,7 @@ export default function AllianceDirectoryPage({
                     minLength={3}
                     maxLength={5}
                     placeholder="SUMMT"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono uppercase text-foreground focus:border-accent focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 font-mono uppercase text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default function AllianceDirectoryPage({
                   name="motto"
                   maxLength={100}
                   placeholder="e.g. United by fresh powder and alpine elevation."
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                  className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
@@ -354,16 +354,16 @@ export default function AllianceDirectoryPage({
                   rows={2}
                   maxLength={500}
                   placeholder="Describe your syndicate vision and cooperative standards..."
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block font-medium text-foreground">Crest Icon</label>
                   <select
                     name="crest_icon"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                     defaultValue="fa-mountain-sun"
                   >
                     {CREST_ICONS.map((i) => (
@@ -377,7 +377,7 @@ export default function AllianceDirectoryPage({
                   <label className="mb-1 block font-medium text-foreground">Crest Color</label>
                   <select
                     name="crest_color"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                     defaultValue="#3b82f6"
                   >
                     {CREST_COLORS.map((c) => (
@@ -389,7 +389,7 @@ export default function AllianceDirectoryPage({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-surface-raised p-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-border bg-surface-raised p-3">
                 <div>
                   <label className="mb-1 block font-medium text-foreground">
                     Min Reputation Requirement
@@ -400,7 +400,7 @@ export default function AllianceDirectoryPage({
                     defaultValue={0}
                     min={0}
                     step={5}
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 font-mono text-foreground focus:border-accent focus:outline-none"
+                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-1.5 font-mono text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col justify-center pt-2">
@@ -410,11 +410,11 @@ export default function AllianceDirectoryPage({
                       name="is_recruiting"
                       value="1"
                       defaultChecked
-                      className="size-4 rounded border-border text-accent focus:ring-accent"
+                      className="size-5 sm:size-4 rounded border-border text-accent focus:ring-accent"
                     />
                     <span>Open Recruitment</span>
                   </label>
-                  <span className="text-[10px] text-muted">
+                  <span className="text-xs text-muted">
                     Allow direct joining without approval
                   </span>
                 </div>
@@ -483,7 +483,7 @@ export default function AllianceDirectoryPage({
                   rows={4}
                   required
                   placeholder="Introduce your resort, slope capacity, and why you want to join..."
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-foreground focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-xs text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 

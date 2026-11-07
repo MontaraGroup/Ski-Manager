@@ -168,7 +168,7 @@ function PlayerRow({ row: r, v2 }: { row: Row; v2: boolean }) {
               {r.isMe ? (
                 <span className="rounded-full bg-accent px-2 text-sm text-accent-foreground">You</span>
               ) : (
-                <a href={`/tour/${r.id}`} className="rounded-full bg-default px-2 text-sm font-normal hover:underline" aria-label={`Tour ${r.username}'s resort`}>Tour</a>
+                <a href={`/tour/${r.id}`} className="inline-flex min-h-11 sm:min-h-6 items-center rounded-full bg-default px-3 py-1 text-xs sm:text-sm font-medium hover:underline" aria-label={`Tour ${r.username}'s resort`}>Tour</a>
               )}
             </div>
             {r.resortName && <div className="truncate text-muted">{r.resortName}</div>}

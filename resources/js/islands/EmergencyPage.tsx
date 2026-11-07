@@ -115,7 +115,7 @@ export default function EmergencyPage({
               <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
                 {coverageRatio}%
               </div>
-              <div className="text-[11px] text-muted tabular-nums">
+              <div className="text-xs text-muted tabular-nums">
                 {totalCoverage} of {slopes} slopes covered
               </div>
               <div className="w-full bg-base-200 rounded-full h-1.5 overflow-hidden mt-1.5">
@@ -137,7 +137,7 @@ export default function EmergencyPage({
               <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
                 {activeStations}
               </div>
-              <div className="text-[11px] text-muted tabular-nums">
+              <div className="text-xs text-muted tabular-nums">
                 {totalStations} total constructed
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function EmergencyPage({
               <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
                 {patrolStaff + medicsCount}
               </div>
-              <div className="text-[11px] text-muted tabular-nums">
+              <div className="text-xs text-muted tabular-nums">
                 {patrolStaff} patrol · {medicsCount} medics
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function EmergencyPage({
               <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
                 {insuranceCount}
               </div>
-              <div className="text-[11px] text-muted">active liability policies</div>
+              <div className="text-xs text-muted">active liability policies</div>
             </div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function EmergencyPage({
                       <Icon name={svc.icon} className={`${svc.tone} text-xl`} />
                     </div>
                     <div className="font-bold text-xs text-foreground">{svc.title}</div>
-                    <div className="text-[11px] text-muted mt-0.5">{svc.desc}</div>
+                    <div className="text-xs text-muted mt-0.5">{svc.desc}</div>
                   </a>
                 ))}
               </div>
@@ -237,7 +237,7 @@ export default function EmergencyPage({
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-border text-muted uppercase text-[10px] font-bold">
+                      <tr className="border-b border-border text-muted uppercase text-xs font-bold">
                         <th className="py-2.5 px-3">Time</th>
                         <th className="py-2.5 px-3">Category</th>
                         <th className="py-2.5 px-3">Incident Log</th>
@@ -255,7 +255,7 @@ export default function EmergencyPage({
                             </td>
                             <td className="py-2.5 px-3 whitespace-nowrap">
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                                   isAccident
                                     ? 'bg-danger/15 text-danger'
                                     : 'bg-primary/15 text-primary'
@@ -287,9 +287,9 @@ export default function EmergencyPage({
                 </span>
               }
             >
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {checklist.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 text-xs">
+                  <div key={item.id} className="flex min-h-11 sm:min-h-7 items-center gap-2.5 text-xs">
                     {item.done ? (
                       <Icon name="fa-circle-check" className="text-success text-sm shrink-0" />
                     ) : (
@@ -299,7 +299,7 @@ export default function EmergencyPage({
                     {item.done ? (
                       <span className="line-through text-muted">{item.text}</span>
                     ) : item.link ? (
-                      <a href={item.link} className="text-primary font-medium hover:underline">
+                      <a href={item.link} className="inline-flex min-h-11 sm:min-h-7 items-center text-primary font-medium hover:underline">
                         {item.text}
                       </a>
                     ) : (
@@ -321,13 +321,13 @@ export default function EmergencyPage({
               <div className="space-y-2">
                 <a
                   href="/ski-patrol"
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
+                  className="flex min-h-11 items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon name="fa-shield-halved" className="text-danger text-sm" />
                     <div>
                       <div className="text-xs font-semibold text-foreground">Patrol Stations</div>
-                      <div className="text-[11px] text-muted">Construct & upgrade facilities</div>
+                      <div className="text-xs text-muted">Construct & upgrade facilities</div>
                     </div>
                   </div>
                   <Icon
@@ -338,13 +338,13 @@ export default function EmergencyPage({
 
                 <a
                   href="/staff/hire"
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
+                  className="flex min-h-11 items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon name="fa-user-plus" className="text-primary text-sm" />
                     <div>
                       <div className="text-xs font-semibold text-foreground">Hire Crew</div>
-                      <div className="text-[11px] text-muted">Recruit patrollers and medics</div>
+                      <div className="text-xs text-muted">Recruit patrollers and medics</div>
                     </div>
                   </div>
                   <Icon
@@ -355,13 +355,13 @@ export default function EmergencyPage({
 
                 <a
                   href="/insurance"
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
+                  className="flex min-h-11 items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon name="fa-file-shield" className="text-info text-sm" />
                     <div>
                       <div className="text-xs font-semibold text-foreground">Insurance Policies</div>
-                      <div className="text-[11px] text-muted">Manage liability coverage</div>
+                      <div className="text-xs text-muted">Manage liability coverage</div>
                     </div>
                   </div>
                   <Icon
@@ -372,13 +372,13 @@ export default function EmergencyPage({
 
                 <a
                   href="/government"
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
+                  className="flex min-h-11 items-center justify-between p-2.5 rounded-lg border border-border/50 bg-base-200/40 hover:bg-base-200 transition-colors group"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon name="fa-building-columns" className="text-warning text-sm" />
                     <div>
                       <div className="text-xs font-semibold text-foreground">Safety Regulations</div>
-                      <div className="text-[11px] text-muted">Maintain legal compliance</div>
+                      <div className="text-xs text-muted">Maintain legal compliance</div>
                     </div>
                   </div>
                   <Icon
