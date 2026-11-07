@@ -31,14 +31,14 @@ export type Flash = { success?: string; error?: string; warning?: string; errors
 
 export type ShellProps = {
   path: string;
-  user: { username: string; isAdmin: boolean };
+  user: { username: string; isAdmin: boolean } | null;
   nav: NavSection[];
   bonusDue: boolean;
   search: { name: string; url: string; icon: string }[];
-  stats: Stats;
-  notifications: { unread: number; latest: Notice[] };
+  stats?: Stats | null;
+  notifications?: { unread: number; latest: Notice[] } | null;
   flash: Flash;
-  seasonVote?: SeasonVoteState;
+  seasonVote?: SeasonVoteState | null;
 };
 
 /** The two site themes (DESIGN.md): stored the same way the head script reads them */

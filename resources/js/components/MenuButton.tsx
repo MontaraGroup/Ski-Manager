@@ -4,16 +4,21 @@ import type { NavDrawerProps } from './NavDrawer';
 
 const NavDrawer = lazy(() => import('./NavDrawer'));
 
-type Props = Omit<NavDrawerProps, 'isOpen' | 'onOpenChange'> & { label: string; className?: string; children: ReactNode };
+type Props = Omit<NavDrawerProps, 'isOpen' | 'onOpenChange'> & {
+  label: string;
+  className?: string;
+  isIconOnly?: boolean;
+  children: ReactNode;
+};
 
 /** Opens the resort menu; the drawer's code loads the first time it opens */
-export function MenuButton({ label, className, children, ...drawer }: Props) {
+export function MenuButton({ label, className, isIconOnly, children, ...drawer }: Props) {
   const [open, setOpen] = useState(false);
   const [used, setUsed] = useState(false);
   return (
     <>
       <Button
-        isIconOnly={!className}
+        isIconOnly={isIconOnly ?? !className}
         variant="ghost"
         aria-label={label}
         className={className}

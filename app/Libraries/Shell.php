@@ -136,10 +136,11 @@ class Shell
         return $flash;
     }
 
-    /** Props for the signed-in shell islands */
+    /** Props for the shell islands (signed-in players and guests) */
     public static function props(string $currentPath, array $flash): array
     {
-        $userId = (int) auth()->id();
+        $isLoggedIn = auth()->loggedIn();
+        $userId = $isLoggedIn ? (int) auth()->id() : null;
         $isAdmin = self::isAdmin();
         $bonusDue = self::bonusDue();
         $db = db_connect();
@@ -150,20 +151,20 @@ class Shell
             if ($items) $nav[] = ['name' => $name, 'icon' => $section['icon'], 'items' => $items];
         }
 
-        $fin = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
-        $genepis = $db->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRowArray();
         $weather = getCurrentWeather();
-        $rating = resortRating($userId);
-        $notifs = $db->table('notifications')->select('id, title, message, icon, is_read')->where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray();
+        $fin = $userId ? $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray() : null;
+        $genepis = $userId ? $db->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRowArray() : null;
+        $rating = $userId ? resortRating($userId) : null;
+        $notifs = $userId ? $db->table('notifications')->select('id, title, message, icon, is_read')->where('user_id', $userId)
+            ->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray() : [];
 
         return [
             'path' => $currentPath,
-            'user' => ['username' => (string) auth()->user()->username, 'isAdmin' => $isAdmin],
+            'user' => $isLoggedIn && auth()->user() ? ['username' => (string) auth()->user()->username, 'isAdmin' => $isAdmin] : null,
             'nav' => $nav,
             'bonusDue' => $bonusDue,
             'search' => array_map(fn($p) => ['name' => $p[0], 'url' => $p[1], 'icon' => $p[2]], self::SEARCH),
-            'stats' => [
+            'stats' => $isLoggedIn ? [
                 'cash' => currency((int) ($fin['cash'] ?? 0)),
                 'temp' => temp((int) $weather['temp']),
                 'tempIcon' => $weather['temp'] <= -5 ? 'fa-snowflake' : ($weather['temp'] <= 0 ? 'fa-cloud' : 'fa-sun'),
@@ -172,10 +173,10 @@ class Shell
                 'gameDay' => (int) $weather['game_day'],
                 'seasonLength' => getSeasonLength(),
                 'genepis' => (int) ($genepis['balance'] ?? 0),
-                'stars' => (int) $rating['stars'],
-            ],
+                'stars' => (int) ($rating['stars'] ?? 0),
+            ] : null,
             'notifications' => [
-                'unread' => unreadNotificationCount($userId),
+                'unread' => $userId ? unreadNotificationCount($userId) : 0,
                 'latest' => array_map(fn($n) => [
                     'id' => (int) $n['id'], 'title' => (string) $n['title'], 'message' => (string) $n['message'],
                     'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $n['icon']) ? (string) $n['icon'] : 'fa-solid fa-bell',
@@ -183,7 +184,7 @@ class Shell
                 ], $notifs),
             ],
             'flash' => $flash,
-            'seasonVote' => SeasonVote::state($userId, $currentPath),
+            'seasonVote' => $userId ? SeasonVote::state($userId, $currentPath) : null,
         ];
     }
 }

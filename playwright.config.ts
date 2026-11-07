@@ -16,6 +16,7 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://ski-manager.net',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    proxy: process.env.PLAYWRIGHT_PROXY ? { server: process.env.PLAYWRIGHT_PROXY } : undefined,
   },
   projects: [
     {

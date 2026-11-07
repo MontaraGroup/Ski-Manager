@@ -97,6 +97,8 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   CompleteProfilePage: () => import('./islands/CompleteProfilePage'),
   Email2FAShowPage: () => import('./islands/Email2FAShowPage'),
   Email2FAVerifyPage: () => import('./islands/Email2FAVerifyPage'),
+  EmailActivateShowPage: () => import('./islands/EmailActivateShowPage'),
+  LockedPage: () => import('./islands/LockedPage'),
   CountdownPage: () => import('./islands/CountdownPage'),
 };
 
@@ -153,9 +155,38 @@ function mountToasts() {
   createRoot(host).render(<Toast.Provider placement="bottom end" />);
 }
 
+declare global {
+  interface Window {
+    FontAwesome?: {
+      dom?: {
+        watch?: () => void;
+      };
+    };
+  }
+}
+
+function watchFontAwesome() {
+  if (typeof window === 'undefined') return;
+  if (window.FontAwesome?.dom?.watch) {
+    window.FontAwesome.dom.watch();
+    return;
+  }
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (window.FontAwesome?.dom?.watch) {
+      clearInterval(interval);
+      window.FontAwesome.dom.watch();
+    } else if (attempts > 50) {
+      clearInterval(interval);
+    }
+  }, 100);
+}
+
 function boot() {
   mountToasts();
   document.querySelectorAll<HTMLElement>('[data-island]').forEach(mount);
+  watchFontAwesome();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

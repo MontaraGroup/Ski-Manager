@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="/css/style.css?v=7">
 </head>
 <body class="min-h-screen flex items-center justify-center bg-base-200">
-    <div class="card bg-base-100 shadow-xl w-96">
-        <div class="card-body text-center">
+    <div class="w-96 rounded-2xl border border-border bg-card p-6 shadow-2xl text-center">
+        <div>
             <i class="fa-solid fa-lock text-error text-5xl mb-4"></i>
             <h1 class="text-2xl font-bold text-error">Access Blocked</h1>
-            <p class="text-base-content/70 mt-2">Too many failed login attempts from your IP address.</p>
+            <p class="text-muted mt-2">Too many failed login attempts from your IP address.</p>
             <div class="bg-error/10 rounded-lg p-4 mt-4">
                 <div class="text-3xl font-bold text-error"><?= $minutes ?></div>
-                <div class="text-sm text-base-content/70">minutes remaining</div>
+                <div class="text-sm text-muted">minutes remaining</div>
             </div>
-            <p class="text-xs text-base-content/70 mt-4">If you believe this is an error, please wait or contact support.</p>
-            <a href="/" class="btn btn-ghost btn-sm mt-4">Back to Home</a>
+            <p class="text-xs text-muted mt-4">If you believe this is an error, please wait or contact support.</p>
+            <a href="/" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold hover:bg-default mt-4">Back to Home</a>
         </div>
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
