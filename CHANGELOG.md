@@ -1,3 +1,11 @@
+## Release 2026-11-07 01:31
+
+* Merge branch 'MontaraGroup:main' into main (d924e6b)
+* Merge pull request #38 from Montara-Group/fix/season-vote-fit (b3f00f5)
+* Merge origin/main into fix/season-vote-fit (c20f239)
+* fix(vote): show both options side by side on desktop (b98387d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (194425f)
+
 ## Release 2026-11-07 01:21
 
 * Merge pull request #34 from Montara-Group/fix/mobile-batch-3-ops-settings (3ce03d4)
