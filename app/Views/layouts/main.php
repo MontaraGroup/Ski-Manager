@@ -198,8 +198,6 @@ body { font-family: var(--sign); }
 .brand-name { font-family: var(--sign); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
 /* Keep brand + Log in + Play free on one line without overflowing small phones */
 @media (max-width: 420px) {
-    .site-nav .navbar-end { gap: 0.25rem; }
-    .site-nav .navbar-end > .btn-sm:not(.btn-circle) { padding-left: 0.5rem; padding-right: 0.5rem; }
     .site-nav .brand { padding: 0 0.25rem; gap: 0.4rem; }
     .brand-name { font-size: 1.125rem; }
 }
@@ -212,12 +210,6 @@ body { font-family: var(--sign); }
     .site-nav .brand { gap: 0.4rem; }
     .brand-name { font-size: 1rem; }
 }
-.site-nav .menu-horizontal { overflow: visible !important; }
-.site-nav .menu-horizontal details { overflow: visible !important; }
-.site-nav .menu-horizontal details > ul { z-index: 50; }
-.site-nav .menu-horizontal > li > a,
-.site-nav .menu-horizontal > li > details > summary { font-weight: 500; border-radius: 6px; }
-.site-nav .menu-horizontal > li > a.active { background: color-mix(in oklab, var(--color-base-content) 8%, transparent); color: var(--color-base-content); font-weight: 600; }
 
 /* Resort stats bar under the navbar */
 .stats-bar { gap: 0 !important; }
@@ -307,21 +299,20 @@ a.link:hover{opacity:0.8}
         $__isAdmin = \App\Libraries\Shell::isAdmin();
         $__bonusDue = \App\Libraries\Shell::bonusDue();
         $__nav = \App\Libraries\Shell::NAV;
-        // Signed-in players get the React shell (AppShell, StatsBar, MobileDock islands); this markup
-        // is what guests see, and the fallback shown until the islands mount
-        $__shellIslands = auth()->loggedIn();
+        // The React AppShell island (HeroUI 3.2.7) renders for all players (guests and signed-in)
+        $__shellIslands = true;
         $__flash = \App\Libraries\Shell::takeFlash();
-        $__shell = $__shellIslands ? \App\Libraries\Shell::props($__currentPath, $__flash) : null;
+        $__shell = \App\Libraries\Shell::props($__currentPath, $__flash);
 
         $__navItem = function (array $it) use ($__isAdmin, $__bonusDue) {
             $r = \App\Libraries\Shell::resolveItem($it, $__isAdmin, $__bonusDue);
             if ($r === null) return '';
-            $cls = ($r['locked'] || $r['flagOff']) ? 'opacity-40' : '';
-            $badge = $r['bonusDue'] ? ' <span class="badge badge-warning badge-xs">!</span>' : '';
+            $cls = ($r['locked'] || $r['flagOff']) ? 'text-muted' : 'text-foreground';
+            $badge = $r['bonusDue'] ? ' <span class="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>' : '';
             $target = $r['external'] ? ' target="_blank" rel="noopener noreferrer"' : '';
             $title = $r['flagOff'] ? ' title="Switched off for players (feature flag)"' : '';
-            return '<li><a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="' . $cls . '">'
-                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw mr-2"></i>' . esc($r['label']) . $badge . '</a></li>';
+            return '<a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors ' . $cls . '">'
+                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw text-accent"></i><span>' . esc($r['label']) . '</span>' . $badge . '</a>';
         };
     ?>
     <?php if (session()->get('is_demo')) : ?>
@@ -356,130 +347,56 @@ a.link:hover{opacity:0.8}
     </div>
     <?php endif ?>
     <?php ob_start() ?>
-    <header style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation"><div class="navbar site-nav bg-base-100 border-b border-base-300">
-        <div class="navbar-start">
-            <div class="dropdown">
-                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></div>
-                <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-64 p-2 shadow max-h-[80vh] overflow-y-auto">
-                    <li><a href="/dashboard"><i class="fa-solid fa-gauge-high fa-fw mr-2"></i>Dashboard</a></li>
+    <header class="site-nav border-b border-border bg-background" style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation" class="mx-auto flex min-h-14 max-w-7xl items-center gap-1 px-2 sm:px-4">
+        <div class="lg:hidden">
+            <details class="relative">
+                <summary class="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-default cursor-pointer list-none" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></summary>
+                <div class="absolute left-0 mt-2 w-64 rounded-xl border border-border bg-popover p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
+                    <a href="/dashboard" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors"><i class="fa-solid fa-gauge-high fa-fw mr-1 text-accent"></i>Dashboard</a>
                     <?php foreach ($__nav as $__secName => $__sec) : ?>
-                        <li class="menu-title text-xs mt-1"><?= esc($__secName) ?></li>
+                        <div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1"><?= esc($__secName) ?></div>
                         <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
                     <?php endforeach ?>
-                    <?php if ($__isAdmin) : ?><li class="menu-title text-xs mt-1">Admin</li><li><a href="/admin"><i class="fa-solid fa-shield-halved fa-fw mr-2 text-error"></i>Admin Panel</a></li><?php endif ?>
-                </ul>
-            </div>
-            <a href="/" class="brand" aria-label="Ski Manager home"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg><span class="brand-name">Ski Manager</span></a>
-        </div>
-        <div class="navbar-center hidden lg:flex">
-            <ul class="menu menu-horizontal px-1 gap-1">
-                <li><a href="/" class="<?= $__currentPath === '/' ? 'active' : '' ?>">Home</a></li>
-                <li><a href="/dashboard" class="<?= $__currentPath === '/dashboard' ? 'active' : '' ?>">Dashboard</a></li>
-                <?php foreach ($__nav as $__secName => $__sec) : ?>
-                <li>
-                    <details>
-                        <summary><?= esc($__secName) ?></summary>
-                        <ul class="bg-base-100 rounded-box shadow-lg border border-base-300 w-56 z-50">
-                            <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
-                        </ul>
-                    </details>
-                </li>
-                <?php endforeach ?>
-                <?php if ($__isAdmin) : ?><li><a href="/admin" class="text-error">Admin</a></li><?php endif ?>
-            </ul>
-        </div>
-        <div class="navbar-end gap-2">
-            <?php if (auth()->loggedIn()) : ?>
-            <button onclick="document.getElementById('searchModal').showModal()" class="btn btn-ghost btn-sm btn-circle" aria-label="Search"><i class="fa-solid fa-search" aria-hidden="true"></i></button>
-            <dialog id="searchModal" class="modal modal-top" closedby="any" aria-label="Quick Search">
-                <div class="modal-box max-w-lg mx-auto mt-20 p-0">
-                    <search class="flex items-center gap-2 p-3 border-b border-base-300">
-                        <i class="fa-solid fa-search text-base-content/30" aria-hidden="true"></i>
-                        <input type="search" id="globalSearch" placeholder="Search pages, features, settings..." class="input input-ghost input-sm flex-1 focus:outline-none" autocomplete="off" autofocus />
-                        <kbd class="kbd kbd-xs">Esc</kbd>
-                    </search>
-                    <div id="searchResults" class="max-h-80 overflow-y-auto p-2"></div>
-                    <div id="searchEmpty" class="p-6 text-center text-sm text-base-content/70">
-                        <i class="fa-solid fa-compass text-2xl mb-2" aria-hidden="true"></i>
-                        <p>Type to search pages and features</p>
-                    </div>
+                    <?php if ($__isAdmin) : ?><div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1">Admin</div><a href="/admin" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-danger hover:bg-default transition-colors"><i class="fa-solid fa-shield-halved fa-fw mr-1"></i>Admin Panel</a><?php endif ?>
                 </div>
-                <form method="dialog" class="modal-backdrop"><button>close</button></form>
-            </dialog>
-            <?php endif ?>
-            <label class="swap swap-rotate btn btn-ghost btn-sm btn-circle" aria-label="Toggle light or dark theme">
-                <input type="checkbox" id="themeToggle" value="winter" class="theme-controller" />
-                <svg aria-hidden="true" class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/></svg>
-                <svg aria-hidden="true" class="swap-off fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/></svg>
-            </label>
-            <?php if (auth()->loggedIn()) : ?>
-                <?php $__notifCount = unreadNotificationCount(auth()->id()); ?>
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-circle indicator" aria-label="Notifications">
-                        <i class="fa-solid fa-bell text-base-content/80"></i>
-                        <span id="navbarNotifBadge" class="indicator-item badge badge-error badge-xs <?php echo $__notifCount == 0 ? "hidden" : ""; ?>"><?= $__notifCount > 9 ? "9+" : $__notifCount ?></span>
-                    </div>
-                    <div tabindex="0" class="dropdown-content card bg-base-100 shadow-2xl z-50 w-80 mt-2 border border-base-200/50">
-                        <div class="card-body p-3">
-                            <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-base-100">
-                                <span class="font-semibold text-sm">Notifications</span>
-                                <?php if ($__notifCount > 0) : ?>
-                                    <form action="/notifications/read-all" method="post"><?= csrf_field() ?><button class="link link-primary text-xs no-underline">Mark all read</button></form>
-                                <?php endif ?>
-                            </div>
-                            <div id="navbarNotifTargetList" class="space-y-1 max-h-64 overflow-y-auto">
-                                <?php $__notifs = db_connect()->table("notifications")->where("user_id", auth()->id())->orderBy("created_at", "DESC")->limit(5)->get()->getResultArray(); ?>
-                                <?php if (empty($__notifs)) : ?>
-                                    <p class="text-xs text-base-content/70 text-center py-4">No notifications</p>
-                                <?php else : ?>
-                                    <?php foreach ($__notifs as $__n) : ?>
-                                        <?php 
-                                            $isRead = (bool)($__n["is_read"] ?? false);
-                                            $iconColor = "text-base-content/40";
-                                            $bgAccent = "bg-base-200/50";
-                                            
-                                            if (!$isRead) {
-                                                $iconStr = strtolower($__n["icon"] ?? "");
-                                                $titleStr = strtolower($__n["title"] ?? "");
-                                                if (strpos($iconStr, "snowflake") !== false || strpos($titleStr, "weather") !== false) { $iconColor = "text-info"; $bgAccent = "bg-info/10"; }
-                                                elseif (strpos($iconStr, "trophy") !== false || strpos($iconStr, "medal") !== false) { $iconColor = "text-accent"; $bgAccent = "bg-accent/10"; }
-                                                elseif (strpos($iconStr, "exclamation") !== false || strpos($iconStr, "triangle") !== false) { $iconColor = "text-error"; $bgAccent = "bg-error/10"; }
-                                                else { $iconColor = "text-primary"; $bgAccent = "bg-primary/10"; }
-                                            }
-                                        ?>
-                                        <a href="/notifications/open/<?= (int) $__n["id"] ?>" class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-base-200/70 transition-all <?= $isRead ? "opacity-60" : "font-medium" ?>">
-                                            <div class="w-7 h-7 rounded-lg <?= $bgAccent ?> shrink-0 flex items-center justify-center">
-                                                <i class="<?= esc($__n["icon"] ?? "fa-solid fa-bell") ?> text-[11px] <?= $iconColor ?>"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="text-[11px] text-base-content font-bold truncate"><?= esc($__n["title"]) ?></div>
-                                                <div class="text-[10px] text-base-content/70 truncate mt-0.5"><?= esc($__n["message"]) ?></div>
-                                            </div>
-                                            <?php if (!$isRead) : ?>
-                                                <span class="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0"></span>
-                                            <?php endif; ?>
-                                        </a>
-                                    <?php endforeach ?>
-                                <?php endif ?>
-                            </div>
-                            <div class="border-t border-base-100 pt-2 mt-1">
-                                <a href="/notifications" class="btn btn-ghost btn-xs w-full text-[11px]">View All</a>
-                            </div>
-                        </div>
-                    </div>
+            </details>
+        </div>
+        <a href="/" class="brand flex min-h-11 items-center gap-2 rounded-lg px-2 font-semibold" aria-label="Ski Manager home">
+            <svg class="brand-mark size-7 shrink-0" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span class="brand-name hidden text-lg tracking-tight sm:inline">Ski Manager</span>
+        </a>
+        <div class="hidden items-center gap-1 lg:flex">
+            <a href="/" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Home</a>
+            <a href="/dashboard" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/dashboard' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Dashboard</a>
+            <?php foreach ($__nav as $__secName => $__sec) : ?>
+            <details class="relative">
+                <summary class="flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium hover:bg-default cursor-pointer list-none select-none transition-colors">
+                    <span><?= esc($__secName) ?></span>
+                    <i class="fa-solid fa-chevron-down text-xs text-muted"></i>
+                </summary>
+                <div class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-2xl z-50">
+                    <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
                 </div>
-                <div class="dropdown dropdown-end"><div tabindex="0" role="button" class="btn btn-ghost btn-sm"><i class="fa-solid fa-user-circle mr-1"></i><?= auth()->user()->username ?></div><ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box shadow w-48 z-50 mt-2"><li><a href="/dashboard"><i class="fa-solid fa-gauge-high mr-1"></i>Dashboard</a></li><li><a href="/settings"><i class="fa-solid fa-gear mr-1"></i>Settings</a></li><li><a href="/logout" class="text-error"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</a></li></ul></div>
+            </details>
+            <?php endforeach ?>
+            <?php if ($__isAdmin) : ?><a href="/admin" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium text-danger hover:bg-default transition-colors">Admin</a><?php endif ?>
+        </div>
+        <div class="ml-auto flex items-center gap-1">
+            <?php if (auth()->loggedIn()) : ?>
+                <a href="/settings" class="flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-medium hover:bg-default transition-colors">
+                    <i class="fa-solid fa-user-circle"></i>
+                    <span><?= esc(auth()->user()->username ?? 'Account') ?></span>
+                </a>
             <?php else : ?>
-                <a href="/login" class="btn btn-ghost btn-sm">Log in</a>
-                <a href="/register" class="btn btn-primary btn-sm">Play free</a>
+                <div class="flex items-center gap-1.5 ml-1">
+                    <a href="/login" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg px-3 text-xs sm:text-sm font-medium hover:bg-default transition-colors">Log in</a>
+                    <a href="/register" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg bg-primary px-3 text-xs sm:text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">Play free</a>
+                </div>
             <?php endif ?>
         </div>
-    </div>
     </nav></header>
-    <?php $__legacyHeader = ob_get_clean(); ?>
-    <?php if ($__shellIslands) : ?>
-    <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__legacyHeader) ?></div>
-    <?php else : echo $__legacyHeader; endif ?>
+    <?php $__fallbackHeader = ob_get_clean(); ?>
+    <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__fallbackHeader) ?></div>
 
     <!-- Content -->
     <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
@@ -652,33 +569,19 @@ a.link:hover{opacity:0.8}
     </script>
 
 <script>
-document.querySelectorAll(".navbar details").forEach(function(det) {
+document.querySelectorAll(".site-nav details").forEach(function(det) {
     det.addEventListener("toggle", function() {
         if (this.open) {
-            document.querySelectorAll(".navbar details").forEach(function(other) {
+            document.querySelectorAll(".site-nav details").forEach(function(other) {
                 if (other !== det) other.removeAttribute("open");
             });
         }
     });
 });
 document.addEventListener("click", function(e) {
-    // Close navbar details menus if clicked outside
-    if (!e.target.closest(".navbar details")) {
-        document.querySelectorAll(".navbar details[open]").forEach(function(d) {
+    if (!e.target.closest(".site-nav details")) {
+        document.querySelectorAll(".site-nav details[open]").forEach(function(d) {
             d.removeAttribute("open");
-        });
-    }
-    // Dropdown open/close support for click and touch devices
-    const trigger = e.target.closest(".dropdown > [tabindex=\"0\"]");
-    const dropdown = trigger ? trigger.closest(".dropdown") : null;
-    document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
-        if (d !== dropdown) d.classList.remove("dropdown-open");
-    });
-    if (trigger && dropdown) {
-        dropdown.classList.toggle("dropdown-open");
-    } else if (!e.target.closest(".dropdown-content")) {
-        document.querySelectorAll(".dropdown.dropdown-open").forEach(function(d) {
-            d.classList.remove("dropdown-open");
         });
     }
 });
