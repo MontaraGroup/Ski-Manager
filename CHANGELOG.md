@@ -1,3 +1,11 @@
+## Release 2026-11-07 03:59
+
+* Merge pull request #39 from Montara-Group/feat/heroui-navbar (aefe2a6)
+* Merge branch 'origin/main' into feat/heroui-navbar (7490495)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ab2b96d)
+* Merge pull request #37 from Montara-Group/fix/mobile-batch-6-community (8b38db1)
+* Merge branch 'origin/main' into feat/heroui-navbar (0be5dd8)
+
 ## Release 2026-11-07 03:53
 
 * Merge pull request #37 from Montara-Group/fix/mobile-batch-6-community (8b38db1)
