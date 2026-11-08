@@ -174,18 +174,19 @@ export default function AdminUserPage({
               Delete
             </PostButton>
 
-            <a
-              href={`/admin/impersonate/${user.id}`}
-              onClick={(e) => {
-                if (!window.confirm(`Log in and switch session to ${user.username}?`)) {
-                  e.preventDefault();
-                }
+            <PostButton
+              action={`/admin/impersonate/${user.id}`}
+              variant="secondary"
+              size="sm"
+              confirm={{
+                title: `Impersonate ${user.username}?`,
+                body: `You will be logged out of your admin account and signed in as ${user.username} until you return to admin.`,
+                confirmLabel: 'Impersonate',
               }}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-edge bg-surface-2 px-3 text-xs font-medium text-foreground hover:bg-surface-3 transition-colors"
             >
-              <Icon name="fa-user-secret" />
+              <Icon name="fa-user-secret" className="mr-1" />
               Impersonate
-            </a>
+            </PostButton>
           </div>
         ) : (
           <span className="inline-flex items-center rounded border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning">

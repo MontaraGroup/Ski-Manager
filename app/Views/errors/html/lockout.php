@@ -11,7 +11,7 @@
         <div>
             <i class="fa-solid fa-lock text-error text-5xl mb-4"></i>
             <h1 class="text-2xl font-bold text-error">Access Blocked</h1>
-            <p class="text-muted mt-2">Too many failed login attempts from your IP address.</p>
+            <p class="text-muted mt-2"><?= esc($message ?? 'Too many failed login attempts from your IP address.') ?></p>
             <div class="bg-error/10 rounded-lg p-4 mt-4">
                 <div class="text-3xl font-bold text-error"><?= $minutes ?></div>
                 <div class="text-sm text-muted">minutes remaining</div>
