@@ -18,12 +18,12 @@ echo "=========================================================="
 
 # 1. Environment-specific settings
 if [ "${ENV}" = "staging" ]; then
-    HOST_PATH="/opt/1panel/www/sites/skiv2-staging/ci4"
+    HOST_PATH="/srv/ski-manager/sites/skiv2-staging/ci4"
     CONTAINER_PATH="/www/sites/skiv2-staging/ci4"
     BRANCH="staging"
     DOMAIN="https://staging.ski-manager.net"
 elif [ "${ENV}" = "production" ]; then
-    HOST_PATH="/opt/1panel/www/sites/skiv2/ci4"
+    HOST_PATH="/srv/ski-manager/sites/skiv2/ci4"
     CONTAINER_PATH="/www/sites/skiv2/ci4"
     BRANCH="main"
     DOMAIN="https://ski-manager.net"
@@ -39,14 +39,14 @@ fi
 
 echo "Working directory: $(pwd)"
 
-# 2. Locate 1Panel Docker Containers
-PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^PHP$|^1panel-.*php.*' | head -n 1 || true)
+# 2. Locate Docker Containers
+PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-php$|^PHP$|^1panel-.*php.*' | head -n 1 || true)
 if [ -z "${PHP_CONTAINER}" ]; then
-    PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -iE 'php' | head -n 1 || echo "PHP")
+    PHP_CONTAINER="ski-php"
 fi
 
-MYSQL_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'mysql' | head -n 1 || echo "1Panel-mysql-Uibp")
-OPENRESTY_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'openresty|nginx' | head -n 1 || echo "1Panel-openresty-Xqgf")
+MYSQL_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-mysql$|mysql' | head -n 1 || echo "ski-mysql")
+OPENRESTY_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-proxy$|openresty|nginx' | head -n 1 || echo "ski-proxy")
 
 echo "Detected Containers:"
 echo "  - PHP:       ${PHP_CONTAINER}"
@@ -55,7 +55,7 @@ echo "  - OpenResty: ${OPENRESTY_CONTAINER}"
 
 # 3. Pre-deploy Database Backup (Production only)
 if [ "${ENV}" = "production" ]; then
-    BACKUP_DIR="/opt/1panel/backup/pre_deploy"
+    BACKUP_DIR="/root/db_backups/pre_deploy"
     mkdir -p "${BACKUP_DIR}" 2>/dev/null || BACKUP_DIR="/tmp"
     BACKUP_FILE="${BACKUP_DIR}/backup_pre_deploy_${TIMESTAMP}.sql.gz"
 

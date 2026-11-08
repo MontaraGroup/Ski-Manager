@@ -22,7 +22,7 @@ class Database extends BaseConfig
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => '1Panel-mysql-Uibp',
+        'hostname'     => 'ski-mysql',
         'username'     => 'root',
         'password'     => '',
         'database'     => 'skimanager_v2',
