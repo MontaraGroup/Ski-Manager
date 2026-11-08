@@ -1,3 +1,11 @@
+## Release 2026-11-08 23:36
+
+* fix(privacy): suppress Hotjar popups, stubs, and network calls (bd00ab9)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (21d1994)
+* Merge pull request #40 from Montara-Group/fix/security-review-hardening (266cb1a)
+* fix(security): throttle api auth, escape username, and configure csp (4bcc76c)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (306c773)
+
 ## Release 2026-11-08 22:16
 
 * Merge pull request #40 from Montara-Group/fix/security-review-hardening (266cb1a)
