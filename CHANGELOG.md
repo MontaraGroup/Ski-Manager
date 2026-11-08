@@ -1,3 +1,11 @@
+## Release 2026-11-08 22:16
+
+* Merge pull request #40 from Montara-Group/fix/security-review-hardening (266cb1a)
+* fix(security): throttle api auth, escape username, and configure csp (4bcc76c)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (306c773)
+* Merge pull request #39 from Montara-Group/feat/heroui-navbar (aefe2a6)
+* Merge branch 'origin/main' into feat/heroui-navbar (7490495)
+
 ## Release 2026-11-07 03:59
 
 * Merge pull request #39 from Montara-Group/feat/heroui-navbar (aefe2a6)
