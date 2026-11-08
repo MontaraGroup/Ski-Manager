@@ -154,11 +154,20 @@ body {
 }
 
 /* Hide Hotjar */
-div[class*="hj-"], iframe[id*="hotjar"], div[data-testid*="hotjar"],
+div[class*="hj-"], iframe[id*="hotjar"], iframe[src*="hotjar"], div[data-testid*="hotjar"],
 #_hj_feedback_container, [id^="hj-survey"], [id^="_hj"],
-._hj_widget_container, ._hj-widget-container {
+._hj_widget_container, ._hj-widget-container, [class*="_hj_"],
+div[id*="hotjar"], div[class*="hotjar"] {
     display: none !important;
     visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    z-index: -9999 !important;
 }
 
 /* Mobile */

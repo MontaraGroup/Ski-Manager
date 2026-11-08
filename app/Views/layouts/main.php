@@ -2,6 +2,101 @@
 <html lang="en" dir="ltr" data-theme="carboncloud">
 <head>
     <meta charset="UTF-8">
+    <!-- Hotjar Suppression & Protection -->
+    <script>
+    (function () {
+      window.hj = function () {};
+      window._hjSettings = { hjid: 0, hjsv: 0 };
+      try {
+        Object.freeze(window._hjSettings);
+        Object.freeze(window.hj);
+      } catch (e) {}
+
+      var isHotjar = function (s) {
+        return typeof s === 'string' && /hotjar\.(com|io)/i.test(s);
+      };
+
+      if (typeof window.fetch === 'function') {
+        var _fetch = window.fetch;
+        window.fetch = function (resource, init) {
+          var url = typeof resource === 'string' ? resource : (resource && resource.url);
+          if (isHotjar(url)) return Promise.reject(new Error('Hotjar disabled'));
+          return _fetch.apply(this, arguments);
+        };
+      }
+
+      if (typeof window.XMLHttpRequest !== 'undefined') {
+        var _open = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function (method, url) {
+          if (isHotjar(url)) {
+            try { this.abort(); } catch (e) {}
+            return;
+          }
+          return _open.apply(this, arguments);
+        };
+      }
+
+      var origCreate = document.createElement;
+      document.createElement = function (tagName, options) {
+        var el = origCreate.call(document, tagName, options);
+        if (typeof tagName === 'string' && tagName.toLowerCase() === 'script') {
+          var origSetAttribute = el.setAttribute;
+          el.setAttribute = function (name, val) {
+            if (name === 'src' && isHotjar(val)) return;
+            return origSetAttribute.call(el, name, val);
+          };
+          try {
+            Object.defineProperty(el, 'src', {
+              set: function (url) {
+                if (isHotjar(url)) return;
+                el.setAttribute('src', url);
+              },
+              get: function () {
+                return el.getAttribute('src') || '';
+              },
+              configurable: true,
+            });
+          } catch (e) {}
+        }
+        return el;
+      };
+
+      var removeHj = function (node) {
+        if (!node || node.nodeType !== 1) return;
+        var id = node.id || '';
+        var className = typeof node.className === 'string' ? node.className : '';
+        var src = node.getAttribute ? (node.getAttribute('src') || '') : '';
+        var testId = node.getAttribute ? (node.getAttribute('data-testid') || '') : '';
+        if (
+          /^_?hj/i.test(id) ||
+          /hj-survey|hj-|_hj/i.test(className) ||
+          testId.indexOf('hotjar') !== -1 ||
+          /hotjar/i.test(src) ||
+          /hotjar/i.test(id)
+        ) {
+          try { node.remove(); } catch (e) {}
+        }
+      };
+
+      if (typeof MutationObserver !== 'undefined') {
+        var observer = new MutationObserver(function (mutations) {
+          for (var i = 0; i < mutations.length; i++) {
+            var added = mutations[i].addedNodes;
+            for (var j = 0; j < added.length; j++) {
+              removeHj(added[j]);
+            }
+          }
+        });
+        if (document.documentElement) {
+          observer.observe(document.documentElement, { childList: true, subtree: true });
+        } else {
+          document.addEventListener('DOMContentLoaded', function () {
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+          });
+        }
+      }
+    })();
+    </script>
     <!-- Sentry Observability & Session Replay -->
     <?php $__sentryDsn = function_exists('env') ? env('SENTRY_DSN') : getenv('SENTRY_DSN'); ?>
     <?php if (!empty($__sentryDsn)) : ?>
