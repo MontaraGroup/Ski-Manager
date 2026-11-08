@@ -1,3 +1,11 @@
+## Release 2026-11-08 23:40
+
+* Merge remote-tracking branch 'origin/main' (23617e4)
+* Merge branch 'upstream/main' into main (bdcd2f9)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (eceede4)
+* fix(privacy): suppress Hotjar popups, stubs, and network calls (bd00ab9)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (21d1994)
+
 ## Release 2026-11-08 23:36
 
 * fix(privacy): suppress Hotjar popups, stubs, and network calls (bd00ab9)
