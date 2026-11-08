@@ -7,6 +7,10 @@ use App\Models\MapSegmentModel;
 
 class Api extends BaseController
 {
+    /** Per-account sign-in attempts allowed before the token bucket must refill. */
+    private const AUTH_ACCOUNT_CAPACITY = 5;
+    private const AUTH_ACCOUNT_WINDOW   = 15 * MINUTE;
+
     /**
      * Unified live API endpoint for native mobile applications and clients.
      * Returns authentic mountain map segments, sectors, terrain geometry, finances, and weather.
@@ -282,6 +286,23 @@ class Api extends BaseController
                 ]);
         }
 
+        // Bound password guessing per account, not just per IP: every address shares one bucket
+        // for the same identifier. The identity is hashed so addresses/usernames stay out of cache keys.
+        $throttler   = service('throttler');
+        $throttleKey = 'auth-account-' . hash('sha256', strtolower($identity));
+        if (! $throttler->check($throttleKey, self::AUTH_ACCOUNT_CAPACITY, self::AUTH_ACCOUNT_WINDOW)) {
+            return $this->response
+                ->setHeader('Access-Control-Allow-Origin', '*')
+                ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                ->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+                ->setHeader('Retry-After', (string) max(1, (int) ceil($throttler->getTokenTime())))
+                ->setStatusCode(429)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => 'Too many sign-in attempts for this account. Try again later.',
+                ]);
+        }
+
         $checkField = filter_var($identity, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         $result = auth()->check([$checkField => $identity, 'password' => $password]);
 
@@ -304,6 +325,10 @@ class Api extends BaseController
 
         /** @var \CodeIgniter\Shield\Entities\User $user */
         $user = $result->extraInfo();
+
+        // Valid credentials clear the failure bucket so a typo before signing in doesn't linger.
+        $throttler->remove($throttleKey);
+
         $token = $user->generateAccessToken('mobile');
 
         return $this->response

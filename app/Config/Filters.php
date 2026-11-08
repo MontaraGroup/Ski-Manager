@@ -120,7 +120,10 @@ class Filters extends BaseFilters
      * @var array<string, array<string, list<string>>>
      */
     public array $filters = [
-        'throttle' => ['before' => ['login*', 'register*', 'magic-link*']],
+        'throttle' => [
+            'before' => ['login*', 'register*', 'magic-link*', 'api/auth'],
+            'after'  => ['login'],
+        ],
         'admin' => ['before' => ['admin*']],
         'seasongate' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'buildings*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*', 'compliance*', 'vote*', 'support*', 'alliances*', 'tutorial*']],
         'featuregate' => ['before' => ['snowmaking*', 'bank*', 'night-skiing*', 'terrain-parks*', 'tournaments*', 'vip-guests*', 'daily-bonus*', 'marketing*', 'real-estate*', 'scenic*', 'off-season*', 'insurance*', 'ski-lessons*', 'equipment*', 'grooming*', 'hotels*', 'restaurants*', 'rentals*', 'parking*', 'energy*', 'water*', 'emergency*', 'government*', 'leaderboard*', 'tour*', 'retail*', 'transportation*', 'ski-patrol*']],
