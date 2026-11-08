@@ -20,9 +20,11 @@ class ContentSecurityPolicy extends BaseConfig
     // -------------------------------------------------------------------------
 
     /**
-     * Default CSP report context
+     * Default CSP report context.
+     * Report-only mode allows verifying all third-party integrations (AdSense, Sentry, GTM)
+     * without blocking functionality in production.
      */
-    public bool $reportOnly = false;
+    public bool $reportOnly = true;
 
     /**
      * Specifies a URL where a browser will send reports
@@ -40,7 +42,7 @@ class ContentSecurityPolicy extends BaseConfig
      * HTTP to HTTPS. This directive is for websites with
      * large numbers of old URLs that need to be rewritten.
      */
-    public bool $upgradeInsecureRequests = false;
+    public bool $upgradeInsecureRequests = true;
 
     // -------------------------------------------------------------------------
     // CSP DIRECTIVES SETTINGS
@@ -52,21 +54,51 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $defaultSrc;
+    public $defaultSrc = 'self';
 
     /**
      * Lists allowed scripts' URLs.
      *
      * @var list<string>|string
      */
-    public $scriptSrc = 'self';
+    public $scriptSrc = [
+        'self',
+        'unsafe-inline',
+        'unsafe-eval',
+        'https://browser.sentry-cdn.com',
+        'https://www.googletagmanager.com',
+        'https://kit.fontawesome.com',
+        'https://ka-f.fontawesome.com',
+        'https://pagead2.googlesyndication.com',
+        'https://fundingchoicesmessages.google.com',
+        'https://*.google.com',
+        'https://*.googlesyndication.com',
+        'https://*.doubleclick.net',
+        'https://ep1.adtrafficquality.google',
+        'https://ep2.adtrafficquality.google',
+    ];
 
     /**
      * Specifies valid sources for JavaScript <script> elements.
      *
      * @var list<string>|string
      */
-    public array|string $scriptSrcElem = 'self';
+    public array|string $scriptSrcElem = [
+        'self',
+        'unsafe-inline',
+        'unsafe-eval',
+        'https://browser.sentry-cdn.com',
+        'https://www.googletagmanager.com',
+        'https://kit.fontawesome.com',
+        'https://ka-f.fontawesome.com',
+        'https://pagead2.googlesyndication.com',
+        'https://fundingchoicesmessages.google.com',
+        'https://*.google.com',
+        'https://*.googlesyndication.com',
+        'https://*.doubleclick.net',
+        'https://ep1.adtrafficquality.google',
+        'https://ep2.adtrafficquality.google',
+    ];
 
     /**
      * Specifies valid sources for JavaScript inline event
@@ -74,21 +106,33 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public array|string $scriptSrcAttr = 'self';
+    public array|string $scriptSrcAttr = ['self', 'unsafe-inline'];
 
     /**
      * Lists allowed stylesheets' URLs.
      *
      * @var list<string>|string
      */
-    public $styleSrc = 'self';
+    public $styleSrc = [
+        'self',
+        'unsafe-inline',
+        'https://fonts.googleapis.com',
+        'https://ka-f.fontawesome.com',
+        'https://cdnjs.cloudflare.com',
+    ];
 
     /**
      * Specifies valid sources for stylesheets <link> elements.
      *
      * @var list<string>|string
      */
-    public array|string $styleSrcElem = 'self';
+    public array|string $styleSrcElem = [
+        'self',
+        'unsafe-inline',
+        'https://fonts.googleapis.com',
+        'https://ka-f.fontawesome.com',
+        'https://cdnjs.cloudflare.com',
+    ];
 
     /**
      * Specifies valid sources for stylesheets inline
@@ -96,14 +140,19 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public array|string $styleSrcAttr = 'self';
+    public array|string $styleSrcAttr = ['self', 'unsafe-inline'];
 
     /**
      * Defines the origins from which images can be loaded.
      *
      * @var list<string>|string
      */
-    public $imageSrc = 'self';
+    public $imageSrc = [
+        'self',
+        'data:',
+        'blob:',
+        'https:',
+    ];
 
     /**
      * Restricts the URLs that can appear in a page's `<base>` element.
@@ -112,14 +161,17 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $baseURI;
+    public $baseURI = 'self';
 
     /**
      * Lists the URLs for workers and embedded frame contents
      *
      * @var list<string>|string
      */
-    public $childSrc = 'self';
+    public $childSrc = [
+        'self',
+        'blob:',
+    ];
 
     /**
      * Limits the origins that you can connect to (via XHR,
@@ -127,14 +179,30 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $connectSrc = 'self';
+    public $connectSrc = [
+        'self',
+        'https://*.sentry.io',
+        'https://*.ingest.sentry.io',
+        'https://*.google-analytics.com',
+        'https://*.analytics.google.com',
+        'https://*.googletagmanager.com',
+        'https://ka-f.fontawesome.com',
+        'https://pagead2.googlesyndication.com',
+        'https://*.doubleclick.net',
+    ];
 
     /**
      * Specifies the origins that can serve web fonts.
      *
      * @var list<string>|string
      */
-    public $fontSrc;
+    public $fontSrc = [
+        'self',
+        'data:',
+        'https://fonts.gstatic.com',
+        'https://ka-f.fontawesome.com',
+        'https://cdnjs.cloudflare.com',
+    ];
 
     /**
      * Lists valid endpoints for submission from `<form>` tags.
@@ -151,7 +219,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $frameAncestors;
+    public $frameAncestors = 'self';
 
     /**
      * The frame-src directive restricts the URLs which may
@@ -159,31 +227,38 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $frameSrc;
+    public $frameSrc = [
+        'self',
+        'https://www.google.com',
+        'https://*.google.com',
+        'https://*.googlesyndication.com',
+        'https://*.doubleclick.net',
+        'https://fundingchoicesmessages.google.com',
+    ];
 
     /**
      * Restricts the origins allowed to deliver video and audio.
      *
      * @var list<string>|string|null
      */
-    public $mediaSrc;
+    public $mediaSrc = 'self';
 
     /**
      * Allows control over Flash and other plugins.
      *
      * @var list<string>|string
      */
-    public $objectSrc = 'self';
+    public $objectSrc = 'none';
 
     /**
      * @var list<string>|string|null
      */
-    public $manifestSrc;
+    public $manifestSrc = 'self';
 
     /**
      * @var list<string>|string
      */
-    public array|string $workerSrc = [];
+    public array|string $workerSrc = ['self', 'blob:'];
 
     /**
      * Limits the kinds of plugins a page may invoke.
@@ -212,5 +287,5 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Replace nonce tag automatically?
      */
-    public bool $autoNonce = true;
+    public bool $autoNonce = false;
 }

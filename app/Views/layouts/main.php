@@ -62,8 +62,8 @@
         });
         <?php if (function_exists('auth') && auth()->loggedIn()) : ?>
         Sentry.setUser({
-          id: <?= json_encode((string) auth()->id()) ?>,
-          username: <?= json_encode(auth()->user()->username ?? 'player') ?>,
+          id: <?= json_encode((string) auth()->id(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+          username: <?= json_encode(auth()->user()->username ?? 'player', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
         });
         <?php endif; ?>
       }
@@ -384,7 +384,7 @@ body { font-family: var(--sign); }
     <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
     <?php if (session("admin_original_id")) : ?>
     <div class="bg-warning text-warning-content text-center py-2 text-sm font-semibold sticky top-0 z-50">
-        <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= auth()->user()->username ?? "user" ?>. <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
+        <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= esc(auth()->user()->username ?? "user") ?>. <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
     </div>
     <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
