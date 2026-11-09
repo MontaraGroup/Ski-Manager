@@ -1,3 +1,11 @@
+## Release 2026-11-09 01:40
+
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e001647)
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+
 ## Release 2026-11-09 01:35
 
 * Merge branch 'MontaraGroup:main' into main (e5ee5d3)
