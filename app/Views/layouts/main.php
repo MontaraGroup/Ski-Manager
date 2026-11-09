@@ -903,58 +903,74 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 <?= island('MobileDock', ['path' => $__currentPath, 'nav' => $__shell['nav'], 'isAdmin' => $__isAdmin, 'bonusDue' => $__bonusDue], ob_get_clean()) ?>
 <?php endif ?>
 
-<!-- Tutorial Widget (Collapsible) -->
+<!-- Tutorial card (collapsible) -->
 <?php if (auth()->loggedIn()) : ?>
-<div id="tutorialWidgetContainer" style="position:fixed;bottom:4.5rem;right:1rem;z-index:9980;" class="hidden md:bottom-6 md:right-6">
-    <!-- Collapsed Pill Badge -->
-    <div id="tutPill" onclick="toggleTutCollapse(false)" class="hidden cursor-pointer inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3.5 py-2.5 text-xs font-semibold shadow-2xl min-h-11">
-        <i class="fa-solid fa-graduation-cap text-sm"></i>
-        <span class="font-bold text-xs" id="tutPillText">Tutorial</span>
-        <i class="fa-solid fa-chevron-up text-xs opacity-70"></i>
-    </div>
+<?php $__tutOnMap = $__currentPath === '/map'; ?>
+<?php // Pages whose tutorial action sits on the right (the map's Build button and drawer, the restaurant catalog)
+      // get the card bottom-left. On the Trail Map it also stops short of the hammer (Build) button on a phone, and
+      // hides while the Build drawer is open there, because the drawer fills the screen with Construct at the bottom. ?>
+<?php $__tutLeft = in_array($__currentPath, ['/map', '/restaurants'], true); ?>
+<div id="tutorialWidgetContainer" hidden class="fixed z-[9980] bottom-[4.5rem] md:bottom-6 <?= $__tutLeft ? 'left-4 md:left-6' : 'right-4 md:right-6' ?> <?= $__tutOnMap ? 'max-md:in-[.map-drawer-open]:invisible' : '' ?>">
+    <button type="button" id="tutPill" hidden onclick="toggleTutCollapse(false)" class="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-3.5 py-2.5 text-xs font-semibold text-white shadow-2xl" aria-label="Open the tutorial">
+        <i class="fa-solid fa-graduation-cap text-sm" aria-hidden="true"></i>
+        <span id="tutPillText">Tutorial</span>
+        <i class="fa-solid fa-chevron-up text-xs opacity-70" aria-hidden="true"></i>
+    </button>
 
-    <!-- Expanded Card -->
-    <div id="tutorialWidget" class="w-[calc(100vw-2rem)] max-w-sm md:w-80 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl p-4">
-        <div>
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <div class="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-bold font-mono" id="tutStep">1/10</div>
-                    <h3 class="font-bold text-sm" id="tutTitle">Welcome!</h3>
-                </div>
-                <div class="flex items-center gap-1">
-                    <button onclick="toggleTutCollapse(true)" class="inline-flex min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" aria-label="Minimize tutorial" title="Minimize tutorial"><i class="fa-solid fa-minus"></i></button>
-                    <button onclick="skipTutorial()" class="inline-flex min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-danger" aria-label="Skip tutorial" title="Skip tutorial"><i class="fa-solid fa-xmark"></i></button>
-                </div>
+    <section id="tutorialWidget" aria-labelledby="tutTitle" class="<?= $__tutOnMap ? 'w-[calc(100vw-7rem)]' : 'w-[calc(100vw-2rem)]' ?> max-w-sm md:w-80 rounded-2xl border border-border bg-surface p-4 text-foreground shadow-2xl">
+        <div class="mb-2 flex items-center justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-2">
+                <span class="inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold text-primary" id="tutStep">1/7</span>
+                <h3 class="truncate text-sm font-bold" id="tutTitle">Welcome to Ski Manager</h3>
             </div>
+            <button type="button" onclick="toggleTutCollapse(true)" class="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground sm:min-h-8 sm:min-w-8" aria-label="Minimize tutorial" title="Minimize tutorial"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+        </div>
+
+        <div id="tutBody">
             <div class="flex gap-3">
-                <i class="fa-solid fa-mountain-sun text-primary text-xl mt-0.5" id="tutIcon"></i>
-                <div class="flex-1">
-                    <p class="text-xs text-muted leading-relaxed" id="tutText"></p>
-                    <div id="tutAction" class="mt-2 hidden">
-                        <div class="flex items-center gap-1 text-xs">
-                            <i class="fa-solid fa-arrow-right text-primary"></i>
-                            <span class="font-semibold text-primary" id="tutActionText"></span>
-                        </div>
+                <span id="tutIcon" class="mt-0.5 shrink-0 text-xl text-primary" aria-hidden="true"><i class="fa-solid fa-mountain-sun"></i></span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm leading-relaxed text-muted" id="tutText"></p>
+                    <div id="tutAction" hidden class="mt-2">
+                        <p class="flex items-center gap-1.5 text-sm font-semibold text-primary">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            <span id="tutActionText"></span>
+                        </p>
+                        <p id="tutWaiting" hidden class="mt-1 text-xs text-muted">Next unlocks when this is done.</p>
                     </div>
+                    <div id="tutEstimate" hidden class="mt-3 rounded-lg bg-surface-secondary p-2.5 text-xs">
+                        <p class="font-semibold text-foreground">Tonight's estimate</p>
+                        <p class="mt-0.5 text-muted" id="tutEstimateText"></p>
+                    </div>
+                    <nav id="tutLinks" hidden class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm" aria-label="Where to go next"></nav>
                 </div>
             </div>
-            <div class="flex items-center justify-between mt-3">
-                <progress class="w-28 sm:w-32 h-2 rounded-full overflow-hidden bg-default accent-primary [&::-webkit-progress-bar]:bg-default [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary" id="tutProgress" value="0" max="10"></progress>
-                <div class="flex gap-1">
-                    <a id="tutGoBtn" href="/dashboard" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-xs font-semibold hover:bg-primary/90 gap-1 hidden"><i class="fa-solid fa-arrow-right"></i> Go</a>
-                    <button id="tutNextBtn" onclick="advanceTutorial()" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-primary text-primary-foreground px-2.5 py-1 text-xs font-semibold hover:bg-primary/90 gap-1 hidden"><i class="fa-solid fa-check"></i> Next</button>
-                    <button id="tutDoneBtn" onclick="advanceTutorial()" class="inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-success text-success-foreground px-2.5 py-1 text-xs font-semibold hover:bg-success/90 gap-1 hidden"><i class="fa-solid fa-trophy"></i> Finish</button>
+            <div class="mt-3 flex items-center justify-between gap-2">
+                <button type="button" onclick="confirmSkipTutorial(true)" class="min-h-9 rounded-lg px-1 text-xs font-medium text-muted underline-offset-2 hover:text-foreground hover:underline">Skip tutorial</button>
+                <div class="flex items-center gap-2">
+                    <span class="hidden text-xs tabular-nums text-muted sm:inline" id="tutProgressText"></span>
+                    <a id="tutGoBtn" hidden href="/dashboard" class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white hover:bg-primary/90">Take me there <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <button type="button" id="tutNextBtn" hidden onclick="advanceTutorial()" class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold">Next</button>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div id="tutSkipConfirm" hidden role="alertdialog" aria-labelledby="tutSkipText">
+            <p class="text-sm" id="tutSkipText">Skip the tutorial? You can restart it in Settings.</p>
+            <div class="mt-3 flex justify-end gap-2">
+                <button type="button" onclick="confirmSkipTutorial(false)" class="inline-flex min-h-9 items-center rounded-lg border border-border px-3 text-xs font-semibold hover:bg-default">Keep going</button>
+                <button type="button" onclick="skipTutorial()" class="inline-flex min-h-9 items-center rounded-lg bg-danger px-3 text-xs font-semibold text-danger-foreground hover:bg-danger/90">Skip</button>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
-const tutWidget = document.getElementById('tutorialWidget');
 const tutCsrf = '<?= csrf_hash() ?>';
 const tutCsrfName = '<?= csrf_token() ?>';
-let tutCurrentPage = window.location.pathname;
+const tutCurrentPage = window.location.pathname;
+let tutTimer = null;
+let tutConfirming = false;
 <?php if (session()->get('is_demo') && featureEnabled('demo_v2')) : ?>
 // A new demo player has the cookie banner to answer first: start as the small pill so the two don't stack
 if (localStorage.getItem('tut_collapsed') === null && !localStorage.getItem('cookie_consent')) { window.tutStartCollapsed = true; }
@@ -969,102 +985,133 @@ function toggleTutCollapse(collapse) {
 }
 
 function updateTutDisplay() {
-    const container = document.getElementById('tutorialWidgetContainer');
     const pill = document.getElementById('tutPill');
     const widget = document.getElementById('tutorialWidget');
-    if (!container || !pill || !widget) return;
+    if (!pill || !widget) return;
+    widget.hidden = tutCollapsed;
+    pill.hidden = !tutCollapsed;
+}
 
-    if (tutCollapsed) {
-        widget.classList.add('hidden');
-        pill.classList.remove('hidden');
-    } else {
-        widget.classList.remove('hidden');
-        pill.classList.add('hidden');
-    }
+function hideTutorial() {
+    const c = document.getElementById('tutorialWidgetContainer');
+    if (c) c.hidden = true;
+    if (tutTimer) { clearInterval(tutTimer); tutTimer = null; }
+}
+
+// The nightly settle in the player's own time, e.g. "12:05 AM EST"
+function tutSettleText(iso) {
+    const at = new Date(iso);
+    if (isNaN(at)) return '00:05 server time';
+    return at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 }
 
 function loadTutorial() {
-    const container = document.getElementById('tutorialWidgetContainer');
+    if (tutConfirming) return;
     fetch('/tutorial/check?page=' + encodeURIComponent(tutCurrentPage), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(d => {
-            if (d.done) { 
-                if (container) container.classList.add('hidden'); 
-                return; 
-            }
-            if (container) container.classList.remove('hidden');
+            if (d.done) { hideTutorial(); return; }
+            const c = document.getElementById('tutorialWidgetContainer');
+            if (c) c.hidden = false;
             updateTutDisplay();
             renderTutStep(d);
         })
-        .catch(() => {
-            if (container) container.classList.add('hidden');
-        });
+        .catch(() => hideTutorial());
 }
 
 function renderTutStep(d) {
+    const last = d.step >= d.total - 1;
+    const settle = tutSettleText(d.settleAt);
     document.getElementById('tutStep').textContent = (d.step + 1) + '/' + d.total;
+    document.getElementById('tutProgressText').textContent = 'Step ' + (d.step + 1) + ' of ' + d.total;
     document.getElementById('tutTitle').textContent = d.data.title;
-    const pillText = document.getElementById('tutPillText');
-    if (pillText) pillText.textContent = 'Tutorial: ' + (d.step + 1) + '/' + d.total;
-    document.getElementById('tutText').textContent = d.data.text;
-    document.getElementById('tutIcon').className = d.data.icon + ' text-primary text-xl mt-0.5';
-    document.getElementById('tutProgress').value = d.step;
-    document.getElementById('tutProgress').max = d.total;
+    document.getElementById('tutPillText').textContent = 'Tutorial ' + (d.step + 1) + '/' + d.total;
+    document.getElementById('tutText').textContent = d.data.text.replaceAll('{settle}', settle);
+    // Font Awesome swaps each <i> for an <svg>, so changing a class later does nothing: put in a new <i>
+    const icon = document.createElement('i');
+    icon.className = d.data.icon;
+    document.getElementById('tutIcon').replaceChildren(icon);
 
     const actionDiv = document.getElementById('tutAction');
-    const actionText = document.getElementById('tutActionText');
+    const waiting = document.getElementById('tutWaiting');
     const goBtn = document.getElementById('tutGoBtn');
     const nextBtn = document.getElementById('tutNextBtn');
-    const doneBtn = document.getElementById('tutDoneBtn');
 
-    goBtn.classList.add('hidden');
-    nextBtn.classList.add('hidden');
-    doneBtn.classList.add('hidden');
+    // Reset the buttons every time: a step that was waiting must not leave Next grey on the next one
+    goBtn.hidden = true;
+    waiting.hidden = true;
+    nextBtn.hidden = false;
+    nextBtn.disabled = false;
+    nextBtn.removeAttribute('aria-disabled');
+    nextBtn.className = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold '
+        + (last ? 'bg-success text-success-foreground hover:bg-success/90' : 'bg-primary text-white hover:bg-primary/90');
+    nextBtn.innerHTML = last ? '<i class="fa-solid fa-trophy" aria-hidden="true"></i> Finish' : 'Next';
 
+    actionDiv.hidden = !d.data.action;
     if (d.data.action) {
-        actionDiv.classList.remove('hidden');
-        actionText.textContent = d.data.action;
-
-        if (d.canAdvance) {
-            nextBtn.classList.remove('hidden');
-        } else if (d.data.page && d.data.page !== tutCurrentPage) {
-            goBtn.classList.remove('hidden');
-            goBtn.href = d.data.page;
-        } else {
-            nextBtn.classList.remove('hidden');
-            nextBtn.disabled = true;
-            nextBtn.textContent = 'Complete the action above';
-            nextBtn.className = 'inline-flex min-h-9 sm:min-h-7 items-center justify-center rounded-lg bg-default/40 text-muted px-2.5 py-1 text-xs font-semibold gap-1 cursor-not-allowed';
-        }
-    } else {
-        actionDiv.classList.add('hidden');
-        if (d.step >= d.total - 1) {
-            doneBtn.classList.remove('hidden');
-        } else {
-            nextBtn.classList.remove('hidden');
+        document.getElementById('tutActionText').textContent = d.data.action;
+        if (!d.canAdvance) {
+            if (d.data.page && d.data.page !== tutCurrentPage) {
+                nextBtn.hidden = true;
+                goBtn.href = d.data.page;
+                goBtn.hidden = false;
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.setAttribute('aria-disabled', 'true');
+                nextBtn.className = 'inline-flex min-h-9 cursor-not-allowed items-center justify-center rounded-lg bg-default px-3 text-xs font-semibold text-muted';
+                waiting.hidden = false;
+            }
         }
     }
+
+    const est = document.getElementById('tutEstimate');
+    est.hidden = !d.estimate;
+    if (d.estimate) {
+        document.getElementById('tutEstimateText').textContent =
+            'About ' + d.estimate.skiers + ' skiers, ' + d.estimate.income + ' income and ' + d.estimate.costs + ' costs.';
+    }
+
+    const links = document.getElementById('tutLinks');
+    links.replaceChildren();
+    (d.data.links || []).forEach(l => {
+        const a = document.createElement('a');
+        a.href = l.href;
+        a.textContent = l.label;
+        a.className = 'inline-flex min-h-9 items-center font-medium text-primary underline-offset-2 hover:underline';
+        links.appendChild(a);
+    });
+    links.hidden = !(d.data.links || []).length;
 }
 
 function advanceTutorial() {
+    const nextBtn = document.getElementById('tutNextBtn');
+    if (nextBtn.disabled) return;
+    nextBtn.disabled = true;
     fetch('/tutorial/advance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ [tutCsrfName]: tutCsrf })
     }).then(r => r.json()).then(d => {
         if (d.done || d.completed) {
-            tutWidget.classList.add('hidden');
+            hideTutorial();
             if (d.completed) {
                 const toast = document.createElement('div');
                 toast.className = 'fixed top-4 right-4 z-50';
-                toast.innerHTML = '<div class="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 text-success p-3 shadow-lg text-sm font-semibold"><i class="fa-solid fa-trophy"></i><span>Tutorial complete! You\'re ready to run your resort.</span></div>';
+                toast.setAttribute('role', 'status');
+                toast.innerHTML = '<div class="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 text-success p-3 shadow-lg text-sm font-semibold"><i class="fa-solid fa-trophy" aria-hidden="true"></i><span>Tutorial complete. See you tomorrow for your first results.</span></div>';
                 document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+                setTimeout(() => toast.remove(), 5000);
             }
         } else {
-            renderTutStep({ step: d.step, total: <?= count(\App\Controllers\Tutorial::STEPS) ?>, data: d.data, canAdvance: false });
+            renderTutStep(d);
         }
-    });
+    }).catch(() => { nextBtn.disabled = false; });
+}
+
+function confirmSkipTutorial(show) {
+    tutConfirming = show;
+    document.getElementById('tutBody').hidden = show;
+    document.getElementById('tutSkipConfirm').hidden = !show;
 }
 
 function skipTutorial() {
@@ -1072,13 +1119,14 @@ function skipTutorial() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ [tutCsrfName]: tutCsrf })
-    }).then(() => tutWidget.classList.add('hidden'));
+    }).then(() => { tutConfirming = false; hideTutorial(); });
 }
 
-<?php if (!($__currentPath === '/demo/save' && featureEnabled('demo_v2'))) : // nothing covers the save form ?>
+<?php // Nothing covers the demo save form or the first-visit profile form
+      if (!($__currentPath === '/demo/save' && featureEnabled('demo_v2')) && $__currentPath !== '/complete-profile') : ?>
 loadTutorial();
+tutTimer = setInterval(loadTutorial, 10000);
 <?php endif ?>
-setInterval(loadTutorial, 10000);
 </script>
 <?php endif ?>
 <script>
