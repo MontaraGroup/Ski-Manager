@@ -1,5 +1,6 @@
 package net.skimanager.app.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,10 +42,13 @@ import net.skimanager.app.ui.common.ChoiceRow
 import net.skimanager.app.ui.common.EmptyText
 import net.skimanager.app.ui.common.Figure
 import net.skimanager.app.ui.common.Loaded
+import net.skimanager.app.ui.common.OutlinedPrimaryButton
 import net.skimanager.app.ui.common.Panel
 import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
+import net.skimanager.app.ui.common.SecondaryButton
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 @Composable
@@ -94,31 +99,46 @@ fun EquipmentScreen(app: AppState) {
         ScreenColumn {
             actionError?.let { err ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
                 ) {
-                    Text(err, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
             actionSuccess?.let { msg ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.success.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, LocalSkiColors.current.success.copy(alpha = 0.35f)),
                 ) {
-                    Text(msg, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(12.dp))
+                    Text(msg, color = LocalSkiColors.current.success, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
             // Cash and telemetry overview
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Cash available", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    cashText,
-                    color = if (cashNegative) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Resort cash", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        cashText,
+                        color = if (cashNegative) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -167,15 +187,17 @@ fun EquipmentScreen(app: AppState) {
             val idleGroomers = stats.int("idleGroomers")
             if (idleGroomers > 0) {
                 Card(
-                    Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.warning.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, LocalSkiColors.current.warning.copy(alpha = 0.35f)),
                 ) {
                     Text(
                         "$idleGroomers groomer(s) switched on without an operator. Hire operators in Staff to run them.",
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalSkiColors.current.warning,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(14.dp),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
@@ -228,16 +250,17 @@ fun EquipmentScreen(app: AppState) {
                 // Shop tab
                 if (discount > 0) {
                     Card(
-                        Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
                     ) {
                         Text(
                             "Alliance Bulk Procurement discount: -$discount% on all machinery",
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(12.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(14.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }
@@ -269,7 +292,8 @@ fun EquipmentScreen(app: AppState) {
             val canAfford = cash >= price
             AlertDialog(
                 onDismissRequest = { buyItem = null },
-                title = { Text("Buy ${c.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Buy ${c.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(c.str("description"), style = MaterialTheme.typography.bodyMedium)
@@ -297,7 +321,7 @@ fun EquipmentScreen(app: AppState) {
                         },
                         modifier = Modifier.heightIn(min = 48.dp),
                         enabled = canAfford,
-                    ) { Text("Buy (${c.str("priceText")})") }
+                    ) { Text("Buy (${c.str("priceText")})", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ buyItem = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -309,7 +333,8 @@ fun EquipmentScreen(app: AppState) {
         repairItem?.let { eq ->
             AlertDialog(
                 onDismissRequest = { repairItem = null },
-                title = { Text("Repair ${eq.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Repair ${eq.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Restore ${eq.str("name")} to 100% condition.")
@@ -328,7 +353,7 @@ fun EquipmentScreen(app: AppState) {
                         },
                         modifier = Modifier.heightIn(min = 48.dp),
                         enabled = cash >= eq.int("repairCost"),
-                    ) { Text("Repair (${eq.str("repairCostText")})") }
+                    ) { Text("Repair (${eq.str("repairCostText")})", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ repairItem = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -340,7 +365,8 @@ fun EquipmentScreen(app: AppState) {
         sellItem?.let { eq ->
             AlertDialog(
                 onDismissRequest = { sellItem = null },
-                title = { Text("Sell ${eq.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Sell ${eq.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Decommission and sell ${eq.str("name")} from your fleet.")
@@ -357,7 +383,7 @@ fun EquipmentScreen(app: AppState) {
                             }
                         },
                         modifier = Modifier.heightIn(min = 48.dp),
-                    ) { Text("Sell (${eq.str("resaleText")})") }
+                    ) { Text("Sell (${eq.str("resaleText")})", color = LocalSkiColors.current.danger, fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ sellItem = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -376,14 +402,15 @@ private fun EquipmentCard(
     onSell: () -> Unit,
 ) {
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text(eq.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                    Text(eq.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     val capType = if (eq.str("equipment_type") == "groomer") "grooms" else "covers"
                     Text(
                         "${eq.str("brand")} · $capType ${eq.int("capacity")} slopes",
@@ -393,16 +420,15 @@ private fun EquipmentCard(
                 }
                 val stateTone = eq.str("stateTone")
                 val toneColor = when (stateTone) {
-                    "success" -> MaterialTheme.colorScheme.primary
-                    "warning" -> MaterialTheme.colorScheme.tertiary
-                    "danger" -> MaterialTheme.colorScheme.error
+                    "success" -> LocalSkiColors.current.success
+                    "warning" -> LocalSkiColors.current.warning
+                    "danger" -> LocalSkiColors.current.danger
                     else -> LocalSkiColors.current.muted
                 }
-                Text(
+                StatusBadge(
                     eq.str("stateLabel"),
-                    color = toneColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
+                    toneColor,
+                    toneColor.copy(alpha = 0.12f),
                 )
             }
 
@@ -411,10 +437,11 @@ private fun EquipmentCard(
                 progress = { condition / 100f },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = when {
-                    condition >= 60 -> MaterialTheme.colorScheme.primary
-                    condition >= 30 -> MaterialTheme.colorScheme.tertiary
-                    else -> MaterialTheme.colorScheme.error
+                    condition >= 60 -> LocalSkiColors.current.success
+                    condition >= 30 -> LocalSkiColors.current.warning
+                    else -> LocalSkiColors.current.danger
                 },
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -424,10 +451,7 @@ private fun EquipmentCard(
                 Text(crewLabel, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Running cost", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                Text("${eq.str("fuelCostText")} / day", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-            }
+            Row2("Running cost", "${eq.str("fuelCostText")} / day")
 
             val isBroken = eq.str("state") == "broken"
             val isActive = eq.str("status") == "active"
@@ -439,24 +463,27 @@ private fun EquipmentCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (!isBroken) {
-                    TextButton(onToggle, Modifier.weight(1f).heightIn(min = 48.dp)) {
-                        Text(if (isActive) "Switch off" else "Switch on")
-                    }
+                    SecondaryButton(
+                        if (isActive) "Switch off" else "Switch on",
+                        onToggle,
+                        Modifier.weight(1f),
+                    )
                 }
 
                 if (condition < 100) {
-                    TextButton(
+                    SecondaryButton(
+                        "Repair (${eq.str("repairCostText")})",
                         onRepair,
-                        Modifier.weight(1f).heightIn(min = 48.dp),
+                        Modifier.weight(1f),
                         enabled = cash >= repairCost,
-                    ) {
-                        Text("Repair (${eq.str("repairCostText")})")
-                    }
+                    )
                 }
 
-                TextButton(onSell, Modifier.weight(1f).heightIn(min = 48.dp)) {
-                    Text("Sell (${eq.str("resaleText")})", color = MaterialTheme.colorScheme.error)
-                }
+                OutlinedPrimaryButton(
+                    "Sell (${eq.str("resaleText")})",
+                    onSell,
+                    Modifier.weight(1f),
+                )
             }
         }
     }
@@ -470,23 +497,23 @@ private fun CatalogItemCard(
     onBuy: () -> Unit,
 ) {
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f).padding(end = 8.dp)) {
-                    Text(item.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                    Text(item.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text(item.str("brand"), color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
                 }
                 val owned = item.int("owned")
                 if (owned > 0) {
-                    Text(
+                    StatusBadge(
                         "Owned: $owned",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     )
                 }
             }
@@ -496,27 +523,27 @@ private fun CatalogItemCard(
             val isGroomer = item.str("equipment_type") == "groomer"
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(if (isGroomer) "Grooms per night" else "Slope coverage", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                Text("${item.int("capacity")} slopes", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                Text("${item.int("capacity")} slopes", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
             }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Running cost", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                Text("${item.str("runningCostText")} / day", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                Text("${item.str("runningCostText")} / day", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
             }
 
             if (isGroomer) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Crew requirement", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                    Text("1 operator", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                    Text("1 operator", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Operating range", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                    Text(item.str("maxTempText"), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                    Text(item.str("maxTempText"), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Daily utilities", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                    Text("${item.str("energyKwhText")} · ${item.str("waterLitersText")}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                    Text("${item.str("energyKwhText")} · ${item.str("waterLitersText")}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                 }
             }
 
