@@ -14,6 +14,12 @@ class Grooming extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('grooming'); if ($locked) return $locked;
+        return view('grooming/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         $userId = auth()->id();
         $state = $this->state($userId);
         $db = db_connect();
@@ -178,7 +184,14 @@ class Grooming extends BaseController
             ],
         ];
 
-        return view('grooming/index', ['page' => $page]);
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+        $page['cash'] = [
+            'raw' => $cash,
+            'text' => currency($cash),
+        ];
+
+        return $page;
     }
 
     /** Paid daytime run on one slope */
