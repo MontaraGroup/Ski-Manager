@@ -17,6 +17,12 @@ class Snowmaking extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('snowmaking'); if ($locked) return $locked;
+        return view('snowmaking/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         helper('weather');
@@ -24,6 +30,7 @@ class Snowmaking extends BaseController
         $weather = getCurrentWeather();
         $baseTemp = (int) $weather['base_temp'];
         $snowBase = (int) $weather['snow_base'];
+        $thinBase = $snowBase < W::THIN_BASE;
         $prices = Fleet::prices();
 
         $crew = $db->table('staff')->where('user_id', $userId)->where('role', 'snowmaker')->where('status', 'active')->get()->getResultArray();
@@ -154,6 +161,7 @@ class Snowmaking extends BaseController
             ];
         }
 
+        $standardHours = SM::hours(['model_key' => ''], $baseTemp);
         $totalOperatingCost = array_sum(array_column($running, 'operating_cost'));
         $page = [
             'overview' => [
@@ -201,7 +209,14 @@ class Snowmaking extends BaseController
             ],
         ];
 
-        return view('snowmaking/index', ['page' => $page]);
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+        $page['cash'] = [
+            'raw' => $cash,
+            'text' => currency($cash),
+        ];
+
+        return $page;
     }
 
     private function gun(int $id): ?array

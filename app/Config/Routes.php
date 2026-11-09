@@ -189,6 +189,18 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->post('bank/borrow', 'Bank::borrowAction');
         $routes->post('bank/(:num)/repay', 'Bank::repayAction/$1');
         $routes->post('bank/repay/(:num)', 'Bank::repayAction/$1');
+        $routes->get('grooming', 'Grooming::show');
+        $routes->post('grooming/single', 'Grooming::groomSingleAction');
+        $routes->post('grooming/all', 'Grooming::groomAllAction');
+        $routes->get('snowmaking', 'Snowmaking::show');
+        $routes->post('snowmaking/(:num)/toggle', 'Snowmaking::toggleAction/$1');
+        $routes->post('snowmaking/toggle/(:num)', 'Snowmaking::toggleAction/$1');
+        $routes->post('snowmaking/toggle-all', 'Snowmaking::toggleAllAction');
+        $routes->post('snowmaking/(:num)/repair', 'Snowmaking::repairAction/$1');
+        $routes->post('snowmaking/repair/(:num)', 'Snowmaking::repairAction/$1');
+        $routes->post('snowmaking/assign', 'Snowmaking::assignAction');
+        $routes->post('snowmaking/(:num)/sell', 'Snowmaking::sellAction/$1');
+        $routes->post('snowmaking/sell/(:num)', 'Snowmaking::sellAction/$1');
         $routes->post('account/delete', 'Account::delete');
     });
 });
