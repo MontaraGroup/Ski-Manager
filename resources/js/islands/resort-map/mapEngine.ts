@@ -26,6 +26,14 @@ export interface MapEngineCallbacks {
   onToast: (msg: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
+function readShowAvailable(): boolean {
+  try {
+    return localStorage.getItem('map_show_available') !== '0';
+  } catch {
+    return true;
+  }
+}
+
 export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallbacks) {
   let map: any = null;
   let mapBounds: any = null;
@@ -37,6 +45,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let selectedSegId: number | string | null = null;
   let buildMode: string | null = null;
   let mapFilter = 'all';
+  let selectionLayers: any[] = [];
+  // Set when the player drags, scrolls or touches the map; automatic fitting stops then
+  let userMoved = false;
+  // Players see the runs they can build unless they switch them off (remembered per browser)
+  let showAvailable = readShowAvailable();
 
   // State mirror
   let segments = [...props.segments];
@@ -48,7 +61,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   const isAdmin = props.isAdmin;
   const mapConfig = props.mapConfig;
   const distUnit = props.distUnit;
-  const isImperial = props.isImperial;
 
   let csrfName = props.csrf.name;
   let csrfHash = props.csrf.hash;
@@ -75,12 +87,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let editorSegSector = 0;
   let editorSlopeType = 'downhill';
   let editorSegDiff = 'blue';
-
-  function fmtMoney(n: number) {
-    const prefix = isImperial ? '$' : '';
-    const suffix = isImperial ? '' : ' €';
-    return (n < 0 ? '-' : '') + prefix + Math.abs(Math.round(n)).toLocaleString('en-US') + suffix;
-  }
 
   function escHtml(str: any): string {
     return String(str == null ? '' : str)
@@ -200,12 +206,23 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     initProgressiveOverlays();
 
     map.fitBounds(mapBounds);
+    // A full mountain's height of slack below, so on a tall phone the map can sit above the bottom sheet
+    // (Leaflet centres the map in the frame when the frame is taller than these bounds)
     map.setMaxBounds([
-      [-mapConfig.height * 0.2, -mapConfig.width * 0.2],
+      [-mapConfig.height * 1.0, -mapConfig.width * 0.2],
       [mapConfig.height * 1.2, mapConfig.width * 1.2],
     ]);
 
     renderSegments();
+
+    const markMoved = () => {
+      userMoved = true;
+    };
+    map.on('dragstart', markMoved);
+    container.addEventListener('wheel', markMoved, { passive: true });
+    container.addEventListener('touchstart', markMoved, { passive: true });
+    container.addEventListener('dblclick', markMoved);
+    map.zoomControl?.getContainer()?.addEventListener('click', markMoved);
 
     // Map Event Listeners for Editor
     map.on('mousemove', (e: any) => {
@@ -284,12 +301,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     // Keyboard Shortcuts
     document.addEventListener('keydown', handleKeydown);
 
-    // Initial drawer open for new non-admin players with 0 built runs
-    if (builtIds.length === 0 && !isAdmin) {
-      setTimeout(() => {
-        callbacks.onOpenBuildDrawer('slope');
-      }, 300);
-    }
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -372,6 +383,48 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
+  /**
+   * How a run is drawn. Built runs are solid in their trail colour (lifts dashed amber). Runs a player
+   * can build are thin and dotted in their own colour, so difficulty shows before anything is built.
+   */
+  function segStyle(seg: MapSegment) {
+    const built = isSegmentBuilt(seg.id);
+    if (isAdmin) {
+      return { color: segColor(seg), weight: built ? 5 : 4.5, opacity: built ? 0.95 : 0.85, dashArray: built ? (seg.type === 'lift' ? '10, 5' : null) : '6, 5' };
+    }
+    if (built) {
+      return { color: segColor(seg), weight: 5, opacity: 0.95, dashArray: seg.type === 'lift' ? '10, 5' : null };
+    }
+    // The tab the build panel is on stands out; the other type stays visible but quieter
+    const focused = !buildMode || (buildMode === 'lift') === (seg.type === 'lift');
+    return { color: segColor(seg), weight: focused ? 4 : 3, opacity: focused ? 0.75 : 0.35, dashArray: '2, 7' };
+  }
+
+  function clearSelectionMarks() {
+    selectionLayers.forEach((l) => map && map.removeLayer(l));
+    selectionLayers = [];
+  }
+
+  /** A halo under the selected run and a dot on each end, so it reads at any zoom */
+  function drawSelectionMarks(seg: MapSegment) {
+    const L = (window as any).L;
+    if (!L || !map) return;
+    clearSelectionMarks();
+    const ll = parsePoints(seg.points);
+    if (ll.length < 2) return;
+    selectionLayers.push(
+      L.polyline(ll, { color: '#ffffff', weight: 14, opacity: 0.55, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+    );
+    selectionLayers.push(
+      L.polyline(ll, { color: segColor(seg), weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+    );
+    [ll[0], ll[ll.length - 1]].forEach((pt) => {
+      selectionLayers.push(
+        L.circleMarker(pt, { radius: 6, color: '#ffffff', weight: 2, fillColor: segColor(seg), fillOpacity: 1, interactive: false }).addTo(map)
+      );
+    });
+  }
+
   function renderSegments(newBuildMode?: string | null) {
     const L = (window as any).L;
     if (!L || !map) return;
@@ -401,33 +454,23 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       if (mapFilter === 'built' && !built) return;
       if (mapFilter === 'unassigned' && Number(seg.sector || 0) !== 0) return;
 
-      // Visibility rules
-      if (!buildMode && !built && !isAdmin) return;
-      if (buildMode && !built) {
-        if (buildMode === 'lift' && seg.type !== 'lift') return;
-        if (buildMode === 'slope' && seg.type === 'lift') return;
-        if (!isSegmentReleased(seg)) return;
-      }
+      // Players see what they built, plus every run they can build unless they've hidden those
+      if (!isAdmin && !built && (!showAvailable || !isSegmentReleased(seg))) return;
 
-      const isAvailableHighlight = buildMode && !built;
-      const c = isAvailableHighlight ? '#a855f7' : segColor(seg);
-      const weight = built ? 5 : isAdmin ? 4.5 : 6;
-      const opacity = built ? 0.95 : 0.85;
-      const dashArray = built ? (seg.type === 'lift' ? '10, 5' : null) : '6, 5';
+      const style = segStyle(seg);
+      const { weight, opacity } = style;
 
       const line = L.polyline(ll, {
-        color: c,
-        weight,
-        opacity,
-        dashArray,
+        ...style,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false,
       }).addTo(map);
 
+      // Wide invisible line so a finger can hit a thin run
       const hitLine = L.polyline(ll, {
         color: '#000',
-        weight: 18,
+        weight: 24,
         opacity: 0.001,
         interactive: true,
       }).addTo(map);
@@ -448,8 +491,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         (isAdmin
           ? '<br><span style="opacity:.75;font-size:10px">' + escHtml(secName) + ' • Click to edit</span>'
           : !built
-            ? '<br><span style="color:#c084fc;font-weight:700">Click to construct</span>'
-            : '<br><span style="color:#4ade80;font-size:10px">✓ Operational</span>') +
+            ? '<br><span style="font-size:11px;font-weight:600">Not built · click for the price</span>'
+            : '<br><span style="font-size:11px;font-weight:600">Yours · click for details</span>') +
         '</div>';
 
       hitLine.bindTooltip(tooltipHtml, { sticky: true });
@@ -483,16 +526,20 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
         if (isAdmin) {
           openAdminSegmentPopup(seg, e.latlng);
-        } else if (!built) {
-          selectSegment(seg);
         } else {
-          openBuiltSegmentPopup(seg, e.latlng);
+          // Built or not, the panel shows it: the build view or the run's details
+          selectSegment(seg);
         }
       });
 
       segmentLayers[seg.id] = line;
       hitLayers[seg.id] = hitLine;
     });
+
+    if (!isAdmin && selectedSegId !== null) {
+      const sel = segments.find((s) => String(s.id) === String(selectedSegId));
+      if (sel) drawSelectionMarks(sel);
+    }
 
     renderSectorPolygons();
   }
@@ -528,82 +575,18 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
-  function openBuiltSegmentPopup(seg: MapSegment, latlng: any) {
-    const L = (window as any).L;
-    const item = builtItems[seg.id] || {};
-    const capInfo =
-      seg.type === 'lift' && item.capacity
-        ? '<div class="flex justify-between"><span>Capacity:</span><b>' +
-          Number(item.capacity).toLocaleString() +
-          '/hr</b></div>'
-        : '';
-    const snowInfo =
-      seg.type !== 'lift' && item.snow_quality
-        ? '<div class="flex justify-between"><span>Condition:</span><b class="capitalize">' +
-          escHtml(item.snow_quality) +
-          '</b></div>'
-        : '';
-    const status = item.status || 'open';
-    const statusClass =
-      { open: 'text-success', closed: 'text-muted', broken: 'text-danger', building: 'text-link' }[status] ||
-      'text-muted';
-    const canDemolish = !!item.id;
-    const el = document.createElement('div');
-    el.className = 'p-2 text-xs min-w-[200px] text-foreground bg-surface rounded-lg';
-    el.innerHTML =
-      '<div class="font-bold text-sm mb-1.5 flex items-center gap-1.5">' +
-      (seg.type === 'lift'
-        ? '<i class="fa-solid fa-elevator text-warning"></i>'
-        : '<i class="fa-solid fa-person-skiing text-success"></i>') +
-      ' <span>' +
-      escHtml(seg.name || seg.type) +
-      '</span>' +
-      '</div>' +
-      '<div class="space-y-1 text-muted text-xs">' +
-      '<div class="flex justify-between"><span>Length:</span><b class="tabular-nums font-semibold text-foreground">' +
-      Math.round(seg.length_meters || 0) +
-      ' ' +
-      distUnit +
-      '</b></div>' +
-      capInfo +
-      snowInfo +
-      '<div class="flex justify-between"><span>Status:</span><span class="font-semibold ' +
-      statusClass +
-      ' capitalize">' +
-      escHtml(status) +
-      '</span></div>' +
-      '</div>' +
-      (canDemolish
-        ? '<button type="button" class="w-full mt-3 py-1.5 px-2 rounded-md bg-danger/10 hover:bg-danger/20 text-danger text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors" data-demolish>' +
-          '<i class="fa-solid fa-trash-can"></i> Demolish · refund ' +
-          fmtMoney(Number(item.salvage || 0)) +
-          '</button>'
-        : '');
-
-    const btn = el.querySelector('[data-demolish]') as HTMLButtonElement;
-    if (btn) {
-      btn.addEventListener('click', () => demolishBuilt(seg, item, btn));
+  /** Demolish a built run for its salvage refund. The panel asks first; this only does it. */
+  function demolish(seg: MapSegment, cb?: (ok: boolean) => void) {
+    const item = builtItems[seg.id];
+    if (!item || !item.id) {
+      if (cb) cb(false);
+      return;
     }
-
-    L.popup({ className: 'admin-leaflet-popup' }).setLatLng(latlng).setContent(el).openOn(map);
-  }
-
-  function demolishBuilt(seg: MapSegment, item: BuiltItem, btn: HTMLButtonElement) {
     const name = seg.name || (seg.type === 'lift' ? 'this lift' : 'this slope');
-    const ok = confirm(
-      'Demolish ' +
-        name +
-        '?\n\nYou get ' +
-        fmtMoney(Number(item.salvage || 0)) +
-        ' back (25% salvage). Snow cannons and terrain parks on it are kept but unassigned. This cannot be undone.'
-    );
-    if (!ok) return;
-
-    btn.disabled = true;
     postJSON('/map/demolish/' + item.id, {}, (res) => {
       if (!res || !res.success) {
-        btn.disabled = false;
-        callbacks.onToast(res?.error || 'Demolition failed', 'error');
+        callbacks.onToast(res?.error || 'Could not demolish ' + name + '. Nothing was changed.', 'error');
+        if (cb) cb(false);
         return;
       }
       builtIds = builtIds.filter((id) => String(id) !== String(seg.id) && Number(id) !== Number(seg.id));
@@ -612,10 +595,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         userCash = res.new_cash;
         callbacks.onCashUpdate(userCash);
       }
-      callbacks.onBuiltUpdate(builtIds, builtItems);
-      map.closePopup();
+      callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
       renderSegments(buildMode);
-      callbacks.onToast(res.message || 'Demolished ' + name, 'success');
+      callbacks.onToast(res.message || name + ' demolished.', 'success');
+      if (cb) cb(true);
     });
   }
 
@@ -711,10 +694,21 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const targetTab = seg.type === 'lift' ? 'lift' : 'slope';
 
     if (segmentLayers[seg.id]) {
-      segmentLayers[seg.id].setStyle({ weight: 8, opacity: 1, color: '#38bdf8', dashArray: null });
+      if (isAdmin) {
+        segmentLayers[seg.id].setStyle({ weight: 8, opacity: 1, color: '#38bdf8', dashArray: null });
+      } else {
+        drawSelectionMarks(seg);
+      }
       try {
         if (typeof segmentLayers[seg.id].getBounds === 'function') {
-          map.panTo(segmentLayers[seg.id].getBounds().getCenter(), { animate: true });
+          // On a phone the panel covers the lower part of the map: keep the run in the part still showing
+          const phone = window.matchMedia('(max-width: 767px)').matches;
+          const bounds = segmentLayers[seg.id].getBounds();
+          if (phone) {
+            map.fitBounds(bounds, { maxZoom: map.getZoom(), paddingTopLeft: [24, 24], paddingBottomRight: [24, Math.round(window.innerHeight * 0.55)], animate: true });
+          } else {
+            map.panTo(bounds.getCenter(), { animate: true });
+          }
         }
       } catch {}
     }
@@ -726,16 +720,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function deselectSegment() {
     if (selectedSegId && segmentLayers[selectedSegId]) {
       const s = segments.find((x) => String(x.id) === String(selectedSegId));
-      if (s) {
-        const b = isSegmentBuilt(s.id);
-        segmentLayers[selectedSegId].setStyle({
-          color: b || !buildMode ? segColor(s) : '#a855f7',
-          weight: b ? 5 : 6,
-          opacity: b ? 0.95 : 0.85,
-          dashArray: b ? (s.type === 'lift' ? '10, 5' : null) : '6, 5',
-        });
-      }
+      if (s) segmentLayers[selectedSegId].setStyle(segStyle(s));
     }
+    clearSelectionMarks();
     selectedSegId = null;
     callbacks.onSelectSegment(null);
   }
@@ -1380,6 +1367,34 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       buildMode = m;
       renderSegments(buildMode);
     },
+    setShowAvailable: (show: boolean) => {
+      showAvailable = show;
+      try {
+        localStorage.setItem('map_show_available', show ? '1' : '0');
+      } catch {}
+      renderSegments(buildMode);
+    },
+    getShowAvailable: () => showAvailable,
+    /** The container changed size (the page fits itself to the screen after load): redraw and refit */
+    resize: (bottomPad = 0) => {
+      const L = (window as any).L;
+      if (!map || !L) return;
+      map.invalidateSize({ animate: false });
+      // Once the player has moved the map themselves, leave their view alone
+      if (userMoved || !mapBounds) return;
+      // Fit the part of the mountain with runs on it, in the space above the phone's bottom sheet
+      const layers = Object.values(segmentLayers).filter((l: any) => typeof l.getBounds === 'function');
+      let bounds = layers.length ? L.featureGroup(layers).getBounds() : L.latLngBounds(mapBounds);
+      const size = map.getSize();
+      if (size.x < size.y) {
+        // Portrait phone: the runs spread wider than the screen. Fit their height and centre them;
+        // fitting the width too would shrink the mountain to a strip the sheet then covers.
+        const c = bounds.getCenter();
+        bounds = L.latLngBounds([bounds.getSouth(), c.lng], [bounds.getNorth(), c.lng]);
+      }
+      map.fitBounds(bounds, { animate: false, paddingTopLeft: [16, 56], paddingBottomRight: [16, bottomPad + 16] });
+    },
+    demolish,
     startDraw,
     startEditSegment,
     startEditSectorBoundary,
@@ -1483,11 +1498,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
             userCash = res.new_cash;
             callbacks.onCashUpdate(userCash);
           }
-          callbacks.onBuiltUpdate(builtIds, builtItems);
-          callbacks.onToast(
-            'Constructed "' + (seg.name || seg.type) + '" for ' + fmtMoney(Number(res.cost || 0)) + '!',
-            'success'
-          );
+          callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+          // The panel says what was built and what to do next
           deselectSegment();
           renderSegments(buildMode);
           if (typeof (window as any).loadTutorial === 'function') (window as any).loadTutorial();
