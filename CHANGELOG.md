@@ -1,3 +1,11 @@
+## Release 2026-11-09 03:06
+
+* Merge pull request #57 from Montara-Group/feat/android-game (d7fefc1)
+* Merge pull request #56 from Montara-Group/feat/android-core (9577904)
+* Merge pull request #55 from Montara-Group/main (02c3b83)
+* feat(android): trail map, tickets, staff and the Play release (674865b)
+* feat(android): play the real game on real accounts (76c5348)
+
 ## Release 2026-11-09 01:47
 
 * Merge branch 'MontaraGroup:main' into main (58250ee)
