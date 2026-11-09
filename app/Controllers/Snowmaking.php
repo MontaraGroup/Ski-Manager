@@ -24,6 +24,7 @@ class Snowmaking extends BaseController
         $weather = getCurrentWeather();
         $baseTemp = (int) $weather['base_temp'];
         $snowBase = (int) $weather['snow_base'];
+        $thinBase = $snowBase < W::THIN_BASE;
         $prices = Fleet::prices();
 
         $crew = $db->table('staff')->where('user_id', $userId)->where('role', 'snowmaker')->where('status', 'active')->get()->getResultArray();
