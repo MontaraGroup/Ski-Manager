@@ -1,3 +1,11 @@
+## Release 2026-11-09 01:47
+
+* Merge branch 'MontaraGroup:main' into main (58250ee)
+* Merge pull request #54 from Montara-Group/feat/mobile-api (a545c31)
+* Merge pull request #52 from Montara-Group/feat/demo-save (80a2f50)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e3c9a3e)
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+
 ## Release 2026-11-09 01:40
 
 * Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
