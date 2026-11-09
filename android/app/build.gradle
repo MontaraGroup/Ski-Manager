@@ -42,7 +42,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "BASE_URL", '"https://staging.ski-manager.net"'
+        }
         release {
+            buildConfigField "String", "BASE_URL", '"https://ski-manager.net"'
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -60,6 +64,7 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     packaging {
@@ -81,6 +86,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
     implementation 'androidx.activity:activity-compose:1.9.2'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6'
+    implementation 'androidx.navigation:navigation-compose:2.8.9'
 
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.11.0'
