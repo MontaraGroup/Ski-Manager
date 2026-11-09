@@ -27,7 +27,7 @@ export type Stats = {
 
 export type Notice = { id: number; title: string; message: string; icon: string; isRead: boolean };
 
-export type Flash = { success?: string; error?: string; warning?: string; errors?: string[] };
+export type Flash = { success?: string; info?: string; error?: string; warning?: string; errors?: string[] };
 
 export type ShellProps = {
   path: string;

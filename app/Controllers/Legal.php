@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 class Legal extends BaseController
 {
-    private function basePage(string $active, string $title, string $icon, string $lastUpdated = 'June 3, 2026'): array
+    private function basePage(string $active, string $title, string $icon, string $lastUpdated = 'November 8, 2026'): array
     {
         return [
             'active' => $active,

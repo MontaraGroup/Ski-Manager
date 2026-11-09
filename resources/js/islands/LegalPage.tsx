@@ -270,8 +270,29 @@ export default function LegalPage({
                 </ul>
               </section>
 
+              <section className="space-y-2">
+                <h3 className="text-base font-bold text-foreground">5. Third-Party Advertising &amp; Google AdSense</h3>
+                <p>
+                  We partner with third-party advertising networks, primarily Google AdSense, to serve advertisements on certain pages of the Service. To deliver relevant and non-disruptive ads, these third-party vendors use cookies, web beacons, and device identifiers:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-muted">
+                  <li>
+                    Third-party vendors, including Google, use cookies to serve ads based on a player&apos;s prior visits to ski-manager.net or other websites across the Internet.
+                  </li>
+                  <li>
+                    Google&apos;s use of advertising cookies enables it and its partners to serve personalized or contextual advertisements to you based on your visits to our site and other destinations on the web.
+                  </li>
+                  <li>
+                    Players may opt out of personalized advertising by visiting Google&apos;s <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">Ads Settings</a>. Alternatively, you can opt out of third-party vendor cookies for personalized advertising by visiting <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">aboutads.info</a>.
+                  </li>
+                  <li>
+                    For detailed information regarding how Google processes data when you interact with publisher partner sites, please review <a href="https://www.google.com/policies/privacy/partners/" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">How Google uses data when you use our partners&apos; sites or apps</a>.
+                  </li>
+                </ul>
+              </section>
+
               <section className="space-y-2 pt-2 border-t border-border">
-                <h3 className="text-base font-bold text-foreground">5. Data Retention &amp; Security</h3>
+                <h3 className="text-base font-bold text-foreground">6. Data Retention &amp; Security</h3>
                 <p>
                   All passwords are encrypted with industry-standard hashing algorithms. Communications are secured via TLS 1.3 encryption. Inactive guest accounts or unconfirmed signups are purged after 90 days.
                 </p>
@@ -401,6 +422,42 @@ export default function LegalPage({
                           <td className="p-2.5 text-muted">Google Analytics</td>
                           <td className="p-2.5 text-muted">Anonymous aggregate visitor counts</td>
                           <td className="p-2.5 font-mono">2 years</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">3.4 Advertising &amp; Monetization (Google AdSense &amp; DoubleClick)</h4>
+                  <div className="overflow-x-auto rounded-lg border border-border">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-card/80 border-b border-border text-muted font-medium">
+                        <tr>
+                          <th className="p-2.5">Key</th>
+                          <th className="p-2.5">Provider</th>
+                          <th className="p-2.5">Purpose</th>
+                          <th className="p-2.5">Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="p-2.5 font-mono text-foreground font-medium">__gads</td>
+                          <td className="p-2.5 text-muted">Google AdSense</td>
+                          <td className="p-2.5 text-muted">Ad serving frequency capping and fraud prevention</td>
+                          <td className="p-2.5 font-mono">13 months</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-mono text-foreground font-medium">__gpi</td>
+                          <td className="p-2.5 text-muted">Google AdSense</td>
+                          <td className="p-2.5 text-muted">Publisher ad analytics and audience performance</td>
+                          <td className="p-2.5 font-mono">13 months</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2.5 font-mono text-foreground font-medium">IDE</td>
+                          <td className="p-2.5 text-muted">Google DoubleClick</td>
+                          <td className="p-2.5 text-muted">Ad targeting and conversion measurement across third-party websites</td>
+                          <td className="p-2.5 font-mono">13 months</td>
                         </tr>
                       </tbody>
                     </table>

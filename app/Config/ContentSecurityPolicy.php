@@ -76,6 +76,7 @@ class ContentSecurityPolicy extends BaseConfig
         'https://*.doubleclick.net',
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
+        'https://static.cloudflareinsights.com',
     ];
 
     /**
@@ -98,6 +99,7 @@ class ContentSecurityPolicy extends BaseConfig
         'https://*.doubleclick.net',
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
+        'https://static.cloudflareinsights.com',
     ];
 
     /**
@@ -189,6 +191,10 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ka-f.fontawesome.com',
         'https://pagead2.googlesyndication.com',
         'https://*.doubleclick.net',
+        'https://static.cloudflareinsights.com',
+        'https://ep1.adtrafficquality.google',
+        'https://ep2.adtrafficquality.google',
+        'https://*.adtrafficquality.google',
     ];
 
     /**
@@ -234,6 +240,9 @@ class ContentSecurityPolicy extends BaseConfig
         'https://*.googlesyndication.com',
         'https://*.doubleclick.net',
         'https://fundingchoicesmessages.google.com',
+        'https://ep1.adtrafficquality.google',
+        'https://ep2.adtrafficquality.google',
+        'https://*.adtrafficquality.google',
     ];
 
     /**
