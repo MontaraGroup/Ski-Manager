@@ -201,6 +201,14 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->post('snowmaking/assign', 'Snowmaking::assignAction');
         $routes->post('snowmaking/(:num)/sell', 'Snowmaking::sellAction/$1');
         $routes->post('snowmaking/sell/(:num)', 'Snowmaking::sellAction/$1');
+        $routes->get('equipment', 'Equipment::show');
+        $routes->post('equipment/buy', 'Equipment::buyAction');
+        $routes->post('equipment/(:num)/toggle', 'Equipment::toggleAction/$1');
+        $routes->post('equipment/toggle/(:num)', 'Equipment::toggleAction/$1');
+        $routes->post('equipment/(:num)/repair', 'Equipment::repairAction/$1');
+        $routes->post('equipment/repair/(:num)', 'Equipment::repairAction/$1');
+        $routes->post('equipment/(:num)/sell', 'Equipment::sellAction/$1');
+        $routes->post('equipment/sell/(:num)', 'Equipment::sellAction/$1');
         $routes->post('account/delete', 'Account::delete');
     });
 });

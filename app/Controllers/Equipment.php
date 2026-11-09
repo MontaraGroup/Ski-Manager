@@ -26,6 +26,12 @@ class Equipment extends BaseController
 
     public function index(): string
     {
+        return view('equipment/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         helper('weather');
         $userId = auth()->id();
         $db = db_connect();
@@ -153,7 +159,7 @@ class Equipment extends BaseController
             ],
         ];
 
-        return view('equipment/index', ['page' => $page]);
+        return $page;
     }
 
     public function buy()
@@ -210,7 +216,7 @@ class Equipment extends BaseController
     public function repair(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$eq) return redirect()->back()->with('error', 'Not found.');
+        if (!$eq) return redirect()->to('/equipment')->with('error', 'Not found.');
         if ((int) $eq['condition_pct'] >= 100) return redirect()->to('/equipment')->with('error', $eq['name'] . ' is already in perfect condition.');
 
         $cost = Fleet::repair(auth()->id(), $eq);
@@ -221,7 +227,7 @@ class Equipment extends BaseController
     public function sell(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$eq) return redirect()->back()->with('error', 'Not found.');
+        if (!$eq) return redirect()->to('/equipment')->with('error', 'Not found.');
         $refund = Fleet::sell(auth()->id(), $eq);
         return redirect()->to('/equipment')->with('success', $eq['name'] . ' sold for ' . currency($refund) . '.');
     }
