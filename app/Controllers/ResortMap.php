@@ -175,6 +175,15 @@ class ResortMap extends BaseController
                 'perDay'   => \App\Libraries\Economy::LIFT_HOURS / \App\Libraries\Economy::RIDES_PER_SKIER,
                 'liftKwh'  => \App\Libraries\Utilities::LIFT_KWH_PER_M,
             ] : null,
+            // The same table calcCost() charges with, so the page never shows a different price
+            'costs'             => [
+                'liftPerM'    => self::LIFT_COST_PER_M,
+                'seatMult'    => self::SEAT_COST_MULT,
+                'seatOptions' => self::SEAT_OPTIONS,
+                'slopePerM'   => self::SLOPE_COST_PER_M,
+            ],
+            // Next nightly settle, shown in the player's own time after their first lift and slope
+            'settleAt'          => self::nextSettleAt(),
             'csrf'              => [
                 'name' => csrf_token(),
                 'hash' => csrf_hash(),
@@ -373,13 +382,7 @@ class ResortMap extends BaseController
             ? $rawSlopeType
             : (in_array($segment['type'], $validSlopeTypes, true) ? $segment['type'] : 'slope');
 
-        $seatOptions = [
-            'button'       => [1, 2],
-            'chair_fixed'  => [2, 3, 4],
-            'chair_detach' => [4, 6, 8],
-            'gondola'      => [6, 8, 10],
-            'cable_car'    => [20, 30],
-        ];
+        $seatOptions = self::SEAT_OPTIONS;
         if (!isset($seatOptions[$liftType])) {
             $liftType = 'chair_fixed';
         }
@@ -419,7 +422,7 @@ class ResortMap extends BaseController
         if (!$fin || $cash < $cost) {
             $db->transRollback();
             return $this->response->setStatusCode(400)->setJSON([
-                'error'      => 'Not enough cash ($' . number_format($cost) . ' required, $' . number_format($cash) . ' available)',
+                'error'      => 'Not enough cash: this costs ' . currency($cost) . ' and you have ' . currency($cash) . '.',
                 'cost'       => $cost,
                 'cash'       => $cash,
                 'csrf_token' => csrf_token(),
@@ -579,23 +582,48 @@ class ResortMap extends BaseController
         return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', $seats, $meters);
     }
 
+    /** Build price per metre for each lift type; the map page gets these too, so its prices match the charge */
+    public const LIFT_COST_PER_M = [
+        'button'       => 80,
+        'chair_fixed'  => 150,
+        'chair_detach' => 250,
+        'gondola'      => 400,
+        'cable_car'    => 600,
+    ];
+
+    /** Price multiplier by carrier size */
+    public const SEAT_COST_MULT = [1 => 0.7, 2 => 1.0, 3 => 1.15, 4 => 1.3, 6 => 1.6, 8 => 2.0, 10 => 2.5, 20 => 4.0, 30 => 5.0];
+
+    /** Carrier sizes each lift type can have; the first is the default */
+    public const SEAT_OPTIONS = [
+        'button'       => [1, 2],
+        'chair_fixed'  => [2, 3, 4],
+        'chair_detach' => [4, 6, 8],
+        'gondola'      => [6, 8, 10],
+        'cable_car'    => [20, 30],
+    ];
+
+    public const SLOPE_COST_PER_M = 50;
+
+    /** The nightly game:tick runs at 00:05 in the app's timezone (root crontab on the VPS) */
+    private const SETTLE_TIME = '00:05';
+
+    /** Next nightly settle as ISO 8601, so the browser can show it in the player's own timezone */
+    private static function nextSettleAt(): string
+    {
+        $now = new \DateTimeImmutable('now', new \DateTimeZone(config('App')->appTimezone));
+        $at  = $now->modify('today ' . self::SETTLE_TIME);
+        return ($at <= $now ? $at->modify('+1 day') : $at)->format(DATE_ATOM);
+    }
+
     protected static function calcCost(string $type, ?string $liftType, int $seats, float $meters): int
     {
         if ($type === 'lift') {
-            $base = match ($liftType) {
-                'button'       => 80,
-                'chair_fixed'  => 150,
-                'chair_detach' => 250,
-                'gondola'      => 400,
-                'cable_car'    => 600,
-                default        => 150,
-            };
-            $mult = match ($seats) {
-                1 => 0.7, 2 => 1.0, 3 => 1.15, 4 => 1.3, 6 => 1.6, 8 => 2.0, 10 => 2.5, 20 => 4.0, 30 => 5.0, default => 1.0,
-            };
+            $base = self::LIFT_COST_PER_M[$liftType] ?? self::LIFT_COST_PER_M['chair_fixed'];
+            $mult = self::SEAT_COST_MULT[$seats] ?? 1.0;
             return (int) ($meters * $base * $mult);
         }
-        return (int) ($meters * 50);
+        return (int) ($meters * self::SLOPE_COST_PER_M);
     }
 
     public function saveMidstation($id = null)
