@@ -144,15 +144,17 @@ export default function SupportPage({
               </p>
               <div className="flex flex-wrap justify-center gap-1.5">
                 {TOPICS.map((t) => (
-                  <button
+                  <Button
                     key={t.label}
                     type="button"
-                    onClick={() => handleTopic(t.template)}
-                    className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border bg-surface-secondary/60 px-3.5 py-1 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                    size="sm"
+                    variant="ghost"
+                    onPress={() => handleTopic(t.template)}
+                    className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border px-3.5 py-1 text-xs font-medium"
                   >
                     <Icon name={t.icon} className="text-xs" />
                     <span>{t.label}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -202,15 +204,17 @@ export default function SupportPage({
           {messages.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
               {TOPICS.filter((t) => t.template !== '').map((t) => (
-                <button
+                <Button
                   key={t.label}
                   type="button"
-                  onClick={() => handleTopic(t.template)}
-                  className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted hover:text-primary hover:border-primary transition-colors"
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => handleTopic(t.template)}
+                  className="inline-flex min-h-11 sm:min-h-7 items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted hover:text-primary"
                 >
                   <Icon name={t.icon} className="text-xs" />
                   <span>{t.label}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}

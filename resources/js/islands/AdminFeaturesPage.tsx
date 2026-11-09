@@ -134,18 +134,16 @@ export default function AdminFeaturesPage({ flags, counts }: AdminFeaturesPagePr
               { id: 'beta', label: 'Beta Flags', count: flags.filter((f) => f.isBeta).length },
             ] as const
           ).map((t) => (
-            <button
+            <Button
               key={t.id}
               type="button"
-              onClick={() => setFilterGroup(t.id)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
-                filterGroup === t.id
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted hover:bg-surface hover:text-foreground'
-              }`}
+              size="sm"
+              variant={filterGroup === t.id ? 'primary' : 'ghost'}
+              onPress={() => setFilterGroup(t.id)}
+              className="rounded-lg px-2.5 py-1 text-xs font-semibold"
             >
               {t.label} <span className="font-mono text-[10px] opacity-75">({t.count})</span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -270,17 +268,15 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
             >
               <CsrfInput />
               <input type="hidden" name="level" value={lvl.value} />
-              <button
+              <Button
                 type="submit"
-                disabled={isActive}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                  isActive
-                    ? `${lvl.color} shadow-xs`
-                    : 'text-muted hover:text-foreground hover:bg-surface'
-                }`}
+                size="sm"
+                variant={isActive ? 'primary' : 'ghost'}
+                isDisabled={isActive}
+                className="px-3 py-1.5 text-xs font-semibold"
               >
                 {lvl.label}
-              </button>
+              </Button>
             </form>
           );
         })}

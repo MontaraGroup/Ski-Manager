@@ -1,4 +1,6 @@
+import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { Select } from '@/components/Select';
 import type { BuildCosts, MapSegment } from './types';
 import { TrailSign, cheapestCost, formatCurrency, runKind } from './shared';
 
@@ -36,10 +38,11 @@ function RunRow({
   const len = Math.round(Number(seg.length_meters) || 0);
   return (
     <li>
-      <button
+      <Button
         type="button"
-        onClick={() => onSelect(seg)}
-        className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border px-3 py-2 text-left transition-colors hover:bg-surface-secondary"
+        variant="ghost"
+        onPress={() => onSelect(seg)}
+        className="flex min-h-14 w-full items-center justify-start gap-3 rounded-lg border border-border px-3 py-2 text-left"
       >
         <span className="flex size-7 shrink-0 items-center justify-center">
           <TrailSign seg={seg} />
@@ -54,7 +57,7 @@ function RunRow({
           {seg.type === 'lift' && <span className="block text-xs font-normal text-muted">from</span>}
           {formatCurrency(price, isImperial)}
         </span>
-      </button>
+      </Button>
     </li>
   );
 }
@@ -152,19 +155,18 @@ export function BrowseView({
         </h3>
         <div role="group" aria-label="Kind of run" className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-secondary p-1">
           {(['slope', 'lift'] as const).map((t) => (
-            <button
+            <Button
               key={t}
               type="button"
+              variant={tab === t ? 'primary' : 'ghost'}
               aria-pressed={tab === t}
-              onClick={() => onTab(t)}
-              className={`flex min-h-11 items-center justify-center gap-2 rounded-md text-sm font-semibold transition-colors md:min-h-9 ${
-                tab === t ? 'bg-surface text-foreground shadow-sm' : 'text-muted hover:text-foreground'
-              }`}
+              onPress={() => onTab(t)}
+              className="flex min-h-11 items-center justify-center gap-2 md:min-h-9"
             >
               <Icon name={t === 'lift' ? 'fa-elevator' : 'fa-person-skiing'} />
               {t === 'lift' ? 'Lifts' : 'Slopes'}
               <span className="tabular-nums text-muted">{t === 'lift' ? liftCount : slopeCount}</span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -182,34 +184,36 @@ export function BrowseView({
 
         <div className="flex gap-2">
           {tab === 'slope' && (
-            <label className="flex-1">
-              <span className="sr-only">Difficulty</span>
-              <select
+            <div className="flex-1">
+              <Select
                 value={grade}
-                onChange={(e) => onGrade(e.target.value)}
-                className="h-11 w-full rounded-lg border border-border bg-surface-secondary px-2 text-base text-foreground outline-none md:h-9 md:text-sm"
-              >
-                <option value="">All difficulties</option>
-                <option value="green">Easiest</option>
-                <option value="blue">More difficult</option>
-                <option value="black">Most difficult</option>
-                <option value="double_black">Experts only</option>
-              </select>
-            </label>
+                onChange={(val) => onGrade(String(val))}
+                aria-label="Difficulty"
+                options={[
+                  { id: '', label: 'All difficulties' },
+                  { id: 'green', label: 'Easiest' },
+                  { id: 'blue', label: 'More difficult' },
+                  { id: 'black', label: 'Most difficult' },
+                  { id: 'double_black', label: 'Experts only' },
+                ]}
+                className="w-full"
+              />
+            </div>
           )}
-          <label className="flex-1">
-            <span className="sr-only">Sort</span>
-            <select
+          <div className="flex-1">
+            <Select
               value={sort}
-              onChange={(e) => onSort(e.target.value as SortOrder)}
-              className="h-11 w-full rounded-lg border border-border bg-surface-secondary px-2 text-base text-foreground outline-none md:h-9 md:text-sm"
-            >
-              <option value="cost_asc">Cheapest first</option>
-              <option value="cost_desc">Most expensive first</option>
-              <option value="len_desc">Longest first</option>
-              <option value="name_asc">Name, A to Z</option>
-            </select>
-          </label>
+              onChange={(val) => onSort(val as SortOrder)}
+              aria-label="Sort"
+              options={[
+                { id: 'cost_asc', label: 'Cheapest first' },
+                { id: 'cost_desc', label: 'Most expensive first' },
+                { id: 'len_desc', label: 'Longest first' },
+                { id: 'name_asc', label: 'Name, A to Z' },
+              ]}
+              className="w-full"
+            />
+          </div>
         </div>
 
         <p className="px-1 text-sm text-muted">

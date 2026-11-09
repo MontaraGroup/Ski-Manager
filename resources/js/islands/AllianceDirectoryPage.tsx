@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Button, Chip } from '@heroui/react';
+import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Empty, Page, Panel, PostButton } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type AllianceDirectoryItem = {
   id: number;
@@ -297,13 +299,17 @@ export default function AllianceDirectoryPage({
                   Creation Fee: {foundingFeeText} (Your balance: {user.cashText})
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
-                onClick={() => setFoundModalOpen(false)}
-                className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-default hover:text-foreground"
+                variant="ghost"
+                isIconOnly
+                size="sm"
+                onPress={() => setFoundModalOpen(false)}
+                aria-label="Close modal"
+                className="size-8 rounded-full text-muted hover:text-foreground"
               >
                 <Icon name="fa-xmark" />
-              </button>
+              </Button>
             </div>
 
             <form action="/alliances/create" method="post" className="space-y-3.5 text-xs">
@@ -361,31 +367,21 @@ export default function AllianceDirectoryPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block font-medium text-foreground">Crest Icon</label>
-                  <select
+                  <Select
                     name="crest_icon"
-                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
+                    aria-label="Crest Icon"
                     defaultValue="fa-mountain-sun"
-                  >
-                    {CREST_ICONS.map((i) => (
-                      <option key={i.value} value={i.value}>
-                        {i.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={CREST_ICONS.map((i) => ({ id: i.value, label: i.label }))}
+                  />
                 </div>
                 <div>
                   <label className="mb-1 block font-medium text-foreground">Crest Color</label>
-                  <select
+                  <Select
                     name="crest_color"
-                    className="w-full min-h-11 sm:min-h-9 rounded-lg border border-border bg-surface px-3 py-2 text-base sm:text-sm text-foreground focus:border-accent focus:outline-none"
+                    aria-label="Crest Color"
                     defaultValue="#3b82f6"
-                  >
-                    {CREST_COLORS.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={CREST_COLORS.map((c) => ({ id: c.value, label: c.label }))}
+                  />
                 </div>
               </div>
 
@@ -404,17 +400,15 @@ export default function AllianceDirectoryPage({
                   />
                 </div>
                 <div className="flex flex-col justify-center pt-2">
-                  <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground">
-                    <input
-                      type="checkbox"
-                      name="is_recruiting"
-                      value="1"
-                      defaultChecked
-                      className="size-5 sm:size-4 rounded border-border text-accent focus:ring-accent"
-                    />
-                    <span>Open Recruitment</span>
-                  </label>
-                  <span className="text-xs text-muted">
+                  <Checkbox
+                    name="is_recruiting"
+                    value="1"
+                    defaultChecked
+                    className="font-medium text-foreground"
+                  >
+                    Open Recruitment
+                  </Checkbox>
+                  <span className="text-xs text-muted pl-7">
                     Allow direct joining without approval
                   </span>
                 </div>
@@ -461,13 +455,17 @@ export default function AllianceDirectoryPage({
                   Alliance leadership will review your credentials before admitting your mountain.
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
-                onClick={() => setApplyTarget(null)}
-                className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-default hover:text-foreground"
+                variant="ghost"
+                isIconOnly
+                size="sm"
+                onPress={() => setApplyTarget(null)}
+                aria-label="Close modal"
+                className="size-8 rounded-full text-muted hover:text-foreground"
               >
                 <Icon name="fa-xmark" />
-              </button>
+              </Button>
             </div>
 
             <form

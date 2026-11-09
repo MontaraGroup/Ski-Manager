@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertDialog, Button, Chip } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { csrf, CsrfInput, Figure, Page, Panel } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type RoadmapItem = {
   id: number;
@@ -155,18 +156,16 @@ export default function RoadmapPage({ isAdmin, stats, columns }: RoadmapPageProp
       {/* Category filter pills */}
       <div className="flex flex-wrap items-center gap-1.5">
         {categories.map((cat) => (
-          <button
+          <Button
             key={cat.key}
             type="button"
-            onClick={() => setSelectedCategory(cat.key)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              selectedCategory === cat.key
-                ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                : 'bg-surface border border-border text-muted hover:text-foreground hover:bg-surface-secondary'
-            }`}
+            size="sm"
+            variant={selectedCategory === cat.key ? 'primary' : 'ghost'}
+            onPress={() => setSelectedCategory(cat.key)}
+            className="rounded-full px-3 py-1 text-xs"
           >
             {cat.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -227,14 +226,12 @@ export default function RoadmapPage({ isAdmin, stats, columns }: RoadmapPageProp
                         </div>
 
                         <div className="flex items-center gap-1.5">
-                          <button
+                          <Button
                             type="button"
-                            onClick={() => handleVote(item.id)}
-                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold tabular-nums transition-colors ${
-                              item.voted
-                                ? 'border-primary/40 bg-primary/10 text-primary'
-                                : 'border-border bg-surface text-muted hover:text-foreground hover:bg-surface-secondary'
-                            }`}
+                            size="sm"
+                            variant={item.voted ? 'primary' : 'ghost'}
+                            onPress={() => handleVote(item.id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs tabular-nums"
                             aria-label={`Upvote ${item.title}`}
                           >
                             <Icon
@@ -242,18 +239,21 @@ export default function RoadmapPage({ isAdmin, stats, columns }: RoadmapPageProp
                               className={`text-[10px] ${item.voted ? 'text-primary' : ''}`}
                             />
                             <span>{item.upvotes}</span>
-                          </button>
+                          </Button>
 
                           {isAdmin && (
                             <form action={`/roadmap/delete/${item.id}`} method="post" className="inline">
                               <CsrfInput />
-                              <button
+                              <Button
                                 type="submit"
-                                className="rounded p-1 text-muted hover:text-danger"
-                                title="Delete item"
+                                size="sm"
+                                variant="ghost"
+                                isIconOnly
+                                className="size-7 rounded text-muted hover:text-danger"
+                                aria-label="Delete item"
                               >
                                 <Icon name="fa-trash-can" className="text-xs" />
-                              </button>
+                              </Button>
                             </form>
                           )}
                         </div>
@@ -301,16 +301,18 @@ export default function RoadmapPage({ isAdmin, stats, columns }: RoadmapPageProp
                   <label htmlFor="category" className="block text-xs font-medium text-foreground mb-1">
                     Category
                   </label>
-                  <select
+                  <Select
                     name="category"
                     id="category"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="gameplay">Gameplay & Mountain</option>
-                    <option value="economy">Economy & Commerce</option>
-                    <option value="quality_of_life">Quality of Life</option>
-                    <option value="mobile">Mobile Experience</option>
-                  </select>
+                    aria-label="Category"
+                    defaultValue="gameplay"
+                    options={[
+                      { id: 'gameplay', label: 'Gameplay & Mountain' },
+                      { id: 'economy', label: 'Economy & Commerce' },
+                      { id: 'quality_of_life', label: 'Quality of Life' },
+                      { id: 'mobile', label: 'Mobile Experience' },
+                    ]}
+                  />
                 </div>
 
                 <div>

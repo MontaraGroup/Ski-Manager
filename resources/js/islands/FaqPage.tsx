@@ -56,12 +56,15 @@ export default function FaqPage({ faqs = [] }: FaqPageProps) {
             className="w-full h-11 pl-9 pr-3 rounded-xl border border-border bg-base-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
           />
           {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground text-xs"
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onPress={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground text-xs min-h-7 px-2"
             >
               Clear
-            </button>
+            </Button>
           )}
         </div>
 
@@ -80,9 +83,11 @@ export default function FaqPage({ faqs = [] }: FaqPageProps) {
                   key={item.id}
                   className="rounded-xl border border-border bg-base-100 shadow-sm overflow-hidden transition-all"
                 >
-                  <button
-                    onClick={() => toggleOpen(item.id)}
-                    className="w-full p-4 text-left flex items-center justify-between gap-3 hover:bg-base-200/50 transition-colors"
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onPress={() => toggleOpen(item.id)}
+                    className="w-full h-auto p-4 text-left flex items-center justify-between gap-3 hover:bg-base-200/50"
                   >
                     <span className="font-bold text-xs sm:text-sm text-foreground">
                       {item.question}
@@ -93,7 +98,7 @@ export default function FaqPage({ faqs = [] }: FaqPageProps) {
                         isOpen ? 'rotate-180 text-primary' : ''
                       }`}
                     />
-                  </button>
+                  </Button>
 
                   {isOpen && (
                     <div className="px-4 pb-4 pt-1 text-xs text-muted leading-relaxed border-t border-border/40">

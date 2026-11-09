@@ -156,22 +156,28 @@ export default function AdminSupportChatPage({
                       {/* Action buttons for admin messages on hover */}
                       {isAdmin && !isEditing && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                          <button
+                          <Button
                             type="button"
-                            onClick={() => handleStartEdit(msg)}
+                            variant="ghost"
+                            size="sm"
+                            isIconOnly
+                            onPress={() => handleStartEdit(msg)}
                             aria-label="Edit message"
-                            className="flex h-6 w-6 items-center justify-center rounded text-muted hover:bg-surface-2 hover:text-foreground text-[11px]"
+                            className="size-6 min-h-6 min-w-6 text-[11px] text-muted hover:text-foreground"
                           >
                             <Icon name="fa-pencil" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            onClick={() => handleDeleteMessage(msg.id)}
+                            variant="ghost"
+                            size="sm"
+                            isIconOnly
+                            onPress={() => handleDeleteMessage(msg.id)}
                             aria-label="Delete message"
-                            className="flex h-6 w-6 items-center justify-center rounded text-muted hover:bg-danger/10 hover:text-danger text-[11px]"
+                            className="size-6 min-h-6 min-w-6 text-[11px] text-muted hover:text-danger"
                           >
                             <Icon name="fa-trash" />
-                          </button>
+                          </Button>
                         </div>
                       )}
 

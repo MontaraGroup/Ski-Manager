@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Page, Panel } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type ComparedPlayer = {
   id: number;
@@ -46,36 +47,32 @@ export default function AdminComparePage({
           <form method="get" action="/admin/compare" className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1 space-y-1">
               <label className="text-xs font-semibold text-muted">Player A</label>
-              <select
+              <Select
                 name="a"
                 value={playerA}
-                onChange={(e) => setPlayerA(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-raised px-3 py-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-hidden"
-              >
-                <option value="">Select First Player…</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.username} (ID: {u.id})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setPlayerA(String(val))}
+                aria-label="Player A"
+                options={[
+                  { id: '', label: 'Select First Player...' },
+                  ...users.map((u) => ({ id: String(u.id), label: `${u.username} (ID: ${u.id})` })),
+                ]}
+                className="w-full"
+              />
             </div>
 
             <div className="flex-1 space-y-1">
               <label className="text-xs font-semibold text-muted">Player B</label>
-              <select
+              <Select
                 name="b"
                 value={playerB}
-                onChange={(e) => setPlayerB(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-raised px-3 py-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-hidden"
-              >
-                <option value="">Select Second Player…</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.username} (ID: {u.id})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setPlayerB(String(val))}
+                aria-label="Player B"
+                options={[
+                  { id: '', label: 'Select Second Player...' },
+                  ...users.map((u) => ({ id: String(u.id), label: `${u.username} (ID: ${u.id})` })),
+                ]}
+                className="w-full"
+              />
             </div>
 
             <Button

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@heroui/react/button';
+import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 
 interface DifficultyOption {
@@ -218,16 +219,14 @@ export default function CompleteProfilePage({
 
               {/* Terms Checkbox */}
               <div className="pt-2">
-                <label className="cursor-pointer flex items-start gap-2.5 text-xs text-muted">
-                  <input
-                    type="checkbox"
-                    name="terms"
-                    value="1"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    required
-                    className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4"
-                  />
+                <Checkbox
+                  name="terms"
+                  value="1"
+                  isSelected={termsAccepted}
+                  onChange={setTermsAccepted}
+                  isRequired
+                  className="text-xs text-muted"
+                >
                   <span>
                     I agree to the{' '}
                     <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
@@ -238,7 +237,7 @@ export default function CompleteProfilePage({
                       Privacy Policy
                     </a>.
                   </span>
-                </label>
+                </Checkbox>
               </div>
 
               <Button

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Figure, Page, Panel } from '@/components/Page';
+import { Switch } from '@/components/Switch';
 
 export type TicketItem = {
   id: number;
@@ -238,18 +239,17 @@ function TicketRow({
           <span className="text-sm font-medium text-muted">{currencySymbol}</span>
         </div>
 
-        <label className="flex min-h-11 sm:min-h-8 items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            name="active"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-            className="size-5 sm:size-4 rounded border-border accent-accent"
-          />
+        <Switch
+          name="active"
+          isSelected={active}
+          onChange={setActive}
+          aria-label={active ? 'On sale' : 'Off'}
+          className="min-h-11 sm:min-h-8"
+        >
           <span className={`text-xs font-medium ${active ? 'text-success' : 'text-muted'}`}>
             {active ? 'On sale' : 'Off'}
           </span>
-        </label>
+        </Switch>
 
         <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save ticket price" className="size-11 sm:size-8 flex items-center justify-center">
           <Icon name="fa-floppy-disk" />

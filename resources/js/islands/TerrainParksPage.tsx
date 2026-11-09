@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type ParkFeature = {
   id: number;
@@ -231,54 +232,48 @@ export default function TerrainParksPage({
 
               <div>
                 <label className="text-xs font-semibold text-muted block mb-1">Feature Type</label>
-                <select
+                <Select
                   name="park_type"
                   aria-label="Feature Type"
                   value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-base-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                >
-                  {configKeys.map((k) => (
-                    <option key={k} value={k}>
-                      {parkConfig[k].label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedType(String(val))}
+                  options={configKeys.map((k) => ({
+                    id: k,
+                    label: parkConfig[k].label,
+                  }))}
+                  className="w-full"
+                />
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-muted block mb-1">Scale / Size</label>
-                <select
+                <Select
                   name="size"
                   aria-label="Size"
                   value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-base-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                >
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
+                  onChange={(val) => setSelectedSize(String(val))}
+                  options={[
+                    { id: 'small', label: 'Small' },
+                    { id: 'medium', label: 'Medium' },
+                    { id: 'large', label: 'Large' },
+                  ]}
+                  className="w-full"
+                />
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-muted block mb-1">Attach to Slope</label>
-                <select
+                <Select
                   name="slope_id"
                   aria-label="Slope attachment"
                   value={selectedSlope}
-                  onChange={(e) => setSelectedSlope(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-border bg-base-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Standalone Feature</option>
-                  {slopes.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedSlope(String(val))}
+                  options={[
+                    { id: '', label: 'Standalone Feature' },
+                    ...slopes.map((s) => ({ id: String(s.id), label: s.name })),
+                  ]}
+                  className="w-full"
+                />
               </div>
             </div>
 

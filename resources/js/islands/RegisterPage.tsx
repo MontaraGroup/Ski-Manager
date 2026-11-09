@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@heroui/react/button';
+import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 
 interface RegisterDifficulty {
@@ -256,14 +257,17 @@ export default function RegisterPage({
                     autoComplete="new-password"
                     className="w-full rounded-lg border border-border bg-surface px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-11"
                   />
-                  <button
+                  <Button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    variant="ghost"
+                    isIconOnly
+                    size="sm"
+                    onPress={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted hover:text-foreground transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 min-h-8 min-w-8 text-muted hover:text-foreground"
                   >
                     <Icon name={showPassword ? 'fa-eye-slash' : 'fa-eye'} className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -345,13 +349,11 @@ export default function RegisterPage({
               )}
 
               {/* Terms checkbox */}
-              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-muted pt-1 select-none min-h-11 sm:min-h-0">
-                <input
-                  type="checkbox"
-                  name="terms"
-                  required
-                  className="rounded border-border text-primary focus:ring-primary w-4 h-4 mt-0.5 cursor-pointer"
-                />
+              <Checkbox
+                name="terms"
+                isRequired
+                className="pt-1 text-xs text-muted min-h-11 sm:min-h-0"
+              >
                 <span>
                   I agree to the{' '}
                   <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
@@ -362,7 +364,7 @@ export default function RegisterPage({
                     Privacy Policy
                   </a>
                 </span>
-              </label>
+              </Checkbox>
 
               <Button
                 type="submit"

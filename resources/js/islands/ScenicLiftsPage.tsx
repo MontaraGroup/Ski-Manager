@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Empty, Figure, Page, Panel, PostButton } from '@/components/Page';
+import { Select } from '@/components/Select';
+import { Slider } from '@/components/Slider';
 
 export type ScenicLiftUpgrade = {
   key: string;
@@ -184,16 +186,18 @@ export default function ScenicLiftsPage({
                   <input type="hidden" name="item_id" value={al.id} />
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-muted">Starting price:</span>
-                    <select
+                    <Select
                       name="ticket_price"
-                      defaultValue={rules.refPrice}
-                      className="flex-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-                    >
-                      <option value="15">15 € per ride</option>
-                      <option value="25">25 € per ride</option>
-                      <option value="35">35 € per ride</option>
-                      <option value="50">50 € per ride</option>
-                    </select>
+                      defaultValue={String(rules.refPrice)}
+                      aria-label="Starting price"
+                      options={[
+                        { id: '15', label: '15 € per ride' },
+                        { id: '25', label: '25 € per ride' },
+                        { id: '35', label: '35 € per ride' },
+                        { id: '50', label: '50 € per ride' },
+                      ]}
+                      className="flex-1"
+                    />
                   </div>
                   <Button type="submit" variant="primary" size="sm" className="w-full">
                     <Icon name="fa-camera" className="mr-1 text-xs" />
@@ -297,16 +301,17 @@ function ScenicLiftCard({ lift, rules }: { lift: ScenicLiftItem; rules: ScenicLi
               <span className="font-bold text-foreground">{sliderPrice} €</span>
             </div>
             <div className="flex items-center gap-3">
-              <input
+              <Slider
                 id={`price-${lift.id}`}
-                type="range"
                 name="price"
-                min={rules.minPrice}
-                max={rules.maxPrice}
+                minValue={rules.minPrice}
+                maxValue={rules.maxPrice}
                 step={1}
                 value={sliderPrice}
-                onChange={(e) => setSliderPrice(Number(e.target.value))}
-                className="flex-1 accent-accent"
+                onChange={(val) => setSliderPrice(typeof val === 'number' ? val : (Array.isArray(val) ? val[0] : rules.minPrice))}
+                aria-label="Ticket price per ride"
+                showOutput={false}
+                className="flex-1"
               />
               <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save ticket price">
                 <Icon name="fa-check" />
@@ -391,19 +396,16 @@ function UpgradeCard({
             <CsrfInput />
             <input type="hidden" name="upgrade" value={upgrade.key} />
             {scenicLifts.length > 1 ? (
-              <select
+              <Select
                 name="item_id"
                 value={selectedLiftId}
-                onChange={(e) => setSelectedLiftId(Number(e.target.value))}
-                className="w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                {scenicLifts.map((sl) => (
-                  <option key={sl.id} value={sl.id}>
-                    {sl.name}
-                    {sl.installedKeys.includes(upgrade.key) ? ' (Installed)' : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedLiftId(Number(val))}
+                aria-label="Select scenic lift"
+                options={scenicLifts.map((sl) => ({
+                  id: sl.id,
+                  label: `${sl.name}${sl.installedKeys.includes(upgrade.key) ? ' (Installed)' : ''}`,
+                }))}
+              />
             ) : (
               <input type="hidden" name="item_id" value={scenicLifts[0].id} />
             )}

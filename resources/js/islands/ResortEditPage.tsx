@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { Switch } from '@/components/Switch';
 
 export type ResortEditProps = {
   resort: {
@@ -108,16 +109,12 @@ export default function ResortEditPage({ resort }: ResortEditProps) {
               </div>
             </div>
 
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name="is_open"
-                checked={isOpen}
-                onChange={(e) => setIsOpen(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-base-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
-            </label>
+            <Switch
+              name="is_open"
+              isSelected={isOpen}
+              onChange={setIsOpen}
+              aria-label="Resort Open for Guests"
+            />
           </div>
         </Panel>
 
