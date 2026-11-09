@@ -422,15 +422,16 @@ class Demo extends BaseController
     }
 
     /**
-     * What tonight's tick should pay this demo, for the dashboard until its first real day. Uses the
+     * What tonight's tick should pay this player, for the dashboard until their first real day. Uses the
      * tick's own Economy formulas with today's weather; boosts and events are left out, so it's an estimate.
-     * Null unless this is a demo that hasn't had a tick yet.
+     * New real accounts get it too: without it, nothing on the dashboard says the game settles once a day.
+     * Null once the player has had a tick, or while their resort is closed.
      */
     public static function estimate(int $userId): ?array
     {
         static $cache = [];
         if (array_key_exists($userId, $cache)) return $cache[$userId];
-        if (!featureEnabled('demo_v2') || !featureEnabled('economy_v2') || !self::isDemoUser()) return null;
+        if (!featureEnabled('demo_v2') || !featureEnabled('economy_v2')) return null;
 
         $db = db_connect();
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
