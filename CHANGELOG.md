@@ -1,3 +1,11 @@
+## Release 2026-11-09 19:16
+
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* Merge pull request #70 from Montara-Group/feat/android-expressive-complete (aa9193b)
+* feat(android): upgrade all native screens to material design 3 expressive (41237b2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (46bc782)
+* Merge pull request #69 from Montara-Group/fix/tutorial-revamp (100d041)
+
 ## Release 2026-11-09 18:18
 
 * Merge branch 'MontaraGroup:main' into main (2cecf8f)
