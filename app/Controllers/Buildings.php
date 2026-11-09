@@ -300,6 +300,7 @@ class Buildings extends BaseController
             'upkeep_per_day' => $lvl['upkeep'], 'condition_pct' => 100, 'status' => 'open',
         ]);
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Constructed ' . $lvl['name'] . ' for ' . currency($cost), 'fa-solid fa-hotel');
         return redirect()->to('/' . $def['route'])->with('success', $lvl['name'] . ' built!');
@@ -367,6 +368,7 @@ class Buildings extends BaseController
             'name' => $next['name'] . ' #' . substr($building['name'], -2),
         ]);
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Upgraded ' . $building['name'] . ' to Lv.' . $nextLevel . ' for ' . currency($cost), 'fa-solid fa-arrow-up');
         return redirect()->to('/' . $defs[$type]['route'])->with('success', 'Upgraded to ' . $next['name'] . '!');
@@ -401,6 +403,7 @@ class Buildings extends BaseController
             ]);
         }
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Demolished ' . $building['name'] . ' for ' . currency($refund) . ' salvage', 'fa-solid fa-money-bill-wave');
         return redirect()->to('/' . $route)->with('success', $building['name'] . ' demolished. ' . currency($refund) . ' refunded (25% salvage).');

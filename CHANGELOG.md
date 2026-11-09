@@ -1,3 +1,35 @@
+## Release 2026-11-09 01:47
+
+* Merge branch 'MontaraGroup:main' into main (58250ee)
+* Merge pull request #54 from Montara-Group/feat/mobile-api (a545c31)
+* Merge pull request #52 from Montara-Group/feat/demo-save (80a2f50)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e3c9a3e)
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+
+## Release 2026-11-09 01:40
+
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e001647)
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+
+## Release 2026-11-09 01:35
+
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+* Merge pull request #51 from Montara-Group/feat/demo-first-play (4cb32b4)
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+
+## Release 2026-11-09 01:32
+
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (beed808)
+* android: add web targets to assetlinks for credential sharing (009d233)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e4d746c)
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+
 ## Release 2026-11-09 00:36
 
 * android: add web targets to assetlinks for credential sharing (009d233)

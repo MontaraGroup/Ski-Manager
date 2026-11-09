@@ -53,7 +53,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
             set -e
-            TARGET_DIR="/opt/1panel/www/sites/skiv2-staging/ci4"
+            TARGET_DIR="/srv/ski-manager/sites/skiv2-staging/ci4"
             if [ -n "${{ secrets.STAGING_PATH }}" ]; then
               TARGET_DIR="${{ secrets.STAGING_PATH }}"
             fi

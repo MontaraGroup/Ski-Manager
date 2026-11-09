@@ -270,6 +270,7 @@ class Staff extends BaseController
             'assigned_to' => $post, 'status' => 'active',
         ]);
         $db->transComplete();
+        clearResortRatingCache($userId);
         log_activity($userId, 'Staff', 'Hired ' . $c['name'] . ' as ' . $roles[$role]['name'] . ($post ? ' (' . $post . ')' : ''), 'fa-solid fa-user-plus');
 
         $where = $post ? ' and assigned to ' . $post . '.' : '. There is no free post for them yet, so they\'ll lose morale until you give them one.';
@@ -287,6 +288,7 @@ class Staff extends BaseController
         }
 
         $this->staffModel->update($id, ['status' => 'fired', 'assigned_to' => null]);
+        clearResortRatingCache($userId);
         log_activity($userId, 'Staff', 'Fired ' . $member['name'], 'fa-solid fa-user-minus');
 
         return redirect()->to('/staff')->with('success', $member['name'] . ' has been let go.');

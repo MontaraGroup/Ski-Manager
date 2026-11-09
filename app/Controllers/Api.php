@@ -154,23 +154,29 @@ class Api extends BaseController
      */
     public function leaderboard(): ResponseInterface
     {
+        $cacheKey = 'api_global_leaderboard_50';
+        if (function_exists('cache')) {
+            $cached = cache($cacheKey);
+            if (is_array($cached)) {
+                return $this->response
+                    ->setHeader('Access-Control-Allow-Origin', '*')
+                    ->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                    ->setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                    ->setJSON($cached);
+            }
+        }
+
         $db = db_connect();
         $players = $db->query("
             SELECT 
                 u.id,
                 u.username,
                 pf.cash,
-                pf.total_income,
-                pf.total_expenses,
-                pf.difficulty,
-                (SELECT COUNT(*) FROM staff s WHERE s.user_id = u.id AND s.status != 'fired') as staff_count,
-                (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type IN ('slope','downhill','crosscountry','snowpark','luge')) as slope_count,
-                (SELECT COUNT(*) FROM player_items pi WHERE pi.user_id = u.id AND pi.item_type = 'lift') as lift_count,
-                (CAST(pf.total_income AS SIGNED) - CAST(pf.total_expenses AS SIGNED)) as net_profit,
-                (CAST(pf.cash AS SIGNED) + CAST(pf.total_income AS SIGNED)) as score
+                (CAST(pf.cash AS SIGNED) + CAST(COALESCE(pf.total_income, 0) AS SIGNED)) as score
             FROM users u
-            LEFT JOIN player_finances pf ON pf.user_id = u.id
+            INNER JOIN player_finances pf ON pf.user_id = u.id
             WHERE u.id NOT IN (1, 3)
+            AND u.active = 1
             AND pf.cash IS NOT NULL
             ORDER BY score DESC
             LIMIT 50
@@ -197,6 +203,10 @@ class Api extends BaseController
                 ['id' => 104, 'username' => 'Snowbird_Pro', 'resortName' => 'Little Cottonwood Crest', 'cash' => 2450000, 'reputation' => 91, 'rankPosition' => 4],
                 ['id' => 105, 'username' => 'VailVenture', 'resortName' => 'Front Range Bowls', 'cash' => 2100000, 'reputation' => 89, 'rankPosition' => 5],
             ];
+        }
+
+        if (function_exists('cache') && !empty($entries)) {
+            cache()->save($cacheKey, $entries, 120);
         }
 
         return $this->response
