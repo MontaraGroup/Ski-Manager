@@ -1,5 +1,6 @@
 package net.skimanager.app.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,10 +41,13 @@ import net.skimanager.app.api.str
 import net.skimanager.app.ui.common.EmptyText
 import net.skimanager.app.ui.common.Figure
 import net.skimanager.app.ui.common.Loaded
+import net.skimanager.app.ui.common.OutlinedPrimaryButton
 import net.skimanager.app.ui.common.Panel
 import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
+import net.skimanager.app.ui.common.SecondaryButton
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 @Composable
@@ -82,19 +86,23 @@ fun SnowmakingScreen(app: AppState) {
         ScreenColumn {
             actionError?.let { err ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
                 ) {
-                    Text(err, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
             actionSuccess?.let { msg ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.success.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, LocalSkiColors.current.success.copy(alpha = 0.35f)),
                 ) {
-                    Text(msg, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(12.dp))
+                    Text(msg, color = LocalSkiColors.current.success, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
@@ -140,7 +148,7 @@ fun SnowmakingScreen(app: AppState) {
                         { act("snowmaking/toggle-all", mapOf("action" to "on")) { reload(); reloadCount++ } },
                         Modifier.weight(1f),
                     )
-                    PrimaryButton(
+                    SecondaryButton(
                         "Turn all off",
                         { act("snowmaking/toggle-all", mapOf("action" to "off")) { reload(); reloadCount++ } },
                         Modifier.weight(1f),
@@ -174,19 +182,21 @@ fun SnowmakingScreen(app: AppState) {
                         outlook.forEach { day ->
                             Card(
                                 Modifier.padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+                                shape = MaterialTheme.shapes.medium,
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                             ) {
-                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text("Day ${day.int("day")}", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
                                     Text(day.str("tempText"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                     day.str("snowfallText").takeIf { it.isNotEmpty() }?.let {
-                                        Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                                        Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
                                     }
-                                    Text(
+                                    val canRun = day.bool("canRun")
+                                    StatusBadge(
                                         day.str("hoursText"),
-                                        color = if (day.bool("canRun")) MaterialTheme.colorScheme.primary else LocalSkiColors.current.muted,
-                                        style = MaterialTheme.typography.bodySmall,
+                                        if (canRun) LocalSkiColors.current.success else LocalSkiColors.current.muted,
+                                        (if (canRun) LocalSkiColors.current.success else LocalSkiColors.current.muted).copy(alpha = 0.12f),
                                     )
                                 }
                             }
@@ -199,7 +209,8 @@ fun SnowmakingScreen(app: AppState) {
         repairGun?.let { g ->
             AlertDialog(
                 onDismissRequest = { repairGun = null },
-                title = { Text("Repair ${g.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Repair ${g.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Restore ${g.str("name")} to 100% condition for ${g.str("repairCostText")}.")
@@ -212,7 +223,7 @@ fun SnowmakingScreen(app: AppState) {
                         if (target != null) {
                             act("snowmaking/${target.int("id")}/repair", emptyMap()) { reload(); reloadCount++ }
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Repair (${g.str("repairCostText")})") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Repair (${g.str("repairCostText")})", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ repairGun = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -223,7 +234,8 @@ fun SnowmakingScreen(app: AppState) {
         sellGun?.let { g ->
             AlertDialog(
                 onDismissRequest = { sellGun = null },
-                title = { Text("Sell ${g.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Sell ${g.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Decommission and sell ${g.str("name")} for ${g.str("resaleText")} refund?")
@@ -236,7 +248,7 @@ fun SnowmakingScreen(app: AppState) {
                         if (target != null) {
                             act("snowmaking/${target.int("id")}/sell", emptyMap()) { reload(); reloadCount++ }
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Sell (${g.str("resaleText")})") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Sell (${g.str("resaleText")})", color = LocalSkiColors.current.danger, fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ sellGun = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -254,25 +266,25 @@ private fun SnowGunCard(
     onSell: () -> Unit,
 ) {
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(gun.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                Text(gun.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 val stateTone = gun.str("stateTone")
                 val toneColor = when (stateTone) {
-                    "success" -> MaterialTheme.colorScheme.primary
-                    "warning" -> MaterialTheme.colorScheme.tertiary
-                    "danger" -> MaterialTheme.colorScheme.error
+                    "success" -> LocalSkiColors.current.success
+                    "warning" -> LocalSkiColors.current.warning
+                    "danger" -> LocalSkiColors.current.danger
                     else -> LocalSkiColors.current.muted
                 }
-                Text(
+                StatusBadge(
                     gun.str("stateLabel"),
-                    color = toneColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
+                    toneColor,
+                    toneColor.copy(alpha = 0.12f),
                 )
             }
 
@@ -281,10 +293,11 @@ private fun SnowGunCard(
                 progress = { condition / 100f },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = when {
-                    condition >= 70 -> MaterialTheme.colorScheme.primary
-                    condition >= 40 -> MaterialTheme.colorScheme.tertiary
-                    else -> MaterialTheme.colorScheme.error
+                    condition >= 70 -> LocalSkiColors.current.success
+                    condition >= 40 -> LocalSkiColors.current.warning
+                    else -> LocalSkiColors.current.danger
                 },
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
             Row2("Condition", "$condition%")
@@ -296,27 +309,30 @@ private fun SnowGunCard(
                 Row2("Assigned operator", it)
             }
 
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 val isRunning = gun.str("status") == "active"
-                PrimaryButton(
+                SecondaryButton(
                     if (isRunning) "Turn off" else "Turn on",
                     onToggle,
                     Modifier.weight(1f),
                     enabled = condition > 0,
                 )
                 if (condition < 100) {
-                    PrimaryButton(
+                    SecondaryButton(
                         "Repair (${gun.str("repairCostText")})",
                         onRepair,
                         Modifier.weight(1f),
                     )
                 }
-                TextButton(
+                OutlinedPrimaryButton(
+                    "Sell (${gun.str("resaleText")})",
                     onSell,
-                    Modifier.heightIn(min = 48.dp),
-                ) {
-                    Text("Sell (${gun.str("resaleText")})", color = MaterialTheme.colorScheme.error)
-                }
+                    Modifier.weight(1f),
+                )
             }
         }
     }

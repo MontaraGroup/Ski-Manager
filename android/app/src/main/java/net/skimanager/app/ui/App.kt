@@ -1,6 +1,9 @@
 package net.skimanager.app.ui
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
@@ -87,12 +90,14 @@ fun App() {
     if (showUpdateNote) {
         AlertDialog(
             onDismissRequest = {},
+            shape = MaterialTheme.shapes.extraLarge,
+            title = { Text("Welcome to Ski Manager", fontWeight = FontWeight.Bold) },
             text = { Text("This version plays on your ski-manager.net account. Progress from the old offline game isn't carried over.") },
             confirmButton = {
                 TextButton({
                     oldSave.delete()
                     showUpdateNote = false
-                }) { Text("Continue") }
+                }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Continue", fontWeight = FontWeight.Bold) }
             },
         )
     }
@@ -117,7 +122,7 @@ private fun GameShell(app: AppState) {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(TITLES[route].orEmpty()) },
+                title = { Text(TITLES[route].orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     if (!isTab) IconButton({ nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },

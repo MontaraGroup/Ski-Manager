@@ -1,5 +1,6 @@
 package net.skimanager.app.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,7 @@ import net.skimanager.app.ui.common.Panel
 import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 @Composable
@@ -91,19 +93,23 @@ fun BankScreen(app: AppState) {
         ScreenColumn {
             actionError?.let { err ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
                 ) {
-                    Text(err, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
             actionSuccess?.let { msg ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.success.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, LocalSkiColors.current.success.copy(alpha = 0.35f)),
                 ) {
-                    Text(msg, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(12.dp))
+                    Text(msg, color = LocalSkiColors.current.success, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
@@ -162,7 +168,8 @@ fun BankScreen(app: AppState) {
         borrowProduct?.let { p ->
             AlertDialog(
                 onDismissRequest = { borrowProduct = null },
-                title = { Text("Borrow ${p.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Borrow ${p.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("You will receive ${p.str("amountText")} immediately into your resort treasury.")
@@ -177,7 +184,7 @@ fun BankScreen(app: AppState) {
                         if (target != null) {
                             act("bank/borrow", mapOf("type" to target.str("type"))) { reload(); reloadCount++ }
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Borrow ${p.str("amountText")}") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Borrow ${p.str("amountText")}", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ borrowProduct = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -188,7 +195,8 @@ fun BankScreen(app: AppState) {
         repayLoan?.let { l ->
             AlertDialog(
                 onDismissRequest = { repayLoan = null },
-                title = { Text("Settle ${l.str("name")} early?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Settle ${l.str("name")} early?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Pay ${l.str("payoffText")} now to clear the remaining balance.")
@@ -208,7 +216,7 @@ fun BankScreen(app: AppState) {
                         if (target != null) {
                             act("bank/${target.int("id")}/repay", emptyMap()) { reload(); reloadCount++ }
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Pay ${l.str("payoffText")}") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Pay ${l.str("payoffText")}", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ repayLoan = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -224,18 +232,18 @@ private fun ActiveLoanCard(
     onPayoff: () -> Unit,
 ) {
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(loan.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
-                Text(
+                Text(loan.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                StatusBadge(
                     "${loan.int("days_remaining")}d remaining",
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                 )
             }
 
@@ -244,6 +252,7 @@ private fun ActiveLoanCard(
                 progress = { paidPct / 100f },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -262,14 +271,16 @@ private fun ActiveLoanCard(
             if (saving > 0) {
                 Card(
                     Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = MaterialTheme.shapes.small,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
                 ) {
                     Text(
                         "Early payoff discount: save ${loan.str("savingText")} in interest.",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
@@ -300,10 +311,12 @@ private fun LoanProductCard(
     canBorrow: Boolean,
     onBorrow: () -> Unit,
 ) {
+    val isEmergency = prod.bool("isEmergency")
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -312,17 +325,12 @@ private fun LoanProductCard(
                         loanIcon(prod.str("type")),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = if (prod.bool("isEmergency")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        tint = if (isEmergency) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     )
-                    Text(prod.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                    Text(prod.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 }
-                if (prod.bool("isEmergency")) {
-                    Text(
-                        "Emergency",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                    )
+                if (isEmergency) {
+                    StatusBadge("EMERGENCY", MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.error.copy(alpha = 0.15f))
                 }
             }
 

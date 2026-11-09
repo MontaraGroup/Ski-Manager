@@ -66,12 +66,12 @@ private fun messageOf(result: ApiResult): String = when (result) {
 
 @Composable
 private fun Title(text: String) {
-    Text(text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+    Text(text, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
 }
 
 @Composable
 private fun ErrorText(text: String?) {
-    if (text != null) Text(text, color = LocalSkiColors.current.danger)
+    if (text != null) Text(text, color = LocalSkiColors.current.danger, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
 }
 
 @Composable
@@ -85,6 +85,7 @@ private fun Field(
 ) {
     OutlinedTextField(
         value, onChange, Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
         label = { Text(label) },
         singleLine = true,
         isError = error != null,
@@ -136,16 +137,30 @@ private val DIFFICULTIES = listOf(
 
 @Composable
 private fun DifficultyChoice(selected: String, onSelect: (String) -> Unit) {
-    Text("Difficulty and starting budget", fontWeight = FontWeight.Medium)
-    DIFFICULTIES.forEach { d ->
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(d.key == selected, role = Role.RadioButton) { onSelect(d.key) },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(d.key == selected, null, Modifier.padding(end = 12.dp))
-            Column {
-                Text("${d.label}: ${d.cash}")
-                Text(d.note, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
+    Text("Difficulty and starting budget", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        DIFFICULTIES.forEach { d ->
+            val isSelected = d.key == selected
+            androidx.compose.material3.Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(isSelected, role = Role.RadioButton) { onSelect(d.key) },
+                shape = MaterialTheme.shapes.medium,
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                ),
+                border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(isSelected, null, Modifier.padding(end = 12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("${d.label}: ${d.cash}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                        Text(d.note, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         }
     }
@@ -154,13 +169,22 @@ private fun DifficultyChoice(selected: String, onSelect: (String) -> Unit) {
 @Composable
 private fun TermsBox(checked: Boolean, onChange: (Boolean) -> Unit, error: String?) {
     val context = LocalContext.current
-    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(checked, onChange)
-        Text("I agree to the Terms of Service and Privacy Policy", Modifier.weight(1f).clickable { onChange(!checked) })
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton({ openWebsite(context, "/terms") }, Modifier.heightIn(min = 48.dp)) { Text("Terms of Service") }
-        TextButton({ openWebsite(context, "/privacy") }, Modifier.heightIn(min = 48.dp)) { Text("Privacy Policy") }
+    androidx.compose.material3.Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked, onChange, Modifier.padding(end = 8.dp))
+                Text("I agree to the Terms of Service and Privacy Policy", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).clickable { onChange(!checked) })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton({ openWebsite(context, "/terms") }, Modifier.heightIn(min = 48.dp)) { Text("Terms of Service") }
+                TextButton({ openWebsite(context, "/privacy") }, Modifier.heightIn(min = 48.dp)) { Text("Privacy Policy") }
+            }
+        }
     }
     ErrorText(error)
 }

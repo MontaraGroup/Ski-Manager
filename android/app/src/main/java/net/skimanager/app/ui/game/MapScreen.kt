@@ -2,6 +2,7 @@ package net.skimanager.app.ui.game
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -9,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -17,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,7 +64,10 @@ import net.skimanager.app.api.str
 import net.skimanager.app.ui.AppState
 import net.skimanager.app.ui.common.Loaded
 import net.skimanager.app.ui.common.OFFLINE_TEXT
+import net.skimanager.app.ui.common.OutlinedPrimaryButton
 import net.skimanager.app.ui.common.PrimaryButton
+import net.skimanager.app.ui.common.SecondaryButton
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 import kotlin.math.hypot
 import kotlin.math.max
@@ -203,20 +209,26 @@ fun MapScreen(app: AppState) {
                     }
                 }
             }
-            Column(
-                Modifier.align(Alignment.TopStart).padding(12.dp)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            Surface(
+                modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.94f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
-                Text(data.str("userCashText"), fontWeight = FontWeight.SemiBold)
-                Text("Tap a lift or run", color = colors.muted, style = MaterialTheme.typography.bodySmall)
+                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Text(data.str("userCashText"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Tap a lift or run", color = colors.muted, style = MaterialTheme.typography.bodySmall)
+                }
             }
             note?.let {
-                Text(
-                    it,
-                    Modifier.align(Alignment.BottomCenter).padding(12.dp).fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp)).padding(12.dp),
-                )
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) {
+                    Text(it, modifier = Modifier.padding(14.dp), fontWeight = FontWeight.Medium)
+                }
             }
         }
 
@@ -225,11 +237,24 @@ fun MapScreen(app: AppState) {
             val built = builtItems[selected.id]
             val meters = selected.data.int("length_meters")
             val length = if (data.bool("isImperial")) "${(meters * 3.28084f).toInt()} ft" else "$meters m"
-            ModalBottomSheet({ selectedId = null }, containerColor = MaterialTheme.colorScheme.surface) {
-                Column(Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(titleOf(selected, built), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            ModalBottomSheet(
+                onDismissRequest = { selectedId = null },
+                shape = MaterialTheme.shapes.extraLarge,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ) {
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(titleOf(selected, built), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     val kind = if (selected.type == "lift") "Lift" else if (selected.type == "snowpark") "Terrain park" else kindOf(selected) + " run"
-                    Text("$kind · $length", color = colors.muted)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        StatusBadge(kind, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                        Text(length, color = colors.muted, style = MaterialTheme.typography.bodyMedium)
+                    }
                     if (built == null) {
                         PrimaryButton("Build for ${selected.data.str("costText")}", {
                             busy = true
@@ -241,12 +266,13 @@ fun MapScreen(app: AppState) {
                                 reload()
                             }
                         }, Modifier.fillMaxWidth(), enabled = !busy)
+                        SecondaryButton("Cancel", { selectedId = null }, Modifier.fillMaxWidth())
                     } else {
                         var confirm by remember { mutableStateOf(false) }
                         if (confirm) {
-                            Text("Demolish ${titleOf(selected, built)}?", fontWeight = FontWeight.Medium)
-                            Text("This can't be undone.")
-                            PrimaryButton("Demolish", {
+                            Text("Demolish ${titleOf(selected, built)}?", fontWeight = FontWeight.Bold, color = colors.danger)
+                            Text("This removes the trail from your resort and cannot be undone.")
+                            PrimaryButton("Confirm demolish", {
                                 busy = true
                                 scope.launch {
                                     val result = app.api.post("map/demolish/${built.int("id")}")
@@ -256,12 +282,11 @@ fun MapScreen(app: AppState) {
                                     reload()
                                 }
                             }, Modifier.fillMaxWidth(), enabled = !busy)
-                            TextButton({ confirm = false }, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Keep it") }
+                            SecondaryButton("Keep it", { confirm = false }, Modifier.fillMaxWidth())
                         } else {
-                            TextButton({ confirm = true }, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Demolish", color = colors.danger) }
+                            OutlinedPrimaryButton("Demolish trail", { confirm = true }, Modifier.fillMaxWidth())
                         }
                     }
-                    if (built == null) TextButton({ selectedId = null }, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Cancel") }
                 }
             }
         }
