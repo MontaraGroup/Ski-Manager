@@ -16,7 +16,7 @@ Sign in, sign up, email code, dashboard, trail map (build and demolish), staff (
 
 ## Build
 
-Needs JDK 17 or later and the Android SDK (platform 36, build tools 36.0.0). Debug builds use staging, release builds use production.
+Needs JDK 17 or later and the Android SDK (compileSdk 37, targetSdk 36, build tools 37.0.0). Debug builds use staging, release builds use production.
 
 ```bash
 cd android
@@ -29,7 +29,13 @@ The bundle lands in `app/build/outputs/bundle/release/app-release.aab`.
 If AAPT2 fails with "Daemon startup failed" on Apple silicon, point Gradle at the SDK's copy:
 
 ```bash
-./gradlew bundleRelease -Pandroid.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/36.0.0/aapt2
+./gradlew bundleRelease -Pandroid.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/37.0.0/aapt2
+```
+
+On this Mac with Android SDK at `/Volumes/Applications/Android/sdk`:
+
+```bash
+./gradlew bundleRelease -Pandroid.aapt2FromMavenOverride=/Volumes/Applications/Android/sdk/build-tools/37.0.0/aapt2
 ```
 
 To test the shrunk release code against staging, add `-PreleaseBaseUrl=https://staging.ski-manager.net`. Never upload that build.

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\BuildingModel;
 
 class Buildings extends BaseController
@@ -39,7 +40,18 @@ class Buildings extends BaseController
         return $defs;
     }
 
-    public function show(string $type): string
+    public function show(string $type = 'hotel'): ResponseInterface|string
+    {
+        $page = $this->pageData($type);
+
+        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        return view('buildings/' . $type, ['page' => $page]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(string $type = 'hotel'): array
     {
         $defs = $this->getBuildingDefs();
         if (!isset($defs[$type])) {
@@ -228,7 +240,25 @@ class Buildings extends BaseController
         $rawIcon = $def['icon'] ?? 'fa-building';
         $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
 
-        $page = [
+        $supportedTypes = ['hotel', 'restaurant', 'rental', 'retail', 'ski_patrol', 'transportation'];
+        $typesList = [];
+        foreach ($supportedTypes as $st) {
+            if (isset($defs[$st])) {
+                $rawTypeIcon = $defs[$st]['icon'] ?? 'fa-building';
+                $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawTypeIcon);
+                $typesList[] = [
+                    'key' => $st,
+                    'label' => (string) $defs[$st]['label'],
+                    'singular' => (string) $defs[$st]['singular'],
+                    'icon' => $cleanIcon,
+                ];
+            }
+        }
+
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+
+        return [
             'type' => $type,
             'def' => [
                 'label' => (string) $def['label'],
@@ -244,16 +274,14 @@ class Buildings extends BaseController
                 'netProfitText' => currency((int) ($totalRevenue - $totalUpkeep)),
                 'openCount' => count($openBuildings),
                 'totalCount' => count($buildings),
+                'cash' => $cash,
+                'cashText' => currency($cash),
             ],
             'buildings' => $formattedBuildings,
             'catalog' => $catalog,
             'domain' => $typeData,
+            'types' => $typesList,
         ];
-
-        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-        return view('buildings/' . $type, ['page' => $page]);
     }
 
     public function build()

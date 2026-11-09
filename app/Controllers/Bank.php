@@ -46,6 +46,12 @@ class Bank extends BaseController
 
     public function index(): string
     {
+        return view('bank/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray() ?? ['cash' => 0, 'last_tick' => null];
@@ -141,7 +147,7 @@ class Bank extends BaseController
             'products' => $formattedProducts,
         ];
 
-        return view('bank/index', ['page' => $page]);
+        return $page;
     }
 
     public function borrow()

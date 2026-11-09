@@ -3,12 +3,10 @@ package net.skimanager.app.ui.game
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -37,6 +35,7 @@ import net.skimanager.app.api.objects
 import net.skimanager.app.api.str
 import net.skimanager.app.api.strOrNull
 import net.skimanager.app.ui.AppState
+import net.skimanager.app.ui.common.ChoiceRow
 import net.skimanager.app.ui.common.EmptyText
 import net.skimanager.app.ui.common.Figure
 import net.skimanager.app.ui.common.Loaded
@@ -169,11 +168,7 @@ fun LeaderboardScreen(app: AppState) {
         val shown = data.str("difficulty")
         val players = data.objects("players")
         ScreenColumn {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("easy" to "Easy", "standard" to "Standard", "hard" to "Hard").forEach { (key, label) ->
-                    FilterChip(shown == key, { difficulty = key }, { Text(label) }, Modifier.heightIn(min = 48.dp))
-                }
-            }
+            ChoiceRow(listOf("easy" to "Easy", "standard" to "Standard", "hard" to "Hard"), shown) { difficulty = it }
             if (players.isEmpty()) EmptyText("No resorts ranked yet.")
             players.forEach { p ->
                 Panel {
@@ -187,7 +182,7 @@ fun LeaderboardScreen(app: AppState) {
 }
 
 private val WEBSITE_PAGES = listOf(
-    "Buildings" to "/hotels", "Snowmaking" to "/snowmaking", "Grooming" to "/grooming", "Bank" to "/bank",
+    "Snowmaking" to "/snowmaking", "Grooming" to "/grooming",
     "Equipment" to "/equipment", "Alliances" to "/alliances", "Tournaments" to "/tournaments", "Génépis" to "/genepis", "Support" to "/support",
 )
 
@@ -207,10 +202,8 @@ fun SettingsScreen(app: AppState) {
                 Row2("Difficulty", data.str("difficulty").replaceFirstChar { it.uppercase() })
             }
             Panel("Units") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("metric" to "Metric, euros", "imperial" to "Imperial, dollars").forEach { (key, label) ->
-                        FilterChip((key == "imperial") == imperial, { scope.launch { app.api.post("settings/units", mapOf("units" to key)); reload() } }, { Text(label) }, Modifier.heightIn(min = 48.dp))
-                    }
+                ChoiceRow(listOf("metric" to "Metric, €", "imperial" to "Imperial, $"), if (imperial) "imperial" else "metric") { key ->
+                    scope.launch { app.api.post("settings/units", mapOf("units" to key)); reload() }
                 }
             }
             Panel("More on the website") {
@@ -278,7 +271,7 @@ private fun DeleteAccountDialog(app: AppState, onClose: () -> Unit) {
 @Composable
 fun MoreScreen(onOpen: (String) -> Unit) {
     ScreenColumn {
-        listOf("tickets" to "Lift tickets", "weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
+        listOf("buildings" to "Buildings", "bank" to "Bank", "tickets" to "Lift tickets", "weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
             Panel {
                 Text(label, Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { onOpen(route) }.padding(vertical = 12.dp), fontWeight = FontWeight.Medium)
             }

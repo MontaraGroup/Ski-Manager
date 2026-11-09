@@ -13,8 +13,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +41,8 @@ import net.skimanager.app.ui.game.HireScreen
 import net.skimanager.app.ui.game.MapScreen
 import net.skimanager.app.ui.game.StaffScreen
 import net.skimanager.app.ui.game.TicketsScreen
+import net.skimanager.app.ui.game.BuildingsScreen
+import net.skimanager.app.ui.game.BankScreen
 import net.skimanager.app.ui.game.LeaderboardScreen
 import net.skimanager.app.ui.game.MoreScreen
 import net.skimanager.app.ui.game.NotificationsScreen
@@ -59,7 +61,7 @@ private val TABS = listOf(
 )
 
 private val TITLES = mapOf(
-    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "weather" to "Weather",
+    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "buildings" to "Buildings", "bank" to "Bank", "weather" to "Weather",
     "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings",
 )
 
@@ -120,9 +122,9 @@ private fun GameShell(app: AppState) {
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+            ShortNavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 TABS.forEach { tab ->
-                    NavigationBarItem(
+                    ShortNavigationBarItem(
                         selected = route == tab.route,
                         onClick = {
                             nav.navigate(tab.route) {
@@ -146,6 +148,8 @@ private fun GameShell(app: AppState) {
             composable("tickets") { TicketsScreen(app) }
             composable("finances") { FinancesScreen(app) }
             composable("more") { MoreScreen { nav.navigate(it) } }
+            composable("buildings") { BuildingsScreen(app) }
+            composable("bank") { BankScreen(app) }
             composable("weather") { WeatherScreen(app) }
             composable("notifications") { NotificationsScreen(app) }
             composable("leaderboard") { LeaderboardScreen(app) }
