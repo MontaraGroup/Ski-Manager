@@ -43,6 +43,7 @@ import net.skimanager.app.ui.game.StaffScreen
 import net.skimanager.app.ui.game.TicketsScreen
 import net.skimanager.app.ui.game.BuildingsScreen
 import net.skimanager.app.ui.game.BankScreen
+import net.skimanager.app.ui.game.EquipmentScreen
 import net.skimanager.app.ui.game.GroomingScreen
 import net.skimanager.app.ui.game.SnowmakingScreen
 import net.skimanager.app.ui.game.LeaderboardScreen
@@ -63,7 +64,7 @@ private val TABS = listOf(
 )
 
 private val TITLES = mapOf(
-    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "buildings" to "Buildings", "bank" to "Bank", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "weather" to "Weather",
+    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "buildings" to "Buildings", "bank" to "Bank", "equipment" to "Equipment", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "weather" to "Weather",
     "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings",
 )
 
@@ -152,6 +153,7 @@ private fun GameShell(app: AppState) {
             composable("more") { MoreScreen { nav.navigate(it) } }
             composable("buildings") { BuildingsScreen(app) }
             composable("bank") { BankScreen(app) }
+            composable("equipment") { EquipmentScreen(app) }
             composable("grooming") { GroomingScreen(app) }
             composable("snowmaking") { SnowmakingScreen(app) }
             composable("weather") { WeatherScreen(app) }
