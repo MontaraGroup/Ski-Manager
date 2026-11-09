@@ -1,3 +1,11 @@
+## Release 2026-11-09 16:35
+
+* Merge branch 'MontaraGroup:main' into main (4478e9a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d13fab3)
+* Merge pull request #63 from Montara-Group/feat/android-slopes (d9d1d38)
+* Merge branch 'MontaraGroup:main' into main (67e1458)
+* feat(android): add native grooming and snowmaking screens and API controllers (d3d0fe1)
+
 ## Release 2026-11-09 16:34
 
 * Merge branch 'MontaraGroup:main' into main (67e1458)
