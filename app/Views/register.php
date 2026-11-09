@@ -31,6 +31,7 @@ $players = db_connect()->table('users')->where('id !=', 1)->countAllResults();
 $page = [
     'actionUrl' => $isDemo ? '/demo/claim' : url_to('register'),
     'isDemo' => $isDemo,
+    'demoSummary' => $isDemo ? \App\Controllers\Demo::summary((int) auth()->id()) : null,
     'csrfField' => csrf_token(),
     'csrfToken' => csrf_hash(),
     'oldUsername' => (string) old('username', ''),

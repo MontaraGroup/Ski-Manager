@@ -9,6 +9,12 @@ class Tickets extends BaseController
 {
     public function index(): string
     {
+        return view('tickets/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $ticketModel = new LiftTicketModel();
         $salesModel = new TicketSaleModel();
@@ -108,7 +114,7 @@ class Tickets extends BaseController
             ],
         ];
 
-        return view('tickets/index', ['page' => $page]);
+        return $page;
     }
 
     public function updatePrice()

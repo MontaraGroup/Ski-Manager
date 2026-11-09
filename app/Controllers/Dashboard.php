@@ -25,8 +25,14 @@ class Dashboard extends BaseController
 
     public function index()
     {
+        if (!auth()->id()) return redirect()->to('/login');
+        return view('dashboard/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
-        if (!$userId) return redirect()->to('/login');
         $db = db_connect();
 
         $widgets = $db->table('dashboard_widgets')->where('user_id', $userId)->orderBy('sort_order')->get()->getResultArray();
@@ -385,7 +391,7 @@ class Dashboard extends BaseController
         $estimate = Demo::estimate((int) $userId);
         $page['demoEstimate'] = $estimate ? array_intersect_key($estimate, array_flip(['skiers', 'income', 'costs'])) : null;
 
-        return view('dashboard/index', ['page' => $page]);
+        return $page;
     }
 
     public function toggleWidget()

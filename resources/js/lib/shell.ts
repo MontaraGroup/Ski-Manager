@@ -29,6 +29,14 @@ export type Notice = { id: number; title: string; message: string; icon: string;
 
 export type Flash = { success?: string; info?: string; error?: string; warning?: string; errors?: string[] };
 
+export type DemoBarState = {
+  cash: string;
+  lifts: number;
+  runs: number;
+  buildings: number;
+  prompts: { key: string; title: string; body: string }[];
+};
+
 export type ShellProps = {
   path: string;
   user: { username: string; isAdmin: boolean } | null;
@@ -38,6 +46,7 @@ export type ShellProps = {
   stats?: Stats | null;
   notifications?: { unread: number; latest: Notice[] } | null;
   flash: Flash;
+  demo?: DemoBarState | null;
   seasonVote?: SeasonVoteState | null;
 };
 

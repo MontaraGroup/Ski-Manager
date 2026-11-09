@@ -28,6 +28,7 @@ export type AdminEconomyPageProps = {
   playerCount: number;
   richest: AdminRichestPlayer[];
   recentTransactions: AdminTransaction[];
+  demoStats: { days: number; started: number; claimed: number; rate: string; active: number };
 };
 
 export default function AdminEconomyPage({
@@ -39,6 +40,7 @@ export default function AdminEconomyPage({
   playerCount,
   richest,
   recentTransactions,
+  demoStats,
 }: AdminEconomyPageProps) {
   const [cashAmount, setCashAmount] = useState('50000');
 
@@ -76,6 +78,13 @@ export default function AdminEconomyPage({
           tone="text-danger font-bold"
           note="Outstanding bank liabilities"
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Figure label={`Demos started (${demoStats.days} days)`} value={demoStats.started} />
+        <Figure label={`Demos saved (${demoStats.days} days)`} value={demoStats.claimed} />
+        <Figure label="Save rate" value={demoStats.rate} />
+        <Figure label="Demo accounts now" value={demoStats.active} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

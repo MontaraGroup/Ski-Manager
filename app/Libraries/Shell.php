@@ -184,6 +184,7 @@ class Shell
                 ], $notifs),
             ],
             'flash' => $flash,
+            'demo' => $userId && session()->get('is_demo') ? \App\Controllers\Demo::barState((int) $userId) : null,
             'seasonVote' => $userId ? SeasonVote::state($userId, $currentPath) : null,
         ];
     }

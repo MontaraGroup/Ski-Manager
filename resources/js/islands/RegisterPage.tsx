@@ -13,6 +13,7 @@ interface RegisterDifficulty {
 interface RegisterPageProps {
   actionUrl: string;
   isDemo: boolean;
+  demoSummary?: { cash: string; lifts: number; runs: number } | null;
   csrfToken: string;
   csrfField: string;
   oldUsername?: string;
@@ -32,6 +33,7 @@ interface RegisterPageProps {
 export default function RegisterPage({
   actionUrl,
   isDemo,
+  demoSummary,
   csrfToken,
   csrfField,
   oldUsername = '',
@@ -58,7 +60,7 @@ export default function RegisterPage({
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-5xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
         {/* Left Side: Alpine Trail Map Visual Panel */}
-        <div className="relative isolate overflow-hidden bg-[#141b24] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between min-h-[16rem] lg:min-h-[38rem]">
+        <div className={`relative isolate overflow-hidden bg-[#141b24] text-white p-6 sm:p-8 lg:p-10 ${demoSummary ? 'hidden lg:flex' : 'flex'} flex-col justify-between min-h-[16rem] lg:min-h-[38rem]`}>
           <div
             className="absolute inset-0 -z-20 bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-700"
             style={{
@@ -127,16 +129,18 @@ export default function RegisterPage({
           <div className="w-full max-w-sm mx-auto space-y-5">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                {isDemo ? 'Claim your resort' : 'Create your account'}
+                {demoSummary ? 'Save your resort' : isDemo ? 'Claim your resort' : 'Create your account'}
               </h1>
               <p className="text-sm text-muted mt-1">
-                {isDemo
+                {demoSummary
+                  ? `Your ${demoSummary.lifts} lifts, ${demoSummary.runs} runs and ${demoSummary.cash} stay with your account.`
+                  : isDemo
                   ? 'Save your demo mountain to a permanent account.'
                   : 'Free, and you can be building in under a minute.'}
               </p>
             </div>
 
-            {isDemo && (
+            {isDemo && !demoSummary && (
               <div className="p-3.5 rounded-lg bg-primary/10 border border-primary/30 text-xs text-primary font-medium flex items-center gap-2">
                 <Icon name="fa-cloud-arrow-up" className="w-4 h-4 shrink-0" />
                 <span>Your demo lifts, slopes, equipment, and cash carry over to the new account.</span>
@@ -288,7 +292,8 @@ export default function RegisterPage({
                 />
               </div>
 
-              {/* Difficulty Selection */}
+              {/* Difficulty Selection: a demo already has its mountain */}
+              {!demoSummary && (
               <fieldset className="space-y-1.5 pt-1">
                 <legend className="text-xs font-medium text-foreground">
                   Difficulty <span className="font-normal text-muted">· starting budget</span>
@@ -337,6 +342,7 @@ export default function RegisterPage({
                   })}
                 </div>
               </fieldset>
+              )}
 
               {/* Terms checkbox */}
               <label className="flex items-start gap-2.5 cursor-pointer text-xs text-muted pt-1 select-none min-h-11 sm:min-h-0">

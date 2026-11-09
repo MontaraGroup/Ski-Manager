@@ -6,6 +6,12 @@ class Notifications extends BaseController
 {
     public function index(): string
     {
+        return view('notifications/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $filter = $this->request->getGet('filter') ?? 'all';
@@ -17,7 +23,7 @@ class Notifications extends BaseController
         $unreadCount = $db->table('notifications')->where('user_id', $userId)->where('is_read', 0)->countAllResults();
         $totalCount = $db->table('notifications')->where('user_id', $userId)->countAllResults();
 
-        return view('notifications/index', ['page' => [
+        return [
             'filter' => $filter === 'unread' ? 'unread' : 'all',
             'unreadCount' => $unreadCount,
             'totalCount' => $totalCount,
@@ -26,7 +32,7 @@ class Notifications extends BaseController
                 'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $n['icon']) ? (string) $n['icon'] : 'fa-solid fa-bell',
                 'isRead' => (bool) $n['is_read'], 'time' => date('M j, H:i', strtotime($n['created_at'])),
             ], $notifications),
-        ]]);
+        ];
     }
 
     /** GET /notifications/open/{id}: mark one of your notifications read and go where it points */
