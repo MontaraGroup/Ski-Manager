@@ -1,3 +1,27 @@
+## Release 2026-11-09 00:36
+
+* android: add web targets to assetlinks for credential sharing (009d233)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e4d746c)
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (0c3dce5)
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+
+## Release 2026-11-09 00:28
+
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (0c3dce5)
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (6185332)
+* legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)
+
+## Release 2026-11-09 00:21
+
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (6185332)
+* legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (88dc0f5)
+* Merge remote-tracking branch 'origin/main' (23617e4)
+
 ## Release 2026-11-09 00:14
 
 * legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)

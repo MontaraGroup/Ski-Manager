@@ -30,3 +30,20 @@ Native Android implementation of **[ski-manager.net](https://ski-manager.net)** 
 - **Online & Offline Dual-Engine**:
   - Works 100% offline with atomic local persistence to `ski_manager_resort_v4.json`.
   - Connects to `https://ski-manager.net/api/...` for global leaderboards and background telemetry synchronization.
+
+---
+
+## Signing
+
+Release builds are signed with an upload key that is never committed. Set these in `android/local.properties` (git-ignored), or as environment variables:
+
+```properties
+SKI_KEYSTORE_PATH=/absolute/path/to/skimanager-upload.jks
+SKI_KEYSTORE_PASSWORD=...
+SKI_KEY_ALIAS=upload
+SKI_KEY_PASSWORD=...
+```
+
+The GitHub workflow needs the secrets `SKI_KEYSTORE_BASE64` (the keystore file in base64), `SKI_KEYSTORE_PASSWORD`, `SKI_KEY_ALIAS` and `SKI_KEY_PASSWORD`.
+
+The key that used to be in this repo is public in git history. Never sign with it again.
