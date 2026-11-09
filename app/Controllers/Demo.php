@@ -12,7 +12,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class Demo extends BaseController
 {
-    /** Index of "Set Your Ticket Prices" in Tutorial::STEPS */
+    /** Index of "Set your ticket prices" in Tutorial::STEPS */
     private const TUTORIAL_START_STEP = 3;
 
     /** New demos per IP per hour */
