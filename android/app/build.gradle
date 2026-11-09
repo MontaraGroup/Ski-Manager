@@ -13,14 +13,14 @@ ext.signingValue = { String name -> System.getenv(name) ?: localProperties.getPr
 
 android {
     namespace 'net.skimanager.app'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "net.skimanager.app"
         minSdk 26
-        targetSdk 35
-        versionCode 1
-        versionName "1.0.0"
+        targetSdk 36
+        versionCode VERSION_CODE as Integer
+        versionName VERSION_NAME
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -46,9 +46,11 @@ android {
             buildConfigField "String", "BASE_URL", '"https://staging.ski-manager.net"'
         }
         release {
-            buildConfigField "String", "BASE_URL", '"https://ski-manager.net"'
+            // -PreleaseBaseUrl lets a test build run the shrunk code against staging
+            buildConfigField "String", "BASE_URL", "\"${findProperty('releaseBaseUrl') ?: 'https://ski-manager.net'}\""
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -75,21 +77,21 @@ android {
 }
 
 dependencies {
-    implementation platform('androidx.compose:compose-bom:2024.09.02')
+    implementation platform('androidx.compose:compose-bom:2025.10.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
 
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
-    implementation 'androidx.activity:activity-compose:1.9.2'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6'
-    implementation 'androidx.navigation:navigation-compose:2.8.9'
+    implementation 'androidx.core:core-ktx:1.17.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.4'
+    implementation 'androidx.activity:activity-compose:1.11.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4'
+    implementation 'androidx.navigation:navigation-compose:2.9.5'
 
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.13.2'
 
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
