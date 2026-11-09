@@ -1,3 +1,11 @@
+## Release 2026-11-09 01:35
+
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+* Merge pull request #51 from Montara-Group/feat/demo-first-play (4cb32b4)
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+
 ## Release 2026-11-09 01:32
 
 * Merge branch 'MontaraGroup:main' into main (75226a3)
