@@ -182,7 +182,7 @@ fun LeaderboardScreen(app: AppState) {
 }
 
 private val WEBSITE_PAGES = listOf(
-    "Equipment" to "/equipment", "Alliances" to "/alliances", "Tournaments" to "/tournaments", "Génépis" to "/genepis", "Support" to "/support",
+    "Alliances" to "/alliances", "Tournaments" to "/tournaments", "Génépis" to "/genepis", "Support" to "/support",
 )
 
 @Composable
@@ -270,7 +270,7 @@ private fun DeleteAccountDialog(app: AppState, onClose: () -> Unit) {
 @Composable
 fun MoreScreen(onOpen: (String) -> Unit) {
     ScreenColumn {
-        listOf("buildings" to "Buildings", "bank" to "Bank", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "tickets" to "Lift tickets", "weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
+        listOf("buildings" to "Buildings", "bank" to "Bank", "equipment" to "Equipment", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "tickets" to "Lift tickets", "weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
             Panel {
                 Text(label, Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { onOpen(route) }.padding(vertical = 12.dp), fontWeight = FontWeight.Medium)
             }
