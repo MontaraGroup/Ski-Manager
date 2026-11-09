@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ButtonDefaults
@@ -126,7 +127,7 @@ fun Row2(label: String, value: String, valueColor: Color = Color.Unspecified) {
 fun Figure(label: String, value: String, note: String? = null, valueColor: Color = Color.Unspecified) {
     Panel {
         Text(label, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodyMedium)
-        Text(value, color = valueColor, style = MaterialTheme.typography.headlineMediumEmphasized)
+        Text(value, color = valueColor, style = MaterialTheme.typography.headlineMediumEmphasized, fontWeight = FontWeight.SemiBold)
         if (note != null) Text(note, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -144,8 +145,9 @@ fun EmptyText(text: String) {
 fun ChoiceRow(options: List<Pair<String, String>>, selected: String?, onSelect: (String) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
         options.forEachIndexed { index, (key, label) ->
+            val checked = key == selected
             ToggleButton(
-                checked = key == selected,
+                checked = checked,
                 onCheckedChange = { onSelect(key) },
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 shapes = when (index) {
@@ -153,7 +155,14 @@ fun ChoiceRow(options: List<Pair<String, String>>, selected: String?, onSelect: 
                     options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
-            ) { Text(label, maxLines = 1) }
+                colors = ToggleButtonDefaults.colors(
+                    containerColor = LocalSkiColors.current.surfaceSecondary,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                border = if (checked) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) { Text(label, maxLines = 1, textAlign = TextAlign.Center) }
         }
     }
 }
