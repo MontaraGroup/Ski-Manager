@@ -4,11 +4,17 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\AccountPurge;
+use App\Libraries\Economy;
+use App\Libraries\Utilities;
+use App\Libraries\Weather;
 use CodeIgniter\Shield\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Demo extends BaseController
 {
+    /** Index of "Set Your Ticket Prices" in Tutorial::STEPS */
+    private const TUTORIAL_START_STEP = 3;
+
     /** New demos per IP per hour */
     private const STARTS_PER_HOUR = 5;
 
@@ -182,6 +188,58 @@ class Demo extends BaseController
         return $summary + ['prompts' => $prompts];
     }
 
+    /** Editor placeholder names ("Lift Line 6") aren't for players */
+    private static function displayName(?string $segmentName, string $default): string
+    {
+        return $segmentName === null || preg_match('/^(Lift Line|Slope Path) \\d+$/', $segmentName) ? $default : $segmentName;
+    }
+
+    /**
+     * A resort that works as one: the shortest lifts of the first released sector with segments, and
+     * runs that start at a lift's top and finish at a lift's base, in a mix of difficulties.
+     * Null if the map hasn't got enough, so the seed falls back to the first segments it finds.
+     */
+    private static function starterSegments(): ?array
+    {
+        $db = db_connect();
+        $released = array_column($db->table('resort_sectors')->select('id')->where('resort_map', 'ParkCity')->where('released', 1)->orderBy('id')->get()->getResultArray(), 'id');
+        $segments = fn(string $type, int $sector) => $db->table('map_segments')
+            ->where(['resort_map' => 'ParkCity', 'type' => $type, 'active' => 1, 'sector' => $sector])->get()->getResultArray();
+
+        foreach ($released as $sector) {
+            $lifts = $segments('lift', (int) $sector);
+            if (count($lifts) < 4) continue;
+            usort($lifts, fn($a, $b) => $a['length_meters'] <=> $b['length_meters']);
+            $lifts = array_slice($lifts, 0, 4);
+
+            // Lift paths run base to top, runs top to bottom
+            $ends = fn(array $seg) => [json_decode($seg['points'], true)[0], array_slice(json_decode($seg['points'], true), -1)[0]];
+            $gap = fn(array $p, array $q) => hypot($p[0] - $q[0], $p[1] - $q[1]);
+            $runs = [];
+            foreach ($segments('downhill', (int) $sector) as $run) {
+                [$start, $finish] = $ends($run);
+                $toTop = min(array_map(fn($l) => $gap($start, $ends($l)[1]), $lifts));
+                $toBase = min(array_map(fn($l) => $gap($finish, $ends($l)[0]), $lifts));
+                $runs[] = $run + ['fit' => $toTop + $toBase];
+            }
+            usort($runs, fn($a, $b) => $a['fit'] <=> $b['fit']);
+
+            // Best-fitting run of each difficulty, in the order of the seed's default names, which match them
+            $picked = [];
+            foreach (['green', 'blue', 'blue', 'green', 'black', 'black', 'blue', 'blue'] as $difficulty) {
+                foreach ($runs as $i => $run) {
+                    if ($run['difficulty'] === $difficulty) {
+                        $picked[] = $run;
+                        unset($runs[$i]);
+                        break;
+                    }
+                }
+            }
+            if (count($picked) === 8) return ['lifts' => $lifts, 'slopes' => $picked];
+        }
+        return null;
+    }
+
     public static function seedDemoMountain(int $userId): void
     {
         $db = db_connect();
@@ -203,7 +261,8 @@ class Demo extends BaseController
         ]);
 
         // 2. Lifts & Slopes (dynamically match map segments if available)
-        $liftSegments = $db->table('map_segments')
+        $starter = featureEnabled('demo_v2') ? self::starterSegments() : null;
+        $liftSegments = $starter['lifts'] ?? $db->table('map_segments')
             ->where('resort_map', 'ParkCity')
             ->where('type', 'lift')
             ->where('active', 1)
@@ -224,7 +283,7 @@ class Demo extends BaseController
                 'segment_id'    => $seg ? (int) $seg['id'] : 0,
                 'item_type'     => 'lift',
                 'subtype'       => 'chair_fixed',
-                'name'          => $seg['name'] ?? $defaultLifts[$i]['name'],
+                'name'          => self::displayName($seg['name'] ?? null, $defaultLifts[$i]['name']),
                 'level'         => 1,
                 'length_meters' => $seg ? (int) $seg['length_meters'] : $defaultLifts[$i]['length_meters'],
                 'capacity'      => $defaultLifts[$i]['capacity'],
@@ -236,7 +295,7 @@ class Demo extends BaseController
             ]);
         }
 
-        $slopeSegments = $db->table('map_segments')
+        $slopeSegments = $starter['slopes'] ?? $db->table('map_segments')
             ->where('resort_map', 'ParkCity')
             ->where('type', 'downhill')
             ->where('active', 1)
@@ -262,7 +321,7 @@ class Demo extends BaseController
                 'segment_id'    => $seg ? (int) $seg['id'] : 0,
                 'item_type'     => 'slope',
                 'subtype'       => $diff,
-                'name'          => $seg['name'] ?? $defaultSlopes[$i]['name'],
+                'name'          => self::displayName($seg['name'] ?? null, $defaultSlopes[$i]['name']),
                 'level'         => 1,
                 'length_meters' => $seg ? (int) $seg['length_meters'] : $defaultSlopes[$i]['length_meters'],
                 'capacity'      => 0,
@@ -355,6 +414,76 @@ class Demo extends BaseController
         // 7. Genepis & Daily Bonus
         $db->table('genepis')->insert(['user_id' => $userId, 'balance' => 10]);
         $db->table('daily_bonus')->insert(['user_id' => $userId, 'last_claim_day' => 0, 'streak' => 1]);
+
+        // 8. The mountain is already built, so the tutorial starts at the first thing left to do: ticket prices
+        if (featureEnabled('demo_v2')) {
+            $db->table('tutorial_progress')->insert(['user_id' => $userId, 'current_step' => self::TUTORIAL_START_STEP]);
+        }
+    }
+
+    /**
+     * What tonight's tick should pay this demo, for the dashboard until its first real day. Uses the
+     * tick's own Economy formulas with today's weather; boosts and events are left out, so it's an estimate.
+     * Null unless this is a demo that hasn't had a tick yet.
+     */
+    public static function estimate(int $userId): ?array
+    {
+        static $cache = [];
+        if (array_key_exists($userId, $cache)) return $cache[$userId];
+        if (!featureEnabled('demo_v2') || !featureEnabled('economy_v2') || !self::isDemoUser()) return null;
+
+        $db = db_connect();
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if (!$finance || !empty($finance['last_tick']) || (int) ($finance['resort_open'] ?? 1) !== 1) return null;
+
+        $config = array_column($db->table('difficulty_config')->where('difficulty', $finance['difficulty'] ?? 'standard')->get()->getResultArray(), 'config_value', 'config_key');
+        $revMult = ((int) ($config['revenue_multiplier'] ?? 100)) / 100;
+        $costMult = ((int) ($config['cost_multiplier'] ?? 100)) / 100;
+        $visMult = ((int) ($config['visitor_multiplier'] ?? 100)) / 100;
+
+        $items = $db->table('player_items')->where('user_id', $userId)->get()->getResultArray();
+        $open = array_filter($items, fn($i) => $i['status'] === 'open');
+        $weather = getCurrentWeather();
+        $isWinter = getSeasonDay() <= getWinterDays();
+
+        $demand = Economy::slopeDemand(array_values(array_filter($open, fn($i) => $i['item_type'] === 'slope')))
+            * $visMult * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+        $demand = Economy::marketCap($demand);
+        $terms = Economy::ticketTerms($db->table('lift_tickets')->where('user_id', $userId)->get()->getResultArray());
+        $tourists = $isWinter ? 0 : (int) round($demand * Economy::SUMMER_TOURIST_SHARE);
+        $liftCapacity = Economy::liftDailyCapacity(array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift')));
+        $skiers = min((int) round($demand * $terms['demand'] * ($isWinter ? 1 : 0.15)), $liftCapacity);
+
+        $buildings = $db->table('buildings')->where('user_id', $userId)->get()->getResultArray();
+        $util = Economy::buildingUtilization($buildings, $skiers, $tourists);
+        $income = $skiers * $terms['per_visit'] * $revMult;
+        $costs = Economy::runningCost($items) * $costMult;
+        foreach ($buildings as $b) {
+            $income += (int) $b['revenue_per_day'] * ($util[$b['building_type']] ?? 0) * $revMult;
+            $costs += (int) $b['upkeep_per_day'] * $costMult;
+        }
+        $costs += (int) ($db->table('staff')->selectSum('salary')->where('user_id', $userId)->where('status', 'active')->get()->getRow('salary') ?? 0) * $costMult;
+
+        // Equipment fuel, and the energy and water a demo has no sources for, so it imports them
+        $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $costs += array_sum(array_column($equipment, 'fuel_cost')) * $costMult;
+        $snowmakers = array_values(array_filter($equipment, fn($e) => (int) $e['energy_kwh'] > 0));
+        $openLifts = array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift'));
+        $utilities = Utilities::importCost('energy', Utilities::energyDemand($snowmakers, 0, $openLifts, $buildings)['total'])
+            + Utilities::importCost('water', Utilities::waterDemand($snowmakers));
+        $costs += $utilities;
+
+        $ticketIncome = (int) round($skiers * $terms['per_visit'] * $revMult);
+        $running = (int) round(Economy::runningCost($items) * $costMult);
+        return $cache[$userId] = [
+            'skiers' => number_format($skiers),
+            'income' => currency((int) round($income)),
+            'costs'  => currency((int) round($costs)),
+            'visitors' => $skiers,
+            // Same keys as player_finances.last_tick, so the dashboard's cards can use it until the first tick.
+            // The cards have no line for utilities, so they go with running costs and the totals match the panel.
+            'tick' => ['tickets' => $ticketIncome, 'buildings' => (int) round($income) - $ticketIncome, 'lift_slope_running' => $running + $utilities],
+        ];
     }
 
     /**

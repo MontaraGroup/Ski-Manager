@@ -64,6 +64,7 @@ $routes->post('demo/claim', 'Demo::claim');
 $routes->get('demo/save', 'Demo::save');
 $routes->get('/about', 'About::index');
 $routes->get('alliances', 'Alliances::index');
+$routes->get('alliances/directory', 'Alliances::directory');
 $routes->get('alliances/leaderboard', 'Alliances::leaderboard');
 $routes->get('alliances/view/(:num)', 'Alliances::view/$1');
 $routes->post('alliances/create', 'Alliances::create');

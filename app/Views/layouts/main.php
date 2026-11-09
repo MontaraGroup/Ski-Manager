@@ -955,8 +955,12 @@ const tutWidget = document.getElementById('tutorialWidget');
 const tutCsrf = '<?= csrf_hash() ?>';
 const tutCsrfName = '<?= csrf_token() ?>';
 let tutCurrentPage = window.location.pathname;
+<?php if (session()->get('is_demo') && featureEnabled('demo_v2')) : ?>
+// A new demo player has the cookie banner to answer first: start as the small pill so the two don't stack
+if (localStorage.getItem('tut_collapsed') === null && !localStorage.getItem('cookie_consent')) { window.tutStartCollapsed = true; }
+<?php endif ?>
 
-let tutCollapsed = localStorage.getItem('tut_collapsed') === 'true';
+let tutCollapsed = localStorage.getItem('tut_collapsed') === 'true' || window.tutStartCollapsed === true;
 
 function toggleTutCollapse(collapse) {
     tutCollapsed = collapse;
