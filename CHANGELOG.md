@@ -1,3 +1,11 @@
+## Release 2026-11-09 23:45
+
+* Merge branch 'MontaraGroup:main' into main (23002ea)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (9779662)
+* Merge pull request #71 from Montara-Group/feat/map-first-build (b6537b4)
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* feat(map): show buildable runs, guide the first build, fit phones (144cf51)
+
 ## Release 2026-11-09 19:16
 
 * Merge branch 'MontaraGroup:main' into main (3d74b8c)
