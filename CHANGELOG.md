@@ -1,3 +1,11 @@
+## Release 2026-11-09 17:38
+
+* Merge branch 'MontaraGroup:main' into main (66985b8)
+* Merge pull request #65 from Montara-Group/feat/android-equipment (ecc2714)
+* feat(android): add native equipment screen and API controllers (fe567ef)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d6e9ed0)
+* Merge pull request #64 from Montara-Group/main (0a101e1)
+
 ## Release 2026-11-09 16:35
 
 * Merge branch 'MontaraGroup:main' into main (4478e9a)
