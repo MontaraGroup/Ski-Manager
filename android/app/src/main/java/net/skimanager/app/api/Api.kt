@@ -62,8 +62,7 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
         builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
         try {
             client.newCall(builder.build()).execute().use { response ->
-                val root = runCatching { JsonParser.parseString(response.body?.string().orEmpty()).asJsonObject }.getOrNull()
-                val result = parse(response.code, root)
+                val result = parseBody(response.code, response.body?.string())
                 if (result is ApiResult.Failed && result.code == "unauthenticated") withContext(Dispatchers.Main) { onSignedOut() }
                 result
             }
@@ -72,22 +71,29 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
         }
     }
 
-    private fun parse(status: Int, root: JsonObject?): ApiResult {
-        if (root != null && root.bool("ok")) {
-            return ApiResult.Ok(root.get("data")?.takeUnless { it.isJsonNull }, root.strOrNull("message"))
+    companion object {
+        internal fun parse(status: Int, root: JsonObject?): ApiResult {
+            if (root != null && root.bool("ok")) {
+                return ApiResult.Ok(root.get("data")?.takeUnless { it.isJsonNull }, root.strOrNull("message"))
+            }
+            val errors = root?.get("errors")?.takeIf { it.isJsonObject }?.asJsonObject
+            val fields = errors?.entrySet().orEmpty()
+                .filter { it.key != "code" && it.key != "email" && it.value.isJsonPrimitive }
+                .associate { it.key to it.value.asString }
+            return ApiResult.Failed(status, root?.strOrNull("message") ?: SERVER_ERROR, errors?.strOrNull("code"), fields)
         }
-        val errors = root?.get("errors")?.takeIf { it.isJsonObject }?.asJsonObject
-        val fields = errors?.entrySet().orEmpty()
-            .filter { it.key != "code" && it.key != "email" && it.value.isJsonPrimitive }
-            .associate { it.key to it.value.asString }
-        return ApiResult.Failed(status, root?.strOrNull("message") ?: SERVER_ERROR, errors?.strOrNull("code"), fields)
+
+        internal fun parseBody(status: Int, body: String?): ApiResult {
+            val root = runCatching { JsonParser.parseString(body.orEmpty()).asJsonObject }.getOrNull()
+            return parse(status, root)
+        }
     }
 }
 
 fun JsonObject.strOrNull(name: String): String? = get(name)?.takeIf { it.isJsonPrimitive }?.asString
 fun JsonObject.str(name: String): String = strOrNull(name).orEmpty()
-fun JsonObject.bool(name: String): Boolean = get(name)?.takeIf { it.isJsonPrimitive }?.asBoolean ?: false
-fun JsonObject.int(name: String): Int = get(name)?.takeIf { it.isJsonPrimitive }?.asInt ?: 0
+fun JsonObject.bool(name: String): Boolean = runCatching { get(name)?.takeIf { it.isJsonPrimitive }?.asBoolean }.getOrNull() ?: false
+fun JsonObject.int(name: String): Int = runCatching { get(name)?.takeIf { it.isJsonPrimitive }?.asInt }.getOrNull() ?: 0
 fun JsonObject.obj(name: String): JsonObject = get(name)?.takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
 fun JsonObject.objects(name: String): List<JsonObject> =
     (get(name)?.takeIf { it.isJsonArray }?.asJsonArray ?: JsonArray()).filter { it.isJsonObject }.map { it.asJsonObject }
