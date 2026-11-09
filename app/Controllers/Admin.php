@@ -696,6 +696,7 @@ class Admin extends BaseController
             'recentTransactions' => $recentTransactions,
         ];
 
+        $page['demoStats'] = Demo::stats();
         return view('admin/economy', ['page' => $page]);
     }
 

@@ -102,6 +102,8 @@ class Demo extends BaseController
             return redirect()->to('/')->with('error', 'The demo mountain could not be set up right now. Please try again in a moment.');
         }
 
+        self::bumpStat('started');
+
         // 4. Authenticate session via Shield
         auth()->loginById($demoUserId);
         session()->set('is_demo', true);
@@ -109,6 +111,81 @@ class Demo extends BaseController
         session()->set('demo_created_at', time());
 
         return redirect()->to('/dashboard')->with('success', 'Welcome to Demo Mountain! You have full operational control of Sector 1.');
+    }
+
+    /** Counts survive cleanup, unlike the accounts. Never gets in the way of the player */
+    private static function bumpStat(string $column): void
+    {
+        try {
+            $today = date('Y-m-d');
+            db_connect()->query("INSERT INTO demo_stats (day, {$column}) VALUES (?, 1) ON DUPLICATE KEY UPDATE {$column} = {$column} + 1", [$today]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Demo: could not count ' . $column . ': ' . $e->getMessage());
+        }
+    }
+
+    /** Started, claimed and claim rate for /admin/economy */
+    public static function stats(int $days = 30): array
+    {
+        $db = db_connect();
+        $row = $db->query('SELECT COALESCE(SUM(started), 0) AS started, COALESCE(SUM(claimed), 0) AS claimed FROM demo_stats WHERE day >= ?', [date('Y-m-d', strtotime("-{$days} days"))])->getRow();
+        $started = (int) $row->started;
+        $claimed = (int) $row->claimed;
+        return [
+            'days' => $days,
+            'started' => $started,
+            'claimed' => $claimed,
+            'rate' => $started ? round($claimed * 100 / $started, 1) . '%' : 'n/a',
+            'active' => $db->table('users')->where('status', 'demo')->countAllResults(),
+        ];
+    }
+
+    /** What the player would keep, in real numbers. Null unless this is a demo and demo_v2 is on */
+    public static function summary(int $userId): ?array
+    {
+        if (!featureEnabled('demo_v2') || !self::isDemoUser()) return null;
+        $db = db_connect();
+        $count = fn(string $type) => $db->table('player_items')->where('user_id', $userId)->where('item_type', $type)->countAllResults();
+        return [
+            'cash' => currency((int) ($db->table('player_finances')->where('user_id', $userId)->get()->getRow('cash') ?? 0)),
+            'lifts' => $count('lift'),
+            'runs' => $count('slope'),
+            'buildings' => $db->table('buildings')->where('user_id', $userId)->countAllResults(),
+        ];
+    }
+
+    /** For the demo bar: the summary, and the save prompts this player has earned so far, newest event first */
+    public static function barState(int $userId): ?array
+    {
+        $summary = self::summary($userId);
+        if ($summary === null) return null;
+
+        $db = db_connect();
+        $prompts = [];
+
+        // Everything seeded shares one moment; anything over a minute newer, the player built
+        foreach (['player_items', 'buildings'] as $table) {
+            $range = $db->table($table)->selectMin('created_at', 'first')->where('user_id', $userId)->get()->getRow();
+            if (!$range || !$range->first) continue;
+            $built = $db->table($table)->where('user_id', $userId)->where('created_at >', date('Y-m-d H:i:s', strtotime($range->first) + 60))
+                ->orderBy('id', 'DESC')->limit(1)->get()->getRow();
+            if ($built) {
+                $prompts[] = ['key' => $userId . ':built', 'title' => 'You built ' . $built->name . '.',
+                    'body' => "Save your resort so it isn't deleted after 7 days without play."];
+                break;
+            }
+        }
+
+        // The first night's ledger rows, so the number stays true on later days too
+        $firstDay = fn(string $type) => $db->table('financial_transactions')->where('user_id', $userId)->where('type', $type)->like('category', 'Daily', 'after')->orderBy('id', 'ASC')->limit(1)->get()->getRow('amount');
+        $income = $firstDay('income');
+        $expense = $firstDay('expense');
+        if ($income !== null && (int) $income - (int) $expense > 0) {
+            $prompts[] = ['key' => $userId . ':first_profit', 'title' => 'Your resort made ' . currency((int) $income - (int) $expense) . ' on its first day.',
+                'body' => 'Save it to keep this resort, its cash and its staff.'];
+        }
+
+        return $summary + ['prompts' => $prompts];
     }
 
     /** Editor placeholder names ("Lift Line 6") aren't for players */
@@ -562,7 +639,9 @@ class Demo extends BaseController
             return redirect()->back()->withInput()->with('error', 'That username or email was just taken. Please choose another.');
         }
 
+        self::bumpStat('claimed');
         session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
+        if (featureEnabled('demo_v2')) session()->set('demo_saved_as', $username);
         log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
 
         // The email code page; the resort is already theirs if they come back to it later

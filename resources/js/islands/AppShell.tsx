@@ -12,6 +12,12 @@ export default function AppShell(props: ShellProps) {
   const isLoggedIn = Boolean(props.user && props.user.username);
 
   return (
+    <>
+    {props.demo && (
+      <Suspense fallback={null}>
+        <DemoBar demo={props.demo} />
+      </Suspense>
+    )}
     <header className="border-b border-border bg-background site-nav">
       <nav aria-label="Main navigation" className="mx-auto flex min-h-14 max-w-7xl items-center gap-1 px-2 sm:px-4">
         <div className="lg:hidden">
@@ -61,6 +67,7 @@ export default function AppShell(props: ShellProps) {
         </Suspense>
       )}
     </header>
+    </>
   );
 }
 
@@ -139,6 +146,7 @@ function DesktopMenus({ nav, path, user }: ShellProps) {
 }
 
 const SearchDialog = lazy(() => import('@/components/SearchDialog'));
+const DemoBar = lazy(() => import('@/components/DemoBar'));
 const SeasonVoteDialog = lazy(() => import('@/components/SeasonVoteDialog'));
 
 /** The search dialog's code loads the first time it opens */
