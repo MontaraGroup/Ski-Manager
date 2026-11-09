@@ -108,7 +108,7 @@ class Dashboard extends BaseController
         $insurance = $db->table('insurance')->where('user_id', $userId)->get()->getResultArray();
         $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
         $marketing = $db->table('marketing_campaigns')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
-        $dailyVisitors = (int)($finance['daily_visitors'] ?? 0);
+        $dailyVisitors = (int) (Demo::estimate((int) $userId)['visitors'] ?? $finance['daily_visitors'] ?? 0);
         $netProfit = ($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0);
 
         $cashflow = $this->calcCashflowBreakdown($userId, $dailyVisitors, $staffAll, $equipment, $loans, $marketing, $buildingsAll, $insurance, $finance['difficulty'] ?? 'standard');
@@ -388,6 +388,9 @@ class Dashboard extends BaseController
             ],
         ];
 
+        $estimate = Demo::estimate((int) $userId);
+        $page['demoEstimate'] = $estimate ? array_intersect_key($estimate, array_flip(['skiers', 'income', 'costs'])) : null;
+
         return $page;
     }
 
@@ -590,6 +593,7 @@ class Dashboard extends BaseController
         // Economy v2: tickets and buildings depend on demand and occupancy, so show what the last tick actually paid
         if (featureEnabled('economy_v2')) {
             $last = json_decode((string) ($db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick') ?? ''), true);
+            $last = $last ?: (Demo::estimate((int) $userId)['tick'] ?? null);
             if ($last) {
                 $ticketIncome = (int) ($last['tickets'] ?? 0);
                 $buildingIncome = (int) ($last['buildings'] ?? 0);

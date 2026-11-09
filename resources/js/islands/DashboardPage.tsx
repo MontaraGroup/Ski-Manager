@@ -406,6 +406,7 @@ export type DashboardPageProps = {
   widgets: DashboardWidgetItem[];
   availableWidgets: DashboardAvailableWidget[];
   data: DashboardData;
+  demoEstimate?: { skiers: string; income: string; costs: string } | null;
 };
 
 export default function DashboardPage({
@@ -416,6 +417,7 @@ export default function DashboardPage({
   widgets: initialWidgets,
   availableWidgets,
   data,
+  demoEstimate,
 }: DashboardPageProps) {
   const [widgets, setWidgets] = useState<DashboardWidgetItem[]>(initialWidgets);
   const [editMode, setEditMode] = useState(false);
@@ -681,6 +683,22 @@ export default function DashboardPage({
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 p-4 text-foreground lg:p-8">
+      {demoEstimate && (
+        <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-semibold">
+              <Icon name="fa-moon" className="text-accent" />
+              Tonight's estimate
+            </h2>
+            <p className="text-sm text-muted">
+              About {demoEstimate.skiers} skiers, {demoEstimate.income} income, {demoEstimate.costs} costs. Your first day is settled at 00:05 server time.
+            </p>
+          </div>
+          <a href="/tickets" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground">
+            Check your ticket prices
+          </a>
+        </section>
+      )}
       {/* Mountain Hero Header */}
       <header
         className="relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"

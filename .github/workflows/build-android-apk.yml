@@ -1,4 +1,4 @@
-name: Build Ski Manager Android APK
+name: Build Ski Manager Android Bundle
 
 on:
   push:
@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-apk:
-    name: Compile & Package Android APK
+  build-bundle:
+    name: Compile & Package Android Bundle
     runs-on: ubuntu-latest
 
     steps:
@@ -34,19 +34,32 @@ jobs:
       - name: Make Gradlew Executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
-        working-directory: android
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Locate and Stage APK
+      - name: Restore Upload Key
+        env:
+          SKI_KEYSTORE_BASE64: ${{ secrets.SKI_KEYSTORE_BASE64 }}
         run: |
-          mkdir -p build/dist
-          cp android/app/build/outputs/apk/release/app-release.apk build/dist/SkiManager-v1.0.apk
-          ls -lh build/dist/SkiManager-v1.0.apk
+          if [ -z "$SKI_KEYSTORE_BASE64" ]; then
+            echo "::error::Add the SKI_KEYSTORE_BASE64 secret. See android/README.md."
+            exit 1
+          fi
+          echo "$SKI_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
 
-      - name: Upload APK Artifact
+      - name: Build Release Bundle
+        working-directory: android
+        env:
+          SKI_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          SKI_KEYSTORE_PASSWORD: ${{ secrets.SKI_KEYSTORE_PASSWORD }}
+          SKI_KEY_ALIAS: ${{ secrets.SKI_KEY_ALIAS }}
+          SKI_KEY_PASSWORD: ${{ secrets.SKI_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --stacktrace
+
+      - name: Remove Upload Key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+
+      - name: Upload Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SkiManager-Android-APK
-          path: build/dist/SkiManager-v1.0.apk
+          name: SkiManager-Android-Bundle
+          path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error

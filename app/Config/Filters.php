@@ -122,7 +122,7 @@ class Filters extends BaseFilters
      */
     public array $filters = [
         'throttle' => [
-            'before' => ['login*', 'register*', 'magic-link*', 'api/auth*', 'api/v1/app/auth*'],
+            'before' => ['login*', 'register*', 'magic-link*', 'api/auth*', 'api/v1/app/auth*', 'demo/claim'],
             'after'  => ['login'],
         ],
         'admin' => ['before' => ['admin*']],
