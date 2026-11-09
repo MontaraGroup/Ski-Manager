@@ -1,3 +1,11 @@
+## Release 2026-11-09 18:18
+
+* Merge branch 'MontaraGroup:main' into main (2cecf8f)
+* Merge pull request #67 from Montara-Group/fix/first-day-estimate (69f8ddc)
+* fix(dashboard): show tonight's estimate to new players, not only demos (7b18127)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3aaec49)
+* Merge pull request #66 from Montara-Group/feat/android-unit-tests (e0daa47)
+
 ## Release 2026-11-09 17:38
 
 * Merge branch 'MontaraGroup:main' into main (66985b8)
