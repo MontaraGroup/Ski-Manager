@@ -13,6 +13,12 @@ class Weather extends BaseController
 {
     public function index(): string
     {
+        return view('weather/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         helper('weather');
         $now = getCurrentWeather();
         $baseTemp = (int) $now['base_temp'];
@@ -49,7 +55,7 @@ class Weather extends BaseController
         $demandList = [];
         foreach (W::DEMAND as $c => $f) $demandList[] = $c . ' ' . ($f == 1 ? '±0%' : $pct($f));
 
-        return view('weather/index', ['page' => [
+        return [
             'subtitle' => getSeasonName() . ' · day ' . $seasonDay . ' of ' . getSeasonLength() . ' · '
                 . ['early' => 'Early winter', 'deep' => 'Deep winter', 'spring' => 'Spring', 'summer' => 'Summer'][W::phase($seasonDay, $winterDays)],
             'now' => [
@@ -92,6 +98,6 @@ class Weather extends BaseController
                 'The snow base grows with snowfall and shrinks with warm days and rain. Under ' . snow(W::THIN_BASE) . ', slopes need snow guns.',
                 'Skiers by weather: ' . implode(', ', $demandList) . '; wind of ' . speed(W::WIND_HOLD) . ' or more puts lifts on hold (' . $pct(W::WIND_HOLD_FACTOR) . ').',
             ],
-        ]]);
+        ];
     }
 }

@@ -82,6 +82,16 @@ class ResortMap extends BaseController
 
     public function index()
     {
+        $page = $this->pageData();
+        return view('resort_map/index', [
+            'page'      => $page,
+            'mapConfig' => $page['mapConfig'],
+        ]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\\V1\\App) */
+    protected function pageData(): array
+    {
         $resortMap  = $this->getSelectedMap();
         $mapConfig  = self::RESORT_MAPS[$resortMap] ?? self::RESORT_MAPS['ParkCity'];
         $isAdmin    = $this->isAdmin();
@@ -171,10 +181,7 @@ class ResortMap extends BaseController
             ],
         ];
 
-        return view('resort_map/index', [
-            'page'      => $page,
-            'mapConfig' => $mapConfig,
-        ]);
+        return $page;
     }
 
     public function getSegments()
@@ -572,7 +579,7 @@ class ResortMap extends BaseController
         return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', $seats, $meters);
     }
 
-    private static function calcCost(string $type, ?string $liftType, int $seats, float $meters): int
+    protected static function calcCost(string $type, ?string $liftType, int $seats, float $meters): int
     {
         if ($type === 'lift') {
             $base = match ($liftType) {

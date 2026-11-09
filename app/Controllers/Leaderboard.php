@@ -13,6 +13,12 @@ class Leaderboard extends BaseController
 
     public function index(): string
     {
+        return view('leaderboard/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $db = db_connect();
         $v2 = featureEnabled('economy_v2');
         $difficulties = ['easy', 'standard', 'hard'];
@@ -71,7 +77,7 @@ class Leaderboard extends BaseController
             'isMe' => (int) $p['id'] === $userId,
         ];
 
-        return view('leaderboard/index', ['page' => [
+        return [
             'v2' => $v2,
             'subtitle' => getSeasonName() . ' · day ' . getSeasonDay() . ' · ' . ($v2 ? 'ranked by profit this season' : 'ranked by score'),
             'difficulty' => $difficulty,
@@ -89,7 +95,7 @@ class Leaderboard extends BaseController
                 'rows' => array_map(fn($r) => ['rank' => (int) $r['rank_position'], 'username' => (string) $r['username'], 'resortName' => (string) ($r['resort_name'] ?? ''),
                     'cash' => currency((int) $r['cash']), 'slopes' => (int) $r['total_slopes'], 'lifts' => (int) $r['total_lifts']], $season['rows']),
             ], array_keys($past), $past)),
-        ]]);
+        ];
     }
 
     /** Top 10 of each finished season, demo accounts left out */

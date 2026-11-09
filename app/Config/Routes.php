@@ -144,6 +144,38 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->post('season-vote', 'SeasonVote::vote');
     $routes->post('season-vote/snooze', 'SeasonVote::snooze');
 });
+// The Android app: token auth only, never cookies, so no CSRF (Filters.php). Same rules as the web pages
+$routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], static function ($routes) {
+    $routes->post('auth/login', 'Auth::login');
+    $routes->post('auth/register', 'Auth::register');
+    $routes->post('auth/verify', 'Auth::verify');
+    $routes->post('auth/resend', 'Auth::resend');
+    $routes->group('', ['filter' => 'apptoken'], static function ($routes) {
+        $routes->post('auth/logout', 'Auth::logout');
+        $routes->get('me', 'Me::show');
+        $routes->post('profile', 'Profile::submit');
+        $routes->get('dashboard', 'Dashboard::show');
+        $routes->get('finances', 'Finances::show');
+        $routes->get('weather', 'Weather::show');
+        $routes->get('leaderboard', 'Leaderboard::show');
+        $routes->get('notifications', 'Notifications::show');
+        $routes->post('notifications/read-all', 'Notifications::markAllRead');
+        $routes->get('tickets', 'Tickets::show');
+        $routes->post('tickets/(:num)', 'Tickets::update/$1');
+        $routes->get('staff', 'Staff::show');
+        $routes->get('staff/candidates', 'Staff::candidates');
+        $routes->post('staff/hire', 'Staff::hireAction');
+        $routes->post('staff/auto-assign', 'Staff::autoAssignAction');
+        $routes->post('staff/(:num)/fire', 'Staff::fireAction/$1');
+        $routes->post('staff/(:num)/train', 'Staff::trainAction/$1');
+        $routes->get('map', 'Map::show');
+        $routes->post('map/build', 'Map::build');
+        $routes->post('map/demolish/(:num)', 'Map::demolish/$1');
+        $routes->get('settings', 'Settings::show');
+        $routes->post('settings/units', 'Settings::units');
+        $routes->post('account/delete', 'Account::delete');
+    });
+});
 $routes->get('/ui-kit', 'UiKit::index', ['filter' => 'admin']);
 $routes->match(['get', 'head'], '/roadmap', 'Roadmap::index');
 $routes->post('/roadmap/vote/(:num)', 'Roadmap::vote/$1');

@@ -31,6 +31,13 @@ class Staff extends BaseController
 
     public function index()
     {
+        if (!auth()->id()) return redirect()->to("/login")->with("error", "Please log in first.");
+        return view('staff/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         // Temporary Emergency Seeder
         $db = db_connect();
@@ -46,7 +53,6 @@ class Staff extends BaseController
             ]);
         }
 
-        if (!$userId) return redirect()->to("/login")->with("error", "Please log in first.");
         $staff = $this->staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
         $roles = $this->getRoles();
         $totalSalary = array_sum(array_column($staff, 'salary'));
@@ -106,7 +112,7 @@ class Staff extends BaseController
             'staff' => $formattedStaff,
         ];
 
-        return view('staff/index', ['page' => $page]);
+        return $page;
     }
 
     /** What each role does in the nightly tick (GameTick), shown on the hire page */
@@ -124,6 +130,11 @@ class Staff extends BaseController
     ];
 
     public function hire(): string
+    {
+        return view('staff/hire', ['page' => $this->hireData()]);
+    }
+
+    protected function hireData(): array
     {
         $userId = auth()->id();
         $db = db_connect();
@@ -222,7 +233,7 @@ class Staff extends BaseController
             'maxGroomerLevel' => self::maxUsefulLevel('groomer'),
         ];
 
-        return view('staff/hire', ['page' => $page]);
+        return $page;
     }
 
     public function doHire()
