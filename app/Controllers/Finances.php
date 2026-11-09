@@ -12,6 +12,12 @@ class Finances extends BaseController
 {
     public function index(): string
     {
+        return view('finances/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $financeModel = new FinanceModel();
         $transModel = new TransactionModel();
@@ -128,7 +134,7 @@ class Finances extends BaseController
             $expenses[] = ['Other (variance between category estimates and recorded tick total)', $otherCosts, 'fa-receipt'];
         }
 
-        return view('finances/index', ['page' => [
+        return [
             'gameDay' => $gameDay,
             'cash' => ['text' => currency($cash), 'negative' => $cash < 0],
             'income' => ['source' => !empty($lastTick) ? 'last game day' : 'estimated', 'total' => currency($totalIncome),
@@ -142,6 +148,6 @@ class Finances extends BaseController
             'transactions' => array_map(fn($t) => ['id' => (int) $t['id'], 'day' => (int) $t['game_day'], 'category' => (string) $t['category'],
                 'description' => (string) $t['description'], 'amount' => ($t['type'] === 'income' ? '+' : '-') . currency((int) $t['amount']),
                 'income' => $t['type'] === 'income'], $recentTransactions),
-        ]]);
+        ];
     }
 }

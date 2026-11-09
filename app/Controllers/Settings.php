@@ -6,6 +6,12 @@ class Settings extends BaseController
 {
     public function index(): string
     {
+        return view('settings/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $user = auth()->user();
@@ -50,7 +56,7 @@ class Settings extends BaseController
             ],
         ];
 
-        return view('settings/index', ['page' => $page]);
+        return $page;
     }
 
     public function save()
