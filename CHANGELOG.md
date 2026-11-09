@@ -1,3 +1,11 @@
+## Release 2026-11-09 01:32
+
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (beed808)
+* android: add web targets to assetlinks for credential sharing (009d233)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e4d746c)
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+
 ## Release 2026-11-09 00:36
 
 * android: add web targets to assetlinks for credential sharing (009d233)
