@@ -4,6 +4,13 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+ext.signingValue = { String name -> System.getenv(name) ?: localProperties.getProperty(name) }
+
 android {
     namespace 'net.skimanager.app'
     compileSdk 35
@@ -21,12 +28,16 @@ android {
         }
     }
 
+    // Signing values live outside the repo: android/local.properties locally, environment variables in CI
     signingConfigs {
         release {
-            storeFile file("${rootDir}/keystore/release.jks")
-            storePassword "SkiManager2026!"
-            keyAlias "skimanager"
-            keyPassword "SkiManager2026!"
+            def keystorePath = signingValue("SKI_KEYSTORE_PATH")
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword signingValue("SKI_KEYSTORE_PASSWORD")
+                keyAlias signingValue("SKI_KEY_ALIAS")
+                keyPassword signingValue("SKI_KEY_PASSWORD")
+            }
         }
     }
 
@@ -35,9 +46,6 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            signingConfig signingConfigs.release
         }
     }
 
