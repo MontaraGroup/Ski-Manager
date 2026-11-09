@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "net.skimanager.app",
+      "sha256_cert_fingerprints": [
+        "B7:E6:5E:C3:47:C3:B3:73:5F:76:84:29:5D:4D:2F:BB:FE:EF:42:EE:F4:F2:AE:11:BA:85:06:62:6D:71:21:7F",
+        "3E:A0:EE:3F:DC:5B:34:AC:70:81:B0:76:15:BB:F7:BA:78:06:4B:12:2A:1A:74:2F:CE:42:E8:31:62:3F:0F:DD"
+      ]
+    }
+  }
+]
