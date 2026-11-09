@@ -1,13 +1,18 @@
 package net.skimanager.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /** The site's color tokens (DESIGN.md), converted from oklch, for what Material has no slot for */
 data class SkiColors(val muted: Color, val link: Color, val success: Color, val warning: Color, val danger: Color, val surfaceSecondary: Color)
@@ -44,10 +49,25 @@ private val LightScheme = lightColorScheme(
 
 val LocalSkiColors = staticCompositionLocalOf { DarkSki }
 
+private val ExpressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(32.dp),
+)
+
+/** Material 3 Expressive motion and shapes, with the site's colors rather than wallpaper ones */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SkiManagerTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     CompositionLocalProvider(LocalSkiColors provides if (dark) DarkSki else LightSki) {
-        MaterialTheme(colorScheme = if (dark) DarkScheme else LightScheme, content = content)
+        MaterialExpressiveTheme(
+            colorScheme = if (dark) DarkScheme else LightScheme,
+            motionScheme = MotionScheme.expressive(),
+            shapes = ExpressiveShapes,
+            content = content,
+        )
     }
 }
