@@ -10,7 +10,7 @@ class GameTick extends BaseCommand
 {
     protected $group = 'Game';
     protected $name = 'game:tick';
-    protected $description = 'Process daily game tick — revenue, expenses, weather, morale, conditions, VIP guests';
+    protected $description = 'Process daily game tick: revenue, expenses, weather, morale, conditions, VIP guests';
 
     public function run(array $params)
     {
@@ -25,7 +25,7 @@ class GameTick extends BaseCommand
         }
 
         if (function_exists('isMaintenanceMode') && isMaintenanceMode()) {
-            CLI::write('Maintenance mode is active — Season 2 development underway. Game tick paused to safeguard player finances.', 'yellow');
+            CLI::write('Maintenance mode is active: Season 2 development underway. Game tick paused to safeguard player finances.', 'yellow');
             return;
         }
 
@@ -39,50 +39,66 @@ class GameTick extends BaseCommand
         $isWinter = $seasonDay <= getWinterDays();
         $seasonNum = function_exists('getSeasonNumber') ? (int) getSeasonNumber() : 1;
 
-        CLI::write("Game Tick — Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
+        CLI::write("Game Tick: Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
         // Today's and tomorrow's weather (App\Libraries\Weather generates any missing day)
         \App\Libraries\Weather::ensure($gameDay + 1);
 
-        $users = $db->table('users')->get()->getResultArray();
+        // Pre-fetch shared daily weather once to avoid O(N) redundant queries
+        $todayWeather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray()
+            ?: ($db->table('weather')->where('game_day <=', $gameDay)->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray() ?: []);
 
-        foreach ($users as $user) {
-            $userId = (int) $user['id'];
-            CLI::write("Processing user {$userId}...", 'yellow');
-            try {
-                // CI4 keeps a failed transaction status until reset, so one player's error
-                // used to roll back every player processed after them
-                $db->resetTransStatus();
-                $db->transBegin();
+        // Pre-fetch difficulty configs once to eliminate redundant table queries inside loop
+        $allDiffConfigs = [];
+        $diffRows = $db->table('difficulty_config')->get()->getResultArray();
+        foreach ($diffRows as $dr) {
+            $allDiffConfigs[$dr['difficulty']][$dr['config_key']] = $dr['config_value'];
+        }
 
-                $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-            if (!$finance) {
-                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
-                $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        // Process users in bounded batches to prevent memory exhaustion and execution timeouts
+        $totalUsers = $db->table('users')->countAllResults();
+        $batchSize = 100;
+        $offset = 0;
+
+        while ($offset < $totalUsers) {
+            $users = $db->table('users')->select('id')->orderBy('id', 'ASC')->limit($batchSize, $offset)->get()->getResultArray();
+            if (empty($users)) {
+                break;
             }
 
-            $cash = (int) $finance['cash'];
-            // Today's row is written by the previous tick; fall back to the latest one (e.g. right after a rollover)
-            $weather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray()
-                ?: ($db->table('weather')->where('game_day <=', $gameDay)->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray() ?: []);
-            $resortOpen = (int) ($finance['resort_open'] ?? 1) === 1;
-            $dayIncome = 0;
-            $dayExpenses = 0;
+            foreach ($users as $user) {
+                $userId = (int) $user['id'];
+                CLI::write("Processing user {$userId}...", 'yellow');
+                try {
+                    // CI4 keeps a failed transaction status until reset, so one player's error
+                    // used to roll back every player processed after them
+                    $db->resetTransStatus();
+                    $db->transBegin();
 
-            // Load difficulty config
-            $diff = $finance['difficulty'] ?? 'standard';
-            $diffConfig = [];
-            $diffRows = $db->table('difficulty_config')->where('difficulty', $diff)->get()->getResultArray();
-            foreach ($diffRows as $dr) { $diffConfig[$dr['config_key']] = $dr['config_value']; }
-            $revMult = ((int) ($diffConfig['revenue_multiplier'] ?? 100)) / 100;
-            $costMult = ((int) ($diffConfig['cost_multiplier'] ?? 100)) / 100;
-            $decayMult = ((int) ($diffConfig['decay_multiplier'] ?? 100)) / 100;
-            $moraleDec = (int) ($diffConfig['morale_decay'] ?? 2);
-            $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
-            $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
-            $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
-            // Economy v2 (App\Libraries\Economy): demand-priced tickets, lift capacity and running costs, building occupancy
-            $v2 = featureEnabledFor('economy_v2', $userId);
-            $breakdown = [];
+                    $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+                    if (!$finance) {
+                        $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
+                        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+                    }
+
+                    $cash = (int) $finance['cash'];
+                    $weather = $todayWeather;
+                    $resortOpen = (int) ($finance['resort_open'] ?? 1) === 1;
+                    $dayIncome = 0;
+                    $dayExpenses = 0;
+
+                    // Load difficulty config from pre-fetched lookup map
+                    $diff = $finance['difficulty'] ?? 'standard';
+                    $diffConfig = $allDiffConfigs[$diff] ?? ($allDiffConfigs['standard'] ?? []);
+                    $revMult = ((int) ($diffConfig['revenue_multiplier'] ?? 100)) / 100;
+                    $costMult = ((int) ($diffConfig['cost_multiplier'] ?? 100)) / 100;
+                    $decayMult = ((int) ($diffConfig['decay_multiplier'] ?? 100)) / 100;
+                    $moraleDec = (int) ($diffConfig['morale_decay'] ?? 2);
+                    $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
+                    $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
+                    $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
+                    // Economy v2 (App\Libraries\Economy): demand-priced tickets, lift capacity and running costs, building occupancy
+                    $v2 = featureEnabledFor('economy_v2', $userId);
+                    $breakdown = [];
 
             // Active Génépis perks, loaded before any revenue so the revenue boost applies to all of it
             $activeBoostRows = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
@@ -164,7 +180,7 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
-            // EQUIPMENT (groomers + snowmakers) — fuel, decay, staff bonuses
+            // EQUIPMENT (groomers + snowmakers): fuel, decay, staff bonuses
             // ==============================
             $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
             // Snow guns only run (and cost or wear) on days cold enough for their model
@@ -891,6 +907,7 @@ class GameTick extends BaseCommand
                     log_message("error", "GameTick user {$userId} transaction status failed and was rolled back.");
                 } else {
                     $db->transCommit();
+                    clearResortRatingCache($userId);
                 }
             } catch (\Throwable $e) {
                 $db->transRollback();
@@ -901,6 +918,8 @@ class GameTick extends BaseCommand
                     \Sentry\captureException($e);
                 }
             }
+        }
+            $offset += $batchSize;
         }
 
         // Storage Maintenance: Prune old activity logs & financial records to keep storage bounded

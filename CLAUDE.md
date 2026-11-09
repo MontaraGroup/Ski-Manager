@@ -22,45 +22,46 @@
 - **Local Git Repo**: `/Users/324080/.gemini/antigravity/scratch/ski-manager-repo`
 - **GitHub Remote**: `https://github.com/MontaraGroup/Ski-Manager.git` (`main` branch)
 
-### Production & Staging on the VPS (Managed by 1Panel)
-The VPS runs **1Panel** with Dockerized OpenResty (Nginx), PHP-FPM 8.5, and MySQL 9.7.
+### Production & Staging on the VPS (Standalone Docker Compose Stack)
+The VPS runs a standalone Docker Compose stack at `/srv/ski-manager` with OpenResty (Nginx), PHP-FPM 8.5, MySQL 9.7, and Wiki.js (PostgreSQL 17).
 
-| Environment | Domain | Host Path on VPS | Path Inside `PHP` Container | Database Name |
+| Environment | Domain | Host Path on VPS | Path Inside `ski-php` Container | Database Name |
 | :--- | :--- | :--- | :--- | :--- |
-| **Production** | `https://ski-manager.net` | `/opt/1panel/www/sites/skiv2/ci4` | `/www/sites/skiv2/ci4` | `skiv2` |
-| **Staging** | `https://staging.ski-manager.net` | `/opt/1panel/www/sites/skiv2-staging/ci4` | `/www/sites/skiv2-staging/ci4` | `skiv2_staging` |
+| **Production** | `https://ski-manager.net` | `/srv/ski-manager/sites/skiv2/ci4` | `/www/sites/skiv2/ci4` | `skimanager_v2` |
+| **Staging** | `https://staging.ski-manager.net` | `/srv/ski-manager/sites/skiv2-staging/ci4` | `/www/sites/skiv2-staging/ci4` | `skimanager_staging` |
 
 > **Important Note on Docker Path Mapping**:
-> On the VPS host, files live under `/opt/1panel/www/sites/...`, which is bind-mounted into the `PHP` and `1Panel-openresty-Xqgf` containers at `/www/sites/...` (without `/opt/1panel`).
+> On the VPS host, files live under `/srv/ski-manager/sites/...`, which is bind-mounted into the `ski-php` and `ski-proxy` containers at `/www/sites/...`.
 
 ---
 
 ## 3. Docker Containers on the VPS
 
- PHP and MySQL are **not** installed directly on the Ubuntu host OS — they run inside Docker containers:
+PHP and MySQL run inside Docker containers managed via `/srv/ski-manager/docker-compose.yml`:
 
-- **`PHP`** (`1panel-php-fpm:8.5.5`): Runs PHP 8.5 + CodeIgniter 4 CLI (`spark`).
+- **`ski-php`** (`1panel-php-fpm:8.5.5`): Runs PHP 8.5 + CodeIgniter 4 CLI (`spark`).
   - Lint a PHP file:
     ```bash
-    ssh root@72.62.170.146 'docker exec PHP php -l /www/sites/skiv2/ci4/app/Controllers/Dashboard.php'
+    ssh root@72.62.170.146 'docker exec ski-php php -l /www/sites/skiv2/ci4/app/Controllers/Dashboard.php'
     ```
   - Clear CodeIgniter cache:
     ```bash
-    ssh root@72.62.170.146 'docker exec PHP php /www/sites/skiv2/ci4/spark cache:clear'
+    ssh root@72.62.170.146 'docker exec ski-php php /www/sites/skiv2/ci4/spark cache:clear'
     ```
   - Run migrations:
     ```bash
-    ssh root@72.62.170.146 'docker exec PHP php /www/sites/skiv2/ci4/spark migrate'
+    ssh root@72.62.170.146 'docker exec ski-php php /www/sites/skiv2/ci4/spark migrate'
     ```
 
-- **`1Panel-mysql-Uibp`** (`mysql:9.7.0`): Runs the MySQL database.
-  - Read credentials from `/opt/1panel/www/sites/skiv2/ci4/.env` (`database.default.*`).
-  - Run a SQL query on Production (`skiv2`):
+- **`ski-mysql`** (`mysql:9.7.4`): Runs the MySQL database (also aliased as `1Panel-mysql-Uibp` on the `ski-network` bridge).
+  - Read credentials from `/srv/ski-manager/sites/skiv2/ci4/.env` (`database.default.*`).
+  - Run a SQL query on Production (`skimanager_v2`):
     ```bash
-    ssh root@72.62.170.146 'docker exec 1Panel-mysql-Uibp mysql -uskiv2 -p"$(grep "database.default.password" /opt/1panel/www/sites/skiv2/ci4/.env | cut -d= -f2 | tr -d " ")" skiv2 -e "SHOW TABLES;"'
+    ssh root@72.62.170.146 'docker exec ski-mysql mysql -uskiv2 -p"$(grep "database.default.password" /srv/ski-manager/sites/skiv2/ci4/.env | cut -d= -f2 | tr -d " ")" skimanager_v2 -e "SHOW TABLES;"'
     ```
 
-- **`1Panel-openresty-Xqgf`** (`1panel/openresty`): Web server / reverse proxy serving `public/` for each site.
+- **`ski-proxy`** (`1panel/openresty:1.31.1.1-2-4-noble`): Host-network OpenResty reverse proxy handling SSL and HTTP routing.
+- **`wikijs`** & **`wikijs-db`**: Documentation wiki running Wiki.js v3 on top of PostgreSQL 17.
 
 ---
 
@@ -81,7 +82,7 @@ The VPS runs **1Panel** with Dockerized OpenResty (Nginx), PHP-FPM 8.5, and MySQ
 
 ## 5. Key File & Directory Structure
 
-Inside `/opt/1panel/www/sites/skiv2/ci4` (and local `/Users/324080/.gemini/antigravity/scratch/ski-manager-repo`):
+Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/antigravity/scratch/ski-manager-repo`):
 
 ```text
 ├── app/
@@ -146,20 +147,20 @@ Inside `/opt/1panel/www/sites/skiv2/ci4` (and local `/Users/324080/.gemini/antig
 3. **Deploy to Production & Staging via `scp` or `git`**:
    ```bash
    # Option A: Direct SCP of modified file(s)
-   scp app/Views/dashboard/index.php root@72.62.170.146:/opt/1panel/www/sites/skiv2/ci4/app/Views/dashboard/index.php
-   scp app/Views/dashboard/index.php root@72.62.170.146:/opt/1panel/www/sites/skiv2-staging/ci4/app/Views/dashboard/index.php
+   scp app/Views/dashboard/index.php root@72.62.170.146:/srv/ski-manager/sites/skiv2/ci4/app/Views/dashboard/index.php
+   scp app/Views/dashboard/index.php root@72.62.170.146:/srv/ski-manager/sites/skiv2-staging/ci4/app/Views/dashboard/index.php
 
    # Option B: Commit & push to GitHub, then pull on VPS
    git add -A && git commit -m "Describe change" && git push origin main
-   ssh root@72.62.170.146 'cd /opt/1panel/www/sites/skiv2/ci4 && git pull origin main && cd /opt/1panel/www/sites/skiv2-staging/ci4 && git pull origin main'
+   ssh root@72.62.170.146 'cd /srv/ski-manager/sites/skiv2/ci4 && git pull origin main && cd /srv/ski-manager/sites/skiv2-staging/ci4 && git pull origin main'
    ```
 4. **Lint & Clear Cache on the VPS**:
    ```bash
-   ssh root@72.62.170.146 'docker exec PHP php /www/sites/skiv2/ci4/spark cache:clear && docker exec PHP php /www/sites/skiv2-staging/ci4/spark cache:clear'
+   ssh root@72.62.170.146 'docker exec ski-php php /www/sites/skiv2/ci4/spark cache:clear && docker exec ski-php php /www/sites/skiv2-staging/ci4/spark cache:clear'
    ```
 5. **Check Error Logs if Needed**:
    ```bash
-   ssh root@72.62.170.146 'tail -n 80 /opt/1panel/www/sites/skiv2/ci4/writable/logs/log-$(date +%F).log'
+   ssh root@72.62.170.146 'tail -n 80 /srv/ski-manager/sites/skiv2/ci4/writable/logs/log-$(date +%F).log'
    ```
 
 <!-- entire-agent:begin -->
