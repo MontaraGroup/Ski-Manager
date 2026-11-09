@@ -1,3 +1,11 @@
+## Release 2026-11-09 16:34
+
+* Merge branch 'MontaraGroup:main' into main (67e1458)
+* Merge pull request #60 from Montara-Group/feat/android-bank (fc516b4)
+* feat(android): add native bank screen, API controllers, and update CI setup-java (9c1d40b)
+* Merge pull request #59 from Montara-Group/feat/android-buildings (14cd45e)
+* feat(android): add native buildings screen and API controllers (0b19aba)
+
 ## Release 2026-11-09 03:06
 
 * Merge pull request #57 from Montara-Group/feat/android-game (d7fefc1)
