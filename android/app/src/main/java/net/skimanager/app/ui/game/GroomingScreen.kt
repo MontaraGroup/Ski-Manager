@@ -1,5 +1,6 @@
 package net.skimanager.app.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import net.skimanager.app.ui.common.Panel
 import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 @Composable
@@ -85,19 +87,23 @@ fun GroomingScreen(app: AppState) {
         ScreenColumn {
             actionError?.let { err ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.35f)),
                 ) {
-                    Text(err, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.padding(12.dp))
+                    Text(err, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
             actionSuccess?.let { msg ->
                 Card(
-                    Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.success.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, LocalSkiColors.current.success.copy(alpha = 0.35f)),
                 ) {
-                    Text(msg, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(12.dp))
+                    Text(msg, color = LocalSkiColors.current.success, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(14.dp))
                 }
             }
 
@@ -169,7 +175,7 @@ fun GroomingScreen(app: AppState) {
             if (machines.isNotEmpty() || operators.isNotEmpty()) {
                 Panel("Fleet & operators") {
                     if (machines.isNotEmpty()) {
-                        Text("Machines", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                        Text("Machines", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         machines.forEach { m ->
                             Row2(
                                 m.str("name"),
@@ -178,7 +184,7 @@ fun GroomingScreen(app: AppState) {
                         }
                     }
                     if (operators.isNotEmpty()) {
-                        Text("Operators", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                        Text("Operators", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
                         operators.forEach { op ->
                             Row2(op.str("name"), "Skill ${op.int("skill")} · ${op.str("salaryText")} / day")
                         }
@@ -190,7 +196,8 @@ fun GroomingScreen(app: AppState) {
         if (groomAllDialog) {
             AlertDialog(
                 onDismissRequest = { groomAllDialog = false },
-                title = { Text("Groom ${batch.int("count")} slopes?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Groom ${batch.int("count")} slopes?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Send out groomers on daytime extra runs for ${batch.str("costText")}.")
@@ -201,7 +208,7 @@ fun GroomingScreen(app: AppState) {
                     TextButton({
                         groomAllDialog = false
                         act("grooming/all", emptyMap()) { reload(); reloadCount++ }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Groom all (${batch.str("costText")})") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Groom all (${batch.str("costText")})", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ groomAllDialog = false }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -212,7 +219,8 @@ fun GroomingScreen(app: AppState) {
         groomSingleSlope?.let { s ->
             AlertDialog(
                 onDismissRequest = { groomSingleSlope = null },
-                title = { Text("Groom ${s.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Groom ${s.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Grooming costs ${s.str("extraCostText")} for daytime operation.")
@@ -226,7 +234,7 @@ fun GroomingScreen(app: AppState) {
                         if (target != null) {
                             act("grooming/single", mapOf("slope_id" to target.int("id").toString())) { reload(); reloadCount++ }
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Groom now (${s.str("extraCostText")})") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Groom now (${s.str("extraCostText")})", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = {
                     TextButton({ groomSingleSlope = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") }
@@ -244,23 +252,25 @@ private fun SlopeGroomCard(
     onGroom: () -> Unit,
 ) {
     Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.surfaceSecondary),
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(slope.str("name"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                Text(slope.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                val isGroomed = slope.bool("groomed_today")
+                val isTonight = slope.bool("isTonight")
                 val statusText = when {
-                    slope.bool("groomed_today") -> "Groomed today"
-                    slope.bool("isTonight") -> "Tonight's plan"
+                    isGroomed -> "Groomed today"
+                    isTonight -> "Tonight's plan"
                     else -> slope.str("sectorName")
                 }
-                Text(
+                StatusBadge(
                     statusText,
-                    color = if (slope.bool("groomed_today")) MaterialTheme.colorScheme.primary else LocalSkiColors.current.muted,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
+                    if (isGroomed) LocalSkiColors.current.success else if (isTonight) MaterialTheme.colorScheme.primary else LocalSkiColors.current.muted,
+                    (if (isGroomed) LocalSkiColors.current.success else if (isTonight) MaterialTheme.colorScheme.primary else LocalSkiColors.current.muted).copy(alpha = 0.12f),
                 )
             }
 
@@ -269,10 +279,11 @@ private fun SlopeGroomCard(
                 progress = { condition / 100f },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                 color = when {
-                    condition >= 70 -> MaterialTheme.colorScheme.primary
-                    condition >= 40 -> MaterialTheme.colorScheme.tertiary
-                    else -> MaterialTheme.colorScheme.error
+                    condition >= 70 -> LocalSkiColors.current.success
+                    condition >= 40 -> LocalSkiColors.current.warning
+                    else -> LocalSkiColors.current.danger
                 },
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -288,13 +299,14 @@ private fun SlopeGroomCard(
                 PrimaryButton(
                     "Groom now (${slope.str("extraCostText")})",
                     onGroom,
-                    Modifier.fillMaxWidth(),
+                    Modifier.fillMaxWidth().padding(top = 4.dp),
                 )
             } else if (slope.bool("groomed_today")) {
                 Text(
                     "Groomed today: +$restore% condition restored",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = LocalSkiColors.current.success,
                     style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }

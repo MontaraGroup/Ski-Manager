@@ -1,5 +1,6 @@
 package net.skimanager.app.ui.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -48,10 +51,13 @@ import net.skimanager.app.api.str
 import net.skimanager.app.ui.common.EmptyText
 import net.skimanager.app.ui.common.Figure
 import net.skimanager.app.ui.common.Loaded
+import net.skimanager.app.ui.common.OutlinedPrimaryButton
 import net.skimanager.app.ui.common.Panel
 import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
+import net.skimanager.app.ui.common.SecondaryButton
+import net.skimanager.app.ui.common.StatusBadge
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 data class BuildingCategory(val key: String, val label: String, val icon: ImageVector)
@@ -104,19 +110,29 @@ fun BuildingsScreen(app: AppState) {
                             selectedType = category.key
                             note = null
                         },
-                        label = { Text(category.label) },
+                        label = { Text(category.label, fontWeight = if (selectedType == category.key) FontWeight.Bold else FontWeight.Medium) },
                         leadingIcon = { Icon(category.icon, contentDescription = null, Modifier.size(18.dp)) },
                         modifier = Modifier.heightIn(min = 48.dp),
+                        shape = MaterialTheme.shapes.small,
                     )
                 }
             }
 
             if (note != null) {
-                Text(
-                    note!!,
-                    color = if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = (if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success).copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, (if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success).copy(alpha = 0.35f)),
+                ) {
+                    Text(
+                        note!!,
+                        color = if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(14.dp),
+                    )
+                }
             }
 
             BuildingTelemetry(selectedType, stats, domain)
@@ -126,22 +142,29 @@ fun BuildingsScreen(app: AppState) {
             Panel("Construct ${def.str("singular")}") {
                 Text(def.str("desc"), color = LocalSkiColors.current.muted)
                 catalog.forEach { tier ->
-                    Column(
-                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     ) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text(tier.str("name"), fontWeight = FontWeight.SemiBold)
-                            Text("Level ${tier.int("level")}", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
+                        Column(
+                            Modifier.fillMaxWidth().padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(tier.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                                StatusBadge("Level ${tier.int("level")}", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                            }
+                            Row2("Capacity", "${tier.int("capacity")} units")
+                            Row2("Revenue", "${tier.str("revenueText")} / day")
+                            Row2("Upkeep", "${tier.str("upkeepText")} / day")
+                            PrimaryButton(
+                                "Build for ${tier.str("costText")}",
+                                { buildTier = tier },
+                                Modifier.fillMaxWidth().padding(top = 4.dp),
+                            )
                         }
-                        Row2("Capacity", "${tier.int("capacity")} units")
-                        Row2("Revenue", "${tier.str("revenueText")} / day")
-                        Row2("Upkeep", "${tier.str("upkeepText")} / day")
-                        PrimaryButton(
-                            "Build for ${tier.str("costText")}",
-                            { buildTier = tier },
-                            Modifier.fillMaxWidth(),
-                        )
                     }
                 }
             }
@@ -165,7 +188,8 @@ fun BuildingsScreen(app: AppState) {
         buildTier?.let { tier ->
             AlertDialog(
                 onDismissRequest = { buildTier = null },
-                title = { Text("Construct ${tier.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Construct ${tier.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = { Text("Constructing costs ${tier.str("costText")}. Daily upkeep will be ${tier.str("upkeepText")} / day.") },
                 confirmButton = {
                     TextButton({
@@ -174,7 +198,7 @@ fun BuildingsScreen(app: AppState) {
                         if (t != null) {
                             act("buildings/build", mapOf("type" to selectedType, "level" to t.int("level").toString()))
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Construct") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Construct", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = { TextButton({ buildTier = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") } },
             )
@@ -184,7 +208,8 @@ fun BuildingsScreen(app: AppState) {
             val next = b.obj("nextLevel")
             AlertDialog(
                 onDismissRequest = { upgradeBuilding = null },
-                title = { Text("Upgrade ${b.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Upgrade ${b.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = { Text("Upgrade to ${next.str("name")} for ${next.str("costText")}?") },
                 confirmButton = {
                     TextButton({
@@ -193,7 +218,7 @@ fun BuildingsScreen(app: AppState) {
                         if (target != null) {
                             act("buildings/${target.int("id")}/upgrade", emptyMap())
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Upgrade") }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Upgrade", fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = { TextButton({ upgradeBuilding = null }, Modifier.heightIn(min = 48.dp)) { Text("Cancel") } },
             )
@@ -202,7 +227,8 @@ fun BuildingsScreen(app: AppState) {
         demolishBuilding?.let { b ->
             AlertDialog(
                 onDismissRequest = { demolishBuilding = null },
-                title = { Text("Demolish ${b.str("name")}?") },
+                shape = MaterialTheme.shapes.extraLarge,
+                title = { Text("Demolish ${b.str("name")}?", fontWeight = FontWeight.Bold) },
                 text = { Text("Demolishing gives ${b.str("refundText")} salvage refund (25%). This cannot be undone.") },
                 confirmButton = {
                     TextButton({
@@ -211,7 +237,7 @@ fun BuildingsScreen(app: AppState) {
                         if (target != null) {
                             act("buildings/${target.int("id")}/sell", emptyMap())
                         }
-                    }, Modifier.heightIn(min = 48.dp)) { Text("Demolish", color = LocalSkiColors.current.danger) }
+                    }, Modifier.heightIn(min = 48.dp)) { Text("Demolish", color = LocalSkiColors.current.danger, fontWeight = FontWeight.Bold) }
                 },
                 dismissButton = { TextButton({ demolishBuilding = null }, Modifier.heightIn(min = 48.dp)) { Text("Keep") } },
             )
@@ -270,33 +296,54 @@ private fun BuildingTelemetry(type: String, stats: JsonObject, domain: JsonObjec
 @Composable
 private fun BuildingAlerts(type: String, stats: JsonObject, domain: JsonObject) {
     if (type == "hotel" && domain.int("receptionists") < stats.int("openCount")) {
-        Panel {
-            Text("Understaffed reception desks", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.warning)
-            Text(
-                "Some hotels lack a receptionist. Hire receptionists from Staff to boost check-in speed and revenue.",
-                color = LocalSkiColors.current.muted,
-                style = MaterialTheme.typography.bodySmall,
-            )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.warning.copy(alpha = 0.12f)),
+            border = BorderStroke(1.dp, LocalSkiColors.current.warning.copy(alpha = 0.35f)),
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Understaffed reception desks", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.warning)
+                Text(
+                    "Some hotels lack a receptionist. Hire receptionists from Staff to boost check-in speed and revenue.",
+                    color = LocalSkiColors.current.muted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
     if (type == "ski_patrol" && domain.int("coverageRatio") < 100) {
-        Panel {
-            Text("Insufficient slope coverage", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.warning)
-            Text(
-                "${domain.int("uncoveredSlopes")} slope(s) have no patrol coverage. Uncovered slopes carry liability risks.",
-                color = LocalSkiColors.current.muted,
-                style = MaterialTheme.typography.bodySmall,
-            )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.warning.copy(alpha = 0.12f)),
+            border = BorderStroke(1.dp, LocalSkiColors.current.warning.copy(alpha = 0.35f)),
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Insufficient slope coverage", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.warning)
+                Text(
+                    "${domain.int("uncoveredSlopes")} slope(s) have no patrol coverage. Uncovered slopes carry liability risks.",
+                    color = LocalSkiColors.current.muted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
     if (type == "ski_patrol" && domain.int("patrolCount") == 0 && stats.int("totalCount") > 0) {
-        Panel {
-            Text("Patrol stations unmanned", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.danger)
-            Text(
-                "Stations are built without ski patrol staff. Hire ski patrol immediately to respond to emergencies.",
-                color = LocalSkiColors.current.muted,
-                style = MaterialTheme.typography.bodySmall,
-            )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = LocalSkiColors.current.danger.copy(alpha = 0.12f)),
+            border = BorderStroke(1.dp, LocalSkiColors.current.danger.copy(alpha = 0.35f)),
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Patrol stations unmanned", fontWeight = FontWeight.SemiBold, color = LocalSkiColors.current.danger)
+                Text(
+                    "Stations are built without ski patrol staff. Hire ski patrol immediately to respond to emergencies.",
+                    color = LocalSkiColors.current.muted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }
@@ -313,52 +360,66 @@ private fun BuildingItemCard(
     val nextLevel = b.obj("nextLevel")
     val hasNextLevel = nextLevel.size() > 0
 
-    Column(
-        Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(b.str("name"), fontWeight = FontWeight.SemiBold)
-                Text(
-                    (if (isOpen) "Open" else "Closed") + " · Level ${b.int("level")}",
-                    color = if (isOpen) LocalSkiColors.current.success else LocalSkiColors.current.muted,
-                    style = MaterialTheme.typography.bodySmall,
+        Column(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text(b.str("name"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Level ${b.int("level")}", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
+                }
+                StatusBadge(
+                    text = if (isOpen) "OPEN" else "CLOSED",
+                    color = if (isOpen) LocalSkiColors.current.success else LocalSkiColors.current.danger,
+                    backgroundColor = (if (isOpen) LocalSkiColors.current.success else LocalSkiColors.current.danger).copy(alpha = 0.12f),
                 )
             }
-        }
 
-        Row2("Capacity", "${b.int("capacity")} units")
-        Row2("Revenue", "${b.str("revenueText")} / day")
-        Row2("Upkeep", "${b.str("upkeepText")} / day")
-        Row2("Condition", "$conditionPct%")
+            Row2("Capacity", "${b.int("capacity")} units")
+            Row2("Revenue", "${b.str("revenueText")} / day")
+            Row2("Upkeep", "${b.str("upkeepText")} / day")
+            Row2("Condition", "$conditionPct%")
 
-        LinearProgressIndicator(
-            progress = { conditionPct / 100f },
-            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-            color = when {
-                conditionPct >= 60 -> LocalSkiColors.current.success
-                conditionPct >= 30 -> LocalSkiColors.current.warning
-                else -> LocalSkiColors.current.danger
-            },
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
+            LinearProgressIndicator(
+                progress = { (conditionPct / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                color = when {
+                    conditionPct >= 60 -> LocalSkiColors.current.success
+                    conditionPct >= 30 -> LocalSkiColors.current.warning
+                    else -> LocalSkiColors.current.danger
+                },
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onToggle, Modifier.heightIn(min = 48.dp)) {
-                Text(if (isOpen) "Close" else "Open")
-            }
-            if (hasNextLevel) {
-                TextButton(onUpgrade, Modifier.heightIn(min = 48.dp)) {
-                    Text("Upgrade (${nextLevel.str("costText")})")
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SecondaryButton(
+                    if (isOpen) "Close" else "Open",
+                    onToggle,
+                    Modifier.weight(1f),
+                )
+                if (hasNextLevel) {
+                    SecondaryButton(
+                        "Upgrade (${nextLevel.str("costText")})",
+                        onUpgrade,
+                        Modifier.weight(1f),
+                    )
                 }
-            }
-            TextButton(onDemolish, Modifier.heightIn(min = 48.dp)) {
-                Text("Demolish", color = LocalSkiColors.current.danger)
+                OutlinedPrimaryButton(
+                    "Demolish",
+                    onDemolish,
+                    Modifier.weight(1f),
+                )
             }
         }
     }
