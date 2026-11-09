@@ -1,3 +1,11 @@
+## Release 2026-11-09 00:36
+
+* android: add web targets to assetlinks for credential sharing (009d233)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e4d746c)
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (0c3dce5)
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+
 ## Release 2026-11-09 00:28
 
 * android: add assetlinks.json for deep links and credential sharing (d476293)
