@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +37,10 @@ import net.skimanager.app.ui.auth.AuthFlow
 import net.skimanager.app.ui.auth.ChooseStart
 import net.skimanager.app.ui.game.DashboardScreen
 import net.skimanager.app.ui.game.FinancesScreen
+import net.skimanager.app.ui.game.HireScreen
+import net.skimanager.app.ui.game.MapScreen
+import net.skimanager.app.ui.game.StaffScreen
+import net.skimanager.app.ui.game.TicketsScreen
 import net.skimanager.app.ui.game.LeaderboardScreen
 import net.skimanager.app.ui.game.MoreScreen
 import net.skimanager.app.ui.game.NotificationsScreen
@@ -46,12 +52,14 @@ private data class Tab(val route: String, val label: String, val icon: ImageVect
 
 private val TABS = listOf(
     Tab("dashboard", "Dashboard", Icons.Filled.Landscape),
+    Tab("map", "Map", Icons.Filled.Map),
+    Tab("staff", "Staff", Icons.Filled.Groups),
     Tab("finances", "Finances", Icons.Filled.AccountBalance),
     Tab("more", "More", Icons.Filled.Menu),
 )
 
 private val TITLES = mapOf(
-    "dashboard" to "Dashboard", "finances" to "Finances", "more" to "More", "weather" to "Weather",
+    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "weather" to "Weather",
     "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings",
 )
 
@@ -132,6 +140,10 @@ private fun GameShell(app: AppState) {
     ) { padding ->
         NavHost(nav, "dashboard", Modifier.padding(padding)) {
             composable("dashboard") { DashboardScreen(app) }
+            composable("map") { MapScreen(app) }
+            composable("staff") { StaffScreen(app) { nav.navigate("hire") } }
+            composable("hire") { HireScreen(app) }
+            composable("tickets") { TicketsScreen(app) }
             composable("finances") { FinancesScreen(app) }
             composable("more") { MoreScreen { nav.navigate(it) } }
             composable("weather") { WeatherScreen(app) }

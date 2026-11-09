@@ -278,7 +278,7 @@ private fun DeleteAccountDialog(app: AppState, onClose: () -> Unit) {
 @Composable
 fun MoreScreen(onOpen: (String) -> Unit) {
     ScreenColumn {
-        listOf("weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
+        listOf("tickets" to "Lift tickets", "weather" to "Weather", "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings").forEach { (route, label) ->
             Panel {
                 Text(label, Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { onOpen(route) }.padding(vertical = 12.dp), fontWeight = FontWeight.Medium)
             }

@@ -46,6 +46,17 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
     suspend fun postJson(path: String, json: JsonObject): ApiResult =
         send(Request.Builder().url(base + path).post(json.toString().toRequestBody("application/json".toMediaType())))
 
+    /** A file from the site, such as the map image. Null if it can't be fetched */
+    suspend fun bytes(path: String): ByteArray? = withContext(Dispatchers.IO) {
+        try {
+            client.newCall(Request.Builder().url(BuildConfig.BASE_URL + path).build()).execute().use { response ->
+                if (response.isSuccessful) response.body?.bytes() else null
+            }
+        } catch (e: IOException) {
+            null
+        }
+    }
+
     private suspend fun send(builder: Request.Builder): ApiResult = withContext(Dispatchers.IO) {
         tokens()?.let { builder.header("Authorization", "Bearer $it") }
         builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
