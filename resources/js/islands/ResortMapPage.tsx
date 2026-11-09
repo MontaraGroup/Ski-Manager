@@ -1,44 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button, Chip, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { createMapEngine } from './resort-map/mapEngine';
 import type { BuiltItem, MapSegment, ResortMapProps, Sector, EditorState } from './resort-map/types';
-
-const COST_PER_METER: Record<string, number> = {
-  button: 80,
-  chair_fixed: 150,
-  chair_detach: 250,
-  gondola: 400,
-  cable_car: 600,
-};
-
-const SEAT_MULT: Record<number, number> = {
-  1: 0.7,
-  2: 1.0,
-  3: 1.15,
-  4: 1.3,
-  6: 1.6,
-  8: 2.0,
-  10: 2.5,
-  20: 4.0,
-  30: 5.0,
-};
-
-const SEAT_OPTIONS: Record<string, number[]> = {
-  button: [1, 2],
-  chair_fixed: [2, 3, 4],
-  chair_detach: [4, 6, 8],
-  gondola: [6, 8, 10],
-  cable_car: [20, 30],
-};
-
-function formatCurrency(n: number, isImperial: boolean): string {
-  const prefix = isImperial ? '$' : '';
-  const suffix = isImperial ? '' : ' €';
-  return (n < 0 ? '-' : '') + prefix + Math.abs(Math.round(n)).toLocaleString('en-US') + suffix;
-}
+import { MapHeader } from './resort-map/MapHeader';
+import { MapPanel } from './resort-map/MapPanel';
+import { MapKey } from './resort-map/MapKey';
+import { BuildFooter, BuildView } from './resort-map/BuildView';
+import { BuiltRunView } from './resort-map/BuiltRunView';
+import { BrowseView, type BuildNotice, type SortOrder, type Suggestion } from './resort-map/BrowseView';
+import { TrailSign, buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
 
 export default function ResortMapPage(props: ResortMapProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ReturnType<typeof createMapEngine> | null>(null);
 
@@ -49,32 +23,40 @@ export default function ResortMapPage(props: ResortMapProps) {
   const [builtItems, setBuiltItems] = useState<Record<string, BuiltItem>>(props.builtItems);
   const [userCash, setUserCash] = useState<number>(props.userCash);
 
-  // UI state
-  const [mapFilter, setMapFilter] = useState<string>('all');
-  const [isBuildDrawerOpen, setIsBuildDrawerOpen] = useState<boolean>(false);
-  const [isInspectorDrawerOpen, setIsInspectorDrawerOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'lift' | 'slope'>('lift');
-  const [selectedSeg, setSelectedSeg] = useState<MapSegment | null>(null);
+  const isBuilt = (id: string | number) => builtIds.some((b) => sameId(b, id));
+  const builtSlopes = useMemo(() => segments.filter((s) => s.type !== 'lift' && builtIds.some((b) => sameId(b, s.id))), [segments, builtIds]);
+  const builtLiftCount = useMemo(() => segments.filter((s) => s.type === 'lift' && builtIds.some((b) => sameId(b, s.id))).length, [segments, builtIds]);
+  // A new player gets the panel open on their first step: a slope, then a lift
+  const needsFirst = !props.isAdmin && (builtSlopes.length === 0 || builtLiftCount === 0);
 
-  // Build blueprint options
+  // UI states
+  const [mapFilter, setMapFilter] = useState<string>('all');
+  const [showAvailable, setShowAvailable] = useState<boolean>(true);
+  const [isBuildDrawerOpen, setIsBuildDrawerOpen] = useState<boolean>(needsFirst);
+  const [isInspectorDrawerOpen, setIsInspectorDrawerOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'lift' | 'slope'>(builtSlopes.length === 0 ? 'slope' : 'lift');
+  const [selectedSeg, setSelectedSeg] = useState<MapSegment | null>(null);
+  const [notice, setNotice] = useState<BuildNotice | null>(null);
+
+  // Build options
   const [liftType, setLiftType] = useState<string>('chair_fixed');
-  const [seats, setSeats] = useState<number>(4);
+  const [seats, setSeats] = useState<number>(props.costs.seatOptions.chair_fixed?.[0] ?? 2);
   const [slopeType, setSlopeType] = useState<string>('downhill');
   const [isConstructing, setIsConstructing] = useState<boolean>(false);
 
-  // Build list filters
+  // Build list search / sort
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [diffFilter, setDiffFilter] = useState<string>('');
-  const [sortOrder, setSortOrder] = useState<'cost_asc' | 'cost_desc' | 'len_desc' | 'name_asc'>('cost_asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('cost_asc');
 
-  // Admin inspector filters & form
+  // Inspector search / filter
   const [inspectorSearch, setInspectorSearch] = useState<string>('');
   const [inspectorFilter, setInspectorFilter] = useState<string>('all');
   const [showNewSectorForm, setShowNewSectorForm] = useState<boolean>(false);
   const [newSecName, setNewSecName] = useState<string>('');
   const [newSecColor, setNewSecColor] = useState<string>('#3b82f6');
 
-  // Admin Editor state
+  // Editor state
   const [editorState, setEditorState] = useState<EditorState>({
     active: false,
     mode: null,
@@ -93,15 +75,40 @@ export default function ResortMapPage(props: ResortMapProps) {
     snapStatus: null,
   });
 
-  // Local Toast
+  // Toast
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
-  const toastTimeoutRef = useRef<any>(null);
 
   function triggerToast(msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToast({ msg, type });
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3200);
   }
+
+  /*
+   * Fill the screen between the navbar and the phone dock. A fixed calc() left the bottom of the
+   * map, and anything placed there, under the dock.
+   */
+  const [frameHeight, setFrameHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    function fit() {
+      const el = rootRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const dock = document.querySelector('.mobile-bottom-dock') as HTMLElement | null;
+      const dockH = dock && getComputedStyle(dock).display !== 'none' ? dock.offsetHeight : 0;
+      setFrameHeight(Math.max(320, window.innerHeight - top - dockH));
+    }
+    fit();
+    window.addEventListener('resize', fit);
+    // The navbar and stats bar above can finish rendering after this island: measure again when they do
+    const ro = new ResizeObserver(fit);
+    ro.observe(document.body);
+    return () => {
+      window.removeEventListener('resize', fit);
+      ro.disconnect();
+    };
+  }, []);
 
   // Initialize Map Engine
   useEffect(() => {
@@ -111,8 +118,9 @@ export default function ResortMapPage(props: ResortMapProps) {
       onSelectSegment: (seg) => {
         setSelectedSeg(seg);
         if (seg) {
+          setNotice(null);
           if (seg.type !== 'lift') {
-            setSlopeType(seg.type || 'downhill');
+            setSlopeType(seg.type && seg.type !== 'slope' ? seg.type : 'downhill');
           }
         }
       },
@@ -120,12 +128,10 @@ export default function ResortMapPage(props: ResortMapProps) {
         setIsInspectorDrawerOpen(false);
         setIsBuildDrawerOpen(true);
         setActiveTab(tab);
-        document.body.classList.add('map-drawer-open');
       },
       onCloseBuildDrawer: () => {
         setIsBuildDrawerOpen(false);
         setSelectedSeg(null);
-        document.body.classList.remove('map-drawer-open');
       },
       onEditorStateChange: (state) => setEditorState(state),
       onSegmentsUpdate: (segs) => setSegments(segs),
@@ -140,6 +146,10 @@ export default function ResortMapPage(props: ResortMapProps) {
 
     engine.init(mapContainerRef.current);
     engineRef.current = engine;
+    setShowAvailable(engine.getShowAvailable());
+    if (needsFirst) engine.setBuildMode(builtSlopes.length === 0 ? 'slope' : 'lift');
+    // The frame may already have its final size by now; fit once the panel has laid out
+    requestAnimationFrame(syncMapSize);
 
     return () => {
       engine.destroy();
@@ -147,131 +157,110 @@ export default function ResortMapPage(props: ResortMapProps) {
     };
   }, []);
 
-  // Update seats default when liftType changes
+  /*
+   * Leaflet measures its box once: tell it when the frame is resized. Until the player moves the map
+   * (the engine tracks that), it also refits to the runs, above the phone's bottom sheet. The sheet's
+   * maximum (half the map, MapPanel) is used rather than its height mid-layout.
+   */
+  const panelOpen = isBuildDrawerOpen || isInspectorDrawerOpen;
+  function syncMapSize() {
+    if (!engineRef.current || !mapContainerRef.current) return;
+    const phone = window.matchMedia('(max-width: 767px)').matches;
+    const pad = phone && panelOpen ? mapContainerRef.current.getBoundingClientRect().height * 0.5 : 0;
+    engineRef.current.resize(pad);
+  }
   useEffect(() => {
-    const opts = SEAT_OPTIONS[liftType] || [2, 4];
-    if (!opts.includes(seats)) {
-      setSeats(opts[0]);
-    }
-  }, [liftType]);
+    if (frameHeight) syncMapSize();
+  }, [frameHeight, panelOpen]);
 
-  // Sync drawer body class
+  // The tutorial card (layouts/main.php) moves out of the way on phones while a panel is open
   useEffect(() => {
-    const isOpen = isBuildDrawerOpen || isInspectorDrawerOpen;
-    document.body.classList.toggle('map-drawer-open', isOpen);
+    document.body.classList.toggle('map-drawer-open', isBuildDrawerOpen || isInspectorDrawerOpen);
   }, [isBuildDrawerOpen, isInspectorDrawerOpen]);
 
-  // Header stats
-  const { liftCount, slopeCount } = useMemo(() => {
-    let lifts = 0;
-    let slopes = 0;
-    segments.forEach((s) => {
-      if (s.type === 'lift') lifts++;
-      else slopes++;
-    });
-    return { liftCount: lifts, slopeCount: slopes };
-  }, [segments]);
+  // Keep the carrier size valid for the chosen lift system
+  useEffect(() => {
+    const opts = props.costs.seatOptions[liftType] || [2];
+    if (!opts.includes(seats)) setSeats(opts[0]);
+  }, [liftType]);
 
-  // Available segments counts
-  const { availLiftsCount, availSlopesCount } = useMemo(() => {
-    let lifts = 0;
-    let slopes = 0;
-    segments.forEach((s) => {
-      const isBuilt = builtIds.some((b) => String(b) === String(s.id) || Number(b) === Number(s.id));
-      if (isBuilt) return;
-      if (!props.isAdmin && props.releasedSectorIds.length > 0) {
-        const secVal = Number(s.sector || 0);
-        if (secVal > 0 && !props.releasedSectorIds.includes(secVal)) return;
-      }
-      if (s.type === 'lift') lifts++;
-      else slopes++;
-    });
-    return { availLiftsCount: lifts, availSlopesCount: slopes };
-  }, [segments, builtIds, props.isAdmin, props.releasedSectorIds]);
+  const isReleased = (s: MapSegment) => {
+    if (props.isAdmin || props.releasedSectorIds.length === 0) return true;
+    const secVal = Number(s.sector || 0);
+    return secVal === 0 || props.releasedSectorIds.includes(secVal);
+  };
 
-  // Filtered available runs for build list
+  const buildable = useMemo(() => segments.filter((s) => !isBuilt(s.id) && isReleased(s)), [segments, builtIds]);
+  const availLiftsCount = buildable.filter((s) => s.type === 'lift').length;
+  const availSlopesCount = buildable.length - availLiftsCount;
+
+  // Runs for the list: this tab, search, difficulty, then sorted by the real price
   const availableItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const list = segments.filter((s) => {
-      if (activeTab === 'lift' && s.type !== 'lift') return false;
-      if (activeTab === 'slope' && s.type === 'lift') return false;
-
-      const isBuilt = builtIds.some((b) => String(b) === String(s.id) || Number(b) === Number(s.id));
-      if (isBuilt) return false;
-
-      if (!props.isAdmin && props.releasedSectorIds.length > 0) {
-        const secVal = Number(s.sector || 0);
-        if (secVal > 0 && !props.releasedSectorIds.includes(secVal)) return false;
-      }
-
-      if (q && (s.name || '').toLowerCase().indexOf(q) === -1) return false;
+    const list = buildable.filter((s) => {
+      if ((activeTab === 'lift') !== (s.type === 'lift')) return false;
+      if (q && !(s.name || '').toLowerCase().includes(q)) return false;
       if (activeTab === 'slope' && diffFilter && s.difficulty !== diffFilter) return false;
-
       return true;
     });
-
+    const price = (s: MapSegment) => cheapestCost(s, props.costs);
     list.sort((a, b) => {
-      const lenA = Number(a.length_meters) || 0;
-      const lenB = Number(b.length_meters) || 0;
-      if (sortOrder === 'cost_asc') return lenA - lenB;
-      if (sortOrder === 'cost_desc') return lenB - lenA;
-      if (sortOrder === 'len_desc') return lenB - lenA;
-      return String(a.name || '').localeCompare(String(b.name || ''), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
+      if (sortOrder === 'cost_asc') return price(a) - price(b);
+      if (sortOrder === 'cost_desc') return price(b) - price(a);
+      if (sortOrder === 'len_desc') return (Number(b.length_meters) || 0) - (Number(a.length_meters) || 0);
+      return String(a.name || '').localeCompare(String(b.name || ''), undefined, { numeric: true, sensitivity: 'base' });
     });
-
     return list;
-  }, [segments, builtIds, activeTab, searchQuery, diffFilter, sortOrder, props.isAdmin, props.releasedSectorIds]);
+  }, [buildable, activeTab, searchQuery, diffFilter, sortOrder]);
 
-  // Filtered segments for Inspector
-  const inspectorSegments = useMemo(() => {
-    const q = inspectorSearch.trim().toLowerCase();
-    return segments.filter((s) => {
-      if (inspectorFilter === 'lift' && s.type !== 'lift') return false;
-      if (inspectorFilter === 'slope' && s.type === 'lift') return false;
-      if (inspectorFilter === 'unassigned' && Number(s.sector || 0) !== 0) return false;
-      if (q && (s.name || '').toLowerCase().indexOf(q) === -1) return false;
-      return true;
-    });
-  }, [segments, inspectorSearch, inspectorFilter]);
-
-  // Selected segment construction cost
-  const calculatedCost = useMemo(() => {
-    if (!selectedSeg) return 0;
-    const len = Number(selectedSeg.length_meters) || 0;
-    if (selectedSeg.type === 'lift') {
-      const rate = COST_PER_METER[liftType] || 150;
-      const mult = SEAT_MULT[seats] || 1.3;
-      return Math.round(len * rate * mult);
+  /*
+   * First-build help. No slope yet: the three cheapest easy runs. A slope but no lift: the three lifts
+   * whose ends are closest to an end of a built slope. The game doesn't require them to connect, so
+   * this is a suggestion, not a rule.
+   */
+  const { suggestions, suggestionTitle } = useMemo((): { suggestions: Suggestion[]; suggestionTitle: string | null } => {
+    if (props.isAdmin) return { suggestions: [], suggestionTitle: null };
+    if (builtSlopes.length === 0 && activeTab === 'slope') {
+      const slopes = buildable.filter((s) => s.type !== 'lift');
+      const easy = slopes.filter((s) => s.difficulty === 'green' || s.difficulty === 'blue');
+      const pool = (easy.length >= 3 ? easy : slopes).slice().sort((a, b) => buildCost(a, props.costs) - buildCost(b, props.costs));
+      return { suggestionTitle: 'Build your first slope', suggestions: pool.slice(0, 3).map((seg) => ({ seg, reason: 'Good first slope' })) };
     }
-    return Math.round(len * 50);
-  }, [selectedSeg, liftType, seats]);
-
-  const canAfford = userCash >= calculatedCost;
-
-  // Economy info
-  const economyInfo = useMemo(() => {
-    if (!selectedSeg || !props.economyV2) return null;
-    const m = Number(selectedSeg.length_meters) || 0;
-    if (selectedSeg.type === 'lift') {
-      const cap = props.economyV2.capacity[liftType] || 2400;
-      const maxS = props.economyV2.maxSeats[liftType] || 4;
-      const perHour = Math.round(cap * Math.min(1, seats / maxS));
-      const daily = Math.round(perHour * props.economyV2.perDay);
-      const runCost = m * (props.economyV2.liftRun[liftType] || 0.8);
-      const kwh = Math.round(m * (props.economyV2.liftKwh[liftType] || 0.8));
-      return `Carries ~${daily.toLocaleString()} skiers/day · runs ${formatCurrency(runCost, props.isImperial)}/day + ${kwh.toLocaleString()} kWh`;
+    if (builtSlopes.length > 0 && builtLiftCount === 0 && activeTab === 'lift') {
+      const ranked = buildable
+        .filter((s) => s.type === 'lift')
+        .map((seg) => {
+          let best = Infinity;
+          let near = builtSlopes[0];
+          for (const slope of builtSlopes) {
+            const d = endDistance(seg, slope);
+            if (d < best) {
+              best = d;
+              near = slope;
+            }
+          }
+          return { seg, best, near };
+        })
+        .filter((r) => Number.isFinite(r.best))
+        .sort((a, b) => a.best - b.best)
+        .slice(0, 3);
+      return { suggestionTitle: 'Now add a lift', suggestions: ranked.map((r) => ({ seg: r.seg, reason: `Near ${r.near.name || 'your slope'}` })) };
     }
-    const skiers = Math.round(30 + m / 40);
-    const upkeep = m * props.economyV2.slopeRun;
-    return `Draws ~${skiers} skiers/day · upkeep ${formatCurrency(upkeep, props.isImperial)}/day`;
-  }, [selectedSeg, liftType, seats, props.economyV2, props.isImperial]);
+    return { suggestions: [], suggestionTitle: null };
+  }, [buildable, builtSlopes, builtLiftCount, activeTab, props.isAdmin]);
+
+  const calculatedCost = selectedSeg ? buildCost(selectedSeg, props.costs, liftType, seats) : 0;
+  const selectedItem = selectedSeg ? builtItems[String(selectedSeg.id)] ?? builtItems[Number(selectedSeg.id) as any] : undefined;
+  const selectedIsBuilt = !!selectedSeg && isBuilt(selectedSeg.id);
 
   function handleFilterClick(filter: string) {
     setMapFilter(filter);
     engineRef.current?.setFilter(filter);
+  }
+
+  function handleShowAvailable(v: boolean) {
+    setShowAvailable(v);
+    engineRef.current?.setShowAvailable(v);
   }
 
   function handleOpenBuildDrawer(tab: 'lift' | 'slope') {
@@ -281,11 +270,23 @@ export default function ResortMapPage(props: ResortMapProps) {
     engineRef.current?.setBuildMode(tab);
   }
 
+  function handleTab(tab: 'lift' | 'slope') {
+    setActiveTab(tab);
+    engineRef.current?.setBuildMode(tab);
+  }
+
   function handleCloseBuildDrawer() {
     setIsBuildDrawerOpen(false);
     setSelectedSeg(null);
+    setNotice(null);
     engineRef.current?.deselectSegment();
     engineRef.current?.setBuildMode(null);
+  }
+
+  /** Back from a run to the list, keeping the panel open */
+  function handleBack() {
+    engineRef.current?.deselectSegment();
+    setSelectedSeg(null);
   }
 
   function handleSelectSeg(seg: MapSegment) {
@@ -294,18 +295,31 @@ export default function ResortMapPage(props: ResortMapProps) {
 
   function handleConstruct() {
     if (!selectedSeg || isConstructing) return;
+    const seg = selectedSeg;
+    const wasSlope = seg.type !== 'lift';
     setIsConstructing(true);
-    engineRef.current?.buildSegment(
-      selectedSeg,
-      {
-        liftType,
-        seats,
-        slopeType,
-      },
-      () => {
-        setIsConstructing(false);
+    engineRef.current?.buildSegment(seg, { liftType, seats, slopeType }, (ok: boolean) => {
+      setIsConstructing(false);
+      if (!ok) return;
+      // One next step: the other half of a working resort, then ticket prices before tonight
+      const slopes = builtSlopes.length + (wasSlope ? 1 : 0);
+      const lifts = builtLiftCount + (wasSlope ? 0 : 1);
+      const next: BuildNotice['next'] = lifts === 0 ? 'lift' : slopes === 0 ? 'slope' : 'tickets';
+      setNotice({ name: seg.name || (wasSlope ? 'your slope' : 'your lift'), next });
+      if (next === 'lift' || next === 'slope') handleTab(next);
+      if (typeof (window as any).loadTutorial === 'function') (window as any).loadTutorial();
+    });
+  }
+
+  function handleDemolish(done: (ok: boolean) => void) {
+    if (!selectedSeg) return done(false);
+    engineRef.current?.demolish(selectedSeg, (ok: boolean) => {
+      done(ok);
+      if (ok) {
+        engineRef.current?.deselectSegment();
+        setSelectedSeg(null);
       }
-    );
+    });
   }
 
   function handleResortChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -327,181 +341,96 @@ export default function ResortMapPage(props: ResortMapProps) {
     form.submit();
   }
 
+  // Used by the admin inspector's segment list
   function renderTrailSign(seg: MapSegment) {
-    if (seg.type === 'lift') {
-      return (
-        <span className="inline-flex size-5 shrink-0 items-center justify-center text-warning" title="Lift">
-          <Icon name="fa-elevator" />
-        </span>
-      );
-    }
-    const d = seg.difficulty || 'blue';
-    if (d === 'green') return <span className="tsign green" title="Easiest" />;
-    if (d === 'black') return <span className="tsign black" title="Most difficult" />;
-    if (d === 'double_black') {
-      return (
-        <span className="tsign-pair" title="Experts only">
-          <span className="tsign black" />
-          <span className="tsign black" />
-        </span>
-      );
-    }
-    return <span className="tsign blue" title="More difficult" />;
+    return <TrailSign seg={seg} />;
   }
 
+  // Filtered segments for Inspector
+  const inspectorSegments = useMemo(() => {
+    const q = inspectorSearch.trim().toLowerCase();
+    return segments.filter((s) => {
+      if (inspectorFilter === 'lift' && s.type !== 'lift') return false;
+      if (inspectorFilter === 'slope' && s.type === 'lift') return false;
+      if (inspectorFilter === 'unassigned' && Number(s.sector || 0) !== 0) return false;
+      if (q && (s.name || '').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+  }, [segments, inspectorSearch, inspectorFilter]);
+
   function getSectorLabel(secId: any) {
-    if (!secId || secId === '0' || secId === 0) return 'Default (0)';
+    if (!secId || secId === '0' || secId === 0) return props.isAdmin ? 'Default (0)' : 'Main area';
     const sec = sectors.find((s) => String(s.id) === String(secId) || s.name === String(secId));
     return sec ? sec.name : `Sector #${secId}`;
   }
 
+  const adminActions = props.isAdmin ? (
+    <>
+      <Button
+        variant="outline"
+        onPress={() => {
+          handleCloseBuildDrawer();
+          setIsInspectorDrawerOpen((prev) => !prev);
+        }}
+        className="min-h-11 gap-1.5 font-semibold text-foreground md:min-h-9"
+        aria-label="Open Segment & Sector Manager"
+      >
+        <Icon name="fa-list-check" className="text-link" />
+        <span className="hidden sm:inline">Segments & Sectors</span>
+      </Button>
+      <select
+        value={props.resortMap}
+        onChange={handleResortChange}
+        aria-label="Resort map"
+        className="h-11 rounded-lg border border-border bg-surface px-2.5 text-sm font-medium text-foreground outline-none md:h-9"
+      >
+        {Object.entries(props.resortMaps).map(([k, rm]) => (
+          <option key={k} value={k}>
+            {rm.name}
+          </option>
+        ))}
+      </select>
+    </>
+  ) : undefined;
+
+  const cashText = formatCurrency(userCash, props.isImperial);
+  const settle = settleText(props.settleAt);
+
   return (
-    <div className="relative flex h-[calc(100vh-65px)] w-full flex-col overflow-hidden bg-background text-foreground">
-      {/* Top Header Bar */}
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-2">
-        <div className="flex items-center gap-3">
-          <a
-            href="/resort"
-            className="flex size-9 items-center justify-center rounded-lg border border-border text-foreground hover:bg-surface-secondary"
-            aria-label="Back to resort"
-          >
-            <Icon name="fa-arrow-left" />
-          </a>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">
-              {props.mapConfig.name} <span className="text-xs font-normal text-muted">Trail map</span>
-            </h1>
-            <div className="flex items-center gap-3 text-xs text-muted">
-              <span>
-                <b className="tabular-nums text-foreground">{slopeCount}</b> slopes
-              </span>
-              <span>
-                <b className="tabular-nums text-foreground">{liftCount}</b> lifts
-              </span>
-              <span>
-                <b className="tabular-nums text-foreground">{segments.length}</b> segments
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Filter Pills & Actions */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="hidden rounded-lg border border-border bg-surface-secondary p-0.5 md:flex">
-            <button
-              type="button"
-              onClick={() => handleFilterClick('all')}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                mapFilter === 'all' ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterClick('lift')}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                mapFilter === 'lift' ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Lifts
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterClick('slope')}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                mapFilter === 'slope' ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Slopes
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFilterClick('built')}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                mapFilter === 'built' ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-              }`}
-            >
-              Built
-            </button>
-            {props.isAdmin && (
-              <button
-                type="button"
-                onClick={() => handleFilterClick('unassigned')}
-                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
-                  mapFilter === 'unassigned' ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-                }`}
-                title="Segments with Sector 0"
-              >
-                Unassigned
-              </button>
-            )}
-          </div>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() => engineRef.current?.fitBounds()}
-            className="min-h-8 px-2.5 text-foreground"
-            aria-label="Reset Map Zoom (F)"
-          >
-            <Icon name="fa-expand" />
-          </Button>
-
-          {props.isAdmin && (
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => {
-                handleCloseBuildDrawer();
-                setIsInspectorDrawerOpen((prev) => !prev);
-              }}
-              className="min-h-8 gap-1.5 font-semibold text-foreground"
-              aria-label="Open Segment & Sector Manager"
-            >
-              <Icon name="fa-list-check" className="text-link" />
-              <span className="hidden sm:inline">Segments & Sectors</span>
-            </Button>
-          )}
-
-          <Button
-            size="sm"
-            variant="primary"
-            onPress={() => handleOpenBuildDrawer('lift')}
-            className="min-h-8 gap-1.5 font-semibold"
-          >
-            <Icon name="fa-hammer" />
-            Build
-          </Button>
-
-          {props.isAdmin && (
-            <select
-              value={props.resortMap}
-              onChange={handleResortChange}
-              className="h-8 rounded-lg border border-border bg-surface px-2.5 text-xs font-medium text-foreground outline-none"
-            >
-              {Object.entries(props.resortMaps).map(([k, rm]) => (
-                <option key={k} value={k}>
-                  {rm.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      </header>
+    <div
+      ref={rootRef}
+      style={frameHeight ? { height: frameHeight } : undefined}
+      className="relative flex h-[calc(100dvh-65px)] w-full flex-col overflow-hidden bg-background text-foreground"
+    >
+      <MapHeader
+        mapName={props.mapConfig.name}
+        builtSlopes={builtSlopes.length}
+        builtLifts={builtLiftCount}
+        cashText={cashText}
+        filter={mapFilter}
+        onFilter={handleFilterClick}
+        showAvailable={showAvailable}
+        onShowAvailable={handleShowAvailable}
+        onFit={() => engineRef.current?.fitBounds()}
+        onBuild={() => handleOpenBuildDrawer(builtSlopes.length === 0 ? 'slope' : activeTab)}
+        isAdmin={props.isAdmin}
+        adminActions={adminActions}
+      />
 
       {/* Main Map Viewport */}
       <div className="relative flex-1 overflow-hidden">
         <div ref={mapContainerRef} id="map" />
 
-        {/* Subtle HD Resolution Indicator */}
+        {/* Shown by the engine while the full-size map image loads */}
         <div
           id="hdBadge"
-          className="absolute bottom-4 right-20 z-[800] hidden items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs text-foreground shadow-lg"
+          className="absolute top-3 right-3 z-[800] hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground shadow-sm"
         >
           <Spinner size="sm" />
-          <span>Loading HD terrain...</span>
+          <span>Loading the detailed map…</span>
         </div>
+
+        <MapKey isAdmin={props.isAdmin} />
 
         {/* Admin Floating Top Editor Toolbar */}
         {props.isAdmin && (
@@ -742,452 +671,96 @@ export default function ResortMapPage(props: ResortMapProps) {
           </div>
         )}
 
-        {/* Map Legend */}
-        <div className="absolute bottom-3 left-3 z-[800] flex flex-col gap-1 rounded-lg border border-border bg-surface/95 p-2.5 text-xs text-foreground shadow-xl backdrop-blur-md">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted">Trail key</div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center">
-              <span className="tsign green" />
-            </span>
-            <span className="inline-block h-1 w-4 rounded-sm bg-emerald-500" />
-            <span>Easiest</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center">
-              <span className="tsign blue" />
-            </span>
-            <span className="inline-block h-1 w-4 rounded-sm bg-blue-500" />
-            <span>More difficult</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center">
-              <span className="tsign black" />
-            </span>
-            <span className="inline-block h-1 w-4 rounded-sm bg-slate-900" />
-            <span>Most difficult</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center">
-              <span className="tsign-pair">
-                <span className="tsign black" />
-                <span className="tsign black" />
-              </span>
-            </span>
-            <span className="inline-block h-1 w-4 rounded-sm bg-red-600" />
-            <span>Experts only</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center text-warning">
-              <Icon name="fa-elevator" />
-            </span>
-            <span className="inline-block h-1 w-4 rounded-sm bg-amber-500" />
-            <span>Lift</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex w-5 justify-center" />
-            <span className="inline-block h-1 w-4 rounded-sm bg-purple-500" />
-            <span>Available to build</span>
-          </div>
-        </div>
 
-        {/* Build FAB */}
-        {!isBuildDrawerOpen && (
+        {/* Build button on the map, for when the panel is closed */}
+        {!isBuildDrawerOpen && !isInspectorDrawerOpen && !editorState.active && (
           <Button
-            size="lg"
             variant="primary"
-            onPress={() => handleOpenBuildDrawer('lift')}
-            className="absolute bottom-6 right-6 z-[900] size-14 rounded-full shadow-2xl p-0 min-w-0"
-            aria-label="Open Build Menu"
+            isIconOnly
+            onPress={() => handleOpenBuildDrawer(builtSlopes.length === 0 ? 'slope' : activeTab)}
+            className="absolute right-4 bottom-4 z-[900] size-14 rounded-full shadow-lg"
+            aria-label="Build"
           >
             <Icon name="fa-hammer" className="text-xl" />
           </Button>
         )}
 
-        {/* Player Build Drawer */}
+        {/* Player panel: a run's build view or details, or the list of runs */}
         {isBuildDrawerOpen && (
-          <aside className="absolute top-3 right-3 bottom-3 z-[950] flex w-96 max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-xl border border-border bg-surface text-foreground shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border p-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                  <Icon name="fa-hammer" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">Build</h2>
-                  <div className="flex items-center gap-1.5 text-xs text-muted">
-                    <span>Cash</span>
-                    <span className="tabular-nums font-semibold text-foreground">
-                      {formatCurrency(userCash, props.isImperial)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={handleCloseBuildDrawer}
-                className="size-11 sm:size-8 p-0 text-muted hover:text-foreground flex items-center justify-center"
-                aria-label="Close"
-              >
-                <Icon name="fa-xmark" />
-              </Button>
-            </div>
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto p-3.5">
-              {/* Segmented Tabs */}
-              <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface-secondary p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('lift');
-                    engineRef.current?.setBuildMode('lift');
-                  }}
-                  className={`flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
-                    activeTab === 'lift'
-                      ? 'bg-surface text-foreground shadow-sm'
-                      : 'text-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon name="fa-elevator" className="text-warning" />
-                  <span>Lifts</span>
-                  <Chip size="sm" variant="soft" color="default" className="h-5 px-1.5 text-[11px] tabular-nums">
-                    {availLiftsCount}
-                  </Chip>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('slope');
-                    engineRef.current?.setBuildMode('slope');
-                  }}
-                  className={`flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold transition-colors ${
-                    activeTab === 'slope'
-                      ? 'bg-surface text-foreground shadow-sm'
-                      : 'text-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon name="fa-person-skiing" className="text-success" />
-                  <span>Slopes</span>
-                  <Chip size="sm" variant="soft" color="default" className="h-5 px-1.5 text-[11px] tabular-nums">
-                    {availSlopesCount}
-                  </Chip>
-                </button>
-              </div>
-
-              {/* Selected Segment Blueprint Card */}
-              {selectedSeg && (
-                <div className="mb-4 rounded-xl border border-border bg-surface-secondary p-3.5">
-                  <div className="mb-3 flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-link">
-                        <span>Selected</span>
-                        <span className="flex items-center gap-1">
-                          {renderTrailSign(selectedSeg)}
-                          <span className="capitalize">{selectedSeg.difficulty?.replace('_', ' ') || 'run'}</span>
-                        </span>
-                      </div>
-                      <h3 className="truncate text-base font-bold text-foreground">{selectedSeg.name || 'Unnamed'}</h3>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
-                        className="size-11 sm:size-7 p-0 text-xs text-muted hover:text-foreground flex items-center justify-center"
-                        aria-label="Center map on this run"
-                      >
-                        <Icon name="fa-location-crosshairs" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => {
-                          setSelectedSeg(null);
-                          engineRef.current?.deselectSegment();
-                        }}
-                        className="size-11 sm:size-7 p-0 text-xs text-muted hover:text-foreground flex items-center justify-center"
-                        aria-label="Deselect"
-                      >
-                        <Icon name="fa-xmark" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Stat Grid */}
-                  <div className="mb-3 grid grid-cols-3 gap-2 border-y border-border py-2 text-xs">
-                    <div>
-                      <div className="text-muted">Length</div>
-                      <div className="tabular-nums font-semibold text-foreground">
-                        {Math.round(selectedSeg.length_meters || 0).toLocaleString()} {props.distUnit}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Build time</div>
-                      <div className="font-semibold text-foreground">
-                        {(selectedSeg.length_meters || 0) < 200 ? '1 day' : (selectedSeg.length_meters || 0) < 500 ? '2 days' : '3 days'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Sector</div>
-                      <div className="truncate font-semibold text-foreground">{getSectorLabel(selectedSeg.sector)}</div>
-                    </div>
-                  </div>
-
-                  {/* Lift Options */}
-                  {selectedSeg.type === 'lift' ? (
-                    <div className="space-y-3">
-                      <div>
-                        <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-foreground">
-                          <span>Lift system</span>
-                          <span className="text-muted font-normal">Hourly capacity</span>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          {[
-                            { id: 'button', name: 'Surface / Button Lift', rate: 80, cap: '1,000/hr' },
-                            { id: 'chair_fixed', name: 'Fixed-Grip Chairlift', rate: 150, cap: '2,400/hr' },
-                            { id: 'chair_detach', name: 'Detachable High-Speed', rate: 250, cap: '3,400/hr' },
-                            { id: 'gondola', name: 'Cabin Gondola', rate: 400, cap: '3,500/hr' },
-                            { id: 'cable_car', name: 'Aerial Tram / Cable Car', rate: 600, cap: '4,000/hr' },
-                          ].map((l) => (
-                            <button
-                              key={l.id}
-                              type="button"
-                              onClick={() => setLiftType(l.id)}
-                              className={`flex items-center justify-between rounded-lg border p-2 text-xs transition-colors ${
-                                liftType === l.id
-                                  ? 'border-accent bg-accent/10 text-foreground'
-                                  : 'border-border bg-surface text-muted hover:border-border/80 hover:text-foreground'
-                              }`}
-                            >
-                              <div className="text-left">
-                                <div className="font-semibold text-foreground">{l.name}</div>
-                                <div className="text-[11px] text-muted">
-                                  {formatCurrency(l.rate, props.isImperial)} / m base
-                                </div>
-                              </div>
-                              <span className="tabular-nums font-semibold text-warning">{l.cap}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="mb-1.5 text-xs font-semibold text-foreground">Carrier size</div>
-                        <div className="flex gap-1.5">
-                          {(SEAT_OPTIONS[liftType] || [2, 4]).map((n) => (
-                            <button
-                              key={n}
-                              type="button"
-                              onClick={() => setSeats(n)}
-                              className={`flex-1 rounded-lg border py-1.5 text-center text-xs font-semibold tabular-nums transition-colors ${
-                                seats === n
-                                  ? 'border-accent bg-accent/15 text-accent-foreground'
-                                  : 'border-border bg-surface text-muted hover:text-foreground'
-                              }`}
-                            >
-                              {n} {liftType === 'gondola' || liftType === 'cable_car' ? 'p' : 'seats'}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Slope Options */
-                    <div>
-                      <div className="mb-1.5 text-xs font-semibold text-foreground">Trail discipline</div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {[
-                          { id: 'downhill', name: 'Downhill', icon: 'fa-person-skiing', tone: 'text-success' },
-                          { id: 'crosscountry', name: 'Cross-Country', icon: 'fa-person-skiing-nordic', tone: 'text-link' },
-                          { id: 'snowpark', name: 'Snow Park', icon: 'fa-person-snowboarding', tone: 'text-purple-400' },
-                          { id: 'luge', name: 'Alpine Luge', icon: 'fa-sleigh', tone: 'text-pink-400' },
-                        ].map((d) => (
-                          <button
-                            key={d.id}
-                            type="button"
-                            onClick={() => setSlopeType(d.id)}
-                            className={`flex items-center gap-2 rounded-lg border p-2 text-xs font-semibold transition-colors ${
-                              slopeType === d.id
-                                ? 'border-accent bg-accent/10 text-foreground'
-                                : 'border-border bg-surface text-muted hover:text-foreground'
-                            }`}
-                          >
-                            <Icon name={d.icon} className={d.tone} />
-                            <span>{d.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Construction Cost & Action */}
-                  <div className="mt-3 border-t border-border pt-3">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <div className="text-[11px] font-semibold text-muted">Construction cost</div>
-                        <div
-                          className={`text-xl font-bold tracking-tight tabular-nums ${
-                            canAfford ? 'text-success' : 'text-danger'
-                          }`}
-                        >
-                          {formatCurrency(calculatedCost, props.isImperial)}
-                        </div>
-                        <div className="text-[11px] tabular-nums text-muted">
-                          {canAfford
-                            ? `Balance after: ${formatCurrency(userCash - calculatedCost, props.isImperial)}`
-                            : `Need ${formatCurrency(calculatedCost - userCash, props.isImperial)} more`}
-                        </div>
-                      </div>
-
-                      <Button
-                        size="md"
-                        variant={canAfford ? 'secondary' : 'outline'}
-                        isDisabled={!canAfford || isConstructing}
-                        onPress={handleConstruct}
-                        className={`font-bold ${canAfford ? 'bg-emerald-600 text-white hover:bg-emerald-500' : ''}`}
-                      >
-                        {isConstructing ? (
-                          <>
-                            <Spinner size="sm" /> Building...
-                          </>
-                        ) : (
-                          <>
-                            <Icon name="fa-hammer" /> Construct
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    {economyInfo && <p className="text-xs text-muted">{economyInfo}</p>}
-                  </div>
-                </div>
-              )}
-
-              {/* Search, Filter & Sort */}
-              <div className="mb-3 flex flex-col gap-2">
-                <div className="relative">
-                  <Icon name="fa-magnifying-glass" className="absolute top-1/2 left-3 -translate-y-1/2 text-xs text-muted" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name"
-                    className="h-11 sm:h-9 w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-3 text-base sm:text-xs text-foreground outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {activeTab === 'slope' && (
-                    <select
-                      value={diffFilter}
-                      onChange={(e) => setDiffFilter(e.target.value)}
-                      className="h-11 sm:h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-base sm:text-xs text-foreground outline-none"
-                    >
-                      <option value="">All grades</option>
-                      <option value="green">● Green (Easy)</option>
-                      <option value="blue">■ Blue (Intermediate)</option>
-                      <option value="black">◆ Black (Advanced)</option>
-                      <option value="double_black">◆◆ Double Black</option>
-                    </select>
-                  )}
-
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as any)}
-                    className="h-11 sm:h-8 flex-1 rounded-lg border border-border bg-surface-secondary px-2 text-base sm:text-xs text-foreground outline-none"
-                  >
-                    <option value="cost_asc">Sort: Cheapest first</option>
-                    <option value="cost_desc">Sort: Expensive first</option>
-                    <option value="len_desc">Sort: Longest first</option>
-                    <option value="name_asc">Sort: Name (A–Z)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Segment List */}
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between px-1 text-xs text-muted">
-                  <span>{availableItems.length} available</span>
-                  <span>Click to configure</span>
-                </div>
-
-                {availableItems.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted">
-                    <Icon
-                      name={activeTab === 'lift' ? 'fa-elevator' : 'fa-person-skiing'}
-                      className="mb-2 text-2xl text-muted/60"
-                    />
-                    <p className="font-semibold text-foreground">No available {activeTab}s match</p>
-                    <p className="mt-1 text-muted">Try clearing your search or grade filter</p>
-                  </div>
-                ) : (
-                  availableItems.map((seg) => {
-                    const isSelected = selectedSeg && String(selectedSeg.id) === String(seg.id);
-                    const lenM = Number(seg.length_meters) || 0;
-                    const baseCost = Math.round(lenM * (seg.type === 'lift' ? 150 : 50));
-                    const afford = userCash >= baseCost;
-                    const days = lenM < 200 ? 1 : lenM < 500 ? 2 : 3;
-
-                    return (
-                      <button
-                        key={seg.id}
-                        type="button"
-                        onClick={() => handleSelectSeg(seg)}
-                        className={`flex items-center gap-3 rounded-lg border p-2.5 text-left transition-colors ${
-                          isSelected
-                            ? 'border-accent bg-accent/15 text-foreground ring-1 ring-accent'
-                            : 'border-border bg-surface-secondary hover:border-border/80 hover:bg-surface-secondary/80'
-                        }`}
-                      >
-                        <div className="flex size-7 shrink-0 items-center justify-center">
-                          {renderTrailSign(seg)}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="truncate text-xs font-semibold text-foreground">
-                              {seg.name || 'Unnamed'}
-                            </span>
-                            <span className="text-[11px] text-muted capitalize">
-                              {seg.type === 'lift' ? 'Lift' : seg.difficulty?.replace('_', ' ') || 'Blue'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-muted">
-                            <span className="tabular-nums font-mono">
-                              {Math.round(lenM).toLocaleString()} {props.distUnit}
-                            </span>
-                            <span>•</span>
-                            <span>
-                              {days} {days === 1 ? 'day' : 'days'}
-                            </span>
-                            {Number(seg.sector || 0) > 0 && (
-                              <>
-                                <span>•</span>
-                                <span className="truncate">{getSectorLabel(seg.sector)}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 text-right">
-                          <div
-                            className={`text-xs font-semibold tabular-nums ${
-                              afford ? 'text-foreground' : 'text-danger'
-                            }`}
-                          >
-                            {seg.type === 'lift' && <span className="text-[10px] text-muted font-normal mr-1">from</span>}
-                            {formatCurrency(baseCost, props.isImperial)}
-                          </div>
-                          <div className="text-[10px] text-muted">{isSelected ? 'Selected' : 'Configure'}</div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </aside>
+          selectedSeg && selectedIsBuilt && selectedItem ? (
+            <MapPanel title={selectedSeg.name || 'Your run'} subtitle="Yours" onClose={handleCloseBuildDrawer} onBack={handleBack}>
+              <BuiltRunView
+                seg={selectedSeg}
+                item={selectedItem}
+                isImperial={props.isImperial}
+                distUnit={props.distUnit}
+                sectorLabel={getSectorLabel(selectedSeg.sector)}
+                economyV2={props.economyV2}
+                onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
+                onDemolish={handleDemolish}
+              />
+            </MapPanel>
+          ) : selectedSeg && !selectedIsBuilt ? (
+            <MapPanel
+              title={selectedSeg.name || 'Unnamed run'}
+              subtitle={`Cash ${cashText}`}
+              onClose={handleCloseBuildDrawer}
+              onBack={handleBack}
+              footer={
+                <BuildFooter
+                  seg={selectedSeg}
+                  cost={calculatedCost}
+                  cash={userCash}
+                  isImperial={props.isImperial}
+                  economyV2={props.economyV2}
+                  liftType={liftType}
+                  seats={seats}
+                  isBuilding={isConstructing}
+                  onBuild={handleConstruct}
+                />
+              }
+            >
+              <BuildView
+                seg={selectedSeg}
+                costs={props.costs}
+                isImperial={props.isImperial}
+                distUnit={props.distUnit}
+                sectorLabel={getSectorLabel(selectedSeg.sector)}
+                liftType={liftType}
+                onLiftType={setLiftType}
+                seats={seats}
+                onSeats={setSeats}
+                slopeType={slopeType}
+                onSlopeType={setSlopeType}
+                onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
+              />
+            </MapPanel>
+          ) : (
+            <MapPanel title="Build" subtitle={`Cash ${cashText}`} icon="fa-hammer" onClose={handleCloseBuildDrawer}>
+              <BrowseView
+                tab={activeTab}
+                onTab={handleTab}
+                liftCount={availLiftsCount}
+                slopeCount={availSlopesCount}
+                items={availableItems}
+                suggestions={suggestions}
+                suggestionTitle={suggestionTitle}
+                notice={notice}
+                settle={settle}
+                costs={props.costs}
+                cash={userCash}
+                isImperial={props.isImperial}
+                distUnit={props.distUnit}
+                search={searchQuery}
+                onSearch={setSearchQuery}
+                grade={diffFilter}
+                onGrade={setDiffFilter}
+                sort={sortOrder}
+                onSort={setSortOrder}
+                onSelect={handleSelectSeg}
+              />
+            </MapPanel>
+          )
         )}
 
         {/* Admin Inspector Drawer */}
@@ -1487,18 +1060,18 @@ export default function ResortMapPage(props: ResortMapProps) {
           </aside>
         )}
 
-        {/* Toast Notification */}
+        {/* Toast for results the panel doesn't show itself (errors, admin actions) */}
         {toast && (
-          <div className="absolute top-4 right-4 z-[1100] transition-all duration-300">
+          <div role={toast.type === 'error' ? 'alert' : 'status'} className="absolute top-16 right-3 left-3 z-[1100] flex justify-center md:top-3 md:left-auto">
             <div
-              className={`rounded-lg px-4 py-2 text-xs font-semibold shadow-xl border ${
+              className={`rounded-lg border px-4 py-2 text-sm font-semibold shadow-lg ${
                 toast.type === 'error'
-                  ? 'bg-danger text-danger-foreground border-danger'
+                  ? 'border-danger bg-danger text-danger-foreground'
                   : toast.type === 'warning'
-                    ? 'bg-warning text-warning-foreground border-warning'
+                    ? 'border-warning bg-warning text-warning-foreground'
                     : toast.type === 'info'
-                      ? 'bg-link text-white border-link'
-                      : 'bg-success text-success-foreground border-success'
+                      ? 'border-border bg-surface text-foreground'
+                      : 'border-success bg-success text-success-foreground'
               }`}
             >
               {toast.msg}

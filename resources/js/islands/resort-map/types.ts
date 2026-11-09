@@ -53,6 +53,14 @@ export interface EconomyV2Config {
   liftKwh: Record<string, number>;
 }
 
+export interface BuildCosts {
+  liftPerM: Record<string, number>;
+  /** Keyed by seat count; JSON object keys arrive as strings */
+  seatMult: Record<string, number>;
+  seatOptions: Record<string, number[]>;
+  slopePerM: number;
+}
+
 export interface ResortMapProps {
   resortMap: string;
   resortMaps: Record<string, MapConfig>;
@@ -71,6 +79,10 @@ export interface ResortMapProps {
   distUnit: string;
   isImperial: boolean;
   economyV2: EconomyV2Config | null;
+  /** ResortMap::calcCost's table, so the page shows what the server charges */
+  costs: BuildCosts;
+  /** Next nightly settle (ISO 8601) */
+  settleAt: string;
   csrf: {
     name: string;
     hash: string;
