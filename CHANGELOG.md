@@ -1,3 +1,11 @@
+## Release 2026-11-09 00:28
+
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (0c3dce5)
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (6185332)
+* legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)
+
 ## Release 2026-11-09 00:21
 
 * seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
