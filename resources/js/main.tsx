@@ -83,6 +83,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   ResortEditPage: () => import('./islands/ResortEditPage'),
   TourPage: () => import('./islands/TourPage'),
   UpdatesPage: () => import('./islands/UpdatesPage'),
+  DemoStartPage: () => import('./islands/DemoStartPage'),
   DevelopersPage: () => import('./islands/DevelopersPage'),
   FaqPage: () => import('./islands/FaqPage'),
   GuidesPage: () => import('./islands/GuidesPage'),

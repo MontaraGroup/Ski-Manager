@@ -3,10 +3,36 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Libraries\AccountPurge;
+use CodeIgniter\Shield\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Demo extends BaseController
 {
+    /** New demos per IP per hour */
+    private const STARTS_PER_HOUR = 5;
+
+    /** The page behind every /demo link: safe for crawlers and prefetch, since only its button creates anything */
+    public function landing()
+    {
+        if (auth()->loggedIn()) {
+            return redirect()->to('/dashboard');
+        }
+        $this->response->setHeader('X-Robots-Tag', 'noindex');
+        return view('demo/start');
+    }
+
+    /** Old links and prefetch: change nothing */
+    public function resetGet(): ResponseInterface
+    {
+        return redirect()->to(auth()->loggedIn() ? '/dashboard' : '/demo');
+    }
+
+    public function exitGet(): ResponseInterface
+    {
+        return redirect()->to(auth()->loggedIn() ? '/dashboard' : '/');
+    }
+
     public function start(): ResponseInterface
     {
         // If already logged in as a permanent player, take them straight to dashboard
@@ -16,7 +42,7 @@ class Demo extends BaseController
 
         // Resume existing active demo session if still valid
         if (session()->get('is_demo') && auth()->loggedIn()) {
-            return redirect()->to('/dashboard')->with('info', 'Resumed your active Demo Mountain sandbox.');
+            return redirect()->to('/dashboard');
         }
 
         // A half-finished sign-in in this browser (an account still waiting for its activation code,
@@ -25,6 +51,10 @@ class Demo extends BaseController
         $authenticator = auth('session')->getAuthenticator();
         if ($authenticator->isPending()) {
             $authenticator->logout();
+        }
+
+        if (!service('throttler')->check('demo-start-' . md5($this->request->getIPAddress()), self::STARTS_PER_HOUR, HOUR)) {
+            return redirect()->to('/demo')->with('error', 'Too many demo resorts from your network. Try again in an hour, or create a free account.');
         }
 
         $db = db_connect();
@@ -275,19 +305,25 @@ class Demo extends BaseController
             return redirect()->to('/demo');
         }
 
-        $userId = auth()->id();
+        $userId = (int) auth()->id();
         $db = db_connect();
 
-        $tables = [
-            'player_items', 'buildings', 'equipment', 'lift_tickets',
-            'staff', 'player_finances', 'financial_transactions',
-            'ticket_sales', 'genepis', 'daily_bonus'
-        ];
+        // This wipes the account, so the session flag alone isn't enough: the row must still be a demo
+        $isDemo = $db->table('users')->where('id', $userId)->where('status', 'demo')->countAllResults() === 1;
+        if (!$isDemo) {
+            session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
+            return redirect()->to('/dashboard');
+        }
+
+        // Everything the player has, except what signs them in
+        $tables = array_filter(AccountPurge::tables(), fn($t) => !str_starts_with($t, 'auth_'));
         try {
             $db->transStart();
             foreach ($tables as $t) {
                 $db->table($t)->where('user_id', $userId)->delete();
             }
+            $db->table('tournaments')->where('host_id', $userId)->delete();
+            $db->table('resort_likes')->where('resort_user_id', $userId)->delete();
             self::seedDemoMountain($userId);
             $db->transComplete();
             if (!$db->transStatus()) throw new \RuntimeException('transaction failed');
@@ -296,7 +332,7 @@ class Demo extends BaseController
             log_message('error', 'Demo: could not reset the demo mountain: ' . $e->getMessage());
             return redirect()->to('/dashboard')->with('error', 'The demo mountain could not be reset right now. Please try again.');
         }
-        return redirect()->to('/dashboard')->with('info', 'Demo Mountain reset to pristine factory starter setup.');
+        return redirect()->to('/dashboard')->with('info', 'Your demo resort is back to its starting setup.');
     }
 
     public function exit(): ResponseInterface
@@ -305,7 +341,7 @@ class Demo extends BaseController
             auth()->logout();
             session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
         }
-        return redirect()->to('/')->with('info', 'Exited Demo Mountain.');
+        return redirect()->to('/')->with('info', 'You left the demo.');
     }
 
     public function claim(): ResponseInterface
@@ -320,17 +356,24 @@ class Demo extends BaseController
         $rules = [
             'username'         => 'required|max_length[30]|min_length[3]|regex_match[\A[a-zA-Z0-9\s\-_]+\z]',
             'email'            => 'required|max_length[254]|valid_email',
-            'password'         => 'required|min_length[8]',
+            'password'         => 'required|max_byte[72]|strong_password[]',
             'password_confirm' => 'required|matches[password]',
+            'terms'            => 'required',
         ];
+        $messages = ['terms' => ['required' => 'Please accept the Terms of Service and Privacy Policy.']];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $username = trim($this->request->getPost('username'));
-        $email    = trim($this->request->getPost('email'));
+        $email    = strtolower(trim($this->request->getPost('email')));
         $password = $this->request->getPost('password');
+
+        // Generated guest addresses are what the cleanup looks for
+        if (str_ends_with($email, '@demo.ski-manager.net')) {
+            return redirect()->back()->withInput()->with('error', 'Please use your own email address.');
+        }
 
         $db->transBegin();
 
@@ -365,30 +408,36 @@ class Demo extends BaseController
             return redirect()->back()->withInput()->with('error', 'An account with that email already exists. Please log in or use a different email.');
         }
 
-        // Promote the ephemeral user into a permanent account!
-        $db->table('users')->where('id', $userId)->update([
-            'username'   => $username,
-            'status'     => null,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        // Promote the ephemeral user into a permanent account. It stays inactive until the email is
+        // confirmed, same as any sign-up, so nobody can hold an address they don't own without a code.
+        try {
+            $db->table('users')->where('id', $userId)->update([
+                'username'   => $username,
+                'status'     => null,
+                'active'     => 0,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        $db->table('auth_identities')->where('user_id', $userId)->update([
-            'name'       => $username,
-            'secret'     => $email,
-            'secret2'    => password_hash($password, PASSWORD_DEFAULT),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+            $db->table('auth_identities')->where('user_id', $userId)->where('type', 'email_password')->update([
+                'name'       => $username,
+                'secret'     => $email,
+                'secret2'    => password_hash($password, PASSWORD_DEFAULT),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
 
-        $db->transCommit();
-
-        // Remove demo tags from session
-        session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
-
-        // Log celebration
-        if (function_exists('log_activity')) {
-            log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            // Someone took the name or email between the check and the update (unique index)
+            $db->transRollback();
+            log_message('error', 'Demo: claim failed for #' . $userId . ': ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'That username or email was just taken. Please choose another.');
         }
 
-        return redirect()->to('/dashboard')->with('success', 'Welcome, Director ' . $username . '! Your resort, lifts, slopes, and treasury have been claimed and permanently saved.');
+        session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
+        log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
+
+        // The email code page; the resort is already theirs if they come back to it later
+        auth('session')->getAuthenticator()->startUpAction('register', model(UserModel::class)->findById($userId));
+        return redirect()->to('auth/a/show');
     }
 }

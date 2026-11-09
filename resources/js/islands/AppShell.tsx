@@ -67,6 +67,7 @@ export default function AppShell(props: ShellProps) {
 function useFlashToasts(flash: Flash) {
   useEffect(() => {
     if (flash.success) toast.success(flash.success);
+    if (flash.info) toast(flash.info);
     if (flash.warning) toast.warning(flash.warning, { timeout: 0 });
     // Errors stay until dismissed, so a player can read them at their own pace
     if (flash.error) toast.danger(flash.error, { timeout: 0 });

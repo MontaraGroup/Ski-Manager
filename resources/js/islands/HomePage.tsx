@@ -129,12 +129,7 @@ export default function HomePage({
                     <Icon name="fa-play" className="w-3.5 h-3.5" />
                     <span>Play Free</span>
                   </a>
-                  <a
-                    href="/demo"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all backdrop-blur-sm"
-                  >
-                    <span>Try Demo Mountain</span>
-                  </a>
+                  <DemoStartButton className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all backdrop-blur-sm">Try Demo Mountain</DemoStartButton>
                   <a
                     href="/login"
                     className="inline-flex min-h-11 items-center justify-center text-sm font-medium text-white/80 hover:text-white underline underline-offset-4 px-3"
@@ -484,12 +479,7 @@ export default function HomePage({
                   <Icon name="fa-play" className="w-3.5 h-3.5" />
                   <span>Create Free Account</span>
                 </a>
-                <a
-                  href="/demo"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold hover:bg-default transition-all"
-                >
-                  <span>Explore Demo</span>
-                </a>
+                <DemoStartButton className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-semibold hover:bg-default transition-all">Explore Demo</DemoStartButton>
               </>
             ) : (
               <a
@@ -504,5 +494,18 @@ export default function HomePage({
         </div>
       </section>
     </div>
+  );
+}
+
+/** Starting a demo creates an account, so it's a form post: crawlers and prefetch following a link can't trigger it */
+function DemoStartButton({ className, children }: { className: string; children: React.ReactNode }) {
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
+  return (
+    <form action="/demo" method="post" className="contents">
+      <input type="hidden" name={meta?.dataset.field || 'csrf_test_name'} value={meta?.content || ''} />
+      <button type="submit" className={className}>
+        <span>{children}</span>
+      </button>
+    </form>
   );
 }

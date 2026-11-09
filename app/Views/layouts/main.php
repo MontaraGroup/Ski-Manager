@@ -399,15 +399,21 @@ body { font-family: var(--sign); }
             <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
         </div>
         <div class="flex items-center gap-2">
-            <a href="/demo/reset" class="inline-flex min-h-8 items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-white/10" onclick="return confirm('Reset mountain to starting template?')">
-                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
-            </a>
+            <form action="/demo/reset" method="post" onsubmit="return confirm('Your demo resort goes back to its starting setup. Your progress is lost.')">
+                <?= csrf_field() ?>
+                <button type="submit" class="inline-flex min-h-8 items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-white/10">
+                    <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
+                </button>
+            </form>
             <a href="/demo/save" class="inline-flex min-h-8 items-center gap-1 rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold shadow-sm text-neutral-900 hover:bg-amber-300">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Save My Resort & Claim Capital
             </a>
-            <a href="/demo/exit" class="inline-flex size-8 items-center justify-center rounded-lg text-primary-foreground/80 hover:text-white hover:bg-white/10" title="Exit Demo">
-                <i class="fa-solid fa-xmark"></i>
-            </a>
+            <form action="/demo/exit" method="post">
+                <?= csrf_field() ?>
+                <button type="submit" class="inline-flex size-8 items-center justify-center rounded-lg text-primary-foreground/80 hover:text-white hover:bg-white/10" title="Exit Demo" aria-label="Exit Demo">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </form>
         </div>
     </div>
     <?php endif ?>
@@ -532,7 +538,7 @@ body { font-family: var(--sign); }
     <?php
         $__flashError = $__flash['error'] ?? null;
         $__flashErrors = $__flash['errors'] ?? null;
-        $__flashSuccess = $__flash['success'] ?? null;
+        $__flashSuccess = $__flash['success'] ?? $__flash['info'] ?? null;
         $__flashWarning = $__flash['warning'] ?? null;
     ?>
     <?php if ($__shellIslands) : ?><noscript><?php endif ?>

@@ -127,7 +127,7 @@ class Shell
     {
         $session = session();
         $flash = [];
-        foreach (['success', 'error', 'warning', 'errors'] as $key) {
+        foreach (['success', 'info', 'error', 'warning', 'errors'] as $key) {
             $value = $session->get($key);
             if ($value === null || $value === '' || $value === []) continue;
             $flash[$key] = $key === 'errors' ? array_values(array_map('strval', (array) $value)) : (string) $value;
