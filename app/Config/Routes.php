@@ -185,6 +185,10 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->post('buildings/toggle/(:num)', 'Buildings::toggleAction/$1');
         $routes->post('buildings/(:num)/sell', 'Buildings::sellAction/$1');
         $routes->post('buildings/sell/(:num)', 'Buildings::sellAction/$1');
+        $routes->get('bank', 'Bank::show');
+        $routes->post('bank/borrow', 'Bank::borrowAction');
+        $routes->post('bank/(:num)/repay', 'Bank::repayAction/$1');
+        $routes->post('bank/repay/(:num)', 'Bank::repayAction/$1');
         $routes->post('account/delete', 'Account::delete');
     });
 });
