@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 
 function readOpen(): boolean {
@@ -24,16 +25,18 @@ export function MapKey({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="absolute top-3 left-14 z-[800] text-sm text-foreground">
-      <button
+      <Button
         type="button"
-        onClick={toggle}
+        variant="ghost"
+        size="sm"
+        onPress={toggle}
         aria-expanded={open}
         aria-controls="map-key"
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 font-medium shadow-sm hover:bg-surface-secondary md:min-h-9"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 font-medium shadow-sm md:min-h-9"
       >
         <Icon name="fa-circle-info" /> Key
         <Icon name={open ? 'fa-chevron-up' : 'fa-chevron-down'} className="text-muted" />
-      </button>
+      </Button>
       {open && (
         <dl id="map-key" className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1.5 rounded-lg border border-border bg-surface p-3 shadow-sm">
           <dt className="flex w-6 justify-center"><span className="tsign green" /></dt>

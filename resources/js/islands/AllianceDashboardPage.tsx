@@ -502,24 +502,28 @@ export default function AllianceDashboardPage({
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {quickAmounts.map((q) => (
-                  <button
+                  <Button
                     key={q}
                     type="button"
-                    onClick={() => setDonateAmount(q)}
-                    disabled={user.cash < q}
-                    className="rounded border border-border px-2 py-1 font-mono text-[11px] hover:bg-default disabled:opacity-40"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => setDonateAmount(q)}
+                    isDisabled={user.cash < q}
+                    className="font-mono text-[11px] px-2 py-1 min-h-7"
                   >
                     +{q.toLocaleString()} €
-                  </button>
+                  </Button>
                 ))}
-                <button
+                <Button
                   type="button"
-                  onClick={() => setDonateAmount(user.cash)}
-                  disabled={user.cash <= 0}
-                  className="rounded border border-border px-2 py-1 font-mono text-[11px] font-semibold text-accent hover:bg-default disabled:opacity-40"
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => setDonateAmount(user.cash)}
+                  isDisabled={user.cash <= 0}
+                  className="font-mono text-[11px] font-semibold text-accent px-2 py-1 min-h-7"
                 >
                   Max
-                </button>
+                </Button>
               </div>
             </div>
             <Button

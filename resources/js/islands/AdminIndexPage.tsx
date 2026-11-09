@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Figure, Page, Panel, PostButton } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type SeasonInfo = {
   name: string;
@@ -437,39 +438,33 @@ export default function AdminIndexPage({
               actions={
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="inline-flex rounded-md border border-edge bg-surface-2 p-0.5">
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => setFilterMode('all')}
-                      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                        filterMode === 'all'
-                          ? 'bg-surface-3 text-foreground font-semibold shadow-xs'
-                          : 'text-muted hover:text-foreground'
-                      }`}
+                      size="sm"
+                      variant={filterMode === 'all' ? 'primary' : 'ghost'}
+                      onPress={() => setFilterMode('all')}
+                      className="px-2.5 py-1 text-xs"
                     >
                       All
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      onClick={() => setFilterMode('online')}
-                      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                        filterMode === 'online'
-                          ? 'bg-surface-3 text-foreground font-semibold shadow-xs'
-                          : 'text-muted hover:text-foreground'
-                      }`}
+                      size="sm"
+                      variant={filterMode === 'online' ? 'primary' : 'ghost'}
+                      onPress={() => setFilterMode('online')}
+                      className="px-2.5 py-1 text-xs"
                     >
                       Online
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      onClick={() => setFilterMode('banned')}
-                      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                        filterMode === 'banned'
-                          ? 'bg-surface-3 text-foreground font-semibold shadow-xs'
-                          : 'text-muted hover:text-foreground'
-                      }`}
+                      size="sm"
+                      variant={filterMode === 'banned' ? 'primary' : 'ghost'}
+                      onPress={() => setFilterMode('banned')}
+                      className="px-2.5 py-1 text-xs"
                     >
                       Banned
-                    </button>
+                    </Button>
                   </div>
 
                   <input
@@ -718,18 +713,17 @@ export default function AdminIndexPage({
               <CsrfInput />
               <div>
                 <label className="text-[11px] font-semibold text-muted block mb-1">Condition</label>
-                <select
+                <Select
                   name="condition"
                   value={wCond}
-                  onChange={(e) => setWCond(e.target.value)}
-                  className="w-full rounded-md border border-edge bg-surface-2 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
-                >
-                  {(weather?.conditions || []).map((cond) => (
-                    <option key={cond} value={cond}>
-                      {cond}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setWCond(String(val))}
+                  aria-label="Condition"
+                  options={(weather?.conditions || []).map((cond) => ({
+                    id: cond,
+                    label: cond,
+                  }))}
+                  className="w-full"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">

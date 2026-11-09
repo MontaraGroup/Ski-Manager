@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { Switch } from '@/components/Switch';
 
 const FILTERS: { id: string; label: string; adminOnly?: boolean }[] = [
   { id: 'all', label: 'All' },
@@ -80,29 +81,27 @@ export function MapHeader({
       <div className="-mx-4 mt-2 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none]">
         <div role="group" aria-label="Show on the map" className="flex shrink-0 rounded-lg border border-border bg-surface-secondary p-0.5">
           {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
-            <button
+            <Button
               key={f.id}
-              type="button"
+              size="sm"
+              variant={filter === f.id ? 'primary' : 'ghost'}
               aria-pressed={filter === f.id}
-              onClick={() => onFilter(f.id)}
-              className={`min-h-10 rounded-md px-3 text-sm font-medium transition-colors md:min-h-8 ${
-                filter === f.id ? 'bg-accent text-accent-foreground' : 'text-muted hover:text-foreground'
-              }`}
+              onPress={() => onFilter(f.id)}
+              className="min-h-10 md:min-h-8"
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
         {!isAdmin && (
-          <label className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-foreground md:min-h-8">
-            <input
-              type="checkbox"
-              checked={showAvailable}
-              onChange={(e) => onShowAvailable(e.target.checked)}
-              className="size-4 accent-[var(--accent)]"
-            />
+          <Switch
+            isSelected={showAvailable}
+            onChange={onShowAvailable}
+            size="sm"
+            className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-2 text-sm text-foreground md:min-h-8"
+          >
             Show runs you can build
-          </label>
+          </Switch>
         )}
         <Button
           size="sm"

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button, Chip, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { Select } from '@/components/Select';
 import { createMapEngine } from './resort-map/mapEngine';
 import type { BuiltItem, MapSegment, ResortMapProps, Sector, EditorState } from './resort-map/types';
 import { MapHeader } from './resort-map/MapHeader';
@@ -322,8 +323,8 @@ export default function ResortMapPage(props: ResortMapProps) {
     });
   }
 
-  function handleResortChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const val = e.target.value;
+  function handleResortChange(eOrVal: React.ChangeEvent<HTMLSelectElement> | string | number) {
+    const val = typeof eOrVal === 'object' && eOrVal !== null && 'target' in eOrVal ? eOrVal.target.value : String(eOrVal);
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = '/map/change-map';
@@ -378,18 +379,15 @@ export default function ResortMapPage(props: ResortMapProps) {
         <Icon name="fa-list-check" className="text-link" />
         <span className="hidden sm:inline">Segments & Sectors</span>
       </Button>
-      <select
+      <Select
         value={props.resortMap}
         onChange={handleResortChange}
         aria-label="Resort map"
-        className="h-11 rounded-lg border border-border bg-surface px-2.5 text-sm font-medium text-foreground outline-none md:h-9"
-      >
-        {Object.entries(props.resortMaps).map(([k, rm]) => (
-          <option key={k} value={k}>
-            {rm.name}
-          </option>
-        ))}
-      </select>
+        options={Object.entries(props.resortMaps).map(([k, rm]) => ({
+          id: k,
+          label: rm.name,
+        }))}
+      />
     </>
   ) : undefined;
 
@@ -450,18 +448,19 @@ export default function ResortMapPage(props: ResortMapProps) {
 
                   <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800/80 px-2 py-0.5 text-xs">
                     <span className="font-semibold text-muted">Sector:</span>
-                    <select
+                    <Select
                       value={editorState.sector}
-                      onChange={(e) => engineRef.current?.setEditorSector(Number(e.target.value))}
-                      className="bg-transparent text-xs text-foreground outline-none"
-                    >
-                      <option value="0">Default (0)</option>
-                      {sectors.map((sec) => (
-                        <option key={sec.id} value={sec.id} className="bg-slate-900 text-foreground">
-                          {sec.name} (#{sec.id})
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => engineRef.current?.setEditorSector(Number(val))}
+                      aria-label="Editor Sector"
+                      options={[
+                        { id: 0, label: 'Default (0)' },
+                        ...sectors.map((sec) => ({
+                          id: sec.id,
+                          label: `${sec.name} (#${sec.id})`,
+                        })),
+                      ]}
+                      className="text-xs"
+                    />
                   </div>
 
                   <Button
@@ -550,42 +549,47 @@ export default function ResortMapPage(props: ResortMapProps) {
                           className="h-7 w-36 rounded-md border border-white/15 bg-slate-900 px-2 text-xs font-semibold text-foreground outline-none focus:border-accent"
                         />
 
-                        <select
+                        <Select
                           value={editorState.sector}
-                          onChange={(e) => engineRef.current?.setEditorSector(Number(e.target.value))}
-                          className="h-7 rounded-md border border-white/15 bg-slate-900 px-2 text-xs text-foreground outline-none"
-                        >
-                          <option value="0">Default (0)</option>
-                          {sectors.map((sec) => (
-                            <option key={sec.id} value={sec.id}>
-                              {sec.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(val) => engineRef.current?.setEditorSector(Number(val))}
+                          aria-label="Sector"
+                          options={[
+                            { id: 0, label: 'Default (0)' },
+                            ...sectors.map((sec) => ({
+                              id: sec.id,
+                              label: sec.name,
+                            })),
+                          ]}
+                          className="h-7 w-28 text-xs"
+                        />
 
                         {editorState.type !== 'lift' && (
                           <>
-                            <select
+                            <Select
                               value={editorState.slopeType}
-                              onChange={(e) => engineRef.current?.setEditorSlopeType(e.target.value)}
-                              className="h-7 rounded-md border border-white/15 bg-slate-900 px-2 text-xs text-foreground outline-none"
-                            >
-                              <option value="downhill">Downhill</option>
-                              <option value="crosscountry">Cross-Country</option>
-                              <option value="snowpark">Snow Park</option>
-                              <option value="luge">Luge</option>
-                            </select>
+                              onChange={(val) => engineRef.current?.setEditorSlopeType(String(val))}
+                              aria-label="Slope type"
+                              options={[
+                                { id: 'downhill', label: 'Downhill' },
+                                { id: 'crosscountry', label: 'Cross-Country' },
+                                { id: 'snowpark', label: 'Snow Park' },
+                                { id: 'luge', label: 'Luge' },
+                              ]}
+                              className="h-7 w-28 text-xs"
+                            />
 
-                            <select
+                            <Select
                               value={editorState.difficulty}
-                              onChange={(e) => engineRef.current?.setEditorDifficulty(e.target.value)}
-                              className="h-7 rounded-md border border-white/15 bg-slate-900 px-2 text-xs text-foreground outline-none"
-                            >
-                              <option value="green">● Green (Easy)</option>
-                              <option value="blue">■ Blue (Intermediate)</option>
-                              <option value="black">◆ Black (Advanced)</option>
-                              <option value="double_black">◆◆ Double Black</option>
-                            </select>
+                              onChange={(val) => engineRef.current?.setEditorDifficulty(String(val))}
+                              aria-label="Difficulty"
+                              options={[
+                                { id: 'green', label: '● Green (Easy)' },
+                                { id: 'blue', label: '■ Blue (Intermediate)' },
+                                { id: 'black', label: '◆ Black (Advanced)' },
+                                { id: 'double_black', label: '◆◆ Double Black' },
+                              ]}
+                              className="h-7 w-32 text-xs"
+                            />
                           </>
                         )}
 
@@ -982,16 +986,18 @@ export default function ResortMapPage(props: ResortMapProps) {
                       className="h-8 w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-2.5 text-xs text-foreground outline-none focus:border-accent"
                     />
                   </div>
-                  <select
+                  <Select
                     value={inspectorFilter}
-                    onChange={(e) => setInspectorFilter(e.target.value)}
-                    className="h-8 rounded-lg border border-border bg-surface-secondary px-2 text-xs text-foreground outline-none"
-                  >
-                    <option value="all">All types</option>
-                    <option value="lift">Lifts only</option>
-                    <option value="slope">Slopes only</option>
-                    <option value="unassigned">Unassigned</option>
-                  </select>
+                    onChange={(val) => setInspectorFilter(String(val))}
+                    aria-label="Filter inspector items"
+                    options={[
+                      { id: 'all', label: 'All types' },
+                      { id: 'lift', label: 'Lifts only' },
+                      { id: 'slope', label: 'Slopes only' },
+                      { id: 'unassigned', label: 'Unassigned' },
+                    ]}
+                    className="h-8 text-xs"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-1.5">

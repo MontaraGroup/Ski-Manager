@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Empty, Figure, Page, Panel, PostButton } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type GunItem = {
   id: number;
@@ -572,20 +573,19 @@ function GunCard({ gun, slopes }: { gun: GunItem; slopes: SlopeItem[] }) {
       <form action="/snowmaking/assign" method="post" className="flex items-center gap-2 pt-1">
         <CsrfInput />
         <input type="hidden" name="cannon_id" value={gun.id} />
-        <select
+        <Select
           name="slope_id"
-          defaultValue={gun.priority || ''}
+          defaultValue={gun.priority ? String(gun.priority) : ''}
           aria-label={`Priority slope for ${gun.name}`}
-          className="flex-1 min-w-0 rounded-lg border border-border bg-surface px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
-        >
-          <option value="">Auto: worst slopes first</option>
-          {slopes.map((sl) => (
-            <option key={sl.id} value={sl.id}>
-              First: {sl.name}
-              {sl.status !== 'open' ? ` (${sl.status})` : ''}
-            </option>
-          ))}
-        </select>
+          className="flex-1 min-w-0"
+          options={[
+            { id: '', label: 'Auto: worst slopes first' },
+            ...slopes.map((sl) => ({
+              id: String(sl.id),
+              label: `First: ${sl.name}${sl.status !== 'open' ? ` (${sl.status})` : ''}`,
+            })),
+          ]}
+        />
         <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save priority slope">
           <Icon name="fa-check" />
         </Button>
