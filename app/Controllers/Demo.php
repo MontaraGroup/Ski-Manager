@@ -4,11 +4,17 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\AccountPurge;
+use App\Libraries\Economy;
+use App\Libraries\Utilities;
+use App\Libraries\Weather;
 use CodeIgniter\Shield\Models\UserModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class Demo extends BaseController
 {
+    /** Index of "Set Your Ticket Prices" in Tutorial::STEPS */
+    private const TUTORIAL_START_STEP = 3;
+
     /** New demos per IP per hour */
     private const STARTS_PER_HOUR = 5;
 
@@ -278,6 +284,67 @@ class Demo extends BaseController
         // 7. Genepis & Daily Bonus
         $db->table('genepis')->insert(['user_id' => $userId, 'balance' => 10]);
         $db->table('daily_bonus')->insert(['user_id' => $userId, 'last_claim_day' => 0, 'streak' => 1]);
+
+        // 8. The mountain is already built, so the tutorial starts at the first thing left to do: ticket prices
+        if (featureEnabled('demo_v2')) {
+            $db->table('tutorial_progress')->insert(['user_id' => $userId, 'current_step' => self::TUTORIAL_START_STEP]);
+        }
+    }
+
+    /**
+     * What tonight's tick should pay this demo, for the dashboard until its first real day. Uses the
+     * tick's own Economy formulas with today's weather; boosts and events are left out, so it's an estimate.
+     * Null unless this is a demo that hasn't had a tick yet.
+     */
+    public static function estimate(int $userId): ?array
+    {
+        if (!featureEnabled('demo_v2') || !featureEnabled('economy_v2') || !self::isDemoUser()) return null;
+
+        $db = db_connect();
+        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        if (!$finance || !empty($finance['last_tick']) || (int) ($finance['resort_open'] ?? 1) !== 1) return null;
+
+        $config = array_column($db->table('difficulty_config')->where('difficulty', $finance['difficulty'] ?? 'standard')->get()->getResultArray(), 'config_value', 'config_key');
+        $revMult = ((int) ($config['revenue_multiplier'] ?? 100)) / 100;
+        $costMult = ((int) ($config['cost_multiplier'] ?? 100)) / 100;
+        $visMult = ((int) ($config['visitor_multiplier'] ?? 100)) / 100;
+
+        $items = $db->table('player_items')->where('user_id', $userId)->get()->getResultArray();
+        $open = array_filter($items, fn($i) => $i['status'] === 'open');
+        $weather = getCurrentWeather();
+        $isWinter = getSeasonDay() <= getWinterDays();
+
+        $demand = Economy::slopeDemand(array_values(array_filter($open, fn($i) => $i['item_type'] === 'slope')))
+            * $visMult * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+        $demand = Economy::marketCap($demand);
+        $terms = Economy::ticketTerms($db->table('lift_tickets')->where('user_id', $userId)->get()->getResultArray());
+        $tourists = $isWinter ? 0 : (int) round($demand * Economy::SUMMER_TOURIST_SHARE);
+        $liftCapacity = Economy::liftDailyCapacity(array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift')));
+        $skiers = min((int) round($demand * $terms['demand'] * ($isWinter ? 1 : 0.15)), $liftCapacity);
+
+        $buildings = $db->table('buildings')->where('user_id', $userId)->get()->getResultArray();
+        $util = Economy::buildingUtilization($buildings, $skiers, $tourists);
+        $income = $skiers * $terms['per_visit'] * $revMult;
+        $costs = Economy::runningCost($items) * $costMult;
+        foreach ($buildings as $b) {
+            $income += (int) $b['revenue_per_day'] * ($util[$b['building_type']] ?? 0) * $revMult;
+            $costs += (int) $b['upkeep_per_day'] * $costMult;
+        }
+        $costs += (int) ($db->table('staff')->selectSum('salary')->where('user_id', $userId)->where('status', 'active')->get()->getRow('salary') ?? 0) * $costMult;
+
+        // Equipment fuel, and the energy and water a demo has no sources for, so it imports them
+        $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $costs += array_sum(array_column($equipment, 'fuel_cost')) * $costMult;
+        $snowmakers = array_values(array_filter($equipment, fn($e) => (int) $e['energy_kwh'] > 0));
+        $openLifts = array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift'));
+        $costs += Utilities::importCost('energy', Utilities::energyDemand($snowmakers, 0, $openLifts, $buildings)['total']);
+        $costs += Utilities::importCost('water', Utilities::waterDemand($snowmakers));
+
+        return [
+            'skiers' => number_format($skiers),
+            'income' => currency((int) round($income)),
+            'costs'  => currency((int) round($costs)),
+        ];
     }
 
     /**

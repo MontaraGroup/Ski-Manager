@@ -382,6 +382,8 @@ class Dashboard extends BaseController
             ],
         ];
 
+        $page['demoEstimate'] = Demo::estimate((int) $userId);
+
         return view('dashboard/index', ['page' => $page]);
     }
 
