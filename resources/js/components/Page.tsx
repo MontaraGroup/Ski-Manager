@@ -107,7 +107,7 @@ export function PostButton({
 }: {
   action: string;
   children: ReactNode;
-  confirm?: { title: string; body: string; confirmLabel: string };
+  confirm?: { title: string; body: string; confirmLabel: string; cancelLabel?: string };
   data?: Record<string, string | number | boolean>;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'danger';
@@ -139,7 +139,7 @@ export function PostButton({
                 <AlertDialog.Body>{confirm.body}</AlertDialog.Body>
                 <AlertDialog.Footer>
                   <Button variant="tertiary" onPress={() => setOpen(false)}>
-                    Cancel
+                    {confirm.cancelLabel ?? 'Cancel'}
                   </Button>
                   <Button variant="danger" onPress={() => form.current?.submit()}>
                     {confirm.confirmLabel}

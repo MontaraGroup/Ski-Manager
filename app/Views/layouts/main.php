@@ -392,7 +392,7 @@ body { font-family: var(--sign); }
                 . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw text-accent"></i><span>' . esc($r['label']) . '</span>' . $badge . '</a>';
         };
     ?>
-    <?php if (session()->get('is_demo')) : ?>
+    <?php if (session()->get('is_demo') && !featureEnabled('demo_v2')) : ?>
     <div class="bg-primary text-primary-foreground px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
         <div class="flex items-center gap-2">
             <span class="inline-flex items-center rounded-md bg-amber-400 px-2 py-0.5 text-xs font-bold font-mono text-neutral-900">DEMO SANDBOX</span>
@@ -1071,7 +1071,9 @@ function skipTutorial() {
     }).then(() => tutWidget.classList.add('hidden'));
 }
 
+<?php if (!($__currentPath === '/demo/save' && featureEnabled('demo_v2'))) : // nothing covers the save form ?>
 loadTutorial();
+<?php endif ?>
 setInterval(loadTutorial, 10000);
 </script>
 <?php endif ?>

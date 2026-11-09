@@ -68,6 +68,10 @@ class AuthActivation extends BaseController
             if ($entity !== null && $authenticator->checkAction($entity, $code)) {
                 $authenticator->getUser()->activate();
                 session()->remove('activation_mail');
+                if ($savedAs = session('demo_saved_as')) {
+                    session()->remove('demo_saved_as');
+                    return redirect()->to(config('Auth')->registerRedirect())->with('success', 'Your resort is saved. Welcome, ' . $savedAs . '.');
+                }
                 return redirect()->to(config('Auth')->registerRedirect())->with('message', lang('Auth.registerSuccess'));
             }
             return redirect()->to($back)->with('error', $invalid);
