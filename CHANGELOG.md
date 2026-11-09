@@ -1,3 +1,11 @@
+## Release 2026-11-09 00:21
+
+* seo: update sitemaps with lastmod timestamps and add alliances directory route (a44e713)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (6185332)
+* legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (88dc0f5)
+* Merge remote-tracking branch 'origin/main' (23617e4)
+
 ## Release 2026-11-09 00:14
 
 * legal: add google adsense privacy disclosures and expand csp whitelist (cdeb009)
