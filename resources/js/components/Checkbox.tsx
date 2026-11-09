@@ -12,10 +12,12 @@ export function Checkbox({ children, label, className, defaultChecked, ...props 
   const isDefaultSelected = defaultChecked ?? props.defaultSelected;
   return (
     <HeroCheckbox {...props} defaultSelected={isDefaultSelected} className={className}>
-      <HeroCheckbox.Control>
-        <HeroCheckbox.Indicator />
-      </HeroCheckbox.Control>
-      {content ? <HeroCheckbox.Content>{content}</HeroCheckbox.Content> : null}
+      <HeroCheckbox.Content className="cursor-pointer">
+        <HeroCheckbox.Control>
+          <HeroCheckbox.Indicator />
+        </HeroCheckbox.Control>
+        {content ? <span>{content}</span> : null}
+      </HeroCheckbox.Content>
     </HeroCheckbox>
   );
 }
