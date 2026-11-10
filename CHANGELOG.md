@@ -1,3 +1,11 @@
+## Release 2026-11-10 00:03
+
+* Merge branch 'MontaraGroup:main' into main (c6157fd)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e71177d)
+* Merge pull request #72 from Montara-Group/feat/heroui-components-migration (3b2f112)
+* Merge branch 'MontaraGroup:main' into main (23002ea)
+* feat(ui): migrate checkboxes, switches, selects, sliders and buttons to heroui (67289bc)
+
 ## Release 2026-11-09 23:45
 
 * Merge branch 'MontaraGroup:main' into main (23002ea)
