@@ -1,3 +1,43 @@
+## Release 2026-11-09 23:45
+
+* Merge branch 'MontaraGroup:main' into main (23002ea)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (9779662)
+* Merge pull request #71 from Montara-Group/feat/map-first-build (b6537b4)
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* feat(map): show buildable runs, guide the first build, fit phones (144cf51)
+
+## Release 2026-11-09 19:16
+
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* Merge pull request #70 from Montara-Group/feat/android-expressive-complete (aa9193b)
+* feat(android): upgrade all native screens to material design 3 expressive (41237b2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (46bc782)
+* Merge pull request #69 from Montara-Group/fix/tutorial-revamp (100d041)
+
+## Release 2026-11-09 18:18
+
+* Merge branch 'MontaraGroup:main' into main (2cecf8f)
+* Merge pull request #67 from Montara-Group/fix/first-day-estimate (69f8ddc)
+* fix(dashboard): show tonight's estimate to new players, not only demos (7b18127)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3aaec49)
+* Merge pull request #66 from Montara-Group/feat/android-unit-tests (e0daa47)
+
+## Release 2026-11-09 17:38
+
+* Merge branch 'MontaraGroup:main' into main (66985b8)
+* Merge pull request #65 from Montara-Group/feat/android-equipment (ecc2714)
+* feat(android): add native equipment screen and API controllers (fe567ef)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d6e9ed0)
+* Merge pull request #64 from Montara-Group/main (0a101e1)
+
+## Release 2026-11-09 16:35
+
+* Merge branch 'MontaraGroup:main' into main (4478e9a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d13fab3)
+* Merge pull request #63 from Montara-Group/feat/android-slopes (d9d1d38)
+* Merge branch 'MontaraGroup:main' into main (67e1458)
+* feat(android): add native grooming and snowmaking screens and API controllers (d3d0fe1)
+
 ## Release 2026-11-09 16:34
 
 * Merge branch 'MontaraGroup:main' into main (67e1458)
