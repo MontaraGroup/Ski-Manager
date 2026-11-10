@@ -163,13 +163,15 @@ export default function GenepisPage({
                       className="w-full min-h-11 h-11 px-3 rounded-lg border border-border bg-base-100 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-success"
                     />
                     {balance > 0 && (
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => setExchangeAmount(balance)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 min-h-8 px-2.5 py-1 text-xs font-semibold uppercase bg-muted/20 hover:bg-muted/30 rounded text-foreground transition-colors"
+                        size="sm"
+                        variant="secondary"
+                        onPress={() => setExchangeAmount(balance)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 min-h-8 px-2.5 py-1 text-xs font-semibold uppercase"
                       >
                         Max
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

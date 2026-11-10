@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@heroui/react';
+import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel, PostButton } from '@/components/Page';
 
@@ -120,16 +121,15 @@ export default function AdminChangelogsPage({ entries }: AdminChangelogsPageProp
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-              <label className="flex items-center gap-2 text-xs font-semibold text-foreground cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="published"
-                  checked={form.published}
-                  onChange={(e) => setForm({ ...form, published: e.target.checked })}
-                  className="rounded border-border text-accent focus:ring-accent size-4"
-                />
-                <span>Publish immediately to all players</span>
-              </label>
+              <Checkbox
+                name="published"
+                value="1"
+                isSelected={form.published}
+                onChange={(checked) => setForm({ ...form, published: checked })}
+                className="text-xs font-semibold text-foreground"
+              >
+                Publish immediately to all players
+              </Checkbox>
 
               <Button type="submit" variant="primary" className="text-xs font-bold min-h-10">
                 <Icon name="fa-floppy-disk" className="mr-1.5" />

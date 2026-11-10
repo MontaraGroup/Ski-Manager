@@ -77,13 +77,14 @@ export function BuildView({
                 const selected = liftType === l.id;
                 const firstSeats = costs.seatOptions[l.id]?.[0] ?? 2;
                 return (
-                  <button
+                  <Button
                     key={l.id}
                     type="button"
+                    variant="ghost"
                     aria-pressed={selected}
-                    onClick={() => onLiftType(l.id)}
-                    className={`flex min-h-12 items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                      selected ? 'border-accent bg-accent/10' : 'border-border hover:bg-surface-secondary'
+                    onPress={() => onLiftType(l.id)}
+                    className={`h-auto flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm ${
+                      selected ? 'border-accent bg-accent/10' : 'border-border'
                     }`}
                   >
                     <span className="min-w-0">
@@ -93,7 +94,7 @@ export function BuildView({
                       </span>
                     </span>
                     <span className="shrink-0 tabular-nums text-muted">{l.cap}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -103,17 +104,17 @@ export function BuildView({
             <legend className="mb-2 text-sm font-semibold text-foreground">Carrier size</legend>
             <div className="flex gap-1.5">
               {(costs.seatOptions[liftType] || [2]).map((n) => (
-                <button
+                <Button
                   key={n}
                   type="button"
+                  size="sm"
+                  variant={seats === n ? 'primary' : 'ghost'}
                   aria-pressed={seats === n}
-                  onClick={() => onSeats(n)}
-                  className={`min-h-11 flex-1 rounded-lg border text-center text-sm font-semibold tabular-nums transition-colors md:min-h-9 ${
-                    seats === n ? 'border-accent bg-accent/10 text-foreground' : 'border-border text-muted hover:text-foreground'
-                  }`}
+                  onPress={() => onSeats(n)}
+                  className="min-h-11 flex-1 text-center text-sm font-semibold tabular-nums md:min-h-9"
                 >
                   {n} {n === 1 ? 'seat' : liftType === 'gondola' || liftType === 'cable_car' ? 'people' : 'seats'}
-                </button>
+                </Button>
               ))}
             </div>
           </fieldset>
@@ -123,18 +124,18 @@ export function BuildView({
           <legend className="mb-2 text-sm font-semibold text-foreground">Kind of run</legend>
           <div className="grid grid-cols-2 gap-1.5">
             {SLOPE_TYPES.map((d) => (
-              <button
+              <Button
                 key={d.id}
                 type="button"
+                size="sm"
+                variant={slopeType === d.id ? 'primary' : 'ghost'}
                 aria-pressed={slopeType === d.id}
-                onClick={() => onSlopeType(d.id)}
-                className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors md:min-h-9 ${
-                  slopeType === d.id ? 'border-accent bg-accent/10 text-foreground' : 'border-border text-muted hover:text-foreground'
-                }`}
+                onPress={() => onSlopeType(d.id)}
+                className="flex min-h-11 items-center gap-2 px-3 text-sm font-medium md:min-h-9"
               >
                 <Icon name={d.icon} />
                 <span>{d.name}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </fieldset>

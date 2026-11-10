@@ -790,15 +790,17 @@ export default function DashboardPage({
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-semibold text-muted mr-1 hidden sm:inline">Presets:</span>
               {PRESETS.map((p) => (
-                <button
+                <Button
                   key={p.id}
                   type="button"
-                  onClick={() => handleApplyPreset(p)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:bg-accent/10"
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => handleApplyPreset(p)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium"
                 >
                   <Icon name={p.icon} className="text-accent text-[11px]" />
                   <span>{p.name}</span>
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -1060,54 +1062,61 @@ export default function DashboardPage({
                     <div className="flex items-center gap-1.5">
                       {/* Move Up/Down buttons for accessible mobile reorder */}
                       <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface-raised p-0.5">
-                        <button
+                        <Button
                           type="button"
-                          onClick={() => handleMove(w.widget_key, 'up')}
-                          disabled={idx === 0}
+                          variant="ghost"
+                          size="sm"
+                          isIconOnly
+                          onPress={() => handleMove(w.widget_key, 'up')}
+                          isDisabled={idx === 0}
                           aria-label={`Move ${w.name} up`}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
                         >
                           <Icon name="fa-chevron-up" className="text-[10px]" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          onClick={() => handleMove(w.widget_key, 'down')}
-                          disabled={idx === visibleWidgets.length - 1}
+                          variant="ghost"
+                          size="sm"
+                          isIconOnly
+                          onPress={() => handleMove(w.widget_key, 'down')}
+                          isDisabled={idx === visibleWidgets.length - 1}
                           aria-label={`Move ${w.name} down`}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
                         >
                           <Icon name="fa-chevron-down" className="text-[10px]" />
-                        </button>
+                        </Button>
                       </div>
 
                       {/* Size buttons */}
                       <div className="inline-flex items-center rounded-lg border border-border bg-surface-raised p-0.5 text-[10px]">
                         {(['small', 'medium', 'large'] as const).map((sz) => (
-                          <button
+                          <Button
                             key={sz}
                             type="button"
-                            onClick={() => handleResize(w.widget_key, sz)}
+                            size="sm"
+                            variant={w.size === sz ? 'primary' : 'ghost'}
+                            onPress={() => handleResize(w.widget_key, sz)}
                             aria-label={`Resize ${w.name} to ${sz}`}
-                            className={`rounded px-1.5 py-0.5 font-bold uppercase transition-all ${
-                              w.size === sz
-                                ? 'bg-accent text-accent-foreground shadow-xs'
-                                : 'text-muted hover:text-foreground'
-                            }`}
+                            className="rounded px-1.5 py-0.5 min-h-6 min-w-6 text-[10px] font-bold uppercase"
                           >
                             {sz[0]}
-                          </button>
+                          </Button>
                         ))}
                       </div>
 
                       {/* Hide button */}
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => handleToggle(w.widget_key, false)}
+                        variant="ghost"
+                        size="sm"
+                        isIconOnly
+                        onPress={() => handleToggle(w.widget_key, false)}
                         aria-label={`Hide ${w.name} widget`}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                        className="size-7 min-h-7 min-w-7 rounded-lg text-muted hover:text-danger"
                       >
                         <Icon name="fa-eye-slash" className="text-xs" />
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div>
@@ -1819,14 +1828,17 @@ export default function DashboardPage({
                     Toggle widgets and configure your command dashboard.
                   </p>
                 </div>
-                <button
+                <Button
                   type="button"
-                  onClick={() => setLibraryOpen(false)}
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly
+                  onPress={() => setLibraryOpen(false)}
                   aria-label="Close widget library"
-                  className="rounded-lg p-2 text-muted hover:bg-surface-raised hover:text-foreground transition-colors"
+                  className="rounded-lg p-2 text-muted hover:text-foreground"
                 >
                   <Icon name="fa-xmark" className="text-base" />
-                </button>
+                </Button>
               </div>
 
               {/* Search & Category Filter */}
@@ -1854,18 +1866,16 @@ export default function DashboardPage({
                       { id: 'activity', label: 'Activity' },
                     ] as const
                   ).map((cat) => (
-                    <button
+                    <Button
                       key={cat.id}
                       type="button"
-                      onClick={() => setLibraryCategory(cat.id)}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
-                        libraryCategory === cat.id
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted hover:bg-surface-raised hover:text-foreground'
-                      }`}
+                      size="sm"
+                      variant={libraryCategory === cat.id ? 'primary' : 'ghost'}
+                      onPress={() => setLibraryCategory(cat.id)}
+                      className="rounded-lg px-2.5 py-1 text-xs font-semibold"
                     >
                       {cat.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

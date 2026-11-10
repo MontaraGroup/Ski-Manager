@@ -503,9 +503,9 @@ function DemoStartButton({ className, children }: { className: string; children:
   return (
     <form action="/demo" method="post" className="contents">
       <input type="hidden" name={meta?.dataset.field || 'csrf_test_name'} value={meta?.content || ''} />
-      <button type="submit" className={className}>
+      <Button type="submit" className={className}>
         <span>{children}</span>
-      </button>
+      </Button>
     </form>
   );
 }

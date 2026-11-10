@@ -12,6 +12,7 @@ import sys
 BUDGETS = {
     "entry_js": 300 * 1024,      # 300 KB raw uncompressed
     "dialog_js": 140 * 1024,     # 140 KB raw uncompressed
+    "compose_js": 100 * 1024,    # 100 KB raw uncompressed (HeroUI shared composition chunk)
     "page_js": 75 * 1024,        # 75 KB per individual page island chunk
     "islands_css": 600 * 1024,   # 600 KB uncompressed HeroUI + Tailwind bundle
 }
@@ -72,7 +73,10 @@ def main() -> int:
             elif basename.startswith("Dialog-") and basename.endswith(".js"):
                 if raw_size > BUDGETS["dialog_js"]:
                     violations.append(f"Dialog bundle '{basename}' exceeds {BUDGETS['dialog_js']//1024} KB budget: {raw_size/1024:.2f} KB")
-            elif basename.endswith(".js") and not basename.startswith("islands-") and not basename.startswith("Dialog-"):
+            elif basename.startswith("compose-") and basename.endswith(".js"):
+                if raw_size > BUDGETS["compose_js"]:
+                    violations.append(f"Compose bundle '{basename}' exceeds {BUDGETS['compose_js']//1024} KB budget: {raw_size/1024:.2f} KB")
+            elif basename.endswith(".js") and not basename.startswith("islands-") and not basename.startswith("Dialog-") and not basename.startswith("compose-"):
                 if raw_size > BUDGETS["page_js"]:
                     violations.append(f"Page chunk '{basename}' exceeds {BUDGETS['page_js']//1024} KB budget: {raw_size/1024:.2f} KB")
             elif basename.startswith("islands-") and basename.endswith(".css"):

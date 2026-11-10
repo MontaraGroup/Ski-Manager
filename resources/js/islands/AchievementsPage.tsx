@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Meter } from '@heroui/react';
+import { Button, Meter } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Empty, Figure, Page, Panel, PostButton } from '@/components/Page';
 
@@ -69,16 +69,18 @@ export default function AchievementsPage(p: Props) {
 
       <div role="group" aria-label="Show achievements" className="flex w-fit flex-wrap gap-1 rounded-xl bg-default p-1">
         {(['all', 'ready', 'progress', 'claimed'] as Filter[]).map((f) => (
-          <button
+          <Button
             key={f}
             type="button"
+            size="sm"
+            variant={filter === f ? 'primary' : 'ghost'}
             aria-pressed={filter === f}
-            onClick={() => setFilter(f)}
-            className={`flex min-h-10 pointer-coarse:min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-medium ${filter === f ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'}`}
+            onPress={() => setFilter(f)}
+            className="flex min-h-10 pointer-coarse:min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-medium"
           >
             {{ all: 'All', ready: 'Ready', progress: 'In progress', claimed: 'Done' }[f]}
             <span className="tabular-nums text-muted">{counts[f]}</span>
-          </button>
+          </Button>
         ))}
       </div>
 
