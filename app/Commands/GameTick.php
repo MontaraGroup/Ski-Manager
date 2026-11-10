@@ -86,6 +86,13 @@ class GameTick extends BaseCommand
                     $dayIncome = 0;
                     $dayExpenses = 0;
 
+                    // Detect player dormancy: away for >= 48 hours (at least 2 consecutive missed cycles)
+                    $lastActiveStr = $finance['last_active'] ?? null;
+                    $userRow = $db->table('users')->select('created_at')->where('id', $userId)->get()->getRowArray();
+                    $createdTs = !empty($userRow['created_at']) ? strtotime($userRow['created_at']) : time();
+                    $lastActiveTs = !empty($lastActiveStr) ? strtotime($lastActiveStr) : $createdTs;
+                    $isDormant = (time() - $lastActiveTs) >= 172800;
+
                     // Load difficulty config from pre-fetched lookup map
                     $diff = $finance['difficulty'] ?? 'standard';
                     $diffConfig = $allDiffConfigs[$diff] ?? ($allDiffConfigs['standard'] ?? []);
@@ -133,6 +140,10 @@ class GameTick extends BaseCommand
             foreach ($allStaff as $s) {
                 $moraleChange = -$moraleDec;
                 if (!empty($s['assigned_to'])) $moraleChange += 1;
+                // Inactivity caretaker mode: freeze morale decay so staff don't quit while manager is away
+                if ($isDormant) {
+                    $moraleChange = max(0, $moraleChange);
+                }
                 $newMorale = max(0, min(100, (int) $s['morale'] + $moraleChange));
                 $db->table('staff')->where('id', $s['id'])->update(['morale' => $newMorale]);
                 if ($newMorale <= 10 && rand(1, 100) <= 20) {
@@ -158,7 +169,8 @@ class GameTick extends BaseCommand
                 if ($resortOpen && !$v2) $dayIncome += (int) round($revenue * $revMult); // closed resort: no guests, upkeep still due
                 $dayExpenses += (int) round($b['upkeep_per_day'] * $costMult);
                 $breakdown['building_upkeep'] += (int) round($b['upkeep_per_day'] * $costMult);
-                $newCondition = max(0, (int) $b['condition_pct'] - (int) round(rand(0, 2) * $decayMult));
+                $bDecay = $isDormant ? 0 : (int) round(rand(0, 2) * $decayMult);
+                $newCondition = max(0, (int) $b['condition_pct'] - $bDecay);
                 $db->table('buildings')->where('id', $b['id'])->update(['condition_pct' => $newCondition]);
                 if ($newCondition <= 0) {
                     $db->table('buildings')->where('id', $b['id'])->update(['status' => 'broken']);
@@ -196,10 +208,13 @@ class GameTick extends BaseCommand
             }
             $crewedGuns = array_flip(array_column(array_filter($allStaff, fn($s) => $s['role'] === 'snowmaker' && !empty($s['assigned_to'])), 'assigned_to'));
             foreach ($equipment as $e) {
-                $dayExpenses += (int) round($e['fuel_cost'] * $costMult);
+                // In standby mode, inactive resort does not burn idle fuel
+                if (!$isDormant) {
+                    $dayExpenses += (int) round($e['fuel_cost'] * $costMult);
+                }
 
                 // Assigned operators reduce decay
-                $baseDecay = (int) round(($e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3)) * $decayMult);
+                $baseDecay = $isDormant ? 0 : (int) round(($e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3)) * $decayMult);
                 if ($e['equipment_type'] === 'groomer' && $countAssigned('groomer') > 0) {
                     $baseDecay = max(1, $baseDecay - 1);
                 }
@@ -288,13 +303,15 @@ class GameTick extends BaseCommand
             // A mechanic looks after the lift they're assigned to (assigned_to holds the lift's name)
             $mechanicLifts = array_flip(array_column($assignedByRole['mechanic'] ?? [], 'assigned_to'));
             foreach ($items as $item) {
-                $decay = rand(0, 2);
-                if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
-                    $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
-                }
-                // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
-                if ($v2 && $item['item_type'] === 'slope') {
-                    $decay = \App\Libraries\Grooming::decay($item, $weather, isset($snowCovered[(int) $item['id']]));
+                $decay = $isDormant ? 0 : rand(0, 2);
+                if (!$isDormant) {
+                    if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
+                        $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
+                    }
+                    // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
+                    if ($v2 && $item['item_type'] === 'slope') {
+                        $decay = \App\Libraries\Grooming::decay($item, $weather, isset($snowCovered[(int) $item['id']]));
+                    }
                 }
                 $newCond = max(0, (int) $item['condition_pct'] - $decay);
                 $db->table('player_items')->where('id', $item['id'])->update(['condition_pct' => $newCond]);
@@ -853,6 +870,17 @@ class GameTick extends BaseCommand
             // ==============================
             // UPDATE FINANCES
             // ==============================
+            // Standby Protection: if player is dormant, don't let unattended expenses push cash into negative
+            if ($isDormant) {
+                if ($cash < 25000) {
+                    // If already below $25,000, expenses cannot exceed income so debt does not compound
+                    $dayExpenses = min($dayExpenses, $dayIncome);
+                } elseif (($cash + $dayIncome - $dayExpenses) < 25000) {
+                    // Protect cash floor of $25,000 during caretaker standby
+                    $dayExpenses = min($dayExpenses, max(0, $cash + $dayIncome - 25000));
+                }
+            }
+
             // Apply the day as a change to the current balance: the cash read at the start may be stale
             // if the player bought or sold something while the tick was running
             $newCash = $cash + $dayIncome - $dayExpenses;
@@ -895,9 +923,10 @@ class GameTick extends BaseCommand
             // ==============================
             // DAILY REPORT
             // ==============================
-            log_activity($userId, 'Daily Report', "Day {$gameDay}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
+            $dormantTag = $isDormant ? ' [Standby Protected]' : '';
+            log_activity($userId, 'Daily Report', "Day {$gameDay}{$dormantTag}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
 
-            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses} | Visitors: {$visitors} | Cash: {$newCash}", "white");
+            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses}{$dormantTag} | Visitors: {$visitors} | Cash: {$newCash}", "white");
 
             // Achievements: progress and feature unlocks shouldn't wait for a visit to /achievements
             if (($user['status'] ?? '') !== 'demo') \App\Libraries\Achievements::sync($userId);

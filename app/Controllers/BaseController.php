@@ -41,7 +41,37 @@ abstract class BaseController extends Controller
 
         // Preload any models, libraries, etc, here.
         if (function_exists('auth') && auth()->loggedIn()) {
-            db_connect()->table('player_finances')->where('user_id', auth()->id())->update(['last_active' => date('Y-m-d H:i:s')]);
+            $userId = (int) auth()->id();
+            $db = db_connect();
+
+            // If the player has been away for >= 48 hours, grant a welcome back caretaker bonus
+            // We use an atomic update conditional on last_active to avoid race conditions across concurrent requests
+            $threshold = date('Y-m-d H:i:s', time() - 172800);
+            $grant = 25000;
+            $db->table('player_finances')
+                ->where('user_id', $userId)
+                ->where('last_active <=', $threshold)
+                ->set('cash', "cash + {$grant}", false)
+                ->set('last_active', date('Y-m-d H:i:s'))
+                ->update();
+
+            if ($db->affectedRows() > 0) {
+                if (function_exists('notify')) {
+                    notify(
+                        $userId,
+                        'welcome_back',
+                        'Welcome Back, Manager!',
+                        'Your resort was held in caretaker standby while you were away. We deposited a ' . currency($grant) . ' caretaker grant into your treasury.',
+                        'fa-solid fa-gift',
+                        '/dashboard'
+                    );
+                }
+                if (function_exists('log_activity')) {
+                    log_activity($userId, 'Caretaker', 'Received ' . currency($grant) . ' Caretaker Welcome Back grant upon return.', 'fa-solid fa-gift');
+                }
+            } else {
+                $db->table('player_finances')->where('user_id', $userId)->update(['last_active' => date('Y-m-d H:i:s')]);
+            }
         }
     }
 

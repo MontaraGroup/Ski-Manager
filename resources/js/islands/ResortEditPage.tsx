@@ -19,7 +19,7 @@ export default function ResortEditPage({ resort }: ResortEditProps) {
   const [name, setName] = useState(resort?.name ?? 'My Resort');
   const [location, setLocation] = useState(resort?.location ?? '');
   const [description, setDescription] = useState(resort?.description ?? '');
-  const [isOpen, setIsOpen] = useState(resort?.is_open ?? true);
+  const [isOpen, setIsOpen] = useState(Boolean(resort?.is_open ?? true));
 
   return (
     <Page
@@ -101,20 +101,21 @@ export default function ResortEditPage({ resort }: ResortEditProps) {
             </span>
           }
         >
-          <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-base-200/40">
-            <div>
-              <div className="text-xs font-bold text-foreground">Resort Open for Guests</div>
-              <div className="text-[11px] text-muted mt-0.5">
-                When closed, visitors stop arriving and ticket revenue pauses, but daily upkeep still applies.
-              </div>
-            </div>
-
+          <div className="p-3 rounded-xl border border-border bg-base-200/40">
             <Switch
               name="is_open"
               isSelected={isOpen}
               onChange={setIsOpen}
-              aria-label="Resort Open for Guests"
-            />
+              placement="end"
+              className="w-full"
+            >
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-foreground">Resort Open for Guests</span>
+                <span className="text-[11px] text-muted mt-0.5">
+                  When closed, visitors stop arriving and ticket revenue pauses, but daily upkeep still applies.
+                </span>
+              </div>
+            </Switch>
           </div>
         </Panel>
 
