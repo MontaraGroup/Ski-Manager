@@ -398,6 +398,25 @@ export type DashboardData = {
   };
 };
 
+export type LaunchChecklistStep = {
+  id: string;
+  title: string;
+  description: string;
+  done: boolean;
+  link: string;
+  cta: string;
+  icon: string;
+};
+
+export type LaunchChecklist = {
+  show: boolean;
+  completed: number;
+  total: number;
+  isComplete: boolean;
+  progressPct: number;
+  steps: LaunchChecklistStep[];
+};
+
 export type DashboardPageProps = {
   hero: DashboardHero;
   alerts: DashboardAlert[];
@@ -407,6 +426,7 @@ export type DashboardPageProps = {
   availableWidgets: DashboardAvailableWidget[];
   data: DashboardData;
   demoEstimate?: { skiers: string; income: string; costs: string } | null;
+  launchChecklist?: LaunchChecklist | null;
 };
 
 export default function DashboardPage({
@@ -418,6 +438,7 @@ export default function DashboardPage({
   availableWidgets,
   data,
   demoEstimate,
+  launchChecklist,
 }: DashboardPageProps) {
   const [widgets, setWidgets] = useState<DashboardWidgetItem[]>(initialWidgets);
   const [editMode, setEditMode] = useState(false);
@@ -843,6 +864,117 @@ export default function DashboardPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Resort Launch Checklist */}
+      {launchChecklist?.show && (
+        <section
+          aria-labelledby="launch-checklist-title"
+          className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent text-xs">
+                  <Icon name="fa-flag-checkered" />
+                </span>
+                <h2 id="launch-checklist-title" className="text-base font-bold text-foreground">
+                  Resort Launch Checklist
+                </h2>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    launchChecklist.isComplete ? 'bg-success/15 text-success' : 'bg-accent/15 text-accent'
+                  }`}
+                >
+                  {launchChecklist.isComplete
+                    ? 'Ready for opening'
+                    : `${launchChecklist.completed} of ${launchChecklist.total} complete`}
+                </span>
+              </div>
+              <p className="text-xs text-muted">
+                {launchChecklist.isComplete
+                  ? 'All starter milestones complete. Your mountain operations are running and visitors arrive tonight at 00:05.'
+                  : 'Complete these essential milestones to open your slopes and welcome your first skiers tonight at 00:05.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-36 sm:w-44 space-y-1">
+                <div className="flex justify-between text-[11px] font-mono text-muted">
+                  <span>Launch readiness</span>
+                  <span className="font-semibold text-foreground">{launchChecklist.progressPct}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-secondary border border-border">
+                  <div
+                    className={`h-full transition-all duration-200 ${
+                      launchChecklist.isComplete ? 'bg-success' : 'bg-accent'
+                    }`}
+                    style={{ width: `${Math.max(5, launchChecklist.progressPct)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            {launchChecklist.steps.map((step, idx) => (
+              <div
+                key={step.id}
+                className={`flex flex-col justify-between rounded-xl border p-3.5 transition-colors ${
+                  step.done
+                    ? 'border-success/30 bg-success/5'
+                    : 'border-border bg-surface-secondary/40 hover:bg-surface-secondary'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm ${
+                        step.done ? 'bg-success/20 text-success' : 'bg-default text-muted'
+                      }`}
+                    >
+                      <Icon name={step.done ? 'fa-check' : step.icon} />
+                    </span>
+                    {step.done ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
+                        <Icon name="fa-circle-check" />
+                        Done
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-muted">Step {idx + 1}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2">
+                  {step.done ? (
+                    <a
+                      href={step.link}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-surface px-3 text-xs font-medium text-muted hover:text-foreground transition-colors"
+                    >
+                      View on {step.id === 'bonus' ? 'Town Hall' : (step.id === 'tickets' ? 'Tickets' : 'Trail Map')}
+                    </a>
+                  ) : (
+                    <a
+                      href={step.link}
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-95 transition-opacity"
+                    >
+                      <span>{step.cta}</span>
+                      <Icon name="fa-arrow-right" className="text-[11px]" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Alerts */}
