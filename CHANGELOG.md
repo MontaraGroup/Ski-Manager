@@ -1,3 +1,11 @@
+## Release 2026-11-11 19:28
+
+* Merge branch 'MontaraGroup:main' into main (95ed154)
+* Merge pull request #77 from Montara-Group/feat/beta-program (e52acc4)
+* Merge pull request #76 from Montara-Group/fix/emergency-time-ago (60235c1)
+* feat(beta): opt-in beta program with per-feature switches and feedback (e531d6d)
+* fix(emergency): call timeAgo(), the helper's real name (a0f9d70)
+
 ## Release 2026-11-11 18:05
 
 * Merge branch 'MontaraGroup:main' into main (da170bd)
