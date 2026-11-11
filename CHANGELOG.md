@@ -1,3 +1,11 @@
+## Release 2026-11-11 18:05
+
+* Merge branch 'MontaraGroup:main' into main (da170bd)
+* Merge pull request #75 from Montara-Group/release/android-v2.0.0-vc110 (5f1806c)
+* chore(release): bump VERSION_CODE to 110 for Google Play release (a352704)
+* Merge pull request #74 from Montara-Group/feat/player-retention-improvements (ebf4b27)
+* feat(retention): add launch checklist, fix new player alerts, and protect inactive players (5b858c9)
+
 ## Release 2026-11-10 00:03
 
 * Merge branch 'MontaraGroup:main' into main (c6157fd)
