@@ -56,6 +56,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   ResortAnalysisViewPage: () => import('./islands/ResortAnalysisViewPage'),
   ResortMapPage: () => import('./islands/ResortMapPage'),
   AdminFeaturesPage: () => import('./islands/AdminFeaturesPage'),
+  BetaPage: () => import('./islands/BetaPage'),
   AdminSettingsPage: () => import('./islands/AdminSettingsPage'),
   AdminEconomyPage: () => import('./islands/AdminEconomyPage'),
   AdminSeasonsPage: () => import('./islands/AdminSeasonsPage'),

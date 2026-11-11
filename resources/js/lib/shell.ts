@@ -10,6 +10,8 @@ export type NavItem = {
   flagOff: boolean;
   external: boolean;
   bonusDue: boolean;
+  /** Visible because the page is in beta */
+  beta: boolean;
 };
 export type NavSection = { name: string; icon: string; items: NavItem[] };
 

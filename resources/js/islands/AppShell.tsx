@@ -132,6 +132,7 @@ function DesktopMenus({ nav, path, user }: ShellProps) {
                 >
                   <Icon name={item.icon} className="text-accent" />
                   <span className="flex-1">{item.label}</span>
+                  {item.beta && <span className="rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>}
                   {item.locked && <Icon name="fa-lock" className="text-muted" />}
                   {item.bonusDue && <span className="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>}
                 </Dropdown.Item>

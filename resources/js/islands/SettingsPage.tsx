@@ -5,6 +5,8 @@ import { CsrfInput, Page, Panel, PostButton } from '@/components/Page';
 import { SeasonChoiceFields } from '@/components/SeasonChoiceFields';
 import { Select } from '@/components/Select';
 import { ApiError } from '@/lib/api';
+import { BetaMembership } from '@/components/BetaMembership';
+import type { BetaState } from '@/lib/beta';
 import { SEASON_OPTIONS, sendVote, type SeasonChoice, type SeasonVoteResults, type SeasonVoteState } from '@/lib/seasonVote';
 
 export type UserMeta = {
@@ -34,6 +36,7 @@ export type SettingsPageProps = {
   notifCount: number;
   activityCount: number;
   seasonVote?: SeasonVoteState & { closed: boolean; myComment: string; results: SeasonVoteResults | null };
+  beta?: BetaState;
 };
 
 export default function SettingsPage({
@@ -47,7 +50,9 @@ export default function SettingsPage({
   notifCount = 0,
   activityCount = 0,
   seasonVote,
+  beta,
 }: SettingsPageProps) {
+  const [betaState, setBetaState] = useState<BetaState | undefined>(beta);
   const [usernameVal, setUsernameVal] = useState(user?.username ?? '');
   const [emailVal, setEmailVal] = useState(user?.email ?? '');
   const [resortNameVal, setResortNameVal] = useState(resort?.name ?? '');
@@ -417,6 +422,19 @@ export default function SettingsPage({
         </Panel>
 
         {seasonVote && (seasonVote.open || (seasonVote.closed && seasonVote.results)) && <SeasonVoteSection vote={seasonVote} />}
+
+        {betaState && (
+          <Panel
+            title={
+              <span className="flex items-center gap-2">
+                <Icon name="fa-flask" className="text-primary" />
+                Beta program
+              </span>
+            }
+          >
+            <BetaMembership state={betaState} onChange={setBetaState} />
+          </Panel>
+        )}
 
         {/* Delete Account (Danger Zone) */}
         <Panel
