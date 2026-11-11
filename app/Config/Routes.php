@@ -118,6 +118,7 @@ $routes->get('/restaurants', 'Buildings::show/restaurant');
 $routes->get('/retail', 'Buildings::show/retail');
 $routes->get('/scenic-lifts', 'ScenicLifts::index');
 $routes->get('/settings', 'Settings::index');
+$routes->get('/beta', 'BetaProgram::index');
 $routes->get('/ski-lessons', 'SkiLessons::index');
 $routes->get('/ski-patrol', 'Buildings::show/ski_patrol');
 $routes->get('/snowmaking', 'Snowmaking::index');
@@ -146,6 +147,11 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->get('me', 'Me::index');
     $routes->post('season-vote', 'SeasonVote::vote');
     $routes->post('season-vote/snooze', 'SeasonVote::snooze');
+    // Beta program (App\Libraries\Beta): join, leave, per-feature switch, feedback
+    $routes->post('beta/join', 'Beta::join');
+    $routes->post('beta/leave', 'Beta::leave');
+    $routes->post('beta/feature/(:segment)', 'Beta::feature/$1');
+    $routes->post('beta/feedback/(:segment)', 'Beta::feedback/$1');
 });
 // The Android app: token auth only, never cookies, so no CSRF (Filters.php). Same rules as the web pages
 $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], static function ($routes) {
