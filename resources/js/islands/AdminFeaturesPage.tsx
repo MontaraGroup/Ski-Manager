@@ -15,6 +15,14 @@ export type FeatureFlag = {
     pages?: string[];
     code?: string[];
   } | null;
+  /** Level 3 (beta) only: beta members with it on */
+  betaMembersOn: number | null;
+  betaSince: string | null;
+  feedback: {
+    count: number;
+    average: number;
+    comments: { username: string; rating: number; comment: string; date: string }[];
+  } | null;
 };
 
 export type AdminFeaturesPageProps = {
@@ -22,6 +30,8 @@ export type AdminFeaturesPageProps = {
   counts: {
     everyone: number;
     admins: number;
+    beta: number;
+    members: number;
     off: number;
     unused: number;
   };
@@ -65,6 +75,8 @@ export default function AdminFeaturesPage({ flags, counts }: AdminFeaturesPagePr
         <span>
           <strong className="text-foreground">{counts.everyone}</strong> on for everyone &middot;{' '}
           <strong className="text-foreground">{counts.admins}</strong> admins only &middot;{' '}
+          <strong className="text-foreground">{counts.beta}</strong> in beta &middot;{' '}
+          <strong className="text-foreground">{counts.members}</strong> beta members &middot;{' '}
           <strong className="text-foreground">{counts.off}</strong> off
           {counts.unused > 0 && (
             <span className="text-warning ml-1">
@@ -106,6 +118,7 @@ export default function AdminFeaturesPage({ flags, counts }: AdminFeaturesPagePr
       <div className="rounded-xl border border-border bg-surface-raised p-3.5 text-xs text-muted">
         <strong className="text-foreground">Off:</strong> Hides feature from players (pages redirect to dashboard and navigation links are removed).{' '}
         <strong className="text-foreground">Admins:</strong> Allows administrators to test the feature in production before players see it.{' '}
+        <strong className="text-foreground">Beta:</strong> Admins plus players in the beta program, who can switch it off for themselves and give feedback on /beta.{' '}
         <strong className="text-foreground">Everyone:</strong> Live for all signed-in resort managers.
       </div>
 
@@ -190,6 +203,7 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
   const levels = [
     { value: 0, label: 'Off', color: 'bg-red-600 text-white' },
     { value: 1, label: 'Admins', color: 'bg-warning text-black font-bold' },
+    { value: 3, label: 'Beta', color: '' },
     { value: 2, label: 'Everyone', color: 'bg-emerald-600 text-white font-bold' },
   ];
 
@@ -211,6 +225,14 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
         {flag.description && (
           <p className="text-xs text-muted leading-relaxed">{flag.description}</p>
         )}
+
+        {flag.betaMembersOn !== null && (
+          <p className="text-sm text-foreground">
+            {flag.betaMembersOn} {flag.betaMembersOn === 1 ? 'member has' : 'members have'} it on
+            {flag.betaSince && <span className="text-muted"> · in beta since {flag.betaSince}</span>}
+          </p>
+        )}
+        {flag.feedback && <FeedbackSummary feedback={flag.feedback} />}
 
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[11px] text-muted">
           {!flag.usage ? (
@@ -282,5 +304,30 @@ function FlagRow({ flag }: { flag: FeatureFlag }) {
         })}
       </div>
     </div>
+  );
+}
+
+/** Ratings and the newest comments from /beta. React escapes the comment text. */
+function FeedbackSummary({ feedback }: { feedback: NonNullable<FeatureFlag['feedback']> }) {
+  return (
+    <details className="text-sm">
+      <summary className="inline-flex min-h-9 cursor-pointer items-center font-medium text-foreground">
+        Feedback: {feedback.average.toFixed(1)} out of 5 from {feedback.count} {feedback.count === 1 ? 'player' : 'players'}
+      </summary>
+      {feedback.comments.length === 0 ? (
+        <p className="mt-1 text-muted">No comments yet, only ratings.</p>
+      ) : (
+        <ul className="mt-1 space-y-2">
+          {feedback.comments.map((c, i) => (
+            <li key={i} className="rounded-lg bg-surface-secondary p-2.5">
+              <p className="text-muted">
+                {c.username} · {c.rating}/5 · {c.date}
+              </p>
+              <p className="mt-0.5 whitespace-pre-line text-foreground">{c.comment}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
   );
 }

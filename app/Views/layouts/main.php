@@ -363,7 +363,12 @@ body { font-family: var(--sign); }
     <?php endif ?>
     <script async src="https://fundingchoicesmessages.google.com/i/pub-5636695863753930?ers=1"></script><script>(function() {function signalGooglefcPresent() {if (!window.frames['googlefcPresent']) {if (document.body) {const iframe = document.createElement('iframe'); iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;'; iframe.style.display = 'none'; iframe.name = 'googlefcPresent'; document.body.appendChild(iframe);} else {setTimeout(signalGooglefcPresent, 0);}}}signalGooglefcPresent();})();</script>
 </head>
-<body class="min-h-screen flex flex-col bg-base-200"><a href="#main-content" class="skip-link">Skip to main content</a>
+<?php
+    // The page is shown because it's in beta (flag level 3): Page headings add a "Beta" chip
+    $__betaFlag = \App\Filters\FeatureGate::flagForPath('/' . trim(uri_string(), '/'));
+    $__betaPage = $__betaFlag !== null && function_exists('featureIsBetaFor') && featureIsBetaFor($__betaFlag);
+?>
+<body class="min-h-screen flex flex-col bg-base-200"<?= $__betaPage ? ' data-beta-page="1"' : '' ?>><a href="#main-content" class="skip-link">Skip to main content</a>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5GGPL25W" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
@@ -386,6 +391,7 @@ body { font-family: var(--sign); }
             if ($r === null) return '';
             $cls = ($r['locked'] || $r['flagOff']) ? 'text-muted' : 'text-foreground';
             $badge = $r['bonusDue'] ? ' <span class="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>' : '';
+            if (!empty($r['beta'])) $badge .= ' <span class="rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>';
             $target = $r['external'] ? ' target="_blank" rel="noopener noreferrer"' : '';
             $title = $r['flagOff'] ? ' title="Switched off for players (feature flag)"' : '';
             return '<a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors ' . $cls . '">'

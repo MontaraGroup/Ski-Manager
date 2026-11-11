@@ -995,12 +995,15 @@ class Admin extends BaseController
         $usage = $this->featureFlagUsage();
 
         $flags = [];
-        $counts = ['everyone' => 0, 'admins' => 0, 'off' => 0, 'unused' => 0];
+        $counts = ['everyone' => 0, 'admins' => 0, 'beta' => 0, 'off' => 0, 'unused' => 0];
+        $beta = \App\Libraries\Beta::adminSummary();
+        $counts['members'] = $beta['members'];
 
         foreach ($flagsRaw as $f) {
             $lvl = (int) $f['enabled'];
             if ($lvl === 2) $counts['everyone']++;
             elseif ($lvl === 1) $counts['admins']++;
+            elseif ($lvl === FEATURE_LEVEL_BETA) $counts['beta']++;
             else $counts['off']++;
 
             $isUnused = empty($usage[$f['flag_key']]);
@@ -1018,6 +1021,10 @@ class Admin extends BaseController
                 'enabled' => $lvl,
                 'isBeta' => $isBeta,
                 'usage' => $usage[$f['flag_key']] ?? null,
+                // Beta level: members with it on (members minus those who switched it off), and feedback
+                'betaMembersOn' => $lvl === FEATURE_LEVEL_BETA ? max(0, $beta['members'] - ($beta['off'][$f['flag_key']] ?? 0)) : null,
+                'betaSince' => !empty($f['beta_since']) ? date('j M Y', strtotime($f['beta_since'])) : null,
+                'feedback' => $beta['feedback'][$f['flag_key']] ?? null,
             ];
         }
 
@@ -1051,21 +1058,25 @@ class Admin extends BaseController
         return $usage;
     }
 
-    /** POST /admin/features/set/{id} with level 0 (off), 1 (admins only) or 2 (everyone) */
+    /** POST /admin/features/set/{id} with level 0 (off), 1 (admins only), 3 (beta: admins and beta members) or 2 (everyone) */
     public function setFlag(int $id)
     {
         if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         $level = (int) $this->request->getPost('level');
-        if (!in_array($level, [0, 1, 2], true)) return redirect()->to('/admin/features')->with('error', 'Unknown level.');
+        if (!in_array($level, [0, 1, 2, FEATURE_LEVEL_BETA], true)) return redirect()->to('/admin/features')->with('error', 'Unknown level.');
 
         $db = db_connect();
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if (!$flag) return redirect()->to('/admin/features')->with('error', 'Flag not found.');
 
-        $labels = ['off', 'admins only', 'everyone'];
+        $labels = [0 => 'off', 1 => 'admins only', 2 => 'everyone', FEATURE_LEVEL_BETA => 'beta'];
         if ((int) $flag['enabled'] !== $level) {
-            $db->table('feature_flags')->where('id', $id)->update(['enabled' => $level]);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ': ' . $labels[(int) $flag['enabled']] . ' -> ' . $labels[$level]);
+            $update = ['enabled' => $level];
+            // When it entered beta, for the "In beta since" line on /beta; cleared once it leaves beta
+            if ($level === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
+            elseif ((int) $flag['enabled'] === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
+            $db->table('feature_flags')->where('id', $id)->update($update);
+            $this->auditLog('feature_flag', null, $flag['flag_key'] . ': ' . ($labels[(int) $flag['enabled']] ?? $flag['enabled']) . ' -> ' . $labels[$level]);
         }
         return redirect()->to('/admin/features#flag-' . $id)->with('success', $flag['name'] . ' is now ' . $labels[$level] . '.');
     }
@@ -1077,9 +1088,15 @@ class Admin extends BaseController
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if ($flag) {
             $isBeta = str_starts_with($flag["flag_key"], "beta_");
-            $new = $isBeta ? ((int) $flag["enabled"] + 1) % 3 : ($flag["enabled"] ? 0 : 2);
-            $db->table("feature_flags")->where("id", $id)->update(["enabled" => $new]);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ["off","admin only","everyone"][$new]);
+            // beta_ keys step through off, admins only, beta, everyone; others switch off/everyone
+            $cycle = [0 => 1, 1 => FEATURE_LEVEL_BETA, FEATURE_LEVEL_BETA => 2, 2 => 0];
+            $old = (int) $flag["enabled"];
+            $new = $isBeta ? ($cycle[$old] ?? 0) : ($old ? 0 : 2);
+            $update = ["enabled" => $new];
+            if ($new === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
+            elseif ($old === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
+            $db->table("feature_flags")->where("id", $id)->update($update);
+            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ([0 => "off", 1 => "admin only", 2 => "everyone", FEATURE_LEVEL_BETA => "beta"][$new]));
         }
         return redirect()->to('/admin/features')->with('success', 'Flag updated.');
     }

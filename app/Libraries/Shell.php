@@ -119,6 +119,8 @@ class Shell
             'flagOff' => $flagOff,
             'external' => !empty($it['ext']),
             'bonusDue' => ($it['badge'] ?? null) === 'bonus' && $bonusDue,
+            // Shown because the page is in beta (flag level 3): the nav marks it "Beta"
+            'beta' => $flag !== null && !$flagOff && function_exists('featureIsBetaFor') && featureIsBetaFor($flag),
         ];
     }
 
