@@ -33,7 +33,7 @@ class Emergency extends BaseController
                 'category' => $cat,
                 'message' => $inc['message'] ?? '',
                 'created_at' => $inc['created_at'] ?? '',
-                'timeAgo' => !empty($inc['created_at']) ? time_ago($inc['created_at']) : 'recently',
+                'timeAgo' => !empty($inc['created_at']) ? timeAgo((string) $inc['created_at']) : 'recently',
             ];
         }, $incidents);
 
