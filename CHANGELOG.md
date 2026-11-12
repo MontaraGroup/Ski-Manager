@@ -1,3 +1,11 @@
+## Release 2026-11-12 19:31
+
+* Merge pull request #82 from Montara-Group/main (c4f5791)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (459cc56)
+* Merge pull request #81 from Montara-Group/feat/roadmap-revamp (8001d9a)
+* Merge pull request #80 from Montara-Group/docs/roadmap (7ae6227)
+* feat(roadmap): revamp the page, make it easy to find, and reward taking part (068d173)
+
 ## Release 2026-11-12 18:38
 
 * Merge pull request #81 from Montara-Group/feat/roadmap-revamp (8001d9a)

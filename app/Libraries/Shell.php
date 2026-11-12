@@ -177,6 +177,9 @@ class Shell
                 'snow' => snow((int) $weather['snow_base']),
                 'gameDay' => (int) $weather['game_day'],
                 'seasonLength' => getSeasonLength(),
+                // Resort clock: server time, so the browser's own clock is never trusted
+                'now' => time(),
+                'timezone' => 'America/New_York',
                 'genepis' => (int) ($genepis['balance'] ?? 0),
                 'stars' => (int) ($rating['stars'] ?? 0),
             ] : null,
