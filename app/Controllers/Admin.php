@@ -195,9 +195,8 @@ class Admin extends BaseController
             'activeToday' => $db->table('users')->where('last_active >=', date('Y-m-d 00:00:00'))->countAllResults(),
             'active7d' => $db->table('users')->where('last_active >=', $since('-7 days'))->countAllResults(),
             'roadmapToReview' => $db->tableExists('roadmap_items') ? $db->table('roadmap_items')->where('status', 'suggested')->countAllResults() : 0,
-            // Same thresholds as suspiciousActivity()
-            'suspicious' => (int) $db->query("SELECT COUNT(*) n FROM users u JOIN player_finances f ON f.user_id = u.id
-                WHERE f.cash > (CASE f.difficulty WHEN 'easy' THEN 5000000 WHEN 'hard' THEN 2000000 ELSE 3000000 END)")->getRow('n'),
+            // Players /admin/suspicious lists that nobody has reviewed yet
+            'suspicious' => count(array_filter(\App\Libraries\Suspicion::scan(), fn($x) => empty($x['review']))),
             'backupMonitorUrl' => 'https://ski-manager.sentry.io/crons/ski-manager/db-dump/',
         ];
 
@@ -1222,62 +1221,29 @@ class Admin extends BaseController
     public function suspiciousActivity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $db = db_connect();
-        $suspectsRaw = $db->query("
-            SELECT u.id, u.username, f.cash, f.difficulty,
-                (SELECT COUNT(*) FROM admin_audit_log WHERE target_user_id = u.id AND action = 'flagged') as times_flagged,
-                (SELECT message FROM activity_log WHERE user_id = u.id AND message LIKE '%income%' ORDER BY created_at DESC LIMIT 1) as last_income
-            FROM users u
-            JOIN player_finances f ON f.user_id = u.id
-            WHERE f.cash > (
-                CASE f.difficulty
-                    WHEN 'easy' THEN 5000000
-                    WHEN 'hard' THEN 2000000
-                    ELSE 3000000
-                END
-            )
-            ORDER BY f.cash DESC
-            LIMIT 20
-        ")->getResultArray();
+        $players = array_map(function ($x) {
+            $u = db_connect()->table('player_finances')->select('cash, difficulty')->where('user_id', $x['id'])->get()->getRowArray() ?? [];
+            return array_merge($x, [
+                'cashFormatted' => currency((int) ($u['cash'] ?? 0)),
+                'difficulty' => (string) ($u['difficulty'] ?? 'standard'),
+                'adminEdits' => (int) ($x['adminEdits'] ?? 0),
+                'review' => isset($x['review']) ? ['decision' => $x['review']['decision'], 'when' => timeAgo($x['review']['at'])] : null,
+            ]);
+        }, \App\Libraries\Suspicion::scan());
+        return view('admin/suspicious', ['page' => ['players' => $players]]);
+    }
 
-        $suspects = array_map(function($s) {
-            return [
-                'id' => (int) $s['id'],
-                'username' => $s['username'],
-                'cashFormatted' => currency((int) $s['cash']),
-                'difficulty' => $s['difficulty'] ?? 'standard',
-                'times_flagged' => (int) ($s['times_flagged'] ?? 0),
-                'last_income' => $s['last_income'] ?? '-',
-            ];
-        }, $suspectsRaw);
-
-        $recentRaw = $db->query("
-            SELECT u.id, u.username, f.cash, f.difficulty,
-                a1.message as latest, a1.created_at
-            FROM users u
-            JOIN player_finances f ON f.user_id = u.id
-            JOIN activity_log a1 ON a1.user_id = u.id
-            WHERE a1.message LIKE '%Admin set cash%'
-            ORDER BY a1.created_at DESC
-            LIMIT 10
-        ")->getResultArray();
-
-        $recent = array_map(function($r) {
-            return [
-                'id' => (int) $r['id'],
-                'username' => $r['username'],
-                'cashFormatted' => currency((int) ($r['cash'] ?? 0)),
-                'latest' => $r['latest'] ?? '',
-                'timeFormatted' => isset($r['created_at']) ? date('M j H:i', strtotime($r['created_at'])) : '-',
-            ];
-        }, $recentRaw);
-
-        $page = [
-            'suspects' => $suspects,
-            'recent' => $recent,
-        ];
-
-        return view('admin/suspicious', ['page' => $page]);
+    /** POST /admin/suspicious/{id}/review : flag a player as cheating, or clear them, with a note */
+    public function reviewSuspect(int $userId)
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard');
+        $decision = (string) $this->request->getPost('decision');
+        $note = trim((string) $this->request->getPost('note'));
+        if (!in_array($decision, ['flagged', 'cleared'], true) || $note === '') {
+            return redirect()->to('/admin/suspicious')->with('error', 'Choose flag or clear, and write a note.');
+        }
+        $this->auditLog($decision, $userId, json_encode(['note' => mb_substr($note, 0, 500)]));
+        return redirect()->to('/admin/suspicious')->with('success', $decision === 'flagged' ? 'Player flagged.' : 'Player cleared.');
     }
 
     public function createSeason()

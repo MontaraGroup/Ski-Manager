@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Button, Meter, Modal } from '@heroui/react';
 import { Icon } from '@/components/Icon';
-import { csrf, Page, Panel } from '@/components/Page';
+import { csrf, Page } from '@/components/Page';
+import { Section } from './admin/Section';
 import { ConfirmForm, Field } from './admin/ConfirmForm';
 
 export type UserMeta = {
@@ -378,7 +379,6 @@ export default function AdminUserPage({
                 title={`Ban ${user.username}?`}
                 describe={() => `${user.username} will not be able to log in until you unban them.`}
                 confirmLabel="Ban"
-                danger
               />
             ) : (
               <ConfirmForm
@@ -395,7 +395,6 @@ export default function AdminUserPage({
               title={`Reset ${user.username}'s progress?`}
               describe={() => `Removes ${user.username}'s lifts, slopes, staff, buildings and loans and puts cash back to the starting amount. This cannot be undone.`}
               confirmLabel="Reset everything"
-              danger
             />
             <ConfirmForm
               action={`/admin/impersonate/${user.id}`}
@@ -416,8 +415,8 @@ export default function AdminUserPage({
         )
       }
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Panel title="Balances" actions={<AdjustDialog user={user} cash={finance?.cashRaw ?? 0} genepis={genepis?.balance ?? 0} />}>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+        <Section title="Balances" actions={<AdjustDialog user={user} cash={finance?.cashRaw ?? 0} genepis={genepis?.balance ?? 0} />}>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-sm text-muted">Cash</div>
@@ -457,9 +456,9 @@ export default function AdminUserPage({
               </ConfirmForm>
             </div>
           </details>
-        </Panel>
+        </Section>
 
-        <Panel title="Resort">
+        <Section title="Resort">
           <Facts
             rows={[
               ['Name', finance?.resortName || 'Not named yet'],
@@ -476,9 +475,9 @@ export default function AdminUserPage({
               ['Staff and loans', `${stats.staffCount} staff, ${stats.loanCount} active loans`],
             ]}
           />
-        </Panel>
+        </Section>
 
-        <Panel title="Account">
+        <Section title="Account">
           <Facts
             rows={[
               ['Player ID', `#${user.id}`],
@@ -487,9 +486,9 @@ export default function AdminUserPage({
               ['Status', stateLabel(user)],
             ]}
           />
-        </Panel>
+        </Section>
 
-        <Panel title={`Last ${logins.length} logins`}>
+        <Section title={`Last ${logins.length} logins`}>
           <Table head={['Date', 'Result', 'IP address']} rows={logins.length} empty="No logins recorded.">
             {logins.map((l) => (
               <tr key={l.id}>
@@ -502,11 +501,11 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
       </div>
 
-      <Panel title="Admin notes">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Section title="Admin notes">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
           <NoteForm userId={user.id} />
           {notes.length === 0 ? (
             <p className="text-sm text-muted">No notes on this player yet.</p>
@@ -523,10 +522,10 @@ export default function AdminUserPage({
             </ul>
           )}
         </div>
-      </Panel>
+      </Section>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title={`Last ${transactions.length} cash transactions`} className="min-w-0">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
+        <Section title={`Last ${transactions.length} cash transactions`} className="min-w-0">
           <Table head={['When', 'What', 'Amount']} rows={transactions.length} empty="No cash transactions yet.">
             {transactions.map((t) => (
               <tr key={t.id}>
@@ -544,9 +543,9 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
 
-        <Panel title={`Last ${genepisLog.length} Génépis changes`} className="min-w-0">
+        <Section title={`Last ${genepisLog.length} Génépis changes`} className="min-w-0">
           <Table head={['When', 'Reason', 'Amount']} rows={genepisLog.length} empty="No Génépis history yet.">
             {genepisLog.map((g) => (
               <tr key={g.id}>
@@ -556,11 +555,11 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title={`Achievements completed (${achievements.length})`}>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
+        <Section title={`Achievements completed (${achievements.length})`}>
           {achievements.length === 0 ? (
             <p className="text-sm text-muted">No achievements completed yet.</p>
           ) : (
@@ -573,9 +572,9 @@ export default function AdminUserPage({
               ))}
             </ul>
           )}
-        </Panel>
+        </Section>
 
-        <Panel
+        <Section
           title="Tutorial"
           actions={
             tutorial && (
@@ -590,11 +589,11 @@ export default function AdminUserPage({
           }
         >
           <p className="text-sm">{tutorial ? `On step ${tutorial.step}.` : 'Finished or never started.'}</p>
-        </Panel>
+        </Section>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title={`Lifts and slopes (${items.length})`} className="min-w-0">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-2">
+        <Section title={`Lifts and slopes (${items.length})`} className="min-w-0">
           <Table head={['Name', 'Type', 'Length', 'Status']} rows={items.length} empty="Nothing built yet.">
             {items.map((it) => (
               <tr key={it.id}>
@@ -605,9 +604,9 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
 
-        <Panel title={`Staff (${staff.length})`} className="min-w-0">
+        <Section title={`Staff (${staff.length})`} className="min-w-0">
           <Table head={['Name', 'Role', 'Salary', 'Morale']} rows={staff.length} empty="No staff hired.">
             {staff.map((s) => (
               <tr key={s.id}>
@@ -631,9 +630,9 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
 
-        <Panel title={`Buildings (${buildings.length})`} className="min-w-0">
+        <Section title={`Buildings (${buildings.length})`} className="min-w-0">
           <Table head={['Name', 'Type', 'Level']} rows={buildings.length} empty="No buildings yet.">
             {buildings.map((b) => (
               <tr key={b.id}>
@@ -643,9 +642,9 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
 
-        <Panel title={`Active loans (${loans.length})`} className="min-w-0">
+        <Section title={`Active loans (${loans.length})`} className="min-w-0">
           <Table head={['Loan', 'Left to pay', 'Days left']} rows={loans.length} empty="No active loans.">
             {loans.map((l) => (
               <tr key={l.id}>
@@ -655,10 +654,10 @@ export default function AdminUserPage({
               </tr>
             ))}
           </Table>
-        </Panel>
+        </Section>
       </div>
 
-      <Panel title={`Activity (last ${logs.length})`}>
+      <Section title={`Activity (last ${logs.length})`}>
         {logs.length === 0 ? (
           <p className="text-sm text-muted">No activity recorded for this player.</p>
         ) : (
@@ -672,7 +671,7 @@ export default function AdminUserPage({
             ))}
           </ul>
         )}
-      </Panel>
+      </Section>
     </Page>
   );
 }

@@ -176,7 +176,7 @@ function NavLinks({ path }: { path: string }) {
       <PlayerSearch />
       {GROUPS.map((g) => (
         <section key={g.name} aria-labelledby={`${id}-${g.name}`}>
-          <h2 id={`${id}-${g.name}`} className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          <h2 id={`${id}-${g.name}`} className="mb-1 px-3 text-sm font-semibold text-muted">
             {g.name}
           </h2>
           <ul className="flex flex-col gap-0.5">
