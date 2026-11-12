@@ -127,6 +127,7 @@ _modules/*
 writable/maps/
 public/img/thumbs/
 public/img/*.jpg
+public/img/*.webp
 node_modules/
 public/css/style.css
 .scannerwork/

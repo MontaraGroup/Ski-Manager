@@ -28,6 +28,7 @@ fi
 
 echo "Recreating writable folders and permissions..."
 mkdir -p writable/cache writable/session writable/logs writable/uploads writable/debugbar
-chmod -R 777 writable/
+# 775, not 777: PHP-FPM runs as www-data (uid 1000), which owns writable/, so the owner can write
+chmod -R 775 writable/
 
 echo "Deployment complete!"

@@ -350,9 +350,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function initProgressiveOverlays() {
     const L = (window as any).L;
     const basePath = mapConfig.image.replace(/\.jpg$/i, '');
-    const imgLow = basePath + '_low.jpg';
-    const imgMed = basePath + '_med.jpg';
-    const imgFull = mapConfig.image;
+    const webp = mapConfig.webp ?? { low: false, med: false, full: false };
+    const imgLow = basePath + (webp.low ? '_low.webp' : '_low.jpg');
+    const imgMed = basePath + (webp.med ? '_med.webp' : '_med.jpg');
+    const imgFull = webp.full ? basePath + '.webp' : mapConfig.image;
 
     L.imageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
     let fullOverlay: any = null;

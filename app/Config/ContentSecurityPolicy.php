@@ -20,11 +20,10 @@ class ContentSecurityPolicy extends BaseConfig
     // -------------------------------------------------------------------------
 
     /**
-     * Default CSP report context.
-     * Report-only mode allows verifying all third-party integrations (AdSense, Sentry, GTM)
-     * without blocking functionality in production.
+     * Enforced (no longer report-only) once AdSense, Sentry, GTM and Font Awesome were checked without
+     * 'unsafe-eval'. 'unsafe-inline' is still allowed for scripts; nonces for the inline scripts are the next step.
      */
-    public bool $reportOnly = true;
+    public bool $reportOnly = false;
 
     /**
      * Specifies a URL where a browser will send reports
@@ -64,7 +63,6 @@ class ContentSecurityPolicy extends BaseConfig
     public $scriptSrc = [
         'self',
         'unsafe-inline',
-        'unsafe-eval',
         'https://browser.sentry-cdn.com',
         'https://www.googletagmanager.com',
         'https://kit.fontawesome.com',
@@ -87,7 +85,6 @@ class ContentSecurityPolicy extends BaseConfig
     public array|string $scriptSrcElem = [
         'self',
         'unsafe-inline',
-        'unsafe-eval',
         'https://browser.sentry-cdn.com',
         'https://www.googletagmanager.com',
         'https://kit.fontawesome.com',

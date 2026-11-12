@@ -42,6 +42,8 @@ export interface MapConfig {
   admin_image?: string;
   width: number;
   height: number;
+  /** Which sizes also exist as .webp (smaller); the engine uses those and the JPEGs for the rest */
+  webp?: { low: boolean; med: boolean; full: boolean };
 }
 
 export interface EconomyV2Config {
