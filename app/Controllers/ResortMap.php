@@ -153,7 +153,7 @@ class ResortMap extends BaseController
         $page = [
             'resortMap'         => $resortMap,
             'resortMaps'        => self::RESORT_MAPS,
-            'mapConfig'         => $mapConfig,
+            'mapConfig'         => $mapConfig + ['webp' => self::webpSizes((string) $mapConfig['image'])],
             'segments'          => $segments,
             'sectors'           => $sectors,
             'builtSegmentIds'   => $builtSegmentIds,
@@ -191,6 +191,20 @@ class ResortMap extends BaseController
         ];
 
         return $page;
+    }
+
+    /**
+     * Which map sizes have a WebP copy next to the JPEG (low, med, full). The copies are made on the
+     * server (often 15-30% smaller); a map without them keeps loading the JPEGs.
+     */
+    public static function webpSizes(string $image): array
+    {
+        $base = FCPATH . ltrim(preg_replace('/\.jpe?g$/i', '', $image), '/');
+        return [
+            'low'  => is_file($base . '_low.webp'),
+            'med'  => is_file($base . '_med.webp'),
+            'full' => is_file($base . '.webp'),
+        ];
     }
 
     public function getSegments()

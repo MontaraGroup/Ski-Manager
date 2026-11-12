@@ -215,9 +215,11 @@
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
     <link rel="preload" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" as="style">
     <?php if (auth()->loggedIn()) : ?>
-    <?php $__mapPrefetch = (db_connect()->table("player_finances")->where("user_id", auth()->id())->get()->getRowArray()["resort_map"] ?? "ParkCity"); ?>
-    <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_low.jpg" as="image">
-    <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_med.jpg" as="image">
+    <?php $__mapPrefetch = preg_replace('/[^A-Za-z]/', '', (string) (db_connect()->table("player_finances")->select("resort_map")->where("user_id", auth()->id())->get()->getRow("resort_map") ?? "ParkCity")); ?>
+    <?php // Warm the files the trail map will ask for: the WebP copies when the server has them
+          $__mapWebp = \App\Controllers\ResortMap::webpSizes('/img/' . $__mapPrefetch . '.jpg'); ?>
+    <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_low.<?= $__mapWebp['low'] ? 'webp' : 'jpg' ?>" as="image">
+    <link rel="prefetch" href="/img/<?= $__mapPrefetch ?>_med.<?= $__mapWebp['med'] ? 'webp' : 'jpg' ?>" as="image">
     <?php endif ?>
     <link rel="stylesheet" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" fetchpriority="high">
     <?= \App\Libraries\Islands::headTags(auth()->loggedIn()) ?>

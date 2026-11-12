@@ -173,7 +173,9 @@ class Auth extends ShieldAuth
      *
      * @see https://codeigniter4.github.io/shield/quick_start_guide/using_session_auth/#protecting-pages for set filters.
      */
-    public bool $recordActiveDate = true;
+    // Off: BaseController::initController() records users.last_active itself, at most every few minutes,
+    // instead of an UPDATE on every request
+    public bool $recordActiveDate = false;
 
     /**
      * --------------------------------------------------------------------
