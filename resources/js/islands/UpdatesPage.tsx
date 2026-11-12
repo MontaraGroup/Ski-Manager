@@ -23,6 +23,8 @@ export type ReleaseUpdate = {
   releasedAtFormatted: string;
   isLatest: boolean;
   categories: UpdateCategory[];
+  /** Roadmap ideas that shipped in this release */
+  roadmapItems?: { id: number; title: string }[];
 };
 
 export type UpdatesPageProps = {
@@ -75,7 +77,7 @@ export default function UpdatesPage({ updates = [] }: UpdatesPageProps) {
           const isLatest = up.isLatest;
 
           return (
-            <div key={up.id} className="relative">
+            <div key={up.id} id={`update-${up.id}`} className="relative scroll-mt-24">
               {/* Dot on timeline */}
               <span
                 className={`absolute -left-[33px] top-4 w-4 h-4 rounded-full border-2 border-base-100 ${
@@ -114,6 +116,18 @@ export default function UpdatesPage({ updates = [] }: UpdatesPageProps) {
                 <h3 className="text-base font-bold text-foreground">{up.title}</h3>
                 {up.description && (
                   <p className="text-xs text-muted mt-1 leading-relaxed">{up.description}</p>
+                )}
+
+                {(up.roadmapItems?.length ?? 0) > 0 && (
+                  <p className="mt-2 text-xs text-muted">
+                    From the roadmap:{' '}
+                    {up.roadmapItems!.map((r, i) => (
+                      <span key={r.id}>
+                        {i > 0 && ', '}
+                        <a href={`/roadmap#item-${r.id}`} className="font-medium text-accent hover:underline">{r.title}</a>
+                      </span>
+                    ))}
+                  </p>
                 )}
 
                 {up.categories.length > 0 && (

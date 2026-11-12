@@ -19,6 +19,7 @@ class Achievements
         'Money' => ['cash_', 'first_loan', 'no_debt', 'first_campaign', 'campaigns_'],
         'Safety & rules' => ['full_coverage', 'safety_', 'all_insurance', 'full_compliance', 'zero_fines'],
         'Milestones' => ['login_', 'day_', 'survive_summer', 'summer_profit', 'season_'],
+        'Community' => ['roadmap_'],
     ];
 
     public static function category(string $key): string
@@ -148,6 +149,10 @@ class Achievements
         $cash = (int) ($finance['cash'] ?? 0);
         $visitors = (int) ($finance['daily_visitors'] ?? 0);
         $vips = $count('vip_guests');
+        $roadmapVotes = $db->tableExists('roadmap_vote_history') ? $count('roadmap_vote_history') : 0;
+        $ideas = fn(array $statuses) => $db->table('roadmap_items')->where('author_id', $userId)->whereIn('status', $statuses)->countAllResults();
+        $ideasAccepted = $ideas(['planned', 'in_progress', 'completed']);
+        $ideasShipped = $ideas(['completed']);
 
         return [
             'first_staff' => count($staff), 'staff_10' => count($staff), 'staff_25' => count($staff), 'staff_50' => count($staff), 'staff_100' => count($staff),
@@ -177,6 +182,9 @@ class Achievements
             'login_7' => $streak, 'login_30' => $streak,
             'day_30' => $daysPlayed, 'day_100' => $daysPlayed, 'day_365' => $daysPlayed,
             'survive_summer' => $inSummer ? 1 : 0, 'summer_profit' => $summerProfit > 0 ? 1 : 0,
+            // Roadmap: items ever voted on (unvoting doesn't take it back) and the player's own ideas
+            'roadmap_first_vote' => $roadmapVotes, 'roadmap_voter' => $roadmapVotes,
+            'roadmap_idea_accepted' => $ideasAccepted, 'roadmap_idea_shipped' => $ideasShipped,
         ];
     }
 

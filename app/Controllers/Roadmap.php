@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\RoadmapRewards;
 use CodeIgniter\Database\BaseConnection;
 
 class Roadmap extends BaseController
@@ -255,120 +256,107 @@ class Roadmap extends BaseController
         }
     }
 
-    private function getVoterHash(): string
-    {
-        if (function_exists('auth') && auth()->loggedIn()) {
-            return 'u_' . auth()->id();
-        }
+    /** Statuses in page order, with how the page describes them */
+    private const STATUSES = [
+        'in_progress' => ['In progress', 'Being designed, built or tested now.', 'fa-code'],
+        'planned'     => ['Planned', 'Accepted and queued for a coming update.', 'fa-compass'],
+        'suggested'   => ['Ideas', 'Suggested by players. The most-voted ones get reviewed first.', 'fa-lightbulb'],
+        'completed'   => ['Shipped', 'Live in the game.', 'fa-circle-check'],
+    ];
 
-        $ip = $this->request->getIPAddress() ?? '127.0.0.1';
-        $ua = $this->request->getUserAgent() ? $this->request->getUserAgent()->getAgentString() : 'guest';
-        return hash('sha256', 'guest_' . $ip . '|' . $ua);
+    /** Signed-in player who may vote and suggest (profile finished); null otherwise */
+    private function playerId(): ?int
+    {
+        if (!function_exists('auth') || !auth()->loggedIn()) return null;
+        $userId = (int) auth()->id();
+        $finance = $this->db->table('player_finances')->select('profile_completed')->where('user_id', $userId)->get()->getRowArray();
+        return !empty($finance['profile_completed']) ? $userId : null;
+    }
+
+    /** The name shown on a card: the author's current username, or who added it */
+    private static function authorLabel(array $item, array $usernames): string
+    {
+        $id = (int) ($item['author_id'] ?? 0);
+        if ($id > 0 && isset($usernames[$id])) return $usernames[$id];
+        return ($item['author_name'] ?? '') === 'Ski Manager Team' ? 'Ski Manager team' : 'Community';
     }
 
     public function index(): string
     {
         self::ensureSchema();
+        helper('notify');
 
-        $voterHash = $this->getVoterHash();
-        $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
+        $userId = $this->playerId();
+        $loggedIn = function_exists('auth') && auth()->loggedIn();
 
-        $items = $this->db->table('roadmap_items')
-            ->orderBy('upvotes', 'DESC')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
+        $items = $this->db->table('roadmap_items')->orderBy('upvotes', 'DESC')->orderBy('id', 'ASC')->get()->getResultArray();
 
-        // Get all items this voter has upvoted
-        $votedItemIds = [];
-        $voteBuilder = $this->db->table('roadmap_votes');
-        if ($userId !== null) {
-            $voteBuilder->groupStart()
-                ->where('user_id', $userId)
-                ->orWhere('voter_hash', $voterHash)
-            ->groupEnd();
-        } else {
-            $voteBuilder->where('voter_hash', $voterHash);
-        }
-        $votes = $voteBuilder->get()->getResultArray();
-        foreach ($votes as $v) {
-            $votedItemIds[(int)$v['item_id']] = true;
+        $voted = [];
+        if ($loggedIn) {
+            $rows = $this->db->table('roadmap_votes')->select('item_id')->where('user_id', (int) auth()->id())->get()->getResultArray();
+            $voted = array_fill_keys(array_map('intval', array_column($rows, 'item_id')), true);
         }
 
-        // Categorize by status
-        $columns = [
-            'planned' => [
-                'title'       => 'Planned',
-                'description' => 'Confirmed features queued for upcoming seasons.',
-                'color'       => 'secondary',
-                'badge_color' => 'badge-secondary',
-                'icon'        => 'fa-solid fa-compass',
-                'items'       => [],
-            ],
-            'in_progress' => [
-                'title'       => 'In Progress',
-                'description' => 'Actively under design, testing, or development.',
-                'color'       => 'primary',
-                'badge_color' => 'badge-primary',
-                'icon'        => 'fa-solid fa-code',
-                'items'       => [],
-            ],
-            'completed' => [
-                'title'       => 'Completed / Shipped',
-                'description' => 'Live in the game and available to all managers.',
-                'color'       => 'success',
-                'badge_color' => 'badge-success',
-                'icon'        => 'fa-solid fa-circle-check',
-                'items'       => [],
-            ],
-        ];
+        $authorIds = array_values(array_unique(array_filter(array_map(fn($i) => (int) ($i['author_id'] ?? 0), $items))));
+        $usernames = $authorIds
+            ? array_column($this->db->table('users')->select('id, username')->whereIn('id', $authorIds)->get()->getResultArray(), 'username', 'id')
+            : [];
 
+        $columns = [];
+        foreach (self::STATUSES as $key => [$title, $desc, $icon]) {
+            $columns[$key] = ['status' => $key, 'title' => $title, 'description' => $desc, 'icon' => $icon, 'items' => []];
+        }
         foreach ($items as $item) {
-            $status = $item['status'];
-            if (!isset($columns[$status])) {
-                $status = 'planned';
-            }
-            $item['voted'] = isset($votedItemIds[(int)$item['id']]);
-            $columns[$status]['items'][] = $item;
+            $status = isset($columns[$item['status']]) ? $item['status'] : 'planned';
+            $columns[$status]['items'][] = [
+                'id'          => (int) $item['id'],
+                'title'       => (string) $item['title'],
+                'description' => (string) ($item['description'] ?? ''),
+                'status'      => $status,
+                'category'    => (string) ($item['category'] ?? 'gameplay'),
+                'upvotes'     => (int) ($item['upvotes'] ?? 0),
+                'author'      => self::authorLabel($item, $usernames),
+                'mine'        => $loggedIn && (int) ($item['author_id'] ?? 0) === (int) auth()->id(),
+                'voted'       => isset($voted[(int) $item['id']]),
+                'updatesUrl'  => !empty($item['updates_url']) ? (string) $item['updates_url'] : null,
+                'created_at'  => (string) ($item['created_at'] ?? ''),
+            ];
         }
 
-        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+        // Visiting the page clears the "New" mark in the menu
+        if ($loggedIn && empty(auth()->user()->roadmap_seen_at) && $this->db->fieldExists('roadmap_seen_at', 'users')) {
+            $this->db->table('users')->where('id', (int) auth()->id())->update(['roadmap_seen_at' => date('Y-m-d H:i:s')]);
+        }
 
-        $formattedColumns = [];
-        foreach ($columns as $statusKey => $col) {
-            $rawIcon = $col['icon'] ?? 'fa-compass';
-            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
-            $formattedItems = [];
-            foreach ($col['items'] as $item) {
-                $formattedItems[] = [
-                    'id' => (int) $item['id'],
-                    'title' => (string) $item['title'],
-                    'description' => (string) ($item['description'] ?? ''),
-                    'status' => (string) $item['status'],
-                    'category' => (string) ($item['category'] ?? 'gameplay'),
-                    'upvotes' => (int) ($item['upvotes'] ?? 0),
-                    'author_name' => (string) ($item['author_name'] ?? 'Ski Manager Team'),
-                    'author_id' => isset($item['author_id']) ? (int) $item['author_id'] : null,
-                    'voted' => (bool) ($item['voted'] ?? false),
-                    'created_at' => (string) ($item['created_at'] ?? ''),
-                ];
+        $eligible = $userId !== null && RoadmapRewards::eligible($userId);
+        $releases = [];
+        if (self::checkAdmin() && $this->db->tableExists('updates')) {
+            foreach ($this->db->table('updates')->select('id, version, title')->orderBy('released_at', 'DESC')->limit(30)->get()->getResultArray() as $u) {
+                $releases[] = ['url' => '/updates#update-' . (int) $u['id'], 'label' => 'v' . $u['version'] . ' ' . ($u['title'] ?? '')];
             }
-            $formattedColumns[] = [
-                'status' => $statusKey,
-                'title' => (string) $col['title'],
-                'description' => (string) $col['description'],
-                'icon' => $icon,
-                'items' => $formattedItems,
-            ];
         }
 
         $page = [
             'isAdmin' => self::checkAdmin(),
             'stats' => [
                 'totalItems' => count($items),
-                'totalVotes' => $totalVotes,
+                'totalVotes' => (int) $this->db->table('roadmap_votes')->countAllResults(),
             ],
-            'columns' => $formattedColumns,
+            'columns' => array_values($columns),
+            'me' => [
+                'signedIn'         => $loggedIn,
+                'canVote'          => $userId !== null,
+                'canSuggest'       => $userId !== null && !\App\Controllers\Demo::isDemoUser(),
+                'earnsRewards'     => $eligible,
+                'weeklyRewardDone' => $eligible && RoadmapRewards::weeklyRewardTaken($userId),
+                'suggestionsLeft'  => $userId !== null ? RoadmapRewards::suggestionsLeft($userId) : 0,
+            ],
+            'rewards' => [
+                'voteWeekly'   => RoadmapRewards::VOTE_WEEKLY_GENEPIS,
+                'ideaShipped'  => RoadmapRewards::IDEA_SHIPPED_GENEPIS,
+                'perWeek'      => RoadmapRewards::SUGGESTIONS_PER_WEEK,
+            ],
+            'releases' => $releases,
         ];
 
         return view('roadmap/index', ['page' => $page]);
@@ -377,65 +365,45 @@ class Roadmap extends BaseController
     public function vote(int $itemId)
     {
         self::ensureSchema();
+        helper('notify');
+
+        $userId = $this->playerId();
+        if ($userId === null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Sign in and finish setting up your resort to vote.'])->setStatusCode(401);
+        }
 
         $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
         if (!$item) {
             return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
         }
-
-        $voterHash = $this->getVoterHash();
-        $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
-
-        // Check if vote already exists for this voter
-        $voteBuilder = $this->db->table('roadmap_votes')->where('item_id', $itemId);
-        if ($userId !== null) {
-            $voteBuilder->groupStart()
-                ->where('user_id', $userId)
-                ->orWhere('voter_hash', $voterHash)
-            ->groupEnd();
-        } else {
-            $voteBuilder->where('voter_hash', $voterHash);
+        if ($item['status'] === 'completed') {
+            return $this->response->setJSON(['success' => false, 'message' => 'This idea has already shipped.'])->setStatusCode(400);
         }
-        $existingVote = $voteBuilder->get()->getRowArray();
 
-        if ($existingVote) {
-            // Remove vote (toggle off)
-            $this->db->table('roadmap_votes')
-                ->where('id', (int) $existingVote['id'])
-                ->delete();
-
+        $existing = $this->db->table('roadmap_votes')->where('item_id', $itemId)->where('user_id', $userId)->get()->getRowArray();
+        $reward = 0;
+        if ($existing) {
+            $this->db->table('roadmap_votes')->where('id', (int) $existing['id'])->delete();
             $voted = false;
         } else {
-            // Add vote
             $this->db->table('roadmap_votes')->insert([
-                'item_id'    => $itemId,
-                'user_id'    => $userId,
-                'voter_hash' => $voterHash,
-                'created_at' => date('Y-m-d H:i:s'),
+                'item_id' => $itemId, 'user_id' => $userId, 'voter_hash' => 'u_' . $userId, 'created_at' => date('Y-m-d H:i:s'),
             ]);
-
             $voted = true;
+            $reward = RoadmapRewards::onVote($userId, $itemId);
         }
 
-        // Calculate REAL upvote count from roadmap_votes table (zero fake numbers)
-        $newUpvotes = $this->db->table('roadmap_votes')
-            ->where('item_id', $itemId)
-            ->countAllResults();
-
-        $this->db->table('roadmap_items')
-            ->where('id', $itemId)
-            ->update([
-                'upvotes'    => $newUpvotes,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+        // The real count from roadmap_votes, so the number can't drift
+        $upvotes = $this->db->table('roadmap_votes')->where('item_id', $itemId)->countAllResults();
+        $this->db->table('roadmap_items')->where('id', $itemId)->update(['upvotes' => $upvotes]);
 
         return $this->response->setJSON([
             'success'    => true,
             'voted'      => $voted,
-            'upvotes'    => $newUpvotes,
-            'totalVotes' => $totalVotes,
+            'upvotes'    => $upvotes,
+            'totalVotes' => (int) $this->db->table('roadmap_votes')->countAllResults(),
+            'reward'     => $reward,
+            'message'    => $reward > 0 ? "Thanks for voting. You earned {$reward} Génépis this week." : null,
         ]);
     }
 
@@ -443,72 +411,51 @@ class Roadmap extends BaseController
     {
         self::ensureSchema();
 
+        $userId = $this->playerId();
+        if ($userId === null || \App\Controllers\Demo::isDemoUser()) {
+            return redirect()->to('/roadmap')->with('error', 'Sign in with a full account to suggest an idea.');
+        }
+
         $title = trim($this->request->getPost('title') ?? '');
         $description = trim($this->request->getPost('description') ?? '');
         $category = trim($this->request->getPost('category') ?? 'gameplay');
-
-        $allowedCategories = ['gameplay', 'quality_of_life', 'economy', 'mobile'];
-        if (!in_array($category, $allowedCategories, true)) {
+        if (!in_array($category, ['gameplay', 'quality_of_life', 'economy', 'mobile'], true)) {
             $category = 'gameplay';
         }
 
         if (mb_strlen($title) < 5 || mb_strlen($title) > 100) {
-            return redirect()->back()->with('error', 'Please provide a feature title between 5 and 100 characters.');
+            return redirect()->to('/roadmap')->with('error', 'The title needs 5 to 100 characters.');
         }
-
         if (mb_strlen($description) < 10 || mb_strlen($description) > 1000) {
-            return redirect()->back()->with('error', 'Please provide a feature description between 10 and 1000 characters.');
+            return redirect()->to('/roadmap')->with('error', 'The description needs 10 to 1000 characters.');
         }
-
-        $authorName = 'Community Player';
-        $authorId = null;
-        if (function_exists('auth') && auth()->loggedIn()) {
-            $user = auth()->user();
-            $authorName = $user ? ($user->username ?? 'Player') : 'Player';
-            $authorId = (int) auth()->id();
-        }
-
-        $voterHash = $this->getVoterHash();
-
-        // Anti-spam check: prevent multiple submissions within 60 seconds
-        $recentTime = date('Y-m-d H:i:s', time() - 60);
-        $recentQuery = $this->db->table('roadmap_items')->where('created_at >', $recentTime);
-        if ($authorId !== null) {
-            $recentQuery->where('author_id', $authorId);
-        } else {
-            $recentQuery->where('author_name', $authorName);
-        }
-        if ($recentQuery->countAllResults() > 0) {
-            return redirect()->to('/roadmap')->with('error', 'Please wait a moment before submitting another feature idea.');
+        if (RoadmapRewards::suggestionsLeft($userId) <= 0) {
+            return redirect()->to('/roadmap')->with('error', 'You can suggest ' . RoadmapRewards::SUGGESTIONS_PER_WEEK . ' ideas a week. Try again in a few days.');
         }
 
         $now = date('Y-m-d H:i:s');
         $this->db->transStart();
-
         $this->db->table('roadmap_items')->insert([
             'title'       => $title,
             'description' => $description,
-            'status'      => 'planned',
+            'status'      => 'suggested',
             'category'    => $category,
             'upvotes'     => 1,
-            'author_name' => $authorName,
-            'author_id'   => $authorId,
+            'author_name' => (string) (auth()->user()->username ?? 'Player'),
+            'author_id'   => $userId,
             'created_at'  => $now,
             'updated_at'  => $now,
         ]);
-
-        $itemId = $this->db->insertID();
-
+        $itemId = (int) $this->db->insertID();
         $this->db->table('roadmap_votes')->insert([
-            'item_id'    => $itemId,
-            'user_id'    => $authorId,
-            'voter_hash' => $voterHash,
-            'created_at' => $now,
+            'item_id' => $itemId, 'user_id' => $userId, 'voter_hash' => 'u_' . $userId, 'created_at' => $now,
         ]);
-
         $this->db->transComplete();
 
-        return redirect()->to('/roadmap')->with('success', 'Thank you! Your feature idea has been submitted and added to the community roadmap.');
+        // The author's own vote counts toward voting achievements but earns no Génépis
+        RoadmapRewards::onVote($userId, $itemId, false);
+
+        return redirect()->to('/roadmap#item-' . $itemId)->with('success', 'Your idea is in the Ideas list. If it ships, you earn ' . RoadmapRewards::IDEA_SHIPPED_GENEPIS . ' Génépis.');
     }
 
     public function updateStatus()
@@ -516,23 +463,38 @@ class Roadmap extends BaseController
         if (!self::checkAdmin()) {
             return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized'])->setStatusCode(403);
         }
+        helper('notify');
 
         $itemId = (int) $this->request->getPost('id');
         $status = trim($this->request->getPost('status') ?? '');
-
-        $allowed = ['planned', 'in_progress', 'completed'];
-        if (!in_array($status, $allowed, true)) {
+        if (!isset(self::STATUSES[$status])) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid status'])->setStatusCode(400);
         }
+        $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
 
-        $this->db->table('roadmap_items')
-            ->where('id', $itemId)
-            ->update([
-                'status'     => $status,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+        $update = ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')];
+        $updatesUrl = trim((string) $this->request->getPost('updates_url'));
+        if ($updatesUrl !== '') {
+            if (!preg_match('~^/updates#update-\d+$~', $updatesUrl)) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Invalid release link'])->setStatusCode(400);
+            }
+            $update['updates_url'] = $updatesUrl;
+        }
+        $this->db->table('roadmap_items')->where('id', $itemId)->update($update);
 
-        return $this->response->setJSON(['success' => true]);
+        $previous = (string) $item['status'];
+        $item = array_merge($item, $update);
+        if ($previous === 'suggested' && in_array($status, ['planned', 'in_progress', 'completed'], true)) {
+            RoadmapRewards::onAccepted($item);
+        }
+        if ($status === 'completed' && $previous !== 'completed') {
+            RoadmapRewards::onShipped($item);
+        }
+
+        return $this->response->setJSON(['success' => true, 'status' => $status, 'updatesUrl' => $item['updates_url'] ?? null]);
     }
 
     public function deleteItem(int $itemId)

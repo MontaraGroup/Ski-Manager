@@ -10,6 +10,8 @@ export type NavItem = {
   flagOff: boolean;
   external: boolean;
   bonusDue: boolean;
+  /** Not opened yet by this player: shows a "New" mark */
+  isNew?: boolean;
   /** Visible because the page is in beta */
   beta: boolean;
 };
