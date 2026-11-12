@@ -76,10 +76,15 @@ export type AdminUserPageProps = {
   genepisLog: GenepisRow[];
   logins: LoginRow[];
   notes: NoteRow[];
+  money?: MoneyFormat;
 };
 
 const fmt = (v: number) => v.toLocaleString('en-US');
-const money = (v: number) => `${v < 0 ? '−' : ''}$${fmt(Math.abs(v))}`;
+export type MoneyFormat = { symbol: string; prefix: boolean };
+/** Same layout as currency() in currency_helper.php: $1,000 or 1,000 € */
+let moneyFmt: MoneyFormat = { symbol: '€', prefix: false };
+const money = (v: number) =>
+  `${v < 0 ? '−' : ''}${moneyFmt.prefix ? moneyFmt.symbol : ''}${fmt(Math.abs(v))}${moneyFmt.prefix ? '' : ' ' + moneyFmt.symbol}`;
 
 /** POST a form body the way the CI4 CSRF filter expects; returns status and JSON message */
 async function post(url: string, fields: Record<string, string>): Promise<{ ok: boolean; status: number; message: string }> {
@@ -341,7 +346,9 @@ export default function AdminUserPage({
   genepisLog = [],
   logins = [],
   notes = [],
+  money: moneyFormat,
 }: AdminUserPageProps) {
+  if (moneyFormat) moneyFmt = moneyFormat;
   return (
     <Page
       title={user.username}
@@ -423,7 +430,7 @@ export default function AdminUserPage({
                 confirmLabel="Set it"
               >
                 <input type="hidden" name="user_id" value={user.id} />
-                <Field label="New cash ($)" type="number" name="cash" defaultValue={finance?.cashRaw ?? 0} step={1} required />
+                <Field label={`New cash (${moneyFmt.symbol})`} type="number" name="cash" defaultValue={finance?.cashRaw ?? 0} step={1} required />
                 <Field label="Reason" type="text" name="reason" maxLength={180} required />
               </ConfirmForm>
               <ConfirmForm

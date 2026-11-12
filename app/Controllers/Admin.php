@@ -176,6 +176,7 @@ class Admin extends BaseController
         ];
 
         $page = [
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
             'attention' => $attention,
             'season' => [
                 'name' => $season['name'] ?? 'Season 1',
@@ -401,6 +402,7 @@ class Admin extends BaseController
             ] : null,
             'logs' => $logs,
             'transactions' => $transactions,
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
             'genepisLog' => $genepisLog,
             'logins' => $logins,
             'notes' => $notes,
@@ -1459,6 +1461,10 @@ class Admin extends BaseController
             if ($amount > 0) \App\Libraries\Ledger::creditGenepis($userId, $amount, $label);
             else $ok = \App\Libraries\Ledger::chargeGenepis($userId, -$amount, $label);
         }
+        // With DBDebug off (production) a failed write doesn't throw; the ledger's transaction rolls back and only transStatus() says so
+        if (!db_connect()->transStatus()) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The change was not saved. Nothing was written.']);
+        }
         if (!$ok) {
             return $this->response->setStatusCode(409)->setJSON(['success' => false, 'message' => 'The player does not have that much to take.']);
         }
@@ -1474,9 +1480,12 @@ class Admin extends BaseController
         if ($note === '' || mb_strlen($note) > 2000) {
             return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Write a note of up to 2000 characters.']);
         }
-        db_connect()->table('admin_notes')->insert([
+        $saved = db_connect()->table('admin_notes')->insert([
             'user_id' => $userId, 'admin_id' => (int) auth()->id(), 'note' => $note, 'created_at' => date('Y-m-d H:i:s'),
         ]);
+        if (!$saved) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The note was not saved.']);
+        }
         $this->auditLog('note', $userId, json_encode(['note' => mb_substr($note, 0, 200)]));
         return $this->response->setJSON(['success' => true]);
     }

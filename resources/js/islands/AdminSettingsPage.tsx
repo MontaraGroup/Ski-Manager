@@ -262,7 +262,7 @@ export default function AdminSettingsPage({
             actions={
               <a
                 href="/map"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                className="min-h-11 sm:min-h-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
               >
                 <span>Manage Map</span>
                 <Icon name="fa-arrow-right" className="text-[10px]" />
@@ -286,7 +286,7 @@ export default function AdminSettingsPage({
             actions={
               <a
                 href="/tournaments"
-                className="text-xs font-semibold text-accent hover:underline"
+                className="inline-flex min-h-11 items-center sm:min-h-0 text-xs font-semibold text-accent hover:underline"
               >
                 View all &rarr;
               </a>
@@ -330,28 +330,28 @@ export default function AdminSettingsPage({
             <div className="flex flex-wrap gap-2">
               <a
                 href="/admin/errors"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                className="min-h-11 sm:min-h-0 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
               >
                 <Icon name="fa-bug" className="text-danger" />
                 <span>Error Log</span>
               </a>
               <a
                 href="/admin/broadcast"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                className="min-h-11 sm:min-h-0 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
               >
                 <Icon name="fa-bullhorn" className="text-warning" />
                 <span>Broadcast</span>
               </a>
               <a
                 href="/admin/economy"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                className="min-h-11 sm:min-h-0 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
               >
                 <Icon name="fa-chart-line" className="text-accent" />
                 <span>Economy</span>
               </a>
               <a
                 href="/admin/activity"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                className="min-h-11 sm:min-h-0 inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-raised"
               >
                 <Icon name="fa-clock-rotate-left" className="text-muted" />
                 <span>Activity Logs</span>

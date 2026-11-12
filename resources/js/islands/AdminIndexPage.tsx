@@ -103,6 +103,7 @@ export type ServerInfo = {
 };
 
 export type AdminIndexPageProps = {
+  money?: { symbol: string; prefix: boolean };
   attention: AttentionInfo;
   season: SeasonInfo;
   isStaging: boolean;
@@ -180,6 +181,7 @@ function AttentionCard({
 }
 
 export default function AdminIndexPage({
+  money = { symbol: '€', prefix: false },
   attention,
   season,
   isStaging,
@@ -608,11 +610,11 @@ export default function AdminIndexPage({
                 className="flex flex-col gap-2"
                 submitLabel="Give cash to everyone"
                 title="Give cash to every player?"
-                describe={(d) => `Adds $${n(Number(d.get('amount')))} to the cash of all ${kpis.totalUsers} players. This cannot be undone in one step.`}
+                describe={(d) => `Adds ${money.prefix ? money.symbol : ''}${n(Number(d.get('amount')))}${money.prefix ? '' : ' ' + money.symbol} to the cash of all ${kpis.totalUsers} players. This cannot be undone in one step.`}
                 confirmLabel="Give it"
                 danger
               >
-                <Field label="Cash per player ($)" type="number" name="amount" defaultValue={50000} min={1} max={10000000} step={1} required />
+                <Field label={`Cash per player (${money.symbol})`} type="number" name="amount" defaultValue={50000} min={1} max={10000000} step={1} required />
               </ConfirmForm>
               <ConfirmForm
                 action="/admin/add-genepis-all"

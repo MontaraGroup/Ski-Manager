@@ -89,7 +89,7 @@ export default function AdminAuditPage({ logs = [] }: AdminAuditPageProps) {
                       {l.target_name ? (
                         <a
                           href={`/admin/user/${l.target_user_id}`}
-                          className="font-medium text-primary hover:underline"
+                          className="inline-flex min-h-11 items-center sm:min-h-0 font-medium text-primary hover:underline"
                         >
                           {l.target_name} <span className="font-mono text-muted text-[11px]">#{l.target_user_id}</span>
                         </a>
