@@ -136,8 +136,24 @@ echo "Reloading runtime workers..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
     # PID 1 in the container is supervisord, which treats USR2 as "reopen logs"; signal php-fpm itself.
     # OPcache does not check file timestamps, so this graceful reload is what makes new code live.
-    docker exec "${PHP_CONTAINER}" supervisorctl signal USR2 "php-fpm:*" >/dev/null 2>&1 \
-        || docker exec "${PHP_CONTAINER}" sh -c 'kill -USR2 "$(cat /var/run/php-fpm.pid 2>/dev/null || pgrep -o php-fpm)"' 2>/dev/null || true
+    # Without it, the new JS bundles go live against old PHP (e.g. SKI-MANAGER-1M), so a failed reload must fail the deploy.
+    if docker exec "${PHP_CONTAINER}" supervisorctl signal USR2 "php-fpm:*" >/dev/null 2>&1; then
+        echo "PHP-FPM reloaded via supervisorctl."
+    elif docker exec "${PHP_CONTAINER}" sh -c 'kill -USR2 "$(cat /var/run/php-fpm.pid 2>/dev/null || pgrep -o php-fpm)"' 2>/dev/null; then
+        echo "PHP-FPM reloaded via direct USR2 to the master process."
+    else
+        echo "ERROR: Could not reload PHP-FPM in ${PHP_CONTAINER}; new PHP code is NOT live (OPcache ignores file timestamps)." >&2
+        echo "       Restart the container (docker restart ${PHP_CONTAINER}) and re-run this deploy." >&2
+        exit 1
+    fi
+
+    # Confirm php-fpm came back up after the graceful reload before smoke-testing.
+    sleep 1
+    if docker exec "${PHP_CONTAINER}" sh -c 'command -v supervisorctl >/dev/null 2>&1' \
+        && ! docker exec "${PHP_CONTAINER}" supervisorctl status "php-fpm:*" 2>/dev/null | grep -q RUNNING; then
+        echo "ERROR: php-fpm is not RUNNING in ${PHP_CONTAINER} after reload." >&2
+        exit 1
+    fi
 fi
 
 if docker ps --format '{{.Names}}' | grep -q "${OPENRESTY_CONTAINER}"; then
