@@ -169,10 +169,10 @@ export default function AdminSettingsPage({
                   className="flex items-center justify-between rounded-xl border border-border bg-surface-raised p-2.5"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span
-                      className="inline-block size-3 rounded-full shrink-0 shadow-xs"
-                      style={{ backgroundColor: sec.color }}
-                    />
+                    {/* The sector colour is data, so it goes in as an SVG fill rather than a style attribute */}
+                    <svg viewBox="0 0 12 12" className="size-3 shrink-0" aria-hidden="true">
+                      <circle cx="6" cy="6" r="6" fill={sec.color} />
+                    </svg>
                     <span className="text-xs font-bold text-foreground">{sec.name}</span>
                   </div>
 

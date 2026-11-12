@@ -169,6 +169,9 @@ class Admin extends BaseController
             'activeToday' => $db->table('users')->where('last_active >=', date('Y-m-d 00:00:00'))->countAllResults(),
             'active7d' => $db->table('users')->where('last_active >=', $since('-7 days'))->countAllResults(),
             'roadmapToReview' => $db->tableExists('roadmap_items') ? $db->table('roadmap_items')->where('status', 'suggested')->countAllResults() : 0,
+            // Same thresholds as suspiciousActivity()
+            'suspicious' => (int) $db->query("SELECT COUNT(*) n FROM users u JOIN player_finances f ON f.user_id = u.id
+                WHERE f.cash > (CASE f.difficulty WHEN 'easy' THEN 5000000 WHEN 'hard' THEN 2000000 ELSE 3000000 END)")->getRow('n'),
             'backupMonitorUrl' => 'https://ski-manager.sentry.io/crons/ski-manager/db-dump/',
         ];
 
@@ -308,11 +311,52 @@ class Admin extends BaseController
             ];
         }, $logsRaw);
 
-        $achievements = array_map(function($a) {
+        $achievements = array_values(array_map(function($a) {
             return [
-                'key' => $a['achievement_key'] ?? $a['name'] ?? (string) $a['id'],
+                'key' => $a['achievement_key'] ?? (string) $a['id'],
+                'name' => $a['name'] ?? $a['achievement_key'] ?? '',
+                'claimed' => (bool) ($a['claimed'] ?? 0),
             ];
-        }, $achievementsRaw);
+        }, array_filter($achievementsRaw, fn($a) => (int) ($a['completed'] ?? 0) === 1)));
+
+        $transactions = array_map(fn($t) => [
+            'id' => (int) $t['id'],
+            'gameDay' => (int) $t['game_day'],
+            'category' => (string) $t['category'],
+            'description' => (string) $t['description'],
+            'amountFormatted' => ($t['type'] === 'expense' ? '−' : '+') . currency(abs((int) $t['amount'])),
+            'isExpense' => $t['type'] === 'expense',
+            'when' => $t['created_at'] ? date('M j, H:i', strtotime($t['created_at'])) : '',
+        ], $db->table('financial_transactions')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        $genepisLog = array_map(fn($g) => [
+            'id' => (int) $g['id'],
+            'amountFormatted' => ($g['type'] === 'spent' ? '−' : '+') . number_format(abs((int) $g['amount'])),
+            'isSpent' => $g['type'] === 'spent',
+            'reason' => (string) $g['reason'],
+            'when' => $g['created_at'] ? date('M j, H:i', strtotime($g['created_at'])) : '',
+        ], $db->table('genepis_log')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        // Keep the network, drop the host: 203.0.113.42 -> 203.0.113.x, IPv6 keeps its first 3 groups
+        $maskIp = function (string $ip): string {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) return preg_replace('/\.\d+$/', '.x', $ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return implode(':', array_slice(explode(':', $ip), 0, 3)) . ':x';
+            return 'unknown';
+        };
+        $logins = array_map(fn($l) => [
+            'id' => (int) $l['id'],
+            'when' => date('M j, Y H:i', strtotime($l['date'])),
+            'success' => (bool) $l['success'],
+            'ip' => $maskIp((string) $l['ip_address']),
+        ], $db->table('auth_logins')->select('id, date, success, ip_address')->where('user_id', $id)->orderBy('id', 'DESC')->limit(10)->get()->getResultArray());
+
+        $notes = $db->tableExists('admin_notes') ? array_map(fn($n) => [
+            'id' => (int) $n['id'],
+            'note' => (string) $n['note'],
+            'admin' => (string) ($n['admin_name'] ?? ('#' . $n['admin_id'])),
+            'when' => date('M j, Y H:i', strtotime($n['created_at'])),
+        ], $db->table('admin_notes n')->select('n.*, u.username AS admin_name')->join('users u', 'u.id = n.admin_id', 'left')
+            ->where('n.user_id', $id)->orderBy('n.id', 'DESC')->get()->getResultArray()) : [];
 
         $page = [
             'user' => [
@@ -331,6 +375,9 @@ class Admin extends BaseController
                 'units' => $finance['units'] ?? 'metric',
                 'resortMap' => $finance['resort_map'] ?? 'ParkCity',
                 'resortOpen' => (bool) ($finance['resort_open'] ?? true),
+                'resortName' => (string) ($finance['resort_name'] ?? ''),
+                'dailyVisitors' => number_format((int) ($finance['daily_visitors'] ?? 0)),
+                'lastActive' => !empty($finance['last_active']) ? timeAgo($finance['last_active']) : 'never',
             ],
             'genepis' => [
                 'balance' => (int) ($genepis['balance'] ?? 0),
@@ -353,6 +400,10 @@ class Admin extends BaseController
                 'step' => (int) ($tutorial['current_step'] ?? 1),
             ] : null,
             'logs' => $logs,
+            'transactions' => $transactions,
+            'genepisLog' => $genepisLog,
+            'logins' => $logins,
+            'notes' => $notes,
         ];
 
         return view('admin/user', ['page' => $page]);
@@ -538,6 +589,9 @@ class Admin extends BaseController
     public function grantAchievement()
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
+        $userId = (int) $this->request->getPost('user_id');
+        $achievementId = (int) $this->request->getPost('achievement_id');
+        if ($userId <= 0 || $achievementId <= 0) return redirect()->to('/admin')->with('error', 'Give a player ID and an achievement ID.');
         $achRow = db_connect()->table('achievement_defs')->where('id', $achievementId)->get()->getRowArray() ?: db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray();
         $target = $achRow['target'] ?? 100;
         db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => $target]);
@@ -1389,7 +1443,8 @@ class Admin extends BaseController
         $currency = (string) $this->request->getPost('currency');
         $amount = (int) $this->request->getPost('amount');
         $reason = trim((string) $this->request->getPost('reason'));
-        if (!in_array($currency, ['cash', 'genepis'], true) || $amount === 0 || $reason === '' || mb_strlen($reason) > 255) {
+        // 180: the reason goes into description/reason columns of 200 after the "Admin adjustment: " prefix
+        if (!in_array($currency, ['cash', 'genepis'], true) || $amount === 0 || $reason === '' || mb_strlen($reason) > 180) {
             return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Choose cash or Génépis, a non-zero amount and a reason.']);
         }
         if (!db_connect()->table('users')->where('id', $userId)->countAllResults()) {
