@@ -1,3 +1,11 @@
+## Release 2026-11-12 19:39
+
+* Merge pull request #83 from Montara-Group/feat/resort-clock (ae28cc0)
+* feat(shell): resort clock and next-day countdown in the top bar (ba48ff9)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e667b25)
+* Merge pull request #82 from Montara-Group/main (c4f5791)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (459cc56)
+
 ## Release 2026-11-12 19:31
 
 * Merge pull request #82 from Montara-Group/main (c4f5791)
