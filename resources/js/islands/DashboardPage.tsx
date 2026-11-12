@@ -237,6 +237,8 @@ export const PRESETS: LayoutPreset[] = [
 export type DashboardHero = {
   resortMapKey: string;
   resortMapName: string;
+  /** ResortMap::webpSizes: this map has a _low.webp on the server */
+  resortMapWebpLow?: boolean;
   resortOpen: boolean;
   seasonNum: number;
   gameDay: number;
@@ -790,12 +792,14 @@ export default function DashboardPage({
       )}
       {/* Mountain Hero Header */}
       <header
-        className="relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(15,23,42,0.85) 100%), url('/img/${hero.resortMapKey}_low.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 40%',
-        }}
+        className="map-hero-bg relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"
+        data-webp={hero.resortMapWebpLow ? '' : undefined}
+        style={
+          {
+            '--hero-jpg': `url('/img/${hero.resortMapKey}_low.jpg')`,
+            '--hero-webp': `url('/img/${hero.resortMapKey}_low.webp')`,
+          } as React.CSSProperties
+        }
       >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1.5">
