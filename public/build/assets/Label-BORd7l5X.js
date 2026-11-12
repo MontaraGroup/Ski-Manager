@@ -1,1 +1,0 @@
-import{r as e}from"./rolldown-runtime-XKyaHtl9.js";import{O as t,d as n,o as r}from"./compose-DVfDhtUW.js";import{t as i}from"./react-DlmbjZJV.js";var a=e(i(),1),o=(0,a.createContext)({}),s=t(function(e,t){[e,t]=r(e,t,o);let{elementType:i=`label`,...s}=e,c=n[i];return a.createElement(c,{className:`react-aria-Label`,...s,ref:t})});export{s as n,o as t};

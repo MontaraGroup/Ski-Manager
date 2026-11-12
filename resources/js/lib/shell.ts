@@ -25,6 +25,9 @@ export type Stats = {
   snow: string;
   gameDay: number;
   seasonLength: number;
+  /** Server Unix time in seconds, and the zone the resort clock runs in */
+  now: number;
+  timezone: string;
   genepis: number;
   stars: number;
 };
