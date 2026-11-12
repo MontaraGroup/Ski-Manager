@@ -1,3 +1,11 @@
+## Release 2026-11-12 02:22
+
+* Merge branch 'MontaraGroup:main' into main (3d496d2)
+* Merge pull request #79 from Montara-Group/perf/backend-audit (d3daaff)
+* chore: ignore generated WebP map images (30108cc)
+* perf: ~58 fewer queries per page, no per-request writes, enforced CSP, WebP maps (6fd5f53)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3c60898)
+
 ## Release 2026-11-11 19:28
 
 * Merge branch 'MontaraGroup:main' into main (95ed154)
