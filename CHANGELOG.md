@@ -1,3 +1,11 @@
+## Release 2026-11-12 21:51
+
+* Merge pull request #86 from Montara-Group/feat/admin-revamp (af72b24)
+* fix(admin): staging QA fixes (ae29468)
+* feat(admin): admin nav, attention overview, player page with adjust dialog and notes (f78835e)
+* wip(admin): overview attention numbers (7d353ca)
+* wip(admin): notes table, Génépis ledger, search/adjust/note endpoints, reasons on set cash/Génépis (cc2699f)
+
 ## Release 2026-11-12 21:06
 
 * Merge pull request #85 from Montara-Group/fix/visual-qa (da35e57)
