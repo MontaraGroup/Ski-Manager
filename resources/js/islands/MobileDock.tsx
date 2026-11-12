@@ -13,6 +13,7 @@ const TABS = [
 
 /** Bottom tab bar on phones; "More" opens every page as a sheet */
 export default function MobileDock({ path, nav, isAdmin, bonusDue }: Props) {
+  const hasNew = nav.some((s) => s.items.some((i) => i.isNew));
   const tab = 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs';
   return (
     <nav aria-label="Phone navigation" className="mobile-bottom-dock md:hidden">
@@ -27,7 +28,7 @@ export default function MobileDock({ path, nav, isAdmin, bonusDue }: Props) {
         ))}
         <li>
           <MenuButton
-            label={bonusDue ? 'More pages, daily bonus ready' : 'More pages'}
+            label={bonusDue ? 'More pages, daily bonus ready' : hasNew ? 'More pages, something new' : 'More pages'}
             className={`${tab} h-auto w-full rounded-none text-muted`}
             placement="bottom"
             nav={nav}
@@ -37,6 +38,7 @@ export default function MobileDock({ path, nav, isAdmin, bonusDue }: Props) {
             <span className="relative">
               <Icon name="fa-bars" className="text-lg" />
               {bonusDue && <span aria-hidden="true" className="absolute -right-1.5 -top-1 size-2 rounded-full bg-warning" />}
+              {!bonusDue && hasNew && <span aria-hidden="true" className="absolute -right-1.5 -top-1 size-2 rounded-full bg-accent" />}
             </span>
             More
           </MenuButton>

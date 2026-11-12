@@ -27,6 +27,16 @@ class Updates extends BaseController
                 'removed' => ['label' => 'Removed', 'icon' => 'trash', 'badge' => 'danger'],
             ];
 
+            // Roadmap items that shipped in a release link to it as /updates#update-{id}
+            $fromRoadmap = [];
+            if ($this->db->fieldExists('updates_url', 'roadmap_items')) {
+                $shipped = $this->db->table('roadmap_items')->select('id, title, updates_url')
+                    ->like('updates_url', '/updates#update-', 'after')->get()->getResultArray();
+                foreach ($shipped as $r) {
+                    $fromRoadmap[(int) substr((string) $r['updates_url'], strlen('/updates#update-'))][] = ['id' => (int) $r['id'], 'title' => (string) $r['title']];
+                }
+            }
+
             foreach ($updates as $idx => $update) {
                 $items = $this->db->table('update_items')
                     ->where('update_id', $update['id'])
@@ -62,6 +72,7 @@ class Updates extends BaseController
                     'releasedAtFormatted' => $date,
                     'isLatest' => $idx === 0,
                     'categories' => $categories,
+                    'roadmapItems' => $fromRoadmap[(int) $update['id']] ?? [],
                 ];
             }
         } catch (\Throwable $e) {

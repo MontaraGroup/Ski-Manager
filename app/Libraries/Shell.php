@@ -59,6 +59,7 @@ class Shell
             ['url' => '/genepis',       'label' => 'Génépis',       'icon' => 'fa-seedling'],
             ['url' => '/activity',      'label' => 'Activity Log',  'icon' => 'fa-clock-rotate-left'],
             ['url' => '/vote',          'label' => 'Vote Season 4', 'icon' => 'fa-check-to-slot'],
+            ['url' => '/roadmap',       'label' => 'Roadmap',       'icon' => 'fa-map-location-dot', 'badge' => 'roadmap'],
             ['url' => 'https://wiki.ski-manager.net', 'label' => 'Wiki', 'icon' => 'fa-book', 'ext' => true],
             ['url' => '/support',       'label' => 'Support',       'icon' => 'fa-headset'],
             ['url' => '/settings',      'label' => 'Settings',      'icon' => 'fa-gear'],
@@ -119,6 +120,8 @@ class Shell
             'flagOff' => $flagOff,
             'external' => !empty($it['ext']),
             'bonusDue' => ($it['badge'] ?? null) === 'bonus' && $bonusDue,
+            // "New" until the player has opened the page once (users.roadmap_seen_at)
+            'isNew' => ($it['badge'] ?? null) === 'roadmap' && auth()->loggedIn() && empty(auth()->user()?->roadmap_seen_at),
             // Shown because the page is in beta (flag level 3): the nav marks it "Beta"
             'beta' => $flag !== null && !$flagOff && function_exists('featureIsBetaFor') && featureIsBetaFor($flag),
         ];

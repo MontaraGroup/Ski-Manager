@@ -21,6 +21,8 @@ class Dashboard extends BaseController
         'insurance_mini' => ['name' => 'Insurance', 'icon' => 'fa-solid fa-shield-halved', 'default' => false, 'size' => 'small'],
         'loans_mini' => ['name' => 'Loans', 'icon' => 'fa-solid fa-landmark', 'default' => false, 'size' => 'small'],
         'marketing_mini' => ['name' => 'Marketing', 'icon' => 'fa-solid fa-bullhorn', 'default' => false, 'size' => 'small'],
+        // 'announce': also switched on for existing players the first time they see it
+        'roadmap_mini' => ['name' => 'Roadmap', 'icon' => 'fa-solid fa-map-location-dot', 'default' => true, 'size' => 'medium', 'announce' => true],
     ];
 
     public function index()
@@ -54,7 +56,7 @@ class Dashboard extends BaseController
             if (!in_array($key, $existingKeys)) {
                 $maxOrder++;
                 $toInsert[] = [
-                    'user_id' => $userId, 'widget_key' => $key, 'visible' => 0, 'size' => $w['size'], 'sort_order' => $maxOrder,
+                    'user_id' => $userId, 'widget_key' => $key, 'visible' => empty($w['announce']) ? 0 : 1, 'size' => $w['size'], 'sort_order' => $maxOrder,
                 ];
             }
         }
@@ -388,6 +390,7 @@ class Dashboard extends BaseController
                 'marketing_mini' => [
                     'campaignsCount' => count($marketing),
                 ],
+                'roadmap_mini' => $this->roadmapTop((int) $userId),
             ],
         ];
 
@@ -714,5 +717,22 @@ class Dashboard extends BaseController
             $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-users', 'msg' => 'No staff hired yet.', 'link' => '/staff/hire'];
         }
         return $alerts;
+    }
+
+    /** The three most-voted ideas still open, and whether this player has voted on each */
+    private function roadmapTop(int $userId): array
+    {
+        $db = db_connect();
+        if (!$db->tableExists('roadmap_items')) return ['items' => []];
+        $items = $db->table('roadmap_items')->select('id, title, status, upvotes')
+            ->whereIn('status', ['suggested', 'planned', 'in_progress'])
+            ->orderBy('upvotes', 'DESC')->orderBy('id', 'DESC')->limit(3)->get()->getResultArray();
+        $ids = array_map('intval', array_column($items, 'id'));
+        $voted = $ids ? array_map('intval', array_column(
+            $db->table('roadmap_votes')->select('item_id')->where('user_id', $userId)->whereIn('item_id', $ids)->get()->getResultArray(), 'item_id')) : [];
+        return ['items' => array_map(fn($i) => [
+            'id' => (int) $i['id'], 'title' => (string) $i['title'], 'status' => (string) $i['status'],
+            'upvotes' => (int) $i['upvotes'], 'voted' => in_array((int) $i['id'], $voted, true),
+        ], $items)];
     }
 }

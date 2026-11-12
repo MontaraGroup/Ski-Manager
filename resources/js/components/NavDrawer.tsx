@@ -49,6 +49,7 @@ export default function NavDrawer({ isOpen, onOpenChange, nav, path, isAdmin, pl
                           {item.beta && <BetaChip />}
                           {item.locked && <Icon name="fa-lock" className="ml-auto text-muted" />}
                           {item.bonusDue && <span className="ml-auto rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>}
+                          {item.isNew && <span className="ml-auto rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">New</span>}
                         </a>
                       </li>
                     ))}

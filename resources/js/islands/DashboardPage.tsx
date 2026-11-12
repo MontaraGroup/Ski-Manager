@@ -135,6 +135,14 @@ export const WIDGET_META: Record<string, WidgetMeta> = {
     description: 'Top priority achievements tracked with active progress meters.',
     defaultSize: 'medium',
   },
+  roadmap_mini: {
+    name: 'Roadmap',
+    category: 'activity',
+    categoryLabel: 'Community',
+    icon: 'fa-map-location-dot',
+    description: 'The most-voted ideas for the game. Vote without leaving the dashboard.',
+    defaultSize: 'medium',
+  },
   activity: {
     name: 'Live Activity Log',
     category: 'activity',
@@ -396,7 +404,67 @@ export type DashboardData = {
   marketing_mini: {
     campaignsCount: number;
   };
+  roadmap_mini?: {
+    items: RoadmapTopItem[];
+  };
 };
+
+export type RoadmapTopItem = { id: number; title: string; status: string; upvotes: number; voted: boolean };
+
+/** Top roadmap ideas with a vote button; same endpoint and reward as /roadmap */
+function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
+  const [items, setItems] = useState(initial);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+
+  const vote = async (id: number) => {
+    if (busy !== null) return;
+    setBusy(id);
+    try {
+      const { field, token } = csrf();
+      const fd = new FormData();
+      fd.append(field, token);
+      const res = await fetch(`/roadmap/vote/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, voted: Boolean(data.voted), upvotes: data.upvotes } : it)));
+        setNote(data.message ?? null);
+      } else {
+        setNote(data?.message ?? 'Your vote did not go through. Try again.');
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (items.length === 0) {
+    return <p className="text-muted">No open ideas yet. <a href="/roadmap" className="text-accent hover:underline">Suggest one</a>.</p>;
+  }
+  return (
+    <div className="space-y-2">
+      <ul className="space-y-1.5">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={it.voted ? 'primary' : 'outline'}
+              onPress={() => vote(it.id)}
+              isDisabled={busy !== null}
+              aria-pressed={it.voted}
+              aria-label={`${it.voted ? 'Remove your vote for' : 'Vote for'} ${it.title}, ${it.upvotes} votes`}
+              className="min-h-11 min-w-14 shrink-0 tabular-nums"
+            >
+              <Icon name="fa-chevron-up" className="text-[10px]" />
+              {it.upvotes}
+            </Button>
+            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 text-foreground hover:underline">{it.title}</a>
+          </li>
+        ))}
+      </ul>
+      {note && <p role="status" className="text-success">{note}</p>}
+    </div>
+  );
+}
 
 export type LaunchChecklistStep = {
   id: string;
@@ -1322,6 +1390,11 @@ export default function DashboardPage({
                           Campaigns &rarr;
                         </a>
                       )}
+                      {w.widget_key === 'roadmap_mini' && (
+                        <a href="/roadmap" className="text-xs text-accent hover:underline">
+                          All ideas &rarr;
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1880,6 +1953,8 @@ export default function DashboardPage({
                     )}
                   </div>
                 )}
+
+                {w.widget_key === 'roadmap_mini' && <RoadmapMini initial={data.roadmap_mini?.items ?? []} />}
 
                 {/* Marketing Mini Widget */}
                 {w.widget_key === 'marketing_mini' && (
