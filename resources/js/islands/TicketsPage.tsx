@@ -246,7 +246,7 @@ function TicketRow({
           aria-label={active ? 'On sale' : 'Off'}
           className="min-h-11 sm:min-h-8"
         >
-          <span className={`text-xs font-medium ${active ? 'text-success' : 'text-muted'}`}>
+          <span className={`inline-flex min-h-11 items-center text-xs font-medium sm:min-h-8 ${active ? 'text-success' : 'text-muted'}`}>
             {active ? 'On sale' : 'Off'}
           </span>
         </Switch>

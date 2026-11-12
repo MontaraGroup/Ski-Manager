@@ -552,11 +552,11 @@ export default function LegalPage({
 
         {/* Bottom Navigation Links */}
         <div className="pt-6 border-t border-border flex flex-wrap items-center justify-center gap-3 text-xs text-muted">
-          <a href="/terms" className="text-muted hover:text-foreground">Terms of Service</a>
+          <a href="/terms" className="inline-flex min-h-11 items-center text-muted hover:text-foreground sm:min-h-0">Terms of Service</a>
           <span>·</span>
-          <a href="/privacy" className="text-muted hover:text-foreground">Privacy Policy</a>
+          <a href="/privacy" className="inline-flex min-h-11 items-center text-muted hover:text-foreground sm:min-h-0">Privacy Policy</a>
           <span>·</span>
-          <a href="/cookies" className="text-muted hover:text-foreground">Cookie Policy</a>
+          <a href="/cookies" className="inline-flex min-h-11 items-center text-muted hover:text-foreground sm:min-h-0">Cookie Policy</a>
           <span>·</span>
           <a href="/disclaimer" className="text-muted hover:text-foreground">Disclaimer</a>
           <span>·</span>

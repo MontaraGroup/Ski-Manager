@@ -457,7 +457,7 @@ function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
               <Icon name="fa-chevron-up" className="text-[10px]" />
               {it.upvotes}
             </Button>
-            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 text-foreground hover:underline">{it.title}</a>
+            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 py-3.5 text-foreground hover:underline sm:py-0">{it.title}</a>
           </li>
         ))}
       </ul>
@@ -827,7 +827,7 @@ export default function DashboardPage({
             {hero.bonusAvailable && (
               <a
                 href="/daily-bonus"
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-warning/40 bg-warning px-3 text-xs font-bold text-black shadow hover:opacity-90"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-warning/40 bg-warning px-3 text-xs font-bold text-black shadow hover:opacity-90"
               >
                 <Icon name="fa-gift" />
                 Daily Bonus
@@ -835,14 +835,14 @@ export default function DashboardPage({
             )}
             <a
               href="/map"
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-white/20 bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-white/20 bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-90"
             >
               <Icon name="fa-map" />
               Trail Map
             </a>
             <a
               href="/resort"
-              className="inline-flex min-h-[40px] items-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              className="inline-flex min-h-11 items-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20"
             >
               Resort Settings
             </a>
@@ -850,7 +850,7 @@ export default function DashboardPage({
               variant={editMode ? 'primary' : 'secondary'}
               size="sm"
               onPress={() => setEditMode(!editMode)}
-              className="min-h-[40px] font-bold"
+              className="min-h-11 font-bold"
             >
               <Icon name={editMode ? 'fa-check' : 'fa-sliders'} className="mr-1.5" />
               {editMode ? 'Done Customizing' : 'Customize'}
@@ -1068,7 +1068,7 @@ export default function DashboardPage({
           {unclaimedAchievements > 0 && (
             <a
               href="/achievements"
-              className="flex items-center justify-between rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs font-medium text-warning hover:bg-surface-raised"
+              className="flex min-h-11 items-center justify-between rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs font-medium text-warning hover:bg-surface-raised"
             >
               <div className="flex items-center gap-2">
                 <Icon name="fa-award" />
@@ -1321,77 +1321,77 @@ export default function DashboardPage({
                   ) : (
                     <div>
                       {w.widget_key === 'stats' && (
-                        <a href="/finances" className="text-xs text-accent hover:underline">
+                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Ledger &rarr;
                         </a>
                       )}
                       {w.widget_key === 'overview' && (
-                        <a href="/map" className="text-xs text-accent hover:underline">
+                        <a href="/map" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Trail Map &rarr;
                         </a>
                       )}
                       {w.widget_key === 'weather_mini' && (
-                        <a href="/weather" className="text-xs text-accent hover:underline">
+                        <a href="/weather" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Forecast &rarr;
                         </a>
                       )}
                       {w.widget_key === 'achievements_mini' && (
-                        <a href="/achievements" className="text-xs text-accent hover:underline">
+                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           All &rarr;
                         </a>
                       )}
                       {w.widget_key === 'achievements' && (
-                        <a href="/achievements" className="text-xs text-accent hover:underline">
+                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           All &rarr;
                         </a>
                       )}
                       {w.widget_key === 'activity' && (
-                        <a href="/activity" className="text-xs text-accent hover:underline">
+                        <a href="/activity" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Full log &rarr;
                         </a>
                       )}
                       {w.widget_key === 'parking_mini' && (
-                        <a href="/parking" className="text-xs text-accent hover:underline">
+                        <a href="/parking" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'terrain_parks_mini' && (
-                        <a href="/terrain-parks" className="text-xs text-accent hover:underline">
+                        <a href="/terrain-parks" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'finances_mini' && (
-                        <a href="/finances" className="text-xs text-accent hover:underline">
+                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Details &rarr;
                         </a>
                       )}
                       {w.widget_key === 'staff_mini' && (
-                        <a href="/staff" className="text-xs text-accent hover:underline">
+                        <a href="/staff" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'equipment_mini' && (
-                        <a href="/equipment" className="text-xs text-accent hover:underline">
+                        <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Fleet &rarr;
                         </a>
                       )}
                       {w.widget_key === 'insurance_mini' && (
-                        <a href="/insurance" className="text-xs text-accent hover:underline">
+                        <a href="/insurance" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Policies &rarr;
                         </a>
                       )}
                       {w.widget_key === 'loans_mini' && (
-                        <a href="/bank" className="text-xs text-accent hover:underline">
+                        <a href="/bank" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Bank &rarr;
                         </a>
                       )}
                       {w.widget_key === 'marketing_mini' && (
-                        <a href="/marketing" className="text-xs text-accent hover:underline">
+                        <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Campaigns &rarr;
                         </a>
                       )}
                       {w.widget_key === 'roadmap_mini' && (
-                        <a href="/roadmap" className="text-xs text-accent hover:underline">
+                        <a href="/roadmap" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           All ideas &rarr;
                         </a>
                       )}
@@ -1578,84 +1578,84 @@ export default function DashboardPage({
                   <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-6">
                     <a
                       href="/map"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-map" className="text-accent" />
                       <span>Trail Map</span>
                     </a>
                     <a
                       href="/resort"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-sliders" className="text-accent" />
                       <span>Resort</span>
                     </a>
                     <a
                       href="/finances"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-coins" className="text-accent" />
                       <span>Finances</span>
                     </a>
                     <a
                       href="/staff"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-users" className="text-accent" />
                       <span>Staff</span>
                     </a>
                     <a
                       href="/grooming"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-tractor" className="text-accent" />
                       <span>Grooming</span>
                     </a>
                     <a
                       href="/snowmaking"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-snowflake" className="text-accent" />
                       <span>Snowmaking</span>
                     </a>
                     <a
                       href="/buildings"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-hotel" className="text-accent" />
                       <span>Buildings</span>
                     </a>
                     <a
                       href="/parking"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-square-parking" className="text-accent" />
                       <span>Parking</span>
                     </a>
                     <a
                       href="/equipment"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-toolbox" className="text-accent" />
                       <span>Equipment</span>
                     </a>
                     <a
                       href="/marketing"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-bullhorn" className="text-accent" />
                       <span>Marketing</span>
                     </a>
                     <a
                       href="/alliances"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-handshake" className="text-accent" />
                       <span>Alliances</span>
                     </a>
                     <a
                       href="/vote"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-check-to-slot" className="text-accent" />
                       <span>Vote</span>
@@ -1679,7 +1679,7 @@ export default function DashboardPage({
                         </div>
                         <a
                           href="/achievements"
-                          className="inline-flex min-h-[36px] items-center rounded-lg bg-warning px-3 font-bold text-black hover:opacity-90"
+                          className="inline-flex min-h-11 items-center rounded-lg bg-warning px-3 font-bold text-black hover:opacity-90 sm:min-h-9"
                         >
                           Claim Rewards
                         </a>
@@ -1911,7 +1911,7 @@ export default function DashboardPage({
                         {data.equipment_mini.unitsCount}
                       </div>
                     </div>
-                    <a href="/equipment" className="text-xs text-accent hover:underline">
+                    <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                       View Fleet &rarr;
                     </a>
                   </div>
@@ -1965,7 +1965,7 @@ export default function DashboardPage({
                         {data.marketing_mini.campaignsCount}
                       </div>
                     </div>
-                    <a href="/marketing" className="text-xs text-accent hover:underline">
+                    <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                       Campaigns &rarr;
                     </a>
                   </div>

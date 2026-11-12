@@ -93,7 +93,7 @@ export default function StatsBar(stats: Stats) {
 
   return (
     <div className="border-b border-border bg-background">
-      <ul aria-label="Resort status" className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 py-1 text-sm [scrollbar-width:none] sm:px-4">
+      <ul aria-label="Resort status" className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 py-1 text-sm [scrollbar-width:none] [mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] sm:px-4 sm:[mask-image:none]">
         <Stat href="/finances" label={`Cash ${stats.cash}. Open Finances`} icon="fa-money-bill-wave" tone="text-success">
           <span className="font-semibold tabular-nums">{stats.cash}</span>
         </Stat>

@@ -183,6 +183,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://*.sentry.io',
         'https://*.ingest.sentry.io',
         'https://*.google-analytics.com',
+        'https://analytics.google.com',
+        'https://www.google.com',
         'https://*.analytics.google.com',
         'https://*.googletagmanager.com',
         'https://ka-f.fontawesome.com',

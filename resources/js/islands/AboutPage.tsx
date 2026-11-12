@@ -221,7 +221,8 @@ export default function AboutPage({
                   href={b.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-link shrink-0 hover:underline min-h-11 sm:min-h-0 flex items-center"
+                  aria-label={`${b.name} website (opens in a new tab)`}
+                  className="text-xs text-link shrink-0 hover:underline min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                 >
                   <Icon name="fa-arrow-up-right-from-square" className="w-3 h-3" />
                 </a>

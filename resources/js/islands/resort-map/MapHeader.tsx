@@ -77,8 +77,8 @@ export function MapHeader({
         </div>
       </div>
 
-      {/* Filters scroll sideways on a phone rather than hiding */}
-      <div className="-mx-4 mt-2 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none]">
+      {/* Filters wrap onto a second line on a phone so nothing is cut off */}
+      <div className="mt-2 flex flex-wrap items-center gap-2 pb-0.5">
         <div role="group" aria-label="Show on the map" className="flex shrink-0 rounded-lg border border-border bg-surface-secondary p-0.5">
           {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
             <Button

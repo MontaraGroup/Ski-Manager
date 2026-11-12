@@ -243,7 +243,7 @@ export default function HomePage({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
                     Season 1 Hall of Fame
                   </h3>
-                  <a href="/leaderboard" className="text-xs text-link hover:underline">
+                  <a href="/leaderboard" className="inline-flex min-h-11 items-center text-xs text-link hover:underline sm:min-h-0">
                     Full Board →
                   </a>
                 </div>
@@ -366,7 +366,7 @@ export default function HomePage({
                 <h3 className="text-lg font-bold text-foreground">Recently Built</h3>
                 <p className="text-xs text-muted">Real infrastructure commissioned by players across resorts.</p>
               </div>
-              <a href="/activity" className="text-xs text-link hover:underline">
+              <a href="/activity" className="inline-flex min-h-11 items-center text-xs text-link hover:underline sm:min-h-0">
                 All Activity →
               </a>
             </div>
