@@ -4,7 +4,7 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Session\Handlers\BaseHandler;
-use CodeIgniter\Session\Handlers\FileHandler;
+use CodeIgniter\Session\Handlers\DatabaseHandler;
 
 class Session extends BaseConfig
 {
@@ -22,7 +22,9 @@ class Session extends BaseConfig
      *
      * @var class-string<BaseHandler>
      */
-    public string $driver = FileHandler::class;
+    // Database-backed sessions: file sessions could be unlinked by GC/destroy mid-read,
+    // causing "filesize(): stat failed" in FileHandler::read (SKI-MANAGER-9).
+    public string $driver = DatabaseHandler::class;
 
     /**
      * --------------------------------------------------------------------------
@@ -58,7 +60,7 @@ class Session extends BaseConfig
      *
      * IMPORTANT: You are REQUIRED to set a valid save path!
      */
-    public string $savePath = WRITEPATH . 'session';
+    public string $savePath = 'ci_sessions';
 
     /**
      * --------------------------------------------------------------------------
