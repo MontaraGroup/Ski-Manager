@@ -26,6 +26,7 @@ $routes->post("/admin/features/set/(:num)", "Admin::setFlag/$1");
 $routes->post("/admin/features/enable-all", "Admin::enableAllFlags");
 $routes->post("/admin/features/disable-all-beta", "Admin::disableAllBeta");
 $routes->get("/admin/suspicious", "Admin::suspiciousActivity");
+$routes->post("/admin/suspicious/(:num)/review", "Admin::reviewSuspect/$1");
 $routes->get("/admin/seasons", "Admin::seasonPlanner");
 $routes->post("/admin/seasons/create", "Admin::createSeason");
 $routes->post("/admin/seasons/activate/(:num)", "Admin::activateSeason/$1");
