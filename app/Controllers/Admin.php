@@ -11,6 +11,28 @@ class Admin extends BaseController
         return auth()->id() === 1 || ($user && $user->inGroup('admin', 'superadmin'));
     }
 
+    /**
+     * users.active = 0 means two things: Shield sets it until the player confirms their email, and
+     * banUser() sets it too. A pending email_activate identity tells them apart; deleted accounts have
+     * no users row at all (AccountPurge and deleteUser remove it), so they never reach these lists.
+     */
+    private const UNCONFIRMED_SQL = "EXISTS (SELECT 1 FROM auth_identities ai WHERE ai.user_id = users.id AND ai.type = 'email_activate')";
+
+    /** 'active', 'banned' or 'unconfirmed' for one users row (needs the pending-activation ids) */
+    private static function accountState(array $user, array $unconfirmedIds): string
+    {
+        if (!isset($user['active']) || (int) $user['active'] === 1) return 'active';
+        return in_array((int) $user['id'], $unconfirmedIds, true) ? 'unconfirmed' : 'banned';
+    }
+
+    /** Ids among $ids that still have a pending email confirmation */
+    private static function unconfirmedIds(array $ids): array
+    {
+        if ($ids === []) return [];
+        return array_map('intval', array_column(db_connect()->table('auth_identities')->select('user_id')->distinct()
+            ->where('type', 'email_activate')->whereIn('user_id', $ids)->get()->getResultArray(), 'user_id'));
+    }
+
     public function index(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
@@ -89,7 +111,8 @@ class Admin extends BaseController
         $onlineRecentRow = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray();
         $onlineRecent = $onlineRecentRow['cnt'] ?? 0;
         $newUsers7d = $db->table('users')->where('created_at >', date('Y-m-d H:i:s', strtotime('-7 days')))->countAllResults();
-        $bannedUsers = $db->table('users')->where('active', 0)->countAllResults();
+        $bannedUsers = $db->table('users')->where('active', 0)->where('NOT ' . self::UNCONFIRMED_SQL, null, false)->countAllResults();
+        $unconfirmedUsers = $db->table('users')->where('active', 0)->where(self::UNCONFIRMED_SQL, null, false)->countAllResults();
 
         $season = $db->table('seasons')->where('active', 1)->get()->getRowArray() ?? [];
         $unreadSupport = $db->table('support_messages')->where('sender', 'player')->where('is_read', 0)->countAllResults();
@@ -120,7 +143,9 @@ class Admin extends BaseController
         $avgCash = $totalUsers > 0 ? (int) ($totalCash / $totalUsers) : 0;
         $gb = fn($b) => number_format($b / 1073741824, 1) . ' GB';
 
-        $playersFormatted = array_map(function($u) {
+        $unconfirmed = self::unconfirmedIds(array_column($users, 'id'));
+        $playersFormatted = array_map(function($u) use ($unconfirmed) {
+            $state = self::accountState($u, $unconfirmed);
             $lastTs = !empty($u['last_active']) ? strtotime($u['last_active']) : 0;
             return [
                 'id' => (int) $u['id'],
@@ -135,7 +160,8 @@ class Admin extends BaseController
                 'last_active_ts' => $lastTs,
                 'lastActiveFormatted' => $lastTs ? timeAgo($u['last_active']) : 'Never',
                 'isOnline' => $lastTs > strtotime('-15 minutes'),
-                'isBanned' => isset($u['active']) && !$u['active'],
+                'state' => $state,
+                'isBanned' => $state === 'banned',
                 'lastActivityMessage' => $u['last_activity']['message'] ?? '',
             ];
         }, $users);
@@ -204,6 +230,7 @@ class Admin extends BaseController
                 'totalUsers' => number_format($totalUsers),
                 'newUsers7d' => (int) $newUsers7d,
                 'bannedUsers' => (int) $bannedUsers,
+                'unconfirmedUsers' => (int) $unconfirmedUsers,
                 'onlineRecent' => number_format($onlineRecent),
                 'activePct' => $activePct,
                 'totalCashFormatted' => currency((int) $totalCash),
@@ -364,6 +391,7 @@ class Admin extends BaseController
                 'id' => (int) $user['id'],
                 'username' => $user['username'],
                 'active' => isset($user['active']) ? (bool) $user['active'] : true,
+                'state' => self::accountState($user, self::unconfirmedIds([(int) $user['id']])),
                 'isOwner' => ((int) $user['id'] === 1),
                 'createdFormatted' => date('M j, Y', strtotime($user['created_at'])),
                 'email' => $identity['secret'] ?? 'N/A',

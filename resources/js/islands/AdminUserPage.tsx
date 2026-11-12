@@ -8,6 +8,7 @@ export type UserMeta = {
   id: number;
   username: string;
   active: boolean;
+  state?: 'active' | 'banned' | 'unconfirmed';
   isOwner: boolean;
   createdFormatted: string;
   email: string;
@@ -330,6 +331,15 @@ function Table({ head, children, empty, rows }: { head: string[]; children: Reac
 
 const td = 'px-2 py-1.5 align-top';
 
+/** active=0 is either a ban or an email that was never confirmed (Admin::accountState) */
+function stateLabel(u: UserMeta): string {
+  const state = u.state ?? (u.active ? 'active' : 'banned');
+  return state === 'unconfirmed' ? 'Email not confirmed' : state === 'banned' ? 'Banned' : 'Active';
+}
+function stateNote(u: UserMeta): string {
+  return stateLabel(u) === 'Active' ? '' : `, ${stateLabel(u).toLowerCase()}`;
+}
+
 export default function AdminUserPage({
   user,
   finance,
@@ -355,13 +365,13 @@ export default function AdminUserPage({
       icon="fa-user-gear"
       back="/admin"
       width="max-w-6xl"
-      subtitle={`Player #${user.id}, joined ${user.createdFormatted}${user.active ? '' : ', banned'}`}
+      subtitle={`Player #${user.id}, joined ${user.createdFormatted}${stateNote(user)}`}
       actions={
         user.isOwner ? (
           <span className="rounded-full bg-warning/15 px-3 py-1 text-sm font-semibold">Owner account</span>
         ) : (
           <div className="flex flex-wrap items-center gap-2">
-            {user.active ? (
+            {user.state === 'unconfirmed' ? null : user.active ? (
               <ConfirmForm
                 action={`/admin/ban/${user.id}`}
                 submitLabel="Ban"
@@ -474,7 +484,7 @@ export default function AdminUserPage({
               ['Player ID', `#${user.id}`],
               ['Email', user.email],
               ['Joined', user.createdFormatted],
-              ['Status', user.active ? 'Active' : 'Banned'],
+              ['Status', stateLabel(user)],
             ]}
           />
         </Panel>
