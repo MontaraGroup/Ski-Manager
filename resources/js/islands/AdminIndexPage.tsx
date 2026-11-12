@@ -40,6 +40,7 @@ export type KpiData = {
   totalUsers: string;
   newUsers7d: number;
   bannedUsers: number;
+  unconfirmedUsers?: number;
   onlineRecent: string;
   activePct: number;
   totalCashFormatted: string;
@@ -67,6 +68,8 @@ export type PlayerItem = {
   lastActiveFormatted: string;
   isOnline: boolean;
   isBanned: boolean;
+  /** active=0 is either a ban or an email that was never confirmed */
+  state?: 'active' | 'banned' | 'unconfirmed';
   lastActivityMessage: string;
 };
 
@@ -147,7 +150,7 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
     weather,
     server,
   } = props;
-  const [filterMode, setFilterMode] = useState<'all' | 'online' | 'banned'>('all');
+  const [filterMode, setFilterMode] = useState<'all' | 'online' | 'banned' | 'unconfirmed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('id');
   const [sortAsc, setSortAsc] = useState(false);
@@ -160,6 +163,7 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
     let list = players;
     if (filterMode === 'online') list = list.filter((p) => p.isOnline);
     else if (filterMode === 'banned') list = list.filter((p) => p.isBanned);
+    else if (filterMode === 'unconfirmed') list = list.filter((p) => p.state === 'unconfirmed');
     const q = searchQuery.trim().toLowerCase();
     if (q) list = list.filter((p) => p.username.toLowerCase().includes(q) || String(p.id).includes(q.replace('#', '')));
     const key: Record<SortField, (p: PlayerItem) => number | string> = {
@@ -281,7 +285,7 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
               [
                 ['Sign-ups', `${n(a.signupsToday)} today, ${n(a.signups7d)} this week`],
                 ['Active players', `${n(a.activeToday)} today, ${n(a.active7d)} this week`],
-                ['Players', `${kpis.totalUsers} in total, ${kpis.bannedUsers} banned`],
+                ['Players', `${kpis.totalUsers} in total, ${kpis.bannedUsers} banned, ${kpis.unconfirmedUsers ?? 0} with email not confirmed`],
                 ['Cash held by players', `${kpis.totalCashFormatted} (${kpis.avgCashFormatted} on average)`],
                 ['Last game tick', lastTick?.timeAgo ?? 'never'],
                 [
@@ -310,8 +314,8 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
           title={`Players (${filteredPlayers.length} shown of ${kpis.totalUsers})`}
         >
           <div className="mb-3 flex flex-wrap items-end gap-2">
-            <div role="group" aria-label="Show" className="inline-flex rounded-lg border border-border p-0.5">
-              {(['all', 'online', 'banned'] as const).map((m) => (
+            <div role="group" aria-label="Show" className="inline-flex flex-wrap rounded-lg border border-border p-0.5">
+              {(['all', 'online', 'banned', 'unconfirmed'] as const).map((m) => (
                 <Button
                   key={m}
                   size="sm"
@@ -320,7 +324,7 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
                   onPress={() => setFilterMode(m)}
                   className="min-h-11 sm:min-h-8"
                 >
-                  {m === 'all' ? 'All' : m === 'online' ? 'Online' : 'Banned'}
+                  {m === 'all' ? 'All' : m === 'online' ? 'Online' : m === 'banned' ? 'Banned' : 'Email not confirmed'}
                 </Button>
               ))}
             </div>
@@ -371,6 +375,7 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
                           {p.username}
                         </a>
                         {p.isBanned && <span className="ml-1.5 rounded-full bg-danger/15 px-2 text-xs font-semibold">Banned</span>}
+                        {p.state === 'unconfirmed' && <span className="ml-1.5 rounded-full bg-default px-2 text-xs font-semibold">Email not confirmed</span>}
                       </td>
                       <td className="whitespace-nowrap px-2 py-1 text-right tabular-nums">{p.cashFormatted}</td>
                       <td className="px-2 py-1 text-right tabular-nums">{p.staff_count}</td>
@@ -390,7 +395,8 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
                       <td className="whitespace-nowrap px-2 py-1">
                         {p.id !== 1 && (
                           <div className="flex justify-end gap-1">
-                            {p.isBanned ? (
+                            {/* No ban or unban for an unconfirmed email: active=0 there is Shield's, not a ban */}
+                            {p.state === 'unconfirmed' ? null : p.isBanned ? (
                               <ConfirmForm
                                 action={`/admin/unban/${p.id}`}
                                 submitLabel={<>Unban<span className="sr-only"> {p.username}</span></>}

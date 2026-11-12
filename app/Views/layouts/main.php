@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="carboncloud">
+<html lang="en" dir="ltr" data-theme="carboncloud" data-parkcity-webp="<?= esc(implode(' ', array_keys(array_filter(\App\Controllers\ResortMap::webpSizes('/img/ParkCity.jpg'))))) ?>">
 <head>
     <meta charset="UTF-8">
     <!-- Hotjar Suppression & Protection -->
