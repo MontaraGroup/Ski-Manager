@@ -151,7 +151,29 @@ class Admin extends BaseController
             ];
         }, $recentLogs);
 
+        // What needs attention: every number is a live query
+        $since = fn(string $mod) => date('Y-m-d H:i:s', strtotime($mod));
+        $errors24h = 0;
+        foreach ([date('Y-m-d'), date('Y-m-d', strtotime('-1 day'))] as $day) {
+            $f = WRITEPATH . 'logs/log-' . $day . '.log';
+            if (!is_file($f)) continue;
+            foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+                if (preg_match('/^(ERROR|CRITICAL|ALERT|EMERGENCY) - (\S+ \S+)/', $line, $m) && strtotime($m[2]) >= strtotime('-24 hours')) $errors24h++;
+            }
+        }
+        $attention = [
+            'supportOpen' => (int) $db->query("SELECT COUNT(DISTINCT user_id) n FROM support_messages WHERE sender = 'player' AND is_read = 0")->getRow('n'),
+            'errors24h' => $errors24h,
+            'signupsToday' => $db->table('users')->where('created_at >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'signups7d' => $db->table('users')->where('created_at >=', $since('-7 days'))->countAllResults(),
+            'activeToday' => $db->table('users')->where('last_active >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'active7d' => $db->table('users')->where('last_active >=', $since('-7 days'))->countAllResults(),
+            'roadmapToReview' => $db->tableExists('roadmap_items') ? $db->table('roadmap_items')->where('status', 'suggested')->countAllResults() : 0,
+            'backupMonitorUrl' => 'https://ski-manager.sentry.io/crons/ski-manager/db-dump/',
+        ];
+
         $page = [
+            'attention' => $attention,
             'season' => [
                 'name' => $season['name'] ?? 'Season 1',
                 'season_number' => (int) ($season['season_number'] ?? 1),
