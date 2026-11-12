@@ -341,7 +341,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $cash = (int) $this->request->getPost('cash');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash') ?? 0);
         db_connect()->table('player_finances')->where('user_id', $userId)->update(['cash' => $cash]);
+        $this->auditLog('set_cash', $userId, json_encode(['from' => $before, 'to' => $cash, 'reason' => $reason]));
         log_activity($userId, 'admin_cash', "Admin set cash to " . currency($cash));
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Cash updated.');
     }
@@ -351,7 +355,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $amount = (int) $this->request->getPost('genepis');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRow('balance') ?? 0);
         db_connect()->table('genepis')->where('user_id', $userId)->update(['balance' => $amount]);
+        $this->auditLog('set_genepis', $userId, json_encode(['from' => $before, 'to' => $amount, 'reason' => $reason]));
         log_activity($userId, 'admin_genepis', "Admin set génépis to " . $amount);
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Génépis updated.');
     }
@@ -1330,5 +1338,69 @@ class Admin extends BaseController
         setting('SeasonVote.closesAt', date('Y-m-d H:i:s', $ts));
         $this->auditLog('season_vote_close_date', null, date('Y-m-d H:i', $ts));
         return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
+    }
+
+    /** GET /admin/search?q= : players by username, email or ID (JSON, at most 10) */
+    public function searchPlayers()
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['results' => []]);
+        $q = trim((string) $this->request->getGet('q'));
+        if ($q === '') return $this->response->setJSON(['results' => []]);
+        $db = db_connect();
+        $b = $db->table('users u')->select('u.id, u.username, ai.secret AS email')
+            ->join('auth_identities ai', "ai.user_id = u.id AND ai.type = 'email_password'", 'left');
+        if (ctype_digit($q)) {
+            $b->where('u.id', (int) $q);
+        } else {
+            $b->groupStart()->like('u.username', $q)->orLike('ai.secret', $q)->groupEnd();
+        }
+        $rows = $b->orderBy('u.id', 'DESC')->limit(10)->get()->getResultArray();
+        return $this->response->setJSON(['results' => array_map(fn($r) => [
+            'id' => (int) $r['id'], 'username' => (string) $r['username'], 'email' => (string) ($r['email'] ?? ''),
+        ], $rows)]);
+    }
+
+    /** POST /admin/user/{id}/adjust : add or take cash or Génépis, with a reason, through the ledger */
+    public function adjustBalance(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $currency = (string) $this->request->getPost('currency');
+        $amount = (int) $this->request->getPost('amount');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if (!in_array($currency, ['cash', 'genepis'], true) || $amount === 0 || $reason === '' || mb_strlen($reason) > 255) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Choose cash or Génépis, a non-zero amount and a reason.']);
+        }
+        if (!db_connect()->table('users')->where('id', $userId)->countAllResults()) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Player not found.']);
+        }
+        $label = 'Admin adjustment: ' . $reason;
+        $ok = true;
+        if ($currency === 'cash') {
+            if ($amount > 0) \App\Libraries\Ledger::credit($userId, $amount, 'Admin', $label);
+            else $ok = \App\Libraries\Ledger::charge($userId, -$amount, 'Admin', $label);
+        } else {
+            if ($amount > 0) \App\Libraries\Ledger::creditGenepis($userId, $amount, $label);
+            else $ok = \App\Libraries\Ledger::chargeGenepis($userId, -$amount, $label);
+        }
+        if (!$ok) {
+            return $this->response->setStatusCode(409)->setJSON(['success' => false, 'message' => 'The player does not have that much to take.']);
+        }
+        $this->auditLog('adjust_' . $currency, $userId, json_encode(['amount' => $amount, 'reason' => $reason]));
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /** POST /admin/user/{id}/note : a private admin note on the player */
+    public function addNote(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $note = trim((string) $this->request->getPost('note'));
+        if ($note === '' || mb_strlen($note) > 2000) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Write a note of up to 2000 characters.']);
+        }
+        db_connect()->table('admin_notes')->insert([
+            'user_id' => $userId, 'admin_id' => (int) auth()->id(), 'note' => $note, 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->auditLog('note', $userId, json_encode(['note' => mb_substr($note, 0, 200)]));
+        return $this->response->setJSON(['success' => true]);
     }
 }
