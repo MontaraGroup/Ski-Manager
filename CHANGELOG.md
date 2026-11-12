@@ -1,3 +1,11 @@
+## Release 2026-11-12 23:37
+
+* Merge pull request #91 from Montara-Group/fix/updates-item-text (d2094101)
+* Merge pull request #88 from MontaraGroup/seer/fix-admin-attention-reload (942ab2fa)
+* Merge upstream/main into seer/fix-admin-attention-reload (32d32dd7)
+* Merge pull request #89 from Montara-Group/fix/deleted-not-banned (9049b81d)
+* Merge upstream/main into fix/updates-item-text (2d2c67ee)
+
 ## Release 2026-11-12 21:51
 
 * Merge pull request #86 from Montara-Group/feat/admin-revamp (af72b24)
