@@ -105,7 +105,8 @@ export type ServerInfo = {
 
 export type AdminIndexPageProps = {
   money?: { symbol: string; prefix: boolean };
-  attention: AttentionInfo;
+  /** Always sent by Admin::index; missing only when stale PHP serves an older payload than this bundle expects. */
+  attention?: AttentionInfo;
   season: SeasonInfo;
   isStaging: boolean;
   isDev: boolean;
@@ -129,22 +130,23 @@ const n = (v: number) => v.toLocaleString('en-US');
  * One thing to look at. "alert" cards say so in words and with an icon, not only with the
  * red border, and link to the page where it gets fixed.
  */
-export default function AdminIndexPage({
-  money = { symbol: '€', prefix: false },
-  attention,
-  season,
-  isStaging,
-  isDev,
-  envWritable,
-  serverTime,
-  serverTimezone,
-  lastTick,
-  kpis,
-  players = [],
-  recentLogs = [],
-  weather,
-  server,
-}: AdminIndexPageProps) {
+export default function AdminIndexPage(props: AdminIndexPageProps) {
+  const {
+    money = { symbol: '€', prefix: false },
+    attention,
+    season,
+    isStaging,
+    isDev,
+    envWritable,
+    serverTime,
+    serverTimezone,
+    lastTick,
+    kpis,
+    players = [],
+    recentLogs = [],
+    weather,
+    server,
+  } = props;
   const [filterMode, setFilterMode] = useState<'all' | 'online' | 'banned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('id');
@@ -203,6 +205,21 @@ export default function AdminIndexPage({
       </button>
     </th>
   );
+
+  if (!a) {
+    // The server payload doesn't match this bundle (e.g. PHP-FPM not reloaded after a deploy).
+    // Report it with what we did receive, then ask for a reload instead of crashing.
+    console.error('AdminIndexPage: server props are missing "attention"; PHP and the JS bundle are out of sync', {
+      receivedKeys: Object.keys(props),
+    });
+    return (
+      <Page title="Admin overview" icon="fa-shield-halved" iconTone="text-accent" back={null} width="max-w-6xl">
+        <p role="alert" className="text-sm">
+          The admin data is out of date with this page. Reload the page; if this keeps happening, the server code was not reloaded after the last deploy.
+        </p>
+      </Page>
+    );
+  }
 
   return (
     <Page
