@@ -1,11 +1,20 @@
 <?php
 
+/**
+ * The signed-in player's difficulty. Read once per request and player: the nav alone asks for it
+ * dozens of times per page (unlock and hidden-page checks). A change of difficulty redirects, so the
+ * next request reads the new value.
+ */
 function getDifficulty(): string
 {
     if (!function_exists('auth') || !auth()->loggedIn()) return 'standard';
-    $db = db_connect();
-    $finance = $db->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
-    return $finance['difficulty'] ?? 'standard';
+    static $byUser = [];
+    $userId = (int) auth()->id();
+    if (!isset($byUser[$userId])) {
+        $row = db_connect()->table('player_finances')->select('difficulty')->where('user_id', $userId)->get()->getRowArray();
+        $byUser[$userId] = (string) ($row['difficulty'] ?? 'standard');
+    }
+    return $byUser[$userId];
 }
 
 function getDifficultyConfig(string $key, string $default = '100'): string

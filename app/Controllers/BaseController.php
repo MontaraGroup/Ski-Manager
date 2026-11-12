@@ -40,9 +40,14 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-        if (function_exists('auth') && auth()->loggedIn()) {
+        // Record activity at most every 5 minutes per session: these UPDATEs ran on every page view.
+        // The welcome-back grant below still sees the first request after a 48-hour absence.
+        $session = session();
+        if (function_exists('auth') && auth()->loggedIn() && time() - (int) $session->get('last_active_written') >= 300) {
+            $session->set('last_active_written', time());
             $userId = (int) auth()->id();
             $db = db_connect();
+            $db->table('users')->where('id', $userId)->update(['last_active' => date('Y-m-d H:i:s')]);
 
             // If the player has been away for >= 48 hours, grant a welcome back caretaker bonus
             // We use an atomic update conditional on last_active to avoid race conditions across concurrent requests

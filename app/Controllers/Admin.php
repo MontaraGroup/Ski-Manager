@@ -1042,6 +1042,9 @@ class Admin extends BaseController
      */
     private function featureFlagUsage(): array
     {
+        // Cached for a day; every deploy runs spark cache:clear, which is when this can change
+        $cached = cache('admin_feature_flag_usage');
+        if (is_array($cached)) return $cached;
         $usage = [];
         foreach (\App\Filters\FeatureGate::ROUTE_FLAGS as $route => $flag) {
             $usage[$flag]['pages'][] = '/' . $route;
@@ -1055,6 +1058,7 @@ class Admin extends BaseController
                 $usage[$flag]['code'][] = $where;
             }
         }
+        cache()->save('admin_feature_flag_usage', $usage, DAY);
         return $usage;
     }
 

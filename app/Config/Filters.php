@@ -86,7 +86,7 @@ class Filters extends BaseFilters
         'before' => [
             'maintenance',
             // 'honeypot',
-            'csrf' => ['except' => ['roadmap/vote/*', 'api/auth', 'api/sync', 'api/v1/app/*']],
+            'csrf' => ['except' => ['api/auth', 'api/sync', 'api/v1/app/*']],
             'invalidchars',
         ],
         'after' => [
