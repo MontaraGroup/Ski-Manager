@@ -49,10 +49,7 @@ export default function LoginPage({
         <div className="relative isolate overflow-hidden bg-[#141b24] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between min-h-[16rem] lg:min-h-[36rem]">
           {/* Background image & gradient overlay */}
           <div
-            className="absolute inset-0 -z-20 bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-700"
-            style={{
-              backgroundImage: 'url(/img/ParkCity_med.jpg), url(/img/ParkCity_low.jpg)',
-            }}
+            className="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-700"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-t lg:bg-gradient-to-r from-[#0a0e14]/95 via-[#0a0e14]/75 to-[#0a0e14]/40" />
 
