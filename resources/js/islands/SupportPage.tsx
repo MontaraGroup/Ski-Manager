@@ -122,7 +122,7 @@ export default function SupportPage({
       actions={
         <a
           href="/faq"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-default"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-default sm:min-h-9"
         >
           <span>FAQ</span>
         </a>

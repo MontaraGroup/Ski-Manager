@@ -141,7 +141,17 @@ function mount(el: HTMLElement) {
     <StrictMode>
       <UNSAFE_PortalProvider getContainer={overlayLayer}>
         <IslandErrorBoundary name={name}>
-          <Suspense fallback={<Spinner aria-label="Loading" />}>
+          <Suspense
+            fallback={
+              name.endsWith('Page') ? (
+                <div className="flex min-h-[60vh] items-center justify-center">
+                  <Spinner aria-label="Loading" />
+                </div>
+              ) : (
+                <Spinner aria-label="Loading" />
+              )
+            }
+          >
             <Island {...readProps(el)} />
           </Suspense>
         </IslandErrorBoundary>

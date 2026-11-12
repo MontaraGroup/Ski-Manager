@@ -22,6 +22,8 @@ export default function LockedPage({ unlock }: LockedPageProps) {
   const progress = Number(unlock?.progress ?? 0);
   const target = Math.max(1, Number(unlock?.target ?? 1));
   const percent = Math.min(100, Math.round((progress / target) * 100));
+  // Features unlock when the reward is claimed, not when the goal is reached (isFeatureUnlocked)
+  const done = progress >= target;
 
   return (
     <div className="mx-auto max-w-lg p-4 sm:p-6 lg:p-8">
@@ -31,7 +33,9 @@ export default function LockedPage({ unlock }: LockedPageProps) {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{label} Locked</h1>
-        <p className="mt-2 text-sm text-muted">Complete an achievement to unlock this feature.</p>
+        <p className="mt-2 text-sm text-muted">
+          {done ? 'Achievement complete. Claim its reward to unlock this feature.' : 'Complete an achievement to unlock this feature.'}
+        </p>
 
         <div className="mx-auto mt-6 max-w-xs rounded-xl border border-border/80 bg-default/40 p-4 text-left">
           <div className="flex items-center gap-3">
@@ -67,7 +71,7 @@ export default function LockedPage({ unlock }: LockedPageProps) {
             className="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl bg-warning px-5 py-2.5 text-sm font-semibold text-warning-foreground hover:bg-warning/90"
           >
             <Icon name="fa-solid fa-trophy" />
-            <span>View Achievements</span>
+            <span>{done ? 'Claim reward' : 'View Achievements'}</span>
           </a>
         </div>
       </div>

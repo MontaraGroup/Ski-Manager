@@ -27,7 +27,7 @@ class Home extends BaseController
                 'temp' => isset($weather['temp']) ? temp((int) $weather['temp']) : '–',
                 'snowBase' => isset($weather['snow_base']) ? snow((int) $weather['snow_base']) : '–',
                 'snowfallText' => $snowfall > 0 ? (snow($snowfall) . ' new snow') : 'No new snow',
-                'windText' => isset($weather['wind_speed']) ? speed((int) $weather['wind_speed']) : '–',
+                'windText' => isset($weather['wind']) ? speed((int) $weather['wind']) : '–',
             ];
         }
 

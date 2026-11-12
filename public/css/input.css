@@ -130,6 +130,13 @@ body {
     outline-offset: 2px !important;
 }
 
+/* Phones: the cookie banner and the tutorial card both sit at the bottom; show the banner first */
+@media (max-width: 767px) {
+    body:has(#cookieConsent[style*="display: block"], #cookieConsent[style*="display:block"]) #tutorialWidgetContainer {
+        visibility: hidden;
+    }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
