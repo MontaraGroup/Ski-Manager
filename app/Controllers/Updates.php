@@ -53,8 +53,9 @@ class Updates extends BaseController
                             'icon' => $typeMeta[$t]['icon'],
                             'badge' => $typeMeta[$t]['badge'],
                             'items' => array_map(fn($it) => [
+                                // update_items keeps the line in `text`; it has no title/description columns
                                 'title' => $it['title'] ?? '',
-                                'description' => $it['description'] ?? '',
+                                'description' => $it['description'] ?? $it['text'] ?? '',
                             ], array_values($filtered)),
                         ];
                     }
