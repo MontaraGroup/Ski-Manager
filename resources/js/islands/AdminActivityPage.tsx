@@ -96,7 +96,7 @@ export default function AdminActivityPage({
               {(filter || userFilter) && (
                 <a
                   href="/admin/activity"
-                  className="inline-flex h-8 items-center rounded-lg border border-border bg-surface px-2.5 text-xs font-medium text-muted hover:text-foreground"
+                  className="inline-flex min-h-11 sm:min-h-8 items-center rounded-lg border border-border bg-surface px-2.5 text-xs font-medium text-muted hover:text-foreground"
                 >
                   Clear
                 </a>
@@ -132,7 +132,7 @@ export default function AdminActivityPage({
                       <td className="py-2.5 font-bold">
                         <a
                           href={`/admin/user/${log.user_id}`}
-                          className="text-accent hover:underline"
+                          className="inline-flex min-h-11 items-center sm:min-h-0 text-accent hover:underline"
                         >
                           {log.username}
                         </a>
@@ -174,7 +174,7 @@ export default function AdminActivityPage({
                 {page > 1 && (
                   <a
                     href={getPageUrl(page - 1)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                    className="min-h-11 sm:min-h-0 inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
                   >
                     <Icon name="fa-chevron-left" className="text-[10px]" />
                     Previous
@@ -184,7 +184,7 @@ export default function AdminActivityPage({
                 {page < totalPages && (
                   <a
                     href={getPageUrl(page + 1)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
+                    className="min-h-11 sm:min-h-0 inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-surface-raised"
                   >
                     Next
                     <Icon name="fa-chevron-right" className="text-[10px]" />

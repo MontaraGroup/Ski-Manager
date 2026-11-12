@@ -151,7 +151,33 @@ class Admin extends BaseController
             ];
         }, $recentLogs);
 
+        // What needs attention: every number is a live query
+        $since = fn(string $mod) => date('Y-m-d H:i:s', strtotime($mod));
+        $errors24h = 0;
+        foreach ([date('Y-m-d'), date('Y-m-d', strtotime('-1 day'))] as $day) {
+            $f = WRITEPATH . 'logs/log-' . $day . '.log';
+            if (!is_file($f)) continue;
+            foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+                if (preg_match('/^(ERROR|CRITICAL|ALERT|EMERGENCY) - (\S+ \S+)/', $line, $m) && strtotime($m[2]) >= strtotime('-24 hours')) $errors24h++;
+            }
+        }
+        $attention = [
+            'supportOpen' => (int) $db->query("SELECT COUNT(DISTINCT user_id) n FROM support_messages WHERE sender = 'player' AND is_read = 0")->getRow('n'),
+            'errors24h' => $errors24h,
+            'signupsToday' => $db->table('users')->where('created_at >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'signups7d' => $db->table('users')->where('created_at >=', $since('-7 days'))->countAllResults(),
+            'activeToday' => $db->table('users')->where('last_active >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'active7d' => $db->table('users')->where('last_active >=', $since('-7 days'))->countAllResults(),
+            'roadmapToReview' => $db->tableExists('roadmap_items') ? $db->table('roadmap_items')->where('status', 'suggested')->countAllResults() : 0,
+            // Same thresholds as suspiciousActivity()
+            'suspicious' => (int) $db->query("SELECT COUNT(*) n FROM users u JOIN player_finances f ON f.user_id = u.id
+                WHERE f.cash > (CASE f.difficulty WHEN 'easy' THEN 5000000 WHEN 'hard' THEN 2000000 ELSE 3000000 END)")->getRow('n'),
+            'backupMonitorUrl' => 'https://ski-manager.sentry.io/crons/ski-manager/db-dump/',
+        ];
+
         $page = [
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
+            'attention' => $attention,
             'season' => [
                 'name' => $season['name'] ?? 'Season 1',
                 'season_number' => (int) ($season['season_number'] ?? 1),
@@ -286,11 +312,52 @@ class Admin extends BaseController
             ];
         }, $logsRaw);
 
-        $achievements = array_map(function($a) {
+        $achievements = array_values(array_map(function($a) {
             return [
-                'key' => $a['achievement_key'] ?? $a['name'] ?? (string) $a['id'],
+                'key' => $a['achievement_key'] ?? (string) $a['id'],
+                'name' => $a['name'] ?? $a['achievement_key'] ?? '',
+                'claimed' => (bool) ($a['claimed'] ?? 0),
             ];
-        }, $achievementsRaw);
+        }, array_filter($achievementsRaw, fn($a) => (int) ($a['completed'] ?? 0) === 1)));
+
+        $transactions = array_map(fn($t) => [
+            'id' => (int) $t['id'],
+            'gameDay' => (int) $t['game_day'],
+            'category' => (string) $t['category'],
+            'description' => (string) $t['description'],
+            'amountFormatted' => ($t['type'] === 'expense' ? '−' : '+') . currency(abs((int) $t['amount'])),
+            'isExpense' => $t['type'] === 'expense',
+            'when' => $t['created_at'] ? date('M j, H:i', strtotime($t['created_at'])) : '',
+        ], $db->table('financial_transactions')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        $genepisLog = array_map(fn($g) => [
+            'id' => (int) $g['id'],
+            'amountFormatted' => ($g['type'] === 'spent' ? '−' : '+') . number_format(abs((int) $g['amount'])),
+            'isSpent' => $g['type'] === 'spent',
+            'reason' => (string) $g['reason'],
+            'when' => $g['created_at'] ? date('M j, H:i', strtotime($g['created_at'])) : '',
+        ], $db->table('genepis_log')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        // Keep the network, drop the host: 203.0.113.42 -> 203.0.113.x, IPv6 keeps its first 3 groups
+        $maskIp = function (string $ip): string {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) return preg_replace('/\.\d+$/', '.x', $ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return implode(':', array_slice(explode(':', $ip), 0, 3)) . ':x';
+            return 'unknown';
+        };
+        $logins = array_map(fn($l) => [
+            'id' => (int) $l['id'],
+            'when' => date('M j, Y H:i', strtotime($l['date'])),
+            'success' => (bool) $l['success'],
+            'ip' => $maskIp((string) $l['ip_address']),
+        ], $db->table('auth_logins')->select('id, date, success, ip_address')->where('user_id', $id)->orderBy('id', 'DESC')->limit(10)->get()->getResultArray());
+
+        $notes = $db->tableExists('admin_notes') ? array_map(fn($n) => [
+            'id' => (int) $n['id'],
+            'note' => (string) $n['note'],
+            'admin' => (string) ($n['admin_name'] ?? ('#' . $n['admin_id'])),
+            'when' => date('M j, Y H:i', strtotime($n['created_at'])),
+        ], $db->table('admin_notes n')->select('n.*, u.username AS admin_name')->join('users u', 'u.id = n.admin_id', 'left')
+            ->where('n.user_id', $id)->orderBy('n.id', 'DESC')->get()->getResultArray()) : [];
 
         $page = [
             'user' => [
@@ -309,6 +376,9 @@ class Admin extends BaseController
                 'units' => $finance['units'] ?? 'metric',
                 'resortMap' => $finance['resort_map'] ?? 'ParkCity',
                 'resortOpen' => (bool) ($finance['resort_open'] ?? true),
+                'resortName' => (string) ($finance['resort_name'] ?? ''),
+                'dailyVisitors' => number_format((int) ($finance['daily_visitors'] ?? 0)),
+                'lastActive' => !empty($finance['last_active']) ? timeAgo($finance['last_active']) : 'never',
             ],
             'genepis' => [
                 'balance' => (int) ($genepis['balance'] ?? 0),
@@ -331,6 +401,11 @@ class Admin extends BaseController
                 'step' => (int) ($tutorial['current_step'] ?? 1),
             ] : null,
             'logs' => $logs,
+            'transactions' => $transactions,
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
+            'genepisLog' => $genepisLog,
+            'logins' => $logins,
+            'notes' => $notes,
         ];
 
         return view('admin/user', ['page' => $page]);
@@ -341,7 +416,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $cash = (int) $this->request->getPost('cash');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash') ?? 0);
         db_connect()->table('player_finances')->where('user_id', $userId)->update(['cash' => $cash]);
+        $this->auditLog('set_cash', $userId, json_encode(['from' => $before, 'to' => $cash, 'reason' => $reason]));
         log_activity($userId, 'admin_cash', "Admin set cash to " . currency($cash));
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Cash updated.');
     }
@@ -351,7 +430,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $amount = (int) $this->request->getPost('genepis');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRow('balance') ?? 0);
         db_connect()->table('genepis')->where('user_id', $userId)->update(['balance' => $amount]);
+        $this->auditLog('set_genepis', $userId, json_encode(['from' => $before, 'to' => $amount, 'reason' => $reason]));
         log_activity($userId, 'admin_genepis', "Admin set génépis to " . $amount);
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Génépis updated.');
     }
@@ -508,6 +591,9 @@ class Admin extends BaseController
     public function grantAchievement()
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
+        $userId = (int) $this->request->getPost('user_id');
+        $achievementId = (int) $this->request->getPost('achievement_id');
+        if ($userId <= 0 || $achievementId <= 0) return redirect()->to('/admin')->with('error', 'Give a player ID and an achievement ID.');
         $achRow = db_connect()->table('achievement_defs')->where('id', $achievementId)->get()->getRowArray() ?: db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray();
         $target = $achRow['target'] ?? 100;
         db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => $target]);
@@ -1330,5 +1416,77 @@ class Admin extends BaseController
         setting('SeasonVote.closesAt', date('Y-m-d H:i:s', $ts));
         $this->auditLog('season_vote_close_date', null, date('Y-m-d H:i', $ts));
         return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
+    }
+
+    /** GET /admin/search?q= : players by username, email or ID (JSON, at most 10) */
+    public function searchPlayers()
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['results' => []]);
+        $q = trim((string) $this->request->getGet('q'));
+        if ($q === '') return $this->response->setJSON(['results' => []]);
+        $db = db_connect();
+        $b = $db->table('users u')->select('u.id, u.username, ai.secret AS email')
+            ->join('auth_identities ai', "ai.user_id = u.id AND ai.type = 'email_password'", 'left');
+        if (ctype_digit($q)) {
+            $b->where('u.id', (int) $q);
+        } else {
+            $b->groupStart()->like('u.username', $q)->orLike('ai.secret', $q)->groupEnd();
+        }
+        $rows = $b->orderBy('u.id', 'DESC')->limit(10)->get()->getResultArray();
+        return $this->response->setJSON(['results' => array_map(fn($r) => [
+            'id' => (int) $r['id'], 'username' => (string) $r['username'], 'email' => (string) ($r['email'] ?? ''),
+        ], $rows)]);
+    }
+
+    /** POST /admin/user/{id}/adjust : add or take cash or Génépis, with a reason, through the ledger */
+    public function adjustBalance(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $currency = (string) $this->request->getPost('currency');
+        $amount = (int) $this->request->getPost('amount');
+        $reason = trim((string) $this->request->getPost('reason'));
+        // 180: the reason goes into description/reason columns of 200 after the "Admin adjustment: " prefix
+        if (!in_array($currency, ['cash', 'genepis'], true) || $amount === 0 || $reason === '' || mb_strlen($reason) > 180) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Choose cash or Génépis, a non-zero amount and a reason.']);
+        }
+        if (!db_connect()->table('users')->where('id', $userId)->countAllResults()) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Player not found.']);
+        }
+        $label = 'Admin adjustment: ' . $reason;
+        $ok = true;
+        if ($currency === 'cash') {
+            if ($amount > 0) \App\Libraries\Ledger::credit($userId, $amount, 'Admin', $label);
+            else $ok = \App\Libraries\Ledger::charge($userId, -$amount, 'Admin', $label);
+        } else {
+            if ($amount > 0) \App\Libraries\Ledger::creditGenepis($userId, $amount, $label);
+            else $ok = \App\Libraries\Ledger::chargeGenepis($userId, -$amount, $label);
+        }
+        // With DBDebug off (production) a failed write doesn't throw; the ledger's transaction rolls back and only transStatus() says so
+        if (!db_connect()->transStatus()) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The change was not saved. Nothing was written.']);
+        }
+        if (!$ok) {
+            return $this->response->setStatusCode(409)->setJSON(['success' => false, 'message' => 'The player does not have that much to take.']);
+        }
+        $this->auditLog('adjust_' . $currency, $userId, json_encode(['amount' => $amount, 'reason' => $reason]));
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /** POST /admin/user/{id}/note : a private admin note on the player */
+    public function addNote(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $note = trim((string) $this->request->getPost('note'));
+        if ($note === '' || mb_strlen($note) > 2000) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Write a note of up to 2000 characters.']);
+        }
+        $saved = db_connect()->table('admin_notes')->insert([
+            'user_id' => $userId, 'admin_id' => (int) auth()->id(), 'note' => $note, 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        if (!$saved) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The note was not saved.']);
+        }
+        $this->auditLog('note', $userId, json_encode(['note' => mb_substr($note, 0, 200)]));
+        return $this->response->setJSON(['success' => true]);
     }
 }

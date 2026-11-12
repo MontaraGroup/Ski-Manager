@@ -126,12 +126,12 @@ export default function AdminChangelogsPage({ entries }: AdminChangelogsPageProp
                 value="1"
                 isSelected={form.published}
                 onChange={(checked) => setForm({ ...form, published: checked })}
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-semibold text-foreground [&_label]:flex [&_label]:min-h-11 [&_label]:items-center sm:[&_label]:min-h-0"
               >
                 Publish immediately to all players
               </Checkbox>
 
-              <Button type="submit" variant="primary" className="text-xs font-bold min-h-10">
+              <Button type="submit" variant="primary" className="text-xs font-bold min-h-11 sm:min-h-10">
                 <Icon name="fa-floppy-disk" className="mr-1.5" />
                 {editingId ? 'Update Changelog' : 'Save Changelog'}
               </Button>

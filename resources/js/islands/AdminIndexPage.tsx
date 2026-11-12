@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
-import { Button } from '@heroui/react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Button, Meter } from '@heroui/react';
 import { Icon } from '@/components/Icon';
-import { CsrfInput, Figure, Page, Panel, PostButton } from '@/components/Page';
+import { Page, Panel } from '@/components/Page';
 import { Select } from '@/components/Select';
+import { ConfirmForm, Field } from './admin/ConfirmForm';
 
 export type SeasonInfo = {
   name: string;
@@ -20,6 +21,18 @@ export type TickInfo = {
   timeAgo: string;
   created_at: string | null;
   isStale: boolean;
+};
+
+export type AttentionInfo = {
+  supportOpen: number;
+  errors24h: number;
+  signupsToday: number;
+  signups7d: number;
+  activeToday: number;
+  active7d: number;
+  roadmapToReview: number;
+  suspicious: number;
+  backupMonitorUrl: string;
 };
 
 export type KpiData = {
@@ -90,6 +103,8 @@ export type ServerInfo = {
 };
 
 export type AdminIndexPageProps = {
+  money?: { symbol: string; prefix: boolean };
+  attention: AttentionInfo;
   season: SeasonInfo;
   isStaging: boolean;
   isDev: boolean;
@@ -107,14 +122,73 @@ export type AdminIndexPageProps = {
 
 type SortField = 'id' | 'username' | 'cash' | 'staff' | 'buildings' | 'items' | 'created' | 'active';
 
+const n = (v: number) => v.toLocaleString('en-US');
+
+/**
+ * One thing to look at. "alert" cards say so in words and with an icon, not only with the
+ * red border, and link to the page where it gets fixed.
+ */
+function AttentionCard({
+  href,
+  external,
+  icon,
+  label,
+  value,
+  detail,
+  alert = false,
+  action,
+}: {
+  href?: string;
+  external?: boolean;
+  icon: string;
+  label: string;
+  value: ReactNode;
+  detail: ReactNode;
+  alert?: boolean;
+  action?: string;
+}) {
+  const body = (
+    <>
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Icon name={icon} />
+        {label}
+      </div>
+      <div className={`text-2xl font-semibold tabular-nums ${alert ? 'text-danger' : ''}`}>{value}</div>
+      <div className="text-sm">
+        {alert && <Icon name="fa-circle-exclamation" className="mr-1 text-danger" />}
+        {detail}
+      </div>
+      {href && action && (
+        <div className="mt-auto pt-1 text-sm font-medium text-link">
+          {action}
+          {external && <span className="sr-only"> (opens Sentry in a new tab)</span>}
+          <Icon name={external ? 'fa-arrow-up-right-from-square' : 'fa-arrow-right'} className="ml-1.5 text-xs" />
+        </div>
+      )}
+    </>
+  );
+  const cls = `flex flex-col gap-1 rounded-xl border bg-surface p-4 ${alert ? 'border-danger' : 'border-border'}`;
+  if (!href) return <div className={cls}>{body}</div>;
+  return (
+    <a
+      href={href}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      className={`${cls} hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus`}
+    >
+      {body}
+    </a>
+  );
+}
+
 export default function AdminIndexPage({
+  money = { symbol: '€', prefix: false },
+  attention,
   season,
   isStaging,
   isDev,
   envWritable,
   serverTime,
   serverTimezone,
-  unreadSupport = 0,
   lastTick,
   kpis,
   players = [],
@@ -122,856 +196,524 @@ export default function AdminIndexPage({
   weather,
   server,
 }: AdminIndexPageProps) {
-  // Player table filters & sorting
   const [filterMode, setFilterMode] = useState<'all' | 'online' | 'banned'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('id');
   const [sortAsc, setSortAsc] = useState(false);
-
-  // Weather inputs
   const [wCond, setWCond] = useState(weather?.condition_name ?? 'Light Snow');
-  const [wTemp, setWTemp] = useState(weather?.temp ?? -5);
-  const [wWind, setWWind] = useState(weather?.wind ?? 15);
-  const [wSnow, setWSnow] = useState(weather?.snowfall ?? 0);
-  const [wBase, setWBase] = useState(weather?.snow_base ?? 50);
 
-  // Bulk actions inputs
-  const [bulkCash, setBulkCash] = useState(50000);
-  const [bulkGenepis, setBulkGenepis] = useState(10);
-  const [achieveUserId, setAchieveUserId] = useState('');
-  const [achieveId, setAchieveId] = useState('');
+  const a = attention;
+  const envName = isStaging ? 'staging' : 'production';
 
   const filteredPlayers = useMemo(() => {
     let list = players;
-
-    if (filterMode === 'online') {
-      list = list.filter((p) => p.isOnline);
-    } else if (filterMode === 'banned') {
-      list = list.filter((p) => p.isBanned);
-    }
-
+    if (filterMode === 'online') list = list.filter((p) => p.isOnline);
+    else if (filterMode === 'banned') list = list.filter((p) => p.isBanned);
     const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        (p) =>
-          p.username.toLowerCase().includes(q) ||
-          String(p.id).includes(q.replace('#', ''))
-      );
-    }
-
-    const sorted = [...list].sort((a, b) => {
-      let cmp = 0;
-      switch (sortField) {
-        case 'id':
-          cmp = a.id - b.id;
-          break;
-        case 'username':
-          cmp = a.username.localeCompare(b.username);
-          break;
-        case 'cash':
-          cmp = a.cashRaw - b.cashRaw;
-          break;
-        case 'staff':
-          cmp = a.staff_count - b.staff_count;
-          break;
-        case 'buildings':
-          cmp = a.building_count - b.building_count;
-          break;
-        case 'items':
-          cmp = a.item_count - b.item_count;
-          break;
-        case 'created':
-          cmp = a.created_ts - b.created_ts;
-          break;
-        case 'active':
-          cmp = a.last_active_ts - b.last_active_ts;
-          break;
-      }
+    if (q) list = list.filter((p) => p.username.toLowerCase().includes(q) || String(p.id).includes(q.replace('#', '')));
+    const key: Record<SortField, (p: PlayerItem) => number | string> = {
+      id: (p) => p.id,
+      username: (p) => p.username.toLowerCase(),
+      cash: (p) => p.cashRaw,
+      staff: (p) => p.staff_count,
+      buildings: (p) => p.building_count,
+      items: (p) => p.item_count,
+      created: (p) => p.created_ts,
+      active: (p) => p.last_active_ts,
+    };
+    return [...list].sort((x, y) => {
+      const kx = key[sortField](x);
+      const ky = key[sortField](y);
+      const cmp = typeof kx === 'string' ? kx.localeCompare(String(ky)) : kx - (ky as number);
       return sortAsc ? cmp : -cmp;
     });
-
-    return sorted;
   }, [players, filterMode, searchQuery, sortField, sortAsc]);
 
   const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortAsc(!sortAsc);
-    } else {
+    if (sortField === field) setSortAsc(!sortAsc);
+    else {
       setSortField(field);
       setSortAsc(false);
     }
   };
 
-  const navLinks = [
-    {
-      group: 'Players',
-      items: [
-        { href: '/admin/broadcast', icon: 'fa-bullhorn', label: 'Broadcast' },
-        { href: '/admin/support', icon: 'fa-headset', label: 'Support', badge: unreadSupport },
-        { href: '/admin/compare', icon: 'fa-code-compare', label: 'Compare' },
-        { href: '/admin/suspicious', icon: 'fa-triangle-exclamation', label: 'Suspicious' },
-        { href: '/admin/export-players', icon: 'fa-download', label: 'Export' },
-      ],
-    },
-    {
-      group: 'Game',
-      items: [
-        { href: '/admin/settings', icon: 'fa-gear', label: 'Settings' },
-        { href: '/admin/economy', icon: 'fa-chart-line', label: 'Economy' },
-        { href: '/admin/seasons', icon: 'fa-calendar-plus', label: 'Seasons' },
-        { href: '/admin/season-vote', icon: 'fa-check-to-slot', label: 'Season vote' },
-        { href: '/admin/features', icon: 'fa-toggle-on', label: 'Flags' },
-        { href: '/admin/changelogs', icon: 'fa-newspaper', label: 'Changelogs' },
-      ],
-    },
-    {
-      group: 'Logs',
-      items: [
-        { href: '/admin/activity', icon: 'fa-clock-rotate-left', label: 'Activity' },
-        { href: '/admin/audit', icon: 'fa-shield-halved', label: 'Audit' },
-        { href: '/admin/errors', icon: 'fa-bug', label: 'Errors' },
-      ],
-    },
-  ];
+  const SortHead = ({ field, children, right }: { field: SortField; children: ReactNode; right?: boolean }) => (
+    <th
+      scope="col"
+      aria-sort={sortField === field ? (sortAsc ? 'ascending' : 'descending') : undefined}
+      className={`px-2 py-1 font-semibold ${right ? 'text-right' : ''}`}
+    >
+      <button
+        type="button"
+        onClick={() => toggleSort(field)}
+        className="inline-flex min-h-11 items-center gap-1 rounded px-1 hover:text-foreground focus-visible:outline-2 focus-visible:outline-focus sm:min-h-8"
+      >
+        {children}
+        {sortField === field && <Icon name={sortAsc ? 'fa-arrow-up' : 'fa-arrow-down'} className="text-xs" />}
+        {sortField === field && <span className="sr-only">{sortAsc ? ', lowest first' : ', highest first'}</span>}
+      </button>
+    </th>
+  );
 
   return (
     <Page
-      title="Admin Panel"
+      title="Admin overview"
       icon="fa-shield-halved"
-      iconTone="text-secondary"
-      back="/dashboard"
-      width="max-w-7xl"
+      iconTone="text-accent"
+      back={null}
+      width="max-w-6xl"
       subtitle={
-        <div className="flex flex-wrap items-center gap-2">
+        <span className="flex flex-wrap items-center gap-2">
           <span>
-            {season?.name} · Day {season?.game_day} of {season?.duration_days} ({season?.days_left} days left)
+            {season?.name}, day {season?.game_day} of {season?.duration_days} ({season?.days_left} days left)
           </span>
-          <span
-            className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              isStaging ? 'bg-warning/20 text-warning' : 'bg-danger/20 text-danger'
-            }`}
-          >
+          <span className={`rounded-full px-2 text-sm font-semibold ${isStaging ? 'bg-warning/15' : 'bg-danger/15'}`}>
             {isStaging ? 'Staging' : 'Production'}
           </span>
-          {season?.maintenance && (
-            <span className="inline-flex rounded border border-danger bg-danger/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-danger">
-              Maintenance ON
-            </span>
-          )}
-        </div>
-      }
-      actions={
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Tick indicator */}
-          <div
-            className="flex items-center gap-2 rounded-md border border-edge bg-surface-2 px-2.5 py-1 text-xs"
-            title={lastTick?.created_at || 'Never'}
-          >
-            <span
-              className={`h-2 w-2 rounded-full ${
-                lastTick?.isStale ? 'bg-danger' : 'bg-success'
-              }`}
-            />
-            <span className="text-muted">Last tick:</span>
-            <span className={`font-medium ${lastTick?.isStale ? 'text-danger' : 'text-foreground'}`}>
-              {lastTick?.timeAgo}
-            </span>
-          </div>
-
-          {/* Trigger Tick */}
-          <PostButton
-            action="/admin/trigger-tick"
-            variant="primary"
-            size="sm"
-            confirm={{
-              title: `Run game tick on ${isStaging ? 'STAGING' : 'PRODUCTION'}?`,
-              body: 'This will advance all player resorts, economics, weather, and simulation state by 1 game day.',
-              confirmLabel: 'Run Tick Now',
-            }}
-          >
-            <Icon name="fa-play" className="mr-1" />
-            Run Tick
-          </PostButton>
-
-          {/* Maintenance toggle */}
-          <PostButton
-            action="/admin/maintenance"
-            variant={season?.maintenance ? 'danger' : 'secondary'}
-            size="sm"
-            confirm={{
-              title: season?.maintenance ? 'Reopen site to players?' : 'Turn Maintenance ON?',
-              body: season?.maintenance
-                ? 'Players will be able to access their resorts and play normally.'
-                : 'Players will see a 503 maintenance page until reopened.',
-              confirmLabel: season?.maintenance ? 'Turn Maintenance Off' : 'Turn Maintenance On',
-            }}
-          >
-            <Icon name="fa-wrench" className="mr-1" />
-            {season?.maintenance ? 'Maint ON' : 'Maint OFF'}
-          </PostButton>
-
-          {/* Dev / Prod Mode toggle */}
-          <PostButton
-            action="/admin/toggle-env"
-            variant="secondary"
-            size="sm"
-            disabled={!envWritable}
-          >
-            <Icon name="fa-code" className="mr-1" />
-            {isDev ? 'Dev Mode' : 'Prod Mode'}
-          </PostButton>
-        </div>
+          {season?.maintenance && <span className="rounded-full bg-danger/15 px-2 text-sm font-semibold">Maintenance is on</span>}
+          <span>
+            Server time {serverTime} ({serverTimezone})
+          </span>
+        </span>
       }
     >
-      <div className="space-y-6">
-        {/* Navigation Quick Toolbar */}
-        <Panel className="p-3">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-6">
-              {navLinks.map((section) => (
-                <div key={section.group} className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted/60 mr-1">
-                    {section.group}
-                  </span>
-                  {section.items.map((item) => (
-                    <a
-                      key={item.href}
-                      href={item.href}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-edge bg-surface-2 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-surface-3 transition-colors"
-                    >
-                      <Icon name={item.icon} className="text-muted text-[11px]" />
-                      <span>{item.label}</span>
-                      {Boolean(item.badge && item.badge > 0) && (
-                        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </a>
-                  ))}
-                </div>
+      <section aria-labelledby="attention-h" className="flex flex-col gap-3">
+        <h2 id="attention-h" className="text-lg font-semibold">
+          Needs a look
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AttentionCard
+            href="/admin/support"
+            icon="fa-headset"
+            label="Support"
+            value={n(a.supportOpen)}
+            alert={a.supportOpen > 0}
+            detail={a.supportOpen === 1 ? 'player waiting for a reply' : 'players waiting for a reply'}
+            action="Open the inbox"
+          />
+          <AttentionCard
+            href="/admin/errors"
+            icon="fa-bug"
+            label="Errors, last 24 hours"
+            value={n(a.errors24h)}
+            alert={a.errors24h > 0}
+            detail={a.errors24h > 0 ? 'logged at ERROR or worse' : 'Nothing logged at ERROR or worse'}
+            action="Read the error log"
+          />
+          <AttentionCard
+            href="#system-tools"
+            icon="fa-clock"
+            label="Last game tick"
+            value={lastTick?.timeAgo ?? 'never'}
+            alert={lastTick?.isStale}
+            detail={lastTick?.isStale ? 'Late: no tick in the last 26 hours' : 'On time'}
+            action="Run a tick"
+          />
+          <AttentionCard
+            href={a.backupMonitorUrl}
+            external
+            icon="fa-database"
+            label="Database backup"
+            value="Sentry"
+            detail="The nightly db-dump reports to a Sentry cron monitor"
+            action="Check the monitor"
+          />
+          <AttentionCard
+            icon="fa-user-plus"
+            label="Sign-ups"
+            value={n(a.signupsToday)}
+            detail={`today, ${n(a.signups7d)} in the last 7 days`}
+          />
+          <AttentionCard
+            icon="fa-signal"
+            label="Active players"
+            value={n(a.activeToday)}
+            detail={`today, ${n(a.active7d)} in the last 7 days`}
+          />
+          <AttentionCard
+            href="/roadmap"
+            icon="fa-map-signs"
+            label="Roadmap suggestions"
+            value={n(a.roadmapToReview)}
+            alert={a.roadmapToReview > 0}
+            detail="waiting for review"
+            action="Review on the roadmap"
+          />
+          <AttentionCard
+            href="/admin/suspicious"
+            icon="fa-triangle-exclamation"
+            label="Suspicious balances"
+            value={n(a.suspicious)}
+            alert={a.suspicious > 0}
+            detail="players above the cash limit for their difficulty"
+            action="See who"
+          />
+        </div>
+      </section>
+
+      <section aria-labelledby="totals-h" className="flex flex-col gap-3">
+        <h2 id="totals-h" className="text-lg font-semibold">
+          Totals
+        </h2>
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ['Players', kpis.totalUsers, `${kpis.newUsers7d} new this week, ${kpis.bannedUsers} banned`],
+            ['Active, last 24 hours', kpis.onlineRecent, `${kpis.activePct}% of players`],
+            ['Cash held by players', kpis.totalCashFormatted, `${kpis.avgCashFormatted} on average`],
+            ['Active loans', kpis.totalLoans, ''],
+            ['Staff employed', kpis.totalStaff, ''],
+            ['Buildings', kpis.totalBuildings, ''],
+            ['Lifts and slopes', kpis.totalItems, ''],
+            ['Facilities', kpis.totalFacilities, `${kpis.totalParking} car parks, ${kpis.totalParks} terrain parks`],
+          ].map(([label, value, note]) => (
+            <div key={label} className="rounded-xl border border-border bg-surface p-3">
+              <dt className="text-sm text-muted">{label}</dt>
+              <dd className="text-lg font-semibold tabular-nums">{value}</dd>
+              {note && <dd className="text-sm text-muted">{note}</dd>}
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Panel
+          className="min-w-0 lg:col-span-2"
+          title={`Players (${filteredPlayers.length} shown of ${kpis.totalUsers})`}
+        >
+          <div className="mb-3 flex flex-wrap items-end gap-2">
+            <div role="group" aria-label="Show" className="inline-flex rounded-lg border border-border p-0.5">
+              {(['all', 'online', 'banned'] as const).map((m) => (
+                <Button
+                  key={m}
+                  size="sm"
+                  variant={filterMode === m ? 'primary' : 'ghost'}
+                  aria-pressed={filterMode === m}
+                  onPress={() => setFilterMode(m)}
+                  className="min-h-11 sm:min-h-8"
+                >
+                  {m === 'all' ? 'All' : m === 'online' ? 'Online' : 'Banned'}
+                </Button>
               ))}
             </div>
-            <div className="text-[11px] text-muted">
-              Server: {serverTime} ({serverTimezone})
+            <div className="min-w-40 flex-1">
+              <Field
+                label="Filter this list"
+                type="search"
+                placeholder="Name or ID"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
+          {filteredPlayers.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">No player matches this filter.</p>
+          ) : (
+            <div className="max-h-[32rem] overflow-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-surface text-muted">
+                  <tr className="border-b border-border">
+                    <SortHead field="id">ID</SortHead>
+                    <SortHead field="username">Player</SortHead>
+                    <SortHead field="cash" right>
+                      Cash
+                    </SortHead>
+                    <SortHead field="staff" right>
+                      Staff
+                    </SortHead>
+                    <SortHead field="buildings" right>
+                      Buildings
+                    </SortHead>
+                    <SortHead field="items" right>
+                      Lifts and slopes
+                    </SortHead>
+                    <SortHead field="created">Joined</SortHead>
+                    <SortHead field="active">Last active</SortHead>
+                    <th scope="col" className="px-2 py-1 text-right font-semibold">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredPlayers.map((p) => (
+                    <tr key={p.id} className={p.isBanned ? 'bg-danger/5' : ''}>
+                      <td className="whitespace-nowrap px-2 py-1 tabular-nums text-muted">#{p.id}</td>
+                      <td className="whitespace-nowrap px-2 py-1">
+                        <a href={`/admin/user/${p.id}`} className="inline-flex min-h-11 items-center font-medium text-link hover:underline sm:min-h-0">
+                          {p.username}
+                        </a>
+                        {p.isBanned && <span className="ml-1.5 rounded-full bg-danger/15 px-2 text-xs font-semibold">Banned</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-1 text-right tabular-nums">{p.cashFormatted}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{p.staff_count}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{p.building_count}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{p.item_count}</td>
+                      <td className="whitespace-nowrap px-2 py-1 text-muted">{p.joinedFormatted}</td>
+                      <td className="whitespace-nowrap px-2 py-1" title={p.lastActivityMessage}>
+                        {p.isOnline ? (
+                          <span className="font-medium">
+                            <Icon name="fa-circle" className="mr-1 text-[0.5rem] text-success" />
+                            Online
+                          </span>
+                        ) : (
+                          <span className="text-muted">{p.lastActiveFormatted}</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-1">
+                        {p.id !== 1 && (
+                          <div className="flex justify-end gap-1">
+                            {p.isBanned ? (
+                              <ConfirmForm
+                                action={`/admin/unban/${p.id}`}
+                                submitLabel={<>Unban<span className="sr-only"> {p.username}</span></>}
+                                title={`Unban ${p.username}?`}
+                                describe={() => `${p.username} will be able to log in again.`}
+                                confirmLabel="Unban"
+                              />
+                            ) : (
+                              <ConfirmForm
+                                action={`/admin/ban/${p.id}`}
+                                submitLabel={<>Ban<span className="sr-only"> {p.username}</span></>}
+                                title={`Ban ${p.username}?`}
+                                describe={() => `${p.username} will not be able to log in until you unban them.`}
+                                confirmLabel="Ban"
+                                danger
+                              />
+                            )}
+                            <ConfirmForm
+                              action={`/admin/delete/${p.id}`}
+                              submitLabel={<>Delete<span className="sr-only"> {p.username}</span></>}
+                              title={`Delete ${p.username}?`}
+                              describe={() => `Deletes ${p.username} and everything in their resort. This cannot be undone.`}
+                              confirmLabel="Delete for good"
+                              danger
+                            />
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Panel>
 
-        {/* KPI Strip */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-users" className="opacity-70" /> Players
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalUsers}</div>
-            <div className="text-[11px] text-muted truncate">+{kpis.newUsers7d} this wk</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-signal" className="opacity-70" /> Active 24h
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.onlineRecent}</div>
-            <div className="text-[11px] text-muted">{kpis.activePct}% of total</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-sack-dollar" className="opacity-70 text-warning" /> Total Cash
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalCashFormatted}</div>
-            <div className="text-[11px] text-muted truncate">{kpis.avgCashFormatted} avg</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-file-invoice-dollar" className="opacity-70 text-danger" /> Loans
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalLoans}</div>
-            <div className="text-[11px] text-muted">active loans</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-user-group" className="opacity-70 text-secondary" /> Staff
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalStaff}</div>
-            <div className="text-[11px] text-muted">employed</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-hotel" className="opacity-70 text-warning" /> Buildings
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalBuildings}</div>
-            <div className="text-[11px] text-muted">lodges & dining</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-person-skiing" className="opacity-70 text-primary" /> Lifts/Slopes
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalItems}</div>
-            <div className="text-[11px] text-muted">built items</div>
-          </div>
-
-          <div className="rounded-lg border border-edge bg-surface-2 p-3">
-            <div className="text-xs text-muted flex items-center gap-1.5">
-              <Icon name="fa-square-parking" className="opacity-70" /> Facilities
-            </div>
-            <div className="mt-1 text-lg font-bold tabular-nums text-foreground">{kpis.totalFacilities}</div>
-            <div className="text-[11px] text-muted truncate">{kpis.totalParking} lots · {kpis.totalParks} parks</div>
-          </div>
-        </div>
-
-        {/* Main Grid: Players Table + Recent Activity Feed */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Players Table (8 cols on lg) */}
-          <div className="lg:col-span-8">
-            <Panel
-              title={
-                <span className="flex items-center gap-2">
-                  <Icon name="fa-users" className="text-primary" />
-                  Players ({filteredPlayers.length} shown of {kpis.totalUsers})
-                </span>
-              }
-              actions={
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-md border border-edge bg-surface-2 p-0.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={filterMode === 'all' ? 'primary' : 'ghost'}
-                      onPress={() => setFilterMode('all')}
-                      className="px-2.5 py-1 text-xs"
-                    >
-                      All
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={filterMode === 'online' ? 'primary' : 'ghost'}
-                      onPress={() => setFilterMode('online')}
-                      className="px-2.5 py-1 text-xs"
-                    >
-                      Online
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={filterMode === 'banned' ? 'primary' : 'ghost'}
-                      onPress={() => setFilterMode('banned')}
-                      className="px-2.5 py-1 text-xs"
-                    >
-                      Banned
-                    </Button>
+        <Panel
+          className="min-w-0"
+          title="Latest activity"
+          actions={
+            <a href="/admin/activity" className="inline-flex min-h-11 items-center text-sm font-medium text-link hover:underline sm:min-h-0">
+              All activity
+            </a>
+          }
+        >
+          {recentLogs.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">No activity recorded yet.</p>
+          ) : (
+            <ul className="max-h-[32rem] divide-y divide-border overflow-y-auto">
+              {recentLogs.map((log) => (
+                <li key={log.id} className="flex items-start gap-2 py-2 text-sm">
+                  <Icon name={`fa-${log.icon || 'circle-dot'}`} className="w-4 pt-0.5 text-center text-muted" />
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words">
+                      <span className="font-semibold">{log.username}</span> <span className="text-muted">{log.message}</span>
+                    </p>
+                    <p className="text-muted">
+                      Day {log.game_day}, {log.timeAgo}
+                    </p>
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
 
-                  <input
-                    type="search"
-                    aria-label="Search players"
-                    placeholder="Name or ID…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-32 sm:w-44 rounded-md border border-edge bg-surface-2 px-2.5 py-1 text-xs text-foreground placeholder:text-muted focus:border-focus focus:outline-none"
-                  />
-                </div>
-              }
-            >
-              {filteredPlayers.length === 0 ? (
-                <p className="py-12 text-center text-xs text-muted">No players match current filter or search.</p>
-              ) : (
-                <div className="overflow-x-auto max-h-[500px] -mx-4 -my-4 sm:-mx-6 sm:-my-6">
-                  <table className="w-full text-left text-xs">
-                    <thead className="sticky top-0 border-b border-edge bg-surface-2 text-muted uppercase tracking-wider font-semibold z-10">
-                      <tr>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('id')}
-                          className="px-3 py-2.5 sm:px-4 cursor-pointer hover:text-foreground select-none"
-                        >
-                          ID {sortField === 'id' && (sortAsc ? '▲' : '▼')}
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('username')}
-                          className="px-3 py-2.5 cursor-pointer hover:text-foreground select-none"
-                        >
-                          Player {sortField === 'username' && (sortAsc ? '▲' : '▼')}
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('cash')}
-                          className="px-3 py-2.5 text-right cursor-pointer hover:text-foreground select-none"
-                        >
-                          Cash {sortField === 'cash' && (sortAsc ? '▲' : '▼')}
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('staff')}
-                          className="px-2 py-2.5 text-right cursor-pointer hover:text-foreground select-none"
-                        >
-                          Staff
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('buildings')}
-                          className="px-2 py-2.5 text-right cursor-pointer hover:text-foreground select-none"
-                        >
-                          Bldgs
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('items')}
-                          className="px-2 py-2.5 text-right cursor-pointer hover:text-foreground select-none"
-                        >
-                          Items
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('created')}
-                          className="px-3 py-2.5 cursor-pointer hover:text-foreground select-none"
-                        >
-                          Joined
-                        </th>
-                        <th
-                          scope="col"
-                          onClick={() => toggleSort('active')}
-                          className="px-3 py-2.5 cursor-pointer hover:text-foreground select-none"
-                        >
-                          Last Active
-                        </th>
-                        <th scope="col" className="px-3 py-2.5 text-right sm:pr-4">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-edge">
-                      {filteredPlayers.map((p) => (
-                        <tr
-                          key={p.id}
-                          className={`hover:bg-surface-2/60 transition-colors ${
-                            p.isBanned ? 'opacity-50 bg-danger/5' : ''
-                          }`}
-                        >
-                          <td className="whitespace-nowrap px-3 py-2 font-mono text-muted sm:px-4">
-                            #{p.id}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-2 font-medium">
-                            <a
-                              href={`/admin/user/${p.id}`}
-                              className="text-foreground hover:text-primary hover:underline"
-                            >
-                              {p.username}
-                            </a>
-                            {p.isBanned && (
-                              <span className="ml-1.5 inline-flex rounded bg-danger/15 px-1.5 py-0.2 text-[10px] font-bold text-danger">
-                                Banned
-                              </span>
-                            )}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-2 text-right font-mono font-medium">
-                            {p.cashFormatted}
-                          </td>
-                          <td className="whitespace-nowrap px-2 py-2 text-right font-mono text-muted">
-                            {p.staff_count}
-                          </td>
-                          <td className="whitespace-nowrap px-2 py-2 text-right font-mono text-muted">
-                            {p.building_count}
-                          </td>
-                          <td className="whitespace-nowrap px-2 py-2 text-right font-mono text-muted">
-                            {p.item_count}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-2 text-muted text-[11px]">
-                            {p.joinedFormatted}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-2 text-[11px]" title={p.lastActivityMessage}>
-                            <div className="flex items-center gap-1.5">
-                              {p.isOnline && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-success" title="Online now" />
-                              )}
-                              <span className={p.isOnline ? 'font-medium text-success' : 'text-muted'}>
-                                {p.lastActiveFormatted}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-2 text-right sm:pr-4">
-                            <div className="flex items-center justify-end gap-1">
-                              <a
-                                href={`/admin/user/${p.id}`}
-                                className="flex h-6 w-6 items-center justify-center rounded text-muted hover:bg-surface-2 hover:text-foreground text-[11px]"
-                                title="Edit player"
-                              >
-                                <Icon name="fa-pen-to-square" />
-                              </a>
-                              {p.id !== 1 && (
-                                <>
-                                  {p.isBanned ? (
-                                    <PostButton
-                                      action={`/admin/unban/${p.id}`}
-                                      variant="secondary"
-                                      size="sm"
-                                      className="inline-block"
-                                    >
-                                      <Icon name="fa-unlock" className="text-success text-[11px]" />
-                                    </PostButton>
-                                  ) : (
-                                    <PostButton
-                                      action={`/admin/ban/${p.id}`}
-                                      variant="secondary"
-                                      size="sm"
-                                      confirm={{
-                                        title: `Ban ${p.username}?`,
-                                        body: `This will prevent ${p.username} from logging in.`,
-                                        confirmLabel: 'Ban Player',
-                                      }}
-                                      className="inline-block"
-                                    >
-                                      <Icon name="fa-ban" className="text-warning text-[11px]" />
-                                    </PostButton>
-                                  )}
-                                  <PostButton
-                                    action={`/admin/delete/${p.id}`}
-                                    variant="danger"
-                                    size="sm"
-                                    confirm={{
-                                      title: `Delete ${p.username}?`,
-                                      body: `Permanently delete ${p.username} and all resort assets? Irreversible.`,
-                                      confirmLabel: 'Delete Player',
-                                    }}
-                                    className="inline-block"
-                                  >
-                                    <Icon name="fa-trash" className="text-[11px]" />
-                                  </PostButton>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Panel>
-          </div>
-
-          {/* Activity Feed (4 cols on lg) */}
-          <div className="lg:col-span-4">
-            <Panel
-              title={
-                <span className="flex items-center gap-2">
-                  <Icon name="fa-clock-rotate-left" className="text-secondary" />
-                  Live Activity
-                </span>
-              }
-              actions={
-                <a
-                  href="/admin/activity"
-                  className="text-xs font-semibold text-primary hover:underline"
-                >
-                  View All →
-                </a>
-              }
-            >
-              {recentLogs.length === 0 ? (
-                <p className="py-8 text-center text-xs text-muted">No recent activity recorded.</p>
-              ) : (
-                <div className="divide-y divide-edge max-h-[500px] overflow-y-auto -mx-4 -my-4 sm:-mx-6 sm:-my-6 px-4 sm:px-6">
-                  {recentLogs.map((log) => (
-                    <div key={log.id} className="flex items-start gap-2.5 py-2.5 text-xs">
-                      <span className="w-4 pt-0.5 text-center text-muted">
-                        <Icon name={`fa-${log.icon || 'circle-dot'}`} />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="truncate" title={log.message}>
-                          <span className="font-semibold text-foreground">{log.username}</span>{' '}
-                          <span className="text-muted">{log.message}</span>
-                        </div>
-                        <div className="mt-0.5 text-[11px] text-muted/70">
-                          Day {log.game_day} · {log.timeAgo}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Panel>
-          </div>
+      <section id="system-tools" aria-labelledby="system-tools-h" className="flex scroll-mt-4 flex-col gap-3">
+        <div>
+          <h2 id="system-tools-h" className="text-lg font-semibold">
+            System tools
+          </h2>
+          <p className="text-sm text-muted">
+            These act on the whole {envName} game. Each one asks before it runs.
+          </p>
         </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Panel title="Game tick and maintenance">
+            <div className="flex flex-col gap-3 text-sm">
+              <p>
+                Last tick: <strong>{lastTick?.timeAgo ?? 'never'}</strong>
+                {lastTick?.isStale && ' (late)'}
+              </p>
+              <ConfirmForm
+                action="/admin/trigger-tick"
+                submitLabel="Run a tick now"
+                title={`Run a game tick on ${envName}?`}
+                describe={() => 'Every resort moves forward one game day: weather, visitors, revenue, salaries and loans.'}
+                confirmLabel="Run the tick"
+              />
+              <p>
+                Maintenance is <strong>{season?.maintenance ? 'on' : 'off'}</strong>.
+              </p>
+              <ConfirmForm
+                action="/admin/maintenance"
+                submitLabel={season?.maintenance ? 'Turn maintenance off' : 'Turn maintenance on'}
+                title={season?.maintenance ? 'Turn maintenance off?' : 'Turn maintenance on?'}
+                describe={() =>
+                  season?.maintenance
+                    ? 'Players can use their resorts again.'
+                    : 'Players see the maintenance page until you turn it off.'
+                }
+                confirmLabel={season?.maintenance ? 'Turn it off' : 'Turn it on'}
+                danger={!season?.maintenance}
+              />
+            </div>
+          </Panel>
 
-        {/* Bottom Tools Grid: Weather Simulator, Bulk Actions, Server Telemetry */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {/* Weather Simulator */}
-          <Panel
-            title={
-              <span className="flex items-center gap-2">
-                <Icon name="fa-cloud-sun" className="text-primary" />
-                Weather Simulator
-              </span>
-            }
-          >
-            <form action="/admin/set-weather" method="post" className="space-y-3">
-              <CsrfInput />
-              <div>
-                <label className="text-[11px] font-semibold text-muted block mb-1">Condition</label>
+          <Panel title="Weather today">
+            <ConfirmForm
+              action="/admin/set-weather"
+              className="flex flex-col gap-3"
+              submitLabel="Set the weather"
+              title={`Change today's weather on ${envName}?`}
+              describe={(d) =>
+                `Today becomes ${d.get('condition')}, ${d.get('temp')} °C, wind ${d.get('wind')} km/h, ${d.get('snowfall')} cm of new snow on a ${d.get('snow_base')} cm base.`
+              }
+              confirmLabel="Set it"
+            >
+              <div className="flex flex-col gap-1 text-sm">
+                <span className="font-medium" aria-hidden="true">
+                  Condition
+                </span>
                 <Select
                   name="condition"
+                  aria-label="Condition"
                   value={wCond}
                   onChange={(val) => setWCond(String(val))}
-                  aria-label="Condition"
-                  options={(weather?.conditions || []).map((cond) => ({
-                    id: cond,
-                    label: cond,
-                  }))}
+                  options={(weather?.conditions || []).map((c) => ({ id: c, label: c }))}
                   className="w-full"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[11px] font-semibold text-muted block mb-1">Temp (°C)</label>
-                  <input
-                    type="number"
-                    name="temp"
-                    value={wTemp}
-                    onChange={(e) => setWTemp(Number(e.target.value))}
-                    min={-30}
-                    max={30}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2 py-1 text-xs text-foreground focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-muted block mb-1">Wind (km/h)</label>
-                  <input
-                    type="number"
-                    name="wind"
-                    value={wWind}
-                    onChange={(e) => setWWind(Number(e.target.value))}
-                    min={0}
-                    max={120}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2 py-1 text-xs text-foreground focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-muted block mb-1">Snowfall (cm)</label>
-                  <input
-                    type="number"
-                    name="snowfall"
-                    value={wSnow}
-                    onChange={(e) => setWSnow(Number(e.target.value))}
-                    min={0}
-                    max={50}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2 py-1 text-xs text-foreground focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold text-muted block mb-1">Snow Base (cm)</label>
-                  <input
-                    type="number"
-                    name="snow_base"
-                    value={wBase}
-                    onChange={(e) => setWBase(Number(e.target.value))}
-                    min={0}
-                    max={300}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2 py-1 text-xs text-foreground focus:outline-none"
-                  />
-                </div>
+                <Field label="Temperature (°C)" type="number" name="temp" defaultValue={weather?.temp ?? -5} min={-30} max={30} required />
+                <Field label="Wind (km/h)" type="number" name="wind" defaultValue={weather?.wind ?? 15} min={0} max={120} required />
+                <Field label="New snow (cm)" type="number" name="snowfall" defaultValue={weather?.snowfall ?? 0} min={0} max={50} required />
+                <Field label="Snow base (cm)" type="number" name="snow_base" defaultValue={weather?.snow_base ?? 50} min={0} max={300} required />
               </div>
-
-              <Button type="submit" variant="primary" size="sm" className="w-full mt-2">
-                Apply Weather Override
-              </Button>
-            </form>
+            </ConfirmForm>
           </Panel>
 
-          {/* Bulk Economy & Player Rewards */}
-          <Panel
-            title={
-              <span className="flex items-center gap-2">
-                <Icon name="fa-gift" className="text-warning" />
-                Bulk Actions & Grants
-              </span>
-            }
-          >
-            <div className="space-y-4">
-              {/* Cash to All */}
-              <form action="/admin/add-cash-all" method="post" className="space-y-1.5">
-                <CsrfInput />
-                <label className="text-[11px] font-semibold text-muted block">
-                  Give cash to all players
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    name="amount"
-                    aria-label="Cash amount for all"
-                    value={bulkCash}
-                    onChange={(e) => setBulkCash(Number(e.target.value))}
-                    step={1000}
-                    min={1}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="secondary"
-                    className="shrink-0"
-                    onPress={(e) => {
-                      if (!window.confirm(`Give $${bulkCash.toLocaleString()} to ALL players?`)) {
-                        e.continuePropagation();
-                      }
-                    }}
-                  >
-                    Give Cash
-                  </Button>
+          <Panel title="Gifts to every player">
+            <div className="flex flex-col gap-4">
+              <ConfirmForm
+                action="/admin/add-cash-all"
+                className="flex flex-col gap-2"
+                submitLabel="Give cash to everyone"
+                title="Give cash to every player?"
+                describe={(d) => `Adds ${money.prefix ? money.symbol : ''}${n(Number(d.get('amount')))}${money.prefix ? '' : ' ' + money.symbol} to the cash of all ${kpis.totalUsers} players. This cannot be undone in one step.`}
+                confirmLabel="Give it"
+                danger
+              >
+                <Field label={`Cash per player (${money.symbol})`} type="number" name="amount" defaultValue={50000} min={1} max={10000000} step={1} required />
+              </ConfirmForm>
+              <ConfirmForm
+                action="/admin/add-genepis-all"
+                className="flex flex-col gap-2 border-t border-border pt-4"
+                submitLabel="Give Génépis to everyone"
+                title="Give Génépis to every player?"
+                describe={(d) => `Adds ${n(Number(d.get('amount')))} Génépis to every player who has a Génépis balance. This cannot be undone in one step.`}
+                confirmLabel="Give them"
+                danger
+              >
+                <Field label="Génépis per player" type="number" name="amount" defaultValue={10} min={1} max={100000} step={1} required />
+              </ConfirmForm>
+              <ConfirmForm
+                action="/admin/grant-achievement"
+                className="flex flex-col gap-2 border-t border-border pt-4"
+                submitLabel="Grant achievement"
+                title="Grant this achievement?"
+                describe={(d) => `Marks achievement row #${d.get('achievement_id')} as completed for player #${d.get('user_id')}.`}
+                confirmLabel="Grant it"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Player ID" type="number" name="user_id" min={1} required />
+                  <Field label="Achievement ID" type="number" name="achievement_id" min={1} required />
                 </div>
-              </form>
-
-              {/* Genepis to All */}
-              <form action="/admin/add-genepis-all" method="post" className="space-y-1.5 pt-3 border-t border-edge">
-                <CsrfInput />
-                <label className="text-[11px] font-semibold text-muted block">
-                  Give Genepis to all players
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    name="amount"
-                    aria-label="Genepis amount for all"
-                    value={bulkGenepis}
-                    onChange={(e) => setBulkGenepis(Number(e.target.value))}
-                    min={1}
-                    className="w-full rounded-md border border-edge bg-surface-2 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="secondary"
-                    className="shrink-0"
-                    onPress={(e) => {
-                      if (!window.confirm(`Give ${bulkGenepis.toLocaleString()} Genepis to ALL players?`)) {
-                        e.continuePropagation();
-                      }
-                    }}
-                  >
-                    Give Genepis
-                  </Button>
-                </div>
-              </form>
-
-              {/* Grant Achievement to single player */}
-              <form action="/admin/grant-achievement" method="post" className="space-y-1.5 pt-3 border-t border-edge">
-                <CsrfInput />
-                <label className="text-[11px] font-semibold text-muted block">
-                  Grant achievement to player
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    name="user_id"
-                    aria-label="User ID"
-                    placeholder="User ID"
-                    value={achieveUserId}
-                    onChange={(e) => setAchieveUserId(e.target.value)}
-                    required
-                    className="w-1/2 rounded-md border border-edge bg-surface-2 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    name="achievement_id"
-                    aria-label="Achievement ID"
-                    placeholder="Achieve ID"
-                    value={achieveId}
-                    onChange={(e) => setAchieveId(e.target.value)}
-                    required
-                    className="w-1/2 rounded-md border border-edge bg-surface-2 px-2.5 py-1.5 text-xs text-foreground focus:outline-none"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="secondary"
-                    className="shrink-0"
-                  >
-                    Grant
-                  </Button>
-                </div>
-              </form>
+              </ConfirmForm>
             </div>
           </Panel>
 
-          {/* Server Telemetry */}
-          <Panel
-            title={
-              <span className="flex items-center gap-2">
-                <Icon name="fa-server" className="text-secondary" />
-                Server Telemetry
-              </span>
-            }
-            actions={
-              <a
-                href="/admin/errors"
-                className="text-xs font-semibold text-danger hover:underline"
-              >
-                Errors →
-              </a>
-            }
-          >
-            <div className="space-y-3 text-xs">
-              {/* Disk Bar */}
-              <div>
-                <div className="flex justify-between pb-1">
-                  <span className="text-muted">Disk Storage</span>
-                  <span className="font-mono">{server?.diskUsedFormatted} / {server?.diskTotalFormatted}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-surface-3 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      (server?.diskPct ?? 0) > 85
-                        ? 'bg-danger'
-                        : (server?.diskPct ?? 0) > 70
-                        ? 'bg-warning'
-                        : 'bg-success'
-                    }`}
-                    style={{ width: `${Math.min(100, server?.diskPct ?? 0)}%` }}
-                  />
-                </div>
-              </div>
-
-              <dl className="space-y-1.5 pt-2 border-t border-edge">
-                <div className="flex justify-between">
-                  <dt className="text-muted">Load Avg (1/5/15m)</dt>
-                  <dd
-                    className={`font-mono ${
-                      (server?.load[0] ?? 0) > (server?.cores ?? 1) ? 'text-danger font-bold' : ''
-                    }`}
-                  >
-                    {(server?.load || []).map((l) => l.toFixed(2)).join(' / ')}
+          <Panel title="Server" className="md:col-span-2 lg:col-span-3">
+            <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+              <div className="flex flex-col gap-3">
+                <Meter
+                  value={Math.min(100, server?.diskPct ?? 0)}
+                  color={(server?.diskPct ?? 0) > 85 ? 'danger' : (server?.diskPct ?? 0) > 70 ? 'warning' : 'success'}
+                  aria-label="Disk used"
+                >
+                  <span className="text-muted">Disk</span>
+                  <Meter.Output className="ml-auto">
+                    {server?.diskUsedFormatted} of {server?.diskTotalFormatted} used ({server?.diskPct}%)
+                  </Meter.Output>
+                  <Meter.Track className="w-full">
+                    <Meter.Fill />
+                  </Meter.Track>
+                </Meter>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                  <dt className="text-muted">Load (1, 5, 15 min)</dt>
+                  <dd className="tabular-nums">
+                    {(server?.load || []).map((l) => l.toFixed(2)).join(', ')}
+                    {(server?.load[0] ?? 0) > (server?.cores ?? 1) && ' (above core count)'}
                   </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted">CPU Cores</dt>
-                  <dd className="font-mono">{server?.cores}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted">PHP / Framework</dt>
-                  <dd className="font-mono">{server?.phpVersion} / {server?.ciVersion}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted">Memory Peak / Limit</dt>
-                  <dd className="font-mono">{server?.memPeak}M / {server?.memLimit}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted">Database Version</dt>
-                  <dd className="font-mono truncate max-w-[150px]">{server?.dbVersion}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted">Database Size</dt>
-                  <dd className="font-mono">{server?.dbSize} MB</dd>
-                </div>
-              </dl>
+                  <dt className="text-muted">CPU cores</dt>
+                  <dd>{server?.cores}</dd>
+                  <dt className="text-muted">PHP, CodeIgniter</dt>
+                  <dd>
+                    {server?.phpVersion}, {server?.ciVersion}
+                  </dd>
+                  <dt className="text-muted">Memory peak, limit</dt>
+                  <dd>
+                    {server?.memPeak} MB, {server?.memLimit}
+                  </dd>
+                  <dt className="text-muted">Database</dt>
+                  <dd className="break-all">
+                    {server?.dbVersion}, {server?.dbSize} MB
+                  </dd>
+                </dl>
+              </div>
+              <div className="flex flex-col gap-3">
+                <ConfirmForm
+                  action="/admin/optimize-storage"
+                  submitLabel="Optimize storage"
+                  title="Optimize storage?"
+                  describe={() =>
+                    `On ${envName}: deletes activity log rows older than 90 days and financial transactions older than 180 days, removes temporary PDF files, then optimizes the main tables. Deleted rows cannot be recovered.`
+                  }
+                  confirmLabel="Delete old rows and optimize"
+                  danger
+                />
+                <p>
+                  Debug mode is <strong>{isDev ? 'on (development)' : 'off (production)'}</strong>.
+                  {!envWritable && ' The .env file is not writable, so it cannot be switched from here.'}
+                </p>
+                <ConfirmForm
+                  action="/admin/toggle-env"
+                  submitLabel={isDev ? 'Switch to production mode' : 'Switch to development mode'}
+                  title={isDev ? 'Switch to production mode?' : 'Switch to development mode?'}
+                  describe={() =>
+                    isDev
+                      ? `Turns debug output off on ${envName}.`
+                      : `Turns debug output and the debug toolbar on for ${envName}. Error pages will show code and paths.`
+                  }
+                  confirmLabel="Switch"
+                  danger={!isDev}
+                  disabled={!envWritable}
+                />
+              </div>
             </div>
           </Panel>
         </div>
-      </div>
+      </section>
     </Page>
   );
 }

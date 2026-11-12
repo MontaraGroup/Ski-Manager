@@ -1,3 +1,11 @@
+## Release 2026-11-12 21:06
+
+* Merge pull request #85 from Montara-Group/fix/visual-qa (da35e57)
+* fix(ui): visual QA fixes from the site-wide check (842cc14)
+* Merge pull request #84 from Montara-Group/main (ef4371b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (cd7e359)
+* Merge pull request #83 from Montara-Group/feat/resort-clock (ae28cc0)
+
 ## Release 2026-11-12 19:39
 
 * Merge pull request #83 from Montara-Group/feat/resort-clock (ae28cc0)

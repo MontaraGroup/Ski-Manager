@@ -121,7 +121,7 @@ export default function AdminEconomyPage({
                     <td className="py-2.5 font-semibold">
                       <a
                         href={`/admin/user/${r.user_id}`}
-                        className="text-accent hover:underline"
+                        className="inline-flex min-h-11 items-center sm:min-h-0 text-accent hover:underline"
                       >
                         {r.username}
                       </a>

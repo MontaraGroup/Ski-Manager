@@ -37,7 +37,7 @@ export default function AdminErrorsPage({ lines = [], today }: AdminErrorsPagePr
       <Panel
         title={`Today's Errors (${today})`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             {lines.length > 0 && (
               <>
                 <input
@@ -46,14 +46,14 @@ export default function AdminErrorsPage({ lines = [], today }: AdminErrorsPagePr
                   placeholder="Filter log entries…"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  className="w-48 sm:w-64 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-focus focus:outline-none"
+                  className="min-h-11 w-full sm:min-h-0 sm:w-64 rounded-md border border-border bg-field px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-focus focus:outline-none"
                 />
                 <Button
                   size="sm"
                   variant="secondary"
                   onPress={handleCopy}
                   aria-label="Copy logs to clipboard"
-                  className="gap-1.5"
+                  className="min-h-11 gap-1.5 sm:min-h-8"
                 >
                   <Icon name={copied ? 'fa-check' : 'fa-copy'} />
                   {copied ? 'Copied' : 'Copy'}
@@ -62,7 +62,7 @@ export default function AdminErrorsPage({ lines = [], today }: AdminErrorsPagePr
             )}
             <a
               href="/admin/errors"
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-edge bg-surface-2 px-2.5 text-xs font-medium text-foreground hover:bg-surface-3 transition-colors"
+              className="inline-flex min-h-11 sm:min-h-8 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 text-xs font-medium text-foreground hover:bg-surface-secondary transition-colors"
               title="Refresh logs"
             >
               <Icon name="fa-arrow-rotate-right" />
