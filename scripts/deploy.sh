@@ -134,7 +134,10 @@ fi
 # 8. Reload Bytecode Cache (PHP-FPM) and Reverse Proxy (OpenResty)
 echo "Reloading runtime workers..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
-    docker kill -s USR2 "${PHP_CONTAINER}" 2>/dev/null || docker exec "${PHP_CONTAINER}" kill -USR2 1 2>/dev/null || true
+    # PID 1 in the container is supervisord, which treats USR2 as "reopen logs"; signal php-fpm itself.
+    # OPcache does not check file timestamps, so this graceful reload is what makes new code live.
+    docker exec "${PHP_CONTAINER}" supervisorctl signal USR2 "php-fpm:*" >/dev/null 2>&1 \
+        || docker exec "${PHP_CONTAINER}" sh -c 'kill -USR2 "$(cat /var/run/php-fpm.pid 2>/dev/null || pgrep -o php-fpm)"' 2>/dev/null || true
 fi
 
 if docker ps --format '{{.Names}}' | grep -q "${OPENRESTY_CONTAINER}"; then

@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Button, Meter } from '@heroui/react';
 import { Icon } from '@/components/Icon';
-import { Page, Panel } from '@/components/Page';
+import { Page } from '@/components/Page';
 import { Select } from '@/components/Select';
+import { Section } from './admin/Section';
 import { ConfirmForm, Field } from './admin/ConfirmForm';
 
 export type SeasonInfo = {
@@ -128,58 +129,6 @@ const n = (v: number) => v.toLocaleString('en-US');
  * One thing to look at. "alert" cards say so in words and with an icon, not only with the
  * red border, and link to the page where it gets fixed.
  */
-function AttentionCard({
-  href,
-  external,
-  icon,
-  label,
-  value,
-  detail,
-  alert = false,
-  action,
-}: {
-  href?: string;
-  external?: boolean;
-  icon: string;
-  label: string;
-  value: ReactNode;
-  detail: ReactNode;
-  alert?: boolean;
-  action?: string;
-}) {
-  const body = (
-    <>
-      <div className="flex items-center gap-2 text-sm text-muted">
-        <Icon name={icon} />
-        {label}
-      </div>
-      <div className={`text-2xl font-semibold tabular-nums ${alert ? 'text-danger' : ''}`}>{value}</div>
-      <div className="text-sm">
-        {alert && <Icon name="fa-circle-exclamation" className="mr-1 text-danger" />}
-        {detail}
-      </div>
-      {href && action && (
-        <div className="mt-auto pt-1 text-sm font-medium text-link">
-          {action}
-          {external && <span className="sr-only"> (opens Sentry in a new tab)</span>}
-          <Icon name={external ? 'fa-arrow-up-right-from-square' : 'fa-arrow-right'} className="ml-1.5 text-xs" />
-        </div>
-      )}
-    </>
-  );
-  const cls = `flex flex-col gap-1 rounded-xl border bg-surface p-4 ${alert ? 'border-danger' : 'border-border'}`;
-  if (!href) return <div className={cls}>{body}</div>;
-  return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className={`${cls} hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus`}
-    >
-      {body}
-    </a>
-  );
-}
-
 export default function AdminIndexPage({
   money = { symbol: '€', prefix: false },
   attention,
@@ -277,106 +226,69 @@ export default function AdminIndexPage({
         </span>
       }
     >
-      <section aria-labelledby="attention-h" className="flex flex-col gap-3">
+      <section aria-labelledby="attention-h" className="flex flex-col gap-2">
         <h2 id="attention-h" className="text-lg font-semibold">
           Needs a look
         </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AttentionCard
-            href="/admin/support"
-            icon="fa-headset"
-            label="Support"
-            value={n(a.supportOpen)}
-            alert={a.supportOpen > 0}
-            detail={a.supportOpen === 1 ? 'player waiting for a reply' : 'players waiting for a reply'}
-            action="Open the inbox"
-          />
-          <AttentionCard
-            href="/admin/errors"
-            icon="fa-bug"
-            label="Errors, last 24 hours"
-            value={n(a.errors24h)}
-            alert={a.errors24h > 0}
-            detail={a.errors24h > 0 ? 'logged at ERROR or worse' : 'Nothing logged at ERROR or worse'}
-            action="Read the error log"
-          />
-          <AttentionCard
-            href="#system-tools"
-            icon="fa-clock"
-            label="Last game tick"
-            value={lastTick?.timeAgo ?? 'never'}
-            alert={lastTick?.isStale}
-            detail={lastTick?.isStale ? 'Late: no tick in the last 26 hours' : 'On time'}
-            action="Run a tick"
-          />
-          <AttentionCard
-            href={a.backupMonitorUrl}
-            external
-            icon="fa-database"
-            label="Database backup"
-            value="Sentry"
-            detail="The nightly db-dump reports to a Sentry cron monitor"
-            action="Check the monitor"
-          />
-          <AttentionCard
-            icon="fa-user-plus"
-            label="Sign-ups"
-            value={n(a.signupsToday)}
-            detail={`today, ${n(a.signups7d)} in the last 7 days`}
-          />
-          <AttentionCard
-            icon="fa-signal"
-            label="Active players"
-            value={n(a.activeToday)}
-            detail={`today, ${n(a.active7d)} in the last 7 days`}
-          />
-          <AttentionCard
-            href="/roadmap"
-            icon="fa-map-signs"
-            label="Roadmap suggestions"
-            value={n(a.roadmapToReview)}
-            alert={a.roadmapToReview > 0}
-            detail="waiting for review"
-            action="Review on the roadmap"
-          />
-          <AttentionCard
-            href="/admin/suspicious"
-            icon="fa-triangle-exclamation"
-            label="Suspicious balances"
-            value={n(a.suspicious)}
-            alert={a.suspicious > 0}
-            detail="players above the cash limit for their difficulty"
-            action="See who"
-          />
-        </div>
+        {(() => {
+          const todo: { text: ReactNode; href: string; link: string }[] = [];
+          if (a.supportOpen > 0) todo.push({ text: `${n(a.supportOpen)} ${a.supportOpen === 1 ? 'player is' : 'players are'} waiting for a support reply.`, href: '/admin/support', link: 'Open the inbox' });
+          if (a.errors24h > 0) todo.push({ text: `${n(a.errors24h)} ${a.errors24h === 1 ? 'error' : 'errors'} logged in the last 24 hours.`, href: '/admin/errors', link: 'Read the log' });
+          if (lastTick?.isStale) todo.push({ text: `The game tick is late: the last one ran ${lastTick.timeAgo}.`, href: '#system-tools', link: 'Run a tick' });
+          if (a.suspicious > 0) todo.push({ text: `${n(a.suspicious)} ${a.suspicious === 1 ? 'account has' : 'accounts have'} numbers the ledger can't explain.`, href: '/admin/suspicious', link: 'Review' });
+          if (a.roadmapToReview > 0) todo.push({ text: `${n(a.roadmapToReview)} roadmap ${a.roadmapToReview === 1 ? 'idea is' : 'ideas are'} waiting for a decision.`, href: '/roadmap', link: 'Review' });
+          return todo.length === 0 ? (
+            <p className="text-sm text-muted">Nothing needs you right now.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border border-y border-border">
+              {todo.map((t) => (
+                <li key={t.href} className="flex flex-wrap items-center justify-between gap-x-4 py-2 text-sm">
+                  <span>{t.text}</span>
+                  <a href={t.href} className="inline-flex min-h-11 items-center font-medium text-link hover:underline sm:min-h-0">
+                    {t.link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </section>
 
-      <section aria-labelledby="totals-h" className="flex flex-col gap-3">
-        <h2 id="totals-h" className="text-lg font-semibold">
-          Totals
+      <section aria-labelledby="facts-h" className="flex flex-col gap-2">
+        <h2 id="facts-h" className="text-lg font-semibold">
+          At a glance
         </h2>
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            ['Players', kpis.totalUsers, `${kpis.newUsers7d} new this week, ${kpis.bannedUsers} banned`],
-            ['Active, last 24 hours', kpis.onlineRecent, `${kpis.activePct}% of players`],
-            ['Cash held by players', kpis.totalCashFormatted, `${kpis.avgCashFormatted} on average`],
-            ['Active loans', kpis.totalLoans, ''],
-            ['Staff employed', kpis.totalStaff, ''],
-            ['Buildings', kpis.totalBuildings, ''],
-            ['Lifts and slopes', kpis.totalItems, ''],
-            ['Facilities', kpis.totalFacilities, `${kpis.totalParking} car parks, ${kpis.totalParks} terrain parks`],
-          ].map(([label, value, note]) => (
-            <div key={label} className="rounded-xl border border-border bg-surface p-3">
-              <dt className="text-sm text-muted">{label}</dt>
-              <dd className="text-lg font-semibold tabular-nums">{value}</dd>
-              {note && <dd className="text-sm text-muted">{note}</dd>}
-            </div>
-          ))}
-        </dl>
+        <table className="w-full max-w-2xl text-sm">
+          <tbody className="divide-y divide-border">
+            {(
+              [
+                ['Sign-ups', `${n(a.signupsToday)} today, ${n(a.signups7d)} this week`],
+                ['Active players', `${n(a.activeToday)} today, ${n(a.active7d)} this week`],
+                ['Players', `${kpis.totalUsers} in total, ${kpis.bannedUsers} banned`],
+                ['Cash held by players', `${kpis.totalCashFormatted} (${kpis.avgCashFormatted} on average)`],
+                ['Last game tick', lastTick?.timeAgo ?? 'never'],
+                [
+                  'Nightly backup',
+                  <a key="b" href={a.backupMonitorUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-link hover:underline sm:min-h-0">
+                    Check the Sentry monitor<span className="sr-only"> (opens in a new tab)</span>
+                  </a>,
+                ],
+                ['Resorts', `${kpis.totalItems} lifts and slopes, ${kpis.totalBuildings} buildings, ${kpis.totalStaff} staff, ${kpis.totalLoans} active loans`],
+              ] as [string, ReactNode][]
+            ).map(([label, value]) => (
+              <tr key={label}>
+                <th scope="row" className="w-48 py-2 pr-4 text-left font-normal text-muted">
+                  {label}
+                </th>
+                <td className="py-2 tabular-nums">{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Panel
+        <Section
           className="min-w-0 lg:col-span-2"
           title={`Players (${filteredPlayers.length} shown of ${kpis.totalUsers})`}
         >
@@ -496,9 +408,9 @@ export default function AdminIndexPage({
               </table>
             </div>
           )}
-        </Panel>
+        </Section>
 
-        <Panel
+        <Section
           className="min-w-0"
           title="Latest activity"
           actions={
@@ -526,7 +438,7 @@ export default function AdminIndexPage({
               ))}
             </ul>
           )}
-        </Panel>
+        </Section>
       </div>
 
       <section id="system-tools" aria-labelledby="system-tools-h" className="flex scroll-mt-4 flex-col gap-3">
@@ -538,8 +450,8 @@ export default function AdminIndexPage({
             These act on the whole {envName} game. Each one asks before it runs.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Panel title="Game tick and maintenance">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
+          <Section title="Game tick and maintenance">
             <div className="flex flex-col gap-3 text-sm">
               <p>
                 Last tick: <strong>{lastTick?.timeAgo ?? 'never'}</strong>
@@ -568,9 +480,9 @@ export default function AdminIndexPage({
                 danger={!season?.maintenance}
               />
             </div>
-          </Panel>
+          </Section>
 
-          <Panel title="Weather today">
+          <Section title="Weather today">
             <ConfirmForm
               action="/admin/set-weather"
               className="flex flex-col gap-3"
@@ -601,9 +513,9 @@ export default function AdminIndexPage({
                 <Field label="Snow base (cm)" type="number" name="snow_base" defaultValue={weather?.snow_base ?? 50} min={0} max={300} required />
               </div>
             </ConfirmForm>
-          </Panel>
+          </Section>
 
-          <Panel title="Gifts to every player">
+          <Section title="Gifts to every player">
             <div className="flex flex-col gap-4">
               <ConfirmForm
                 action="/admin/add-cash-all"
@@ -641,9 +553,9 @@ export default function AdminIndexPage({
                 </div>
               </ConfirmForm>
             </div>
-          </Panel>
+          </Section>
 
-          <Panel title="Server" className="md:col-span-2 lg:col-span-3">
+          <Section title="Server" className="md:col-span-2 lg:col-span-3">
             <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
               <div className="flex flex-col gap-3">
                 <Meter
@@ -711,7 +623,7 @@ export default function AdminIndexPage({
                 />
               </div>
             </div>
-          </Panel>
+          </Section>
         </div>
       </section>
     </Page>
