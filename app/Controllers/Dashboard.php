@@ -263,6 +263,7 @@ class Dashboard extends BaseController
             'hero' => [
                 'resortMapKey'       => preg_replace('/[^A-Za-z0-9]/', '', (string) $resortMapKey) ?: 'ParkCity',
                 'resortMapName'      => (string) $resortMapName,
+                'resortMapWebpLow'   => \App\Controllers\ResortMap::webpSizes('/img/' . (preg_replace('/[^A-Za-z0-9]/', '', (string) $resortMapKey) ?: 'ParkCity') . '.jpg')['low'],
                 'resortOpen'         => $resortOpen,
                 'seasonNum'          => $seasonNum,
                 'gameDay'            => $gameDay,

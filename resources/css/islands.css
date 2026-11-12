@@ -137,3 +137,30 @@
     bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/*
+ * Map backgrounds with a WebP copy. The plain JPEG rule comes first, so a browser without
+ * image-set() keeps it; the WebP rules apply only when layouts/main.php says this server has the
+ * files (data-parkcity-webp) or the dashboard hero has data-webp (ResortMap::webpSizes).
+ */
+.bg-parkcity-map {
+  background-image: url(/img/ParkCity_med.jpg), url(/img/ParkCity_low.jpg);
+}
+:root[data-parkcity-webp~="med"][data-parkcity-webp~="low"] .bg-parkcity-map {
+  background-image:
+    image-set(url(/img/ParkCity_med.webp) type("image/webp"), url(/img/ParkCity_med.jpg) type("image/jpeg")),
+    image-set(url(/img/ParkCity_low.webp) type("image/webp"), url(/img/ParkCity_low.jpg) type("image/jpeg"));
+}
+.map-hero-bg {
+  background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%), var(--hero-jpg);
+  background-size: cover;
+  background-position: center 40%;
+}
+/* var() inside image-set is only checked when used, so guard it: an unsupported browser keeps the JPEG */
+@supports (background-image: image-set(url("a.webp") type("image/webp"))) {
+  .map-hero-bg[data-webp] {
+    background-image:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%),
+      image-set(var(--hero-webp) type("image/webp"), var(--hero-jpg) type("image/jpeg"));
+  }
+}
