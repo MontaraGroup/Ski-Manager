@@ -55,7 +55,9 @@ class Staff extends BaseController
 
         $staff = $this->staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
         $roles = $this->getRoles();
-        $totalSalary = array_sum(array_column($staff, 'salary'));
+        // Show pay as the tick charges it: difficulty cost multiplier included, same as the hire page
+        $costMult = ((int) getDifficultyConfig('cost_multiplier', '100')) / 100;
+        $totalSalary = (int) round(array_sum(array_column($staff, 'salary')) * $costMult);
 
         $assigned = count(array_filter($staff, fn($s) => !empty($s['assigned_to'])));
         $unassigned = count($staff) - $assigned;
@@ -92,7 +94,7 @@ class Staff extends BaseController
                 'level' => (int) $s['level'],
                 'status' => (string) $s['status'],
                 'morale' => (int) $s['morale'],
-                'salaryText' => currency((int) $s['salary']),
+                'salaryText' => currency((int) round((int) $s['salary'] * $costMult)),
                 'assignedTo' => !empty($s['assigned_to']) ? (string) $s['assigned_to'] : null,
                 'canTrain' => $canTrain,
                 'trainCostText' => $canTrain ? currency($trainCost) : null,
