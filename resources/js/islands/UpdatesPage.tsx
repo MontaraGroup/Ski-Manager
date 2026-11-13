@@ -55,8 +55,8 @@ export default function UpdatesPage({ updates = [] }: UpdatesPageProps) {
       subtitle="Changelogs and system releases. Track updates and new features shipped to Ski Manager"
       actions={
         <div className="flex items-center gap-2">
-          <a href="/roadmap">
-            <Button variant="outline" size="sm" className="font-semibold text-xs min-h-[36px] gap-1.5">
+          <a href="/roadmap" className="inline-flex min-h-11 items-center sm:min-h-0">
+            <Button variant="outline" size="sm" className="font-semibold text-xs gap-1.5">
               <Icon name="fa-compass" className="text-primary" /> Roadmap
             </Button>
           </a>
@@ -64,8 +64,9 @@ export default function UpdatesPage({ updates = [] }: UpdatesPageProps) {
             href="https://skimanager1.featurebase.app/en/changelog"
             target="_blank"
             rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center sm:min-h-0"
           >
-            <Button variant="secondary" size="sm" className="text-xs min-h-[36px] gap-1 text-muted">
+            <Button variant="secondary" size="sm" className="text-xs gap-1 text-muted">
               <Icon name="fa-arrow-up-right-from-square" className="text-[10px]" /> External
             </Button>
           </a>

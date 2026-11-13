@@ -26,7 +26,7 @@ export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '
             <Icon name="fa-chevron-left" />
           </a>
         )}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[12rem] flex-1">
           <h1 className="flex items-center gap-2 text-2xl font-semibold">
             <Icon name={icon} className={iconTone} />
             {title}
