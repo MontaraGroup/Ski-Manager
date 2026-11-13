@@ -221,7 +221,6 @@ class Resort extends BaseController
         $db->table("player_finances")->where("user_id", $userId)->update(["resort_open" => $new]);
         $status = $new ? "opened" : "closed";
         log_activity($userId, "resort_toggle", "Resort " . $status);
-        notify($userId, "resort", "Resort " . $status, "Your resort is now " . $status . ". " . ($new ? "Visitors are arriving!" : "No visitors while closed, but upkeep still applies."), $new ? "fa-solid fa-door-open" : "fa-solid fa-door-closed", "/resort");
         return redirect()->to("/resort")->with("success", "Resort " . $status . "!");
     }
 
