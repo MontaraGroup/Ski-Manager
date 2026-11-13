@@ -1,3 +1,11 @@
+## Release 2026-11-13 00:19
+
+* Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (57f65417)
+* Merge pull request #93 from Montara-Group/main (2bd11fa7)
+* Merge branch 'MontaraGroup:main' into main (82b45b8f)
+* Merge pull request #92 from Montara-Group/fix/suspicion-ledger-gap (a2b3047d)
+
 ## Release 2026-11-13 00:17
 
 * Merge branch 'MontaraGroup:main' into main (82b45b8f)
