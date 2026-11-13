@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\StaffEffects;
 use App\Models\StaffModel;
 use App\Models\PlayerItemModel;
 
@@ -26,7 +27,7 @@ class SkiLessons extends BaseController
         $itemModel = new PlayerItemModel();
         $slopes = $itemModel->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark'])->where('status', 'open')->findAll();
 
-        $activeInstructors = count(array_filter($instructors, fn($i) => ($i['status'] ?? '') === 'active'));
+        $assignedInstructors = count(array_filter($instructors, fn($i) => ($i['status'] ?? '') === 'active' && !empty($i['assigned_to'])));
 
         // Query most recent ski school activity log
         $recentLessonLog = $db->table('activity_log')
@@ -35,20 +36,28 @@ class SkiLessons extends BaseController
             ->orderBy('created_at', 'DESC')
             ->get()->getRowArray();
 
-        $dailyCapacity = $activeInstructors * 10;
-        $lessonsToday = $activeInstructors > 0 ? (int) ceil($activeInstructors * 2.2) : 0;
-        $estimatedRev = $activeInstructors > 0 ? (int) round($activeInstructors * 8 * 45) : 0;
+        helper('difficulty');
+        $finance = $db->table('player_finances')->select('daily_visitors, resort_open')->where('user_id', $userId)->get()->getRowArray();
+        $dailyVisitors = ((int) ($finance['resort_open'] ?? 1) === 1) ? (int) ($finance['daily_visitors'] ?? 0) : 0;
+        $revMult = ((int) getDifficultyConfig('revenue_multiplier', '100')) / 100;
+
+        $dailyCapacity = $assignedInstructors * StaffEffects::LESSONS_PER_INSTRUCTOR;
+        $studentsToday = ($assignedInstructors > 0 && count($slopes) > 0 && $dailyVisitors > 0)
+            ? min($dailyCapacity, (int) round($dailyVisitors * StaffEffects::LESSON_DEMAND_SHARE))
+            : 0;
+        $lessonsToday = $studentsToday > 0 ? (int) ceil($studentsToday / 5) : 0;
+        $estimatedRev = $studentsToday > 0 ? (int) round($studentsToday * StaffEffects::LESSON_FEE * $revMult) : 0;
 
         $page = [
             'stats' => [
-                'activeInstructors' => (int) $activeInstructors,
+                'activeInstructors' => (int) $assignedInstructors,
                 'totalInstructors' => count($instructors),
                 'dailyCapacity' => (int) $dailyCapacity,
                 'lessonsToday' => (int) $lessonsToday,
                 'openSlopesCount' => count($slopes),
                 'estimatedRevenueText' => currency((int) $estimatedRev),
             ],
-            'recentLessonLog' => $recentLessonLog ? (string) ($recentLessonLog['description'] ?? '') : null,
+            'recentLessonLog' => $recentLessonLog ? (string) ($recentLessonLog['message'] ?? '') : null,
             'lessonPrograms' => array_values(array_map(function ($key, $type) {
                 // Extract base icon name
                 $icon = 'fa-person-skiing';
