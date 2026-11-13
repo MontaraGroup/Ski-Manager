@@ -103,7 +103,7 @@ export default function HomePage({
           {/* Hero Left Column */}
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/90 backdrop-blur-md border border-white/20">
-              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-success" />
               <span>
                 Season {season.current} · Day {season.day} of {season.length} ({season.daysRemaining} days left)
               </span>
@@ -174,7 +174,7 @@ export default function HomePage({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[11px] font-medium uppercase text-white/60">Summit Temp</span>
+                  <span className="text-xs font-medium uppercase text-white/60">Summit Temp</span>
                   <div className="text-2xl font-bold mt-1 text-white tabular-nums">
                     {weather ? weather.temp : '–'}
                   </div>
@@ -184,7 +184,7 @@ export default function HomePage({
                 </div>
 
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-[11px] font-medium uppercase text-white/60">Base Depth</span>
+                  <span className="text-xs font-medium uppercase text-white/60">Base Depth</span>
                   <div className="text-2xl font-bold mt-1 text-white tabular-nums">
                     {weather ? weather.snowBase : '–'}
                   </div>
@@ -201,7 +201,7 @@ export default function HomePage({
                 </span>
                 <span className="flex items-center gap-1 text-[#7fb4ff] font-medium">
                   <Icon name="fa-clock" className="w-3 h-3" />
-                  <span>Updates hourly</span>
+                  <span>Updated daily</span>
                 </span>
               </div>
             </div>
@@ -256,8 +256,8 @@ export default function HomePage({
                           <span className="font-semibold text-foreground truncate block">
                             {s.username}
                           </span>
-                          <span className="text-[10px] text-muted">
-                            {s.totalLifts} lifts · {s.totalSlopes} runs
+                          <span className="text-xs text-muted">
+                            {s.totalLifts} {s.totalLifts === 1 ? 'lift' : 'lifts'} · {s.totalSlopes} {s.totalSlopes === 1 ? 'run' : 'runs'}
                           </span>
                         </div>
                       </div>
@@ -348,7 +348,7 @@ export default function HomePage({
               />
               </picture>
             </a>
-            <p className="text-[11px] text-muted text-center">
+            <p className="text-xs text-muted text-center">
               Authentic Park City topography. Cartography licensed from{' '}
               <a href="https://skimap.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
                 Mapsynergy / Skimap
@@ -401,7 +401,7 @@ export default function HomePage({
                       <span className="text-muted truncate block">{r.name}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-muted shrink-0 tabular-nums">
+                  <span className="text-xs text-muted shrink-0 tabular-nums">
                     {r.timeAgoText}
                   </span>
                 </div>
@@ -442,7 +442,7 @@ export default function HomePage({
                       size="sm"
                       variant="soft"
                       color={isCurrent ? 'accent' : isPast ? 'default' : 'warning'}
-                      className="text-[10px] font-semibold"
+                      className="text-xs font-semibold"
                     >
                       {isCurrent ? `Live · Day ${season.day}` : isPast ? 'Completed' : 'Upcoming'}
                     </Chip>
