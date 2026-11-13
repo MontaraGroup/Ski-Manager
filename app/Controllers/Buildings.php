@@ -119,9 +119,12 @@ class Buildings extends BaseController
         $typeData = [];
         if ($type === 'hotel') {
             $receptionists = $db->table('staff')->where('user_id', $userId)->where('role', 'receptionist')->where('status', 'active')->countAllResults();
-            $visitors = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-            $dailyVisitors = (int) ($visitors['daily_visitors'] ?? 0);
-            $occupiedBeds = min($totalCapacity, round($dailyVisitors * 0.3));
+            $financeRow = $db->table('player_finances')->select('daily_visitors, last_tick')->where('user_id', $userId)->get()->getRowArray();
+            $dailyVisitors = (int) ($financeRow['daily_visitors'] ?? 0);
+            $lastTick = json_decode((string) ($financeRow['last_tick'] ?? ''), true) ?: [];
+            $occupiedBeds = isset($lastTick['occupancy']['hotel'])
+                ? (int) round($totalCapacity * (float) $lastTick['occupancy']['hotel'])
+                : min($totalCapacity, (int) round($dailyVisitors * \App\Libraries\Economy::BUILDING_SHARE['hotel']));
             $occupancyRate = $totalCapacity > 0 ? (int) round($occupiedBeds / $totalCapacity * 100) : 0;
             $starRating = count($buildings) > 0 ? min(5, round(array_sum(array_column($buildings, 'level')) / count($buildings) + ($receptionists > 0 ? 1 : 0), 1)) : 0;
             $hotelTiers = [
@@ -142,7 +145,12 @@ class Buildings extends BaseController
                 2 => ['name' => 'Standard', 'avg_price' => 45, 'avgPriceText' => currency(45), 'items' => [['icon' => 'fa-person-skiing', 'name' => 'All-Mountain Skis'], ['icon' => 'fa-person-snowboarding', 'name' => 'Snowboards'], ['icon' => 'fa-helmet-safety', 'name' => 'Helmets'], ['icon' => 'fa-glasses', 'name' => 'Goggles']]],
                 3 => ['name' => 'Premium', 'avg_price' => 85, 'avgPriceText' => currency(85), 'items' => [['icon' => 'fa-person-skiing', 'name' => 'Race Skis'], ['icon' => 'fa-person-snowboarding', 'name' => 'Pro Boards'], ['icon' => 'fa-helmet-safety', 'name' => 'MIPS Helmets'], ['icon' => 'fa-vest', 'name' => 'Impact Vests'], ['icon' => 'fa-wand-magic-sparkles', 'name' => 'Custom Fitting']]],
             ];
-            $totalSetsInUse = min($totalCapacity, round($totalCapacity * 0.7));
+            $financeRow = $db->table('player_finances')->select('daily_visitors, last_tick')->where('user_id', $userId)->get()->getRowArray();
+            $dailyVisitors = (int) ($financeRow['daily_visitors'] ?? 0);
+            $lastTick = json_decode((string) ($financeRow['last_tick'] ?? ''), true) ?: [];
+            $totalSetsInUse = isset($lastTick['occupancy']['rental'])
+                ? (int) round($totalCapacity * (float) $lastTick['occupancy']['rental'])
+                : min($totalCapacity, (int) round($dailyVisitors * \App\Libraries\Economy::BUILDING_SHARE['rental']));
             $utilization = $totalCapacity > 0 ? (int) round($totalSetsInUse / $totalCapacity * 100) : 0;
             $typeData = [
                 'totalSetsInUse' => (int) $totalSetsInUse,
