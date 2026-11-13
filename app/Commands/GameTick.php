@@ -421,7 +421,16 @@ class GameTick extends BaseCommand
             $env = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
             $ecoBonus = 0;
             if ($env) {
-                $ecoScore = (int) ($env['eco_score'] ?? 50);
+                $activeCannonCount = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->countAllResults();
+                $activeLightCount = $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults();
+                $totalBuildingCount = $db->table('buildings')->where('user_id', $userId)->countAllResults();
+                $totalCarbon = ($activeCannonCount * 15) + ($activeLightCount * 10) + ($totalBuildingCount * 5);
+                $ecoScore = max(0, min(100, 100 - $totalCarbon + (int) ($env['renewable_pct'] ?? 0) + (int) ($env['waste_management'] ?? 0) + ((int) ($env['wildlife_impact'] ?? 50) - 50)));
+                $db->table('environmental')->where('user_id', $userId)->update([
+                    'eco_score' => $ecoScore,
+                    'carbon_output' => $totalCarbon,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
                 if ($ecoScore >= 80) {
                     $ecoBonus = 5; // +5% visitor boost for eco-friendly resort
                     // Award 2 Genepis daily (matches promise in UI and Genepis catalog)

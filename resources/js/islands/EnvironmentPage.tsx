@@ -30,10 +30,10 @@ export type EnvironmentPageProps = {
 
 export default function EnvironmentPage({ env, carbon, upgrades }: EnvironmentPageProps) {
   const scoreTone =
-    env.eco_score > 70 ? 'text-success' : env.eco_score > 40 ? 'text-warning' : 'text-danger';
+    env.eco_score >= 80 ? 'text-success' : env.eco_score > 40 ? 'text-warning' : 'text-danger';
 
   const meterColor =
-    env.eco_score > 70 ? 'success' : env.eco_score > 40 ? 'warning' : 'danger';
+    env.eco_score >= 80 ? 'success' : env.eco_score > 40 ? 'warning' : 'danger';
 
   return (
     <Page
@@ -58,11 +58,11 @@ export default function EnvironmentPage({ env, carbon, upgrades }: EnvironmentPa
           />
         </div>
         <p className="mt-3 text-xs text-muted max-w-md mx-auto">
-          {env.eco_score > 70
-            ? 'Great! Eco-friendly resorts attract more visitors and qualify for daily Génépis rewards.'
+          {env.eco_score >= 80
+            ? 'Eco Score is 80 or above. Your resort receives +5% daily visitors and 2 Génépis per day.'
             : env.eco_score > 40
-            ? 'Average environmental standing. Invest in green upgrades to counteract heavy carbon emissions.'
-            : 'Critical rating. High emissions expose the resort to government audits and visitor boycotts.'}
+            ? 'Reach 80 Eco Score to earn +5% daily visitors and 2 Génépis per day.'
+            : 'Critical rating. Scores below 30 trigger daily environmental fines.'}
         </p>
       </Panel>
 
