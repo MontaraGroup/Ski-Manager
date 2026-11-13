@@ -324,7 +324,7 @@ body { font-family: var(--sign); }
 .site-footer h6 { font-size: 0.8125rem; font-weight: 600; color: var(--color-base-content); margin-bottom: 0.75rem; }
 .site-footer ul a { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .site-footer ul a:hover { color: var(--color-base-content); }
-@media (pointer: coarse) { .site-footer ul a { display: inline-flex; align-items: center; min-height: 2.75rem; } .site-footer ul.space-y-2 > * + * { margin-top: 0; } }
+@media (pointer: coarse) { .site-footer a:not(.brand) { display: inline-flex; align-items: center; min-height: 2.75rem; min-width: 2.75rem; } .site-footer ul.space-y-2 > * + * { margin-top: 0; } }
 
 @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -596,8 +596,8 @@ body { font-family: var(--sign); }
                     <a href="/" class="brand mb-3" style="padding:0"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#1d232b"/><path d="M3 25 L12 11 L16 17 L20 9 L29 25 Z" fill="#f7f5f0"/><path d="M12 11 L14.6 15 L12.6 14 L10.4 15.6 Z M20 9 L23 14.5 L20.8 13.4 L18.4 15 Z" fill="#1d232b" opacity=".35"/><path d="M20 9 L19 25" stroke="#2f6fd6" stroke-width="1.6" stroke-linecap="round"/></svg><span class="brand-name">Ski Manager</span></a>
                     <p class="text-sm text-base-content/70 mb-4">A free ski resort management game. Build lifts and runs on real mountains and try to keep the place profitable.</p>
                     <div class="flex gap-3">
-                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="Discord" aria-label="Ski Manager on Discord"><i class="fa-brands fa-discord text-lg" aria-hidden="true"></i></a>
-                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="flex size-9 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="GitHub" aria-label="Ski Manager source code on GitHub"><i class="fa-brands fa-github text-lg" aria-hidden="true"></i></a>
+                        <a href="https://discord.gg/u3GzGt8K6a" target="_blank" rel="noopener noreferrer" class="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="Discord" aria-label="Ski Manager on Discord"><i class="fa-brands fa-discord text-lg" aria-hidden="true"></i></a>
+                        <a href="https://github.com/MontaraGroup/Ski-Manager" target="_blank" rel="noopener noreferrer" class="flex size-11 items-center justify-center rounded-lg text-muted hover:bg-default hover:text-foreground" title="GitHub" aria-label="Ski Manager source code on GitHub"><i class="fa-brands fa-github text-lg" aria-hidden="true"></i></a>
                     </div>
                 </div>
                 <!-- Game -->
