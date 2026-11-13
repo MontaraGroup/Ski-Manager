@@ -69,7 +69,6 @@ class Parking extends BaseController
                 'capacityText' => number_format((int) $cfg['capacity']),
                 'cost' => (int) $cfg['cost'],
                 'costText' => currency((int) $cfg['cost']),
-                'originalCostText' => currency((int) ($cfg['cost'] * 1.2)),
                 'upkeepText' => currency((int) $cfg['upkeep']),
                 'build_days' => (int) $cfg['build_days'],
                 'canAfford' => $cash >= (int) $cfg['cost'],
