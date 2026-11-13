@@ -123,7 +123,7 @@ export default function RegisterPage({
         </div>
 
         {/* Right Side: Registration Form */}
-        <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center overflow-y-auto max-h-[90vh]">
+        <div className="p-6 sm:p-8 lg:p-10 flex flex-col lg:justify-center">
           <div className="w-full max-w-sm mx-auto space-y-5">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
@@ -335,7 +335,7 @@ export default function RegisterPage({
                         <div className="text-xs font-bold text-foreground mt-1 tabular-nums">
                           {d.cashText}
                         </div>
-                        <p className="text-[10px] text-muted leading-tight mt-0.5 line-clamp-1">
+                        <p className="text-xs text-muted leading-tight mt-0.5">
                           {d.note}
                         </p>
                       </label>
