@@ -113,7 +113,7 @@ export default function UpdatesPage({ updates = [] }: UpdatesPageProps) {
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-foreground">{up.title}</h3>
+                <h2 className="text-base font-bold text-foreground">{up.title}</h2>
                 {up.description && (
                   <p className="text-xs text-muted mt-1 leading-relaxed">{up.description}</p>
                 )}

@@ -321,7 +321,7 @@ body { font-family: var(--sign); }
 .stats-bar .stat-pill:hover { color: var(--color-base-content); }
 
 /* Footer */
-.site-footer h6 { font-size: 0.8125rem; font-weight: 600; color: var(--color-base-content); margin-bottom: 0.75rem; }
+.site-footer h2 { font-size: 0.8125rem; font-weight: 600; color: var(--color-base-content); margin-bottom: 0.75rem; }
 .site-footer ul a { color: color-mix(in oklab, var(--color-base-content) 70%, transparent); }
 .site-footer ul a:hover { color: var(--color-base-content); }
 @media (pointer: coarse) { .site-footer ul a { display: inline-flex; align-items: center; min-height: 2.75rem; } .site-footer ul.space-y-2 > * + * { margin-top: 0; } }
@@ -602,7 +602,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Game -->
                 <div>
-                    <h6 class="">Game</h6>
+                    <h2 class="">Game</h2>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/register">Play Now</a></li>
                         <li><a href="/leaderboard">Leaderboard</a></li>
@@ -614,7 +614,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Resources -->
                 <div>
-                    <h6 class="">Resources</h6>
+                    <h2 class="">Resources</h2>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/guides">Guides</a></li>
                         <li><a href="/faq">FAQ</a></li>
@@ -625,7 +625,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Legal -->
                 <div>
-                    <h6 class="">Legal</h6>
+                    <h2 class="">Legal</h2>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/terms">Terms</a></li>
                         <li><a href="/privacy">Privacy</a></li>
