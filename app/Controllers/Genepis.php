@@ -24,7 +24,7 @@ class Genepis extends BaseController
             // Instant effects
             'snow_dump' => ['name' => 'Instant Snow Dump', 'desc' => 'Add 30cm of fresh powder to all slopes', 'cost' => 40, 'icon' => 'fa-solid fa-snowflake', 'color' => 'text-primary', 'duration' => null, 'category' => 'Instant'],
             'repair_all' => ['name' => 'Repair Everything', 'desc' => 'All slopes, lifts, equipment, and buildings to 100%', 'cost' => 60, 'icon' => 'fa-solid fa-wrench', 'color' => 'text-warning', 'duration' => null, 'category' => 'Instant'],
-            'reputation_boost' => ['name' => 'PR Campaign', 'desc' => '+500 visitors instantly', 'cost' => 80, 'icon' => 'fa-solid fa-star', 'color' => 'text-warning', 'duration' => null, 'category' => 'Instant'],
+            'reputation_boost' => ['name' => 'PR Campaign', 'desc' => '+25 resort reputation immediately', 'cost' => 80, 'icon' => 'fa-solid fa-star', 'color' => 'text-warning', 'duration' => null, 'category' => 'Instant'],
             'cash_injection' => ['name' => 'Cash Injection', 'desc' => 'Receive 100,000 € cash immediately', 'cost' => 150, 'icon' => 'fa-solid fa-money-bill-transfer', 'color' => 'text-success', 'duration' => null, 'category' => 'Instant'],
             'groom_all' => ['name' => 'Perfect Grooming', 'desc' => 'All slopes groomed to 100% condition', 'cost' => 35, 'icon' => 'fa-solid fa-tractor', 'color' => 'text-success', 'duration' => null, 'category' => 'Instant'],
             'morale_boost' => ['name' => 'Staff Party', 'desc' => 'All staff morale set to 100%', 'cost' => 45, 'icon' => 'fa-solid fa-champagne-glasses', 'color' => 'text-info', 'duration' => null, 'category' => 'Instant'],
@@ -74,12 +74,9 @@ class Genepis extends BaseController
         }
 
         $earnMethods = [
-            ['name' => 'Daily Login Bonus', 'desc' => 'Earn Génépis from your daily streak', 'amount' => '1-5/day', 'icon' => 'fa-fire', 'link' => '/dailybonus'],
+            ['name' => 'Daily Login Bonus', 'desc' => 'Earn Génépis from your daily streak', 'amount' => '1-5/day', 'icon' => 'fa-fire', 'link' => '/daily-bonus'],
             ['name' => 'Achievements', 'desc' => 'Complete achievements for rewards', 'amount' => 'Varies', 'icon' => 'fa-award', 'link' => '/achievements'],
-            ['name' => 'Tournaments', 'desc' => 'Win tournaments to earn Génépis', 'amount' => '10-100', 'icon' => 'fa-trophy', 'link' => '/tournaments'],
             ['name' => 'Eco Score', 'desc' => 'Maintain 80+ eco score', 'amount' => '2/day', 'icon' => 'fa-leaf', 'link' => '/environment'],
-            ['name' => 'Full Compliance', 'desc' => 'Stay compliant with all regulations', 'amount' => '1/day', 'icon' => 'fa-building-columns', 'link' => '/government'],
-            ['name' => 'VIP Guests', 'desc' => 'Attract VIP visitors to your resort', 'amount' => '5-20', 'icon' => 'fa-star', 'link' => '/vip-guests'],
             ['name' => 'Resort Tours', 'desc' => 'Get likes on your resort from other players', 'amount' => '1/like', 'icon' => 'fa-heart', 'link' => '/settings'],
         ];
 
