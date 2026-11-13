@@ -123,10 +123,6 @@ class Roadmap extends BaseController
                 $forge->addUniqueKey(['item_id', 'voter_hash']);
                 $forge->addKey('item_id');
                 $forge->createTable('roadmap_votes', true);
-            } else {
-                try {
-                    $db->query("ALTER TABLE roadmap_votes MODIFY voter_hash VARCHAR(128) NOT NULL");
-                } catch (\Throwable $e) {}
             }
 
             // Seed default items if table is empty
@@ -283,7 +279,6 @@ class Roadmap extends BaseController
 
     public function index(): string
     {
-        self::ensureSchema();
         helper('notify');
 
         $userId = $this->playerId();
