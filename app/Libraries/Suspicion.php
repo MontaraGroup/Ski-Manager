@@ -6,8 +6,11 @@ namespace App\Libraries;
  * Finds players whose numbers the game itself can't explain (for /admin/suspicious).
  *
  * Signals, strongest first. Each gives points; a player's score is the sum.
- * - Unexplained cash (3): cash minus (starting cash + ledger income - ledger expenses) is over 100,000.
- *   Every legitimate cash change goes through the ledger totals, so a gap means cash arrived another way.
+ * - Unexplained cash (3): cash minus (starting cash + the sum of the player's financial_transactions) is
+ *   over 100,000. The rows, not player_finances.total_income/total_expenses: those totals only count the
+ *   nightly tick and equipment, so loans, rewards and building spend looked like unexplained cash.
+ *   Only for accounts created since LEDGER_COMPLETE_SINCE: older accounts made cash moves before every
+ *   move wrote a row, so their history can't explain their cash.
  * - Unexplained Génépis (2): balance is more than 20 above total earned minus total spent.
  * - Income spike (2): one game day's income is over 250,000 and over 4x the player's 14-day average.
  * - Rapid repeats (2): 5 or more identical income entries within one minute (double-submit exploits).
@@ -18,6 +21,9 @@ namespace App\Libraries;
 class Suspicion
 {
     private const START_CASH = "CASE pf.difficulty WHEN 'easy' THEN 1000000 WHEN 'hard' THEN 200000 ELSE 500000 END";
+
+    /** The day the Ledger helper reached main (PR #2); on production 110 of 118 accounts since match their rows within 1,000 */
+    private const LEDGER_COMPLETE_SINCE = '2026-11-04 00:00:00';
 
     /** @return array<int, array{id:int, username:string, score:int, reasons:list<array{signal:string, points:int, detail:string}>}> */
     public static function scan(): array
@@ -32,10 +38,12 @@ class Suspicion
         $real = "pf.profile_completed = 1 AND COALESCE(u.status, '') <> 'demo'";
 
         foreach ($db->query("
-            SELECT u.id, u.username, CAST(pf.cash AS SIGNED) - (" . self::START_CASH . " + CAST(pf.total_income AS SIGNED) - CAST(pf.total_expenses AS SIGNED)) AS gap
+            SELECT u.id, u.username, CAST(pf.cash AS SIGNED) - (" . self::START_CASH . " + COALESCE(ft.net, 0)) AS gap
             FROM player_finances pf JOIN users u ON u.id = pf.user_id
-            WHERE $real HAVING gap > 100000")->getResultArray() as $r) {
-            $add((int) $r['id'], $r['username'], 'Unexplained cash', 3, currency((int) $r['gap']) . ' more than starting cash plus recorded income minus expenses');
+            LEFT JOIN (SELECT user_id, SUM(IF(type = 'income', amount, -amount)) AS net FROM financial_transactions GROUP BY user_id) ft
+                ON ft.user_id = u.id
+            WHERE $real AND u.created_at >= ? HAVING gap > 100000", [self::LEDGER_COMPLETE_SINCE])->getResultArray() as $r) {
+            $add((int) $r['id'], $r['username'], 'Unexplained cash', 3, currency((int) $r['gap']) . ' more than starting cash plus every recorded transaction');
         }
 
         foreach ($db->query("
