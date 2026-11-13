@@ -1,3 +1,19 @@
+## Release 2026-11-13 00:19
+
+* Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (57f65417)
+* Merge pull request #93 from Montara-Group/main (2bd11fa7)
+* Merge branch 'MontaraGroup:main' into main (82b45b8f)
+* Merge pull request #92 from Montara-Group/fix/suspicion-ledger-gap (a2b3047d)
+
+## Release 2026-11-13 00:17
+
+* Merge branch 'MontaraGroup:main' into main (82b45b8f)
+* Merge pull request #92 from Montara-Group/fix/suspicion-ledger-gap (a2b3047d)
+* fix(admin): judge unexplained cash by the transaction rows (7bbd2920)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (875c446b)
+* Merge pull request #91 from Montara-Group/fix/updates-item-text (d2094101)
+
 ## Release 2026-11-12 23:37
 
 * Merge pull request #91 from Montara-Group/fix/updates-item-text (d2094101)
