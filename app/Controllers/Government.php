@@ -100,6 +100,12 @@ class Government extends BaseController
             ];
         }, $inspections);
 
+        $finance = $db->table('player_finances')->select('difficulty')->where('user_id', $userId)->get()->getRowArray();
+        $diff = $finance['difficulty'] ?? 'standard';
+        $inspRow = $db->table('difficulty_config')->where('difficulty', $diff)->where('config_key', 'inspection_chance')->get()->getRowArray();
+        $perRegChancePct = (int) ($inspRow['config_value'] ?? 5);
+        $inspectionChance = $nonCompliant > 0 ? (int) round((1 - pow(1 - ($perRegChancePct / 100), $nonCompliant)) * 100) : 0;
+
         $page = [
             'stats' => [
                 'compliantCount' => $compliant,
@@ -108,9 +114,8 @@ class Government extends BaseController
                 'totalCostText' => currency((int) $totalCost),
                 'totalRiskText' => currency((int) $totalRisk),
                 'totalPossibleCostText' => currency((int) $totalPossibleCost),
-                'inspectionChance' => (int) ($nonCompliant * 5),
-                'reputationPenalty' => (int) ($nonCompliant * 15),
-                'visitorPenalty' => (int) ($nonCompliant * 3),
+                'inspectionChance' => $inspectionChance,
+                'perRegInspectionChance' => $perRegChancePct,
             ],
             'tiers' => $formattedTiers,
             'inspections' => $formattedInspections,
