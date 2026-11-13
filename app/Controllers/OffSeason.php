@@ -201,7 +201,6 @@ class OffSeason extends BaseController
         $db->transComplete();
 
         log_activity($userId, 'maintenance', $taskConfig['name'] . ": {$count} items serviced for " . currency($totalCost));
-        notify($userId, 'maintenance', $taskConfig['name'] . ' complete', "{$count} items restored to perfect condition.", $taskConfig['icon'], '/off-season');
 
         return redirect()->to('/off-season')->with('success', $taskConfig['name'] . ' complete! ' . $count . ' items serviced for ' . currency($totalCost) . '.');
     }
@@ -238,7 +237,6 @@ class OffSeason extends BaseController
         $db->transComplete();
 
         log_activity($userId, 'Off-Season', 'Built ' . $cfg['name'] . ' for ' . currency($cfg['cost']), 'fa-solid fa-sun');
-        notify($userId, 'building', $cfg['name'] . ' built!', 'Your new summer activity is ready for guests.', $cfg['icon'] ?? 'fa-solid fa-sun', '/off-season');
 
         return redirect()->to('/off-season')->with('success', $cfg['name'] . ' built for ' . currency($cfg['cost']) . '!');
     }

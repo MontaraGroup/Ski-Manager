@@ -32,7 +32,20 @@ export type Stats = {
   stars: number;
 };
 
-export type Notice = { id: number; title: string; message: string; icon: string; isRead: boolean };
+/** One notification as NotificationFeed::item() sends it */
+export type Notice = {
+  id: number;
+  title: string;
+  message: string;
+  icon: string;
+  isRead: boolean;
+  time: string;
+  category: string;
+  alert: boolean;
+  link: string | null;
+  linkLabel: string | null;
+  createdAt: string;
+};
 
 export type Flash = { success?: string; info?: string; error?: string; warning?: string; errors?: string[] };
 

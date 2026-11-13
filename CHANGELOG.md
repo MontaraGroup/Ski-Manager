@@ -1,3 +1,11 @@
+## Release 2026-11-13 04:18
+
+* Merge pull request #94 from Montara-Group/main (9ab8901b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (dd89ce57)
+* Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (57f65417)
+* Merge pull request #93 from Montara-Group/main (2bd11fa7)
+
 ## Release 2026-11-13 00:19
 
 * Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
