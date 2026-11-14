@@ -226,10 +226,10 @@ class GameTick extends BaseCommand
                 if ($eqNewCond <= 0) {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => 0, 'status' => 'broken']);
                     log_activity($userId, 'equipment_broken', $e['name'] . ' has broken down!', 'fa-solid fa-triangle-exclamation');
-                    notify($userId, 'equipment', $e['name'] . ' broke down!', 'Repair it before it can operate again.', 'fa-solid fa-triangle-exclamation', '/equipment');
+                    notify($userId, 'equipment_breakdown', $e['name'] . ' broke down!', 'Repair it before it can operate again.', 'fa-solid fa-triangle-exclamation', '/equipment');
                 } elseif ($eqNewCond <= 20 && (int) $e['condition_pct'] > 20) {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => $eqNewCond]);
-                    notify($userId, 'equipment', $e['name'] . ' needs maintenance', 'Condition at ' . $eqNewCond . '%. Repair soon.', 'fa-solid fa-wrench', '/equipment');
+                    notify($userId, 'equipment_wear', $e['name'] . ' needs maintenance', 'Condition at ' . $eqNewCond . '%. Repair soon.', 'fa-solid fa-wrench', '/equipment');
                 } else {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => $eqNewCond]);
                 }
@@ -468,7 +468,11 @@ class GameTick extends BaseCommand
                 ->get()->getResultArray();
             foreach ($endedTournaments as $et) {
                 $db->table('tournaments')->where('id', $et['id'])->update(['status' => 'ended']);
-                log_activity($userId, 'Tournament', $et['name'] . ' has concluded successfully!', 'fa-solid fa-medal');
+                $repBoost = (int) ($et['reputation_boost'] ?? 0);
+                if ($repBoost > 0) {
+                    $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . $repBoost, false)->update();
+                }
+                log_activity($userId, 'Tournament', $et['name'] . ' has concluded: +' . $repBoost . ' Reputation.', 'fa-solid fa-medal');
             }
 
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;
@@ -733,7 +737,7 @@ class GameTick extends BaseCommand
                     $resNewCond = max(0, $res['condition_pct'] - $resDecay);
                     if ($resNewCond <= 0) {
                         $db->table($resTable)->where('id', $res['id'])->update(['condition_pct' => 0, 'status' => 'broken']);
-                        notify($userId, $resType, $res['name'] . ' broke down!', 'Repair it to restore ' . $resType . ' production.', 'fa-solid fa-triangle-exclamation', '/' . $resType);
+                        notify($userId, $resType . '_breakdown', $res['name'] . ' broke down!', 'Repair it to restore ' . $resType . ' production.', 'fa-solid fa-triangle-exclamation', '/' . $resType);
                     } else {
                         $db->table($resTable)->where('id', $res['id'])->update(['condition_pct' => $resNewCond]);
                     }
@@ -805,7 +809,7 @@ class GameTick extends BaseCommand
 
                 $dayIncome += $vipCash;
                 log_activity($userId, 'vip_arrival', $vip['name'] . ' ' . $vipFullName . ' has arrived! +' . number_format($vipCash) . '€', $vip['icon']);
-                notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/dashboard');
+                notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/vip-guests');
             }
 
             // Process departing VIPs with satisfaction check
