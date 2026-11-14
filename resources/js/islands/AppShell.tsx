@@ -1,8 +1,8 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Button, Dropdown, Popover, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/MenuButton';
-import { useNotifications } from '@/lib/notifications';
+import { markAllRead, markRead, timeAgo, useNotifications } from '@/lib/notifications';
 import { applyTheme, currentTheme, isActive, type Flash, type ShellProps, type Theme } from '@/lib/shell';
 
 /** The in-game and public navbar: menus, search, theme, notifications, account or auth actions */
@@ -192,52 +192,75 @@ function ThemeToggle() {
 }
 
 function Notifications({ initial }: { initial: NonNullable<ShellProps['notifications']> }) {
-  const { unread, latest, markAllRead } = useNotifications(initial);
+  const { unread, latest, announcement } = useNotifications(initial);
   const label = unread > 0 ? `Notifications, ${unread} unread` : 'Notifications';
+  const fail = (e: Error) => toast.danger(e.message);
+  const list = useRef<HTMLUListElement>(null);
+  // The pressed button goes away once read: keep focus inside the dialog so Escape still closes it
+  const readOne = (id: number) => {
+    const buttons = Array.from(list.current?.querySelectorAll<HTMLElement>('[data-mark-read]') ?? []);
+    const next = buttons[buttons.findIndex((b) => b.dataset.markRead === String(id)) + 1];
+    const own = list.current?.querySelector<HTMLElement>(`[data-open="${id}"]`);
+    markRead(id).then(() => (next ?? own)?.focus(), fail);
+  };
   return (
-    <Popover>
-      <Button isIconOnly variant="ghost" aria-label={label} className="relative size-11 sm:size-9">
-        <Icon name="fa-bell" />
-        {unread > 0 && (
-          <span aria-hidden="true" className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-danger px-1 text-center text-xs font-semibold leading-4 text-danger-foreground">
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
-      </Button>
-      <Popover.Content placement="bottom end" className="w-80">
-        <Popover.Dialog aria-label="Notifications" className="flex flex-col gap-2 p-3">
-          <div className="flex items-center justify-between">
-            <Popover.Heading className="text-sm font-semibold">Notifications</Popover.Heading>
-            {unread > 0 && (
-              <Button size="sm" variant="ghost" onPress={() => markAllRead().catch((e: Error) => toast.danger(e.message))}>
-                Mark all read
-              </Button>
-            )}
-          </div>
-          {latest.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted">No notifications yet. Weather, events and staff news show up here.</p>
-          ) : (
-            <ul className="flex max-h-72 flex-col overflow-y-auto">
-              {latest.map((n) => (
-                <li key={n.id}>
-                  <a href={`/notifications/open/${n.id}`} className="flex items-start gap-2 rounded-lg p-2 hover:bg-default">
-                    <Icon name={n.icon} className={`mt-0.5 ${n.isRead ? 'text-muted' : 'text-accent'}`} />
-                    <span className="min-w-0 flex-1">
-                      <span className={`block truncate text-sm ${n.isRead ? '' : 'font-semibold'}`}>{n.title}</span>
-                      <span className="block truncate text-xs text-muted">{n.message}</span>
-                    </span>
-                    {!n.isRead && <span className="sr-only">Unread</span>}
-                  </a>
-                </li>
-              ))}
-            </ul>
+    <>
+      {/* Always in the page so screen readers hear what the 30 s poll finds */}
+      <p role="status" aria-live="polite" className="sr-only">{announcement}</p>
+      <Popover>
+        <Button isIconOnly variant="ghost" aria-label={label} className="relative size-11 sm:size-9">
+          <Icon name="fa-bell" />
+          {unread > 0 && (
+            <span aria-hidden="true" className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-danger px-1 text-center text-xs font-semibold leading-4 text-danger-foreground">
+              {unread > 9 ? '9+' : unread}
+            </span>
           )}
-          <a href="/notifications" className="rounded-lg px-2 py-2 text-center text-sm text-accent-soft-foreground hover:bg-default">
-            View all notifications
-          </a>
-        </Popover.Dialog>
-      </Popover.Content>
-    </Popover>
+        </Button>
+        <Popover.Content placement="bottom end" className="w-[min(24rem,calc(100vw-1rem))]">
+          <Popover.Dialog aria-label="Notifications" className="flex flex-col gap-2 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Popover.Heading className="text-sm font-semibold">
+                Notifications{unread > 0 && <span className="font-normal text-muted"> · {unread} unread</span>}
+              </Popover.Heading>
+              {unread > 0 && (
+                <Button size="sm" variant="ghost" onPress={() => markAllRead().catch(fail)}>
+                  Mark all read
+                </Button>
+              )}
+            </div>
+            {latest.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted">Nothing yet. Breakdowns, finished builds, VIP guests and game news show up here.</p>
+            ) : (
+              <ul ref={list} className="-mx-1 flex max-h-[min(24rem,60vh)] flex-col overflow-y-auto">
+                {latest.map((n) => (
+                  <li key={n.id} className="flex items-start gap-1">
+                    <a href={`/notifications/open/${n.id}`} data-open={n.id} className="flex min-w-0 flex-1 items-start gap-2 rounded-lg p-2 hover:bg-default">
+                      <Icon name={n.icon} className={`mt-0.5 ${n.alert ? 'text-warning' : n.isRead ? 'text-muted' : 'text-accent'}`} />
+                      <span className="min-w-0 flex-1">
+                        <span className={`block text-sm ${n.isRead ? '' : 'font-semibold'}`}>
+                          {!n.isRead && <span className="sr-only">Unread: </span>}
+                          {n.title}
+                        </span>
+                        <span className="line-clamp-2 block text-sm text-muted">{n.message}</span>
+                        <span className="block text-xs text-muted">{timeAgo(n.createdAt)}</span>
+                      </span>
+                    </a>
+                    {!n.isRead && (
+                      <Button isIconOnly size="sm" variant="ghost" aria-label={`Mark read: ${n.title}`} data-mark-read={n.id} className="mt-1 size-11 shrink-0 sm:size-9" onPress={() => readOne(n.id)}>
+                        <Icon name="fa-check" />
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <a href="/notifications" className="flex min-h-11 items-center justify-center rounded-lg px-2 text-sm text-accent-soft-foreground hover:bg-default sm:min-h-9">
+              See all notifications
+            </a>
+          </Popover.Dialog>
+        </Popover.Content>
+      </Popover>
+    </>
   );
 }
 

@@ -45,6 +45,8 @@ $routes->get("notifications", "Notifications::index");
 $routes->get("notifications/read-all", "Notifications::readAllLegacy");
 $routes->post("notifications/read-all", "Notifications::readAll");
 $routes->get("notifications/open/(:num)", "Notifications::open/$1");
+$routes->get("notifications/feed", "Notifications::feed");
+$routes->post("notifications/(:num)/read", "Notifications::markRead/$1");
 $routes->post("notifications/delete-all", "Notifications::deleteAll");
 $routes->post("notifications/delete-read", "Notifications::deleteRead");
 $routes->get("parking", "Parking::index");
@@ -173,6 +175,7 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->get('leaderboard', 'Leaderboard::show');
         $routes->get('notifications', 'Notifications::show');
         $routes->post('notifications/read-all', 'Notifications::markAllRead');
+        $routes->post('notifications/(:num)/read', 'Notifications::markOneRead/$1');
         $routes->get('tickets', 'Tickets::show');
         $routes->post('tickets/(:num)', 'Tickets::update/$1');
         $routes->get('staff', 'Staff::show');
