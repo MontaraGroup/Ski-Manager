@@ -1,3 +1,11 @@
+## Release 2026-11-14 23:51
+
+* Merge pull request #100 from Montara-Group/main (6ef2a15d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c194de6e)
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+
 ## Release 2026-11-14 21:34
 
 * Merge branch 'MontaraGroup:main' into main (3ee53166)
