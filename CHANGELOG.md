@@ -1,3 +1,11 @@
+## Release 2026-11-14 21:34
+
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+* Merge pull request #97 from Montara-Group/fix/parking-shuttle-balance (01e65135)
+* Merge pull request #96 from Montara-Group/fix/tournaments-reputation-and-night-race (948af292)
+
 ## Release 2026-11-13 19:18
 
 * Merge pull request #95 from Montara-Group/feat/notifications-revamp (0337d4ef)
