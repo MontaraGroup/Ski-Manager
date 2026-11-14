@@ -26,7 +26,7 @@ npm run build
 BUNDLE="$(mktemp -t ski-assets).tgz"
 trap 'rm -f "${BUNDLE}"' EXIT
 # COPYFILE_DISABLE keeps macOS ._* metadata files out of the bundle
-COPYFILE_DISABLE=1 tar -czf "${BUNDLE}" public/build public/css/style.css
+COPYFILE_DISABLE=1 tar --no-xattrs -czf "${BUNDLE}" public/build public/css/style.css
 
 REMOTE="/tmp/ski-assets-manual-$$.tgz"
 scp -P "${PORT}" -q "${BUNDLE}" "${SSH}:${REMOTE}"
