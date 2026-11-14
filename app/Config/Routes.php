@@ -187,6 +187,7 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->get('map', 'Map::show');
         $routes->post('map/build', 'Map::build');
         $routes->post('map/demolish/(:num)', 'Map::demolish/$1');
+        $routes->post('map/upgrade/(:num)', 'Map::upgrade/$1');
         $routes->get('settings', 'Settings::show');
         $routes->post('settings/units', 'Settings::units');
         $routes->get('buildings', 'Buildings::show');
@@ -251,6 +252,7 @@ $routes->post("/dashboard/reset-widgets", "Dashboard::resetWidgets");
 $routes->post("/dashboard/batch-update-widgets", "Dashboard::batchUpdateWidgets");
 $routes->post("/map/build", "ResortMap::buildItem");
 $routes->post("/map/demolish/(:num)", "ResortMap::demolishItem/$1");
+$routes->post("/map/upgrade/(:num)", "ResortMap::swapLift/$1");
 $routes->match(['get', 'head'], '/api/map-image/(:segment)', 'MapImage::serve/$1');
 $routes->post("/map/change-map", "ResortMap::changeMap");
 $routes->post("/map/sector/create", "ResortMap::createSector");

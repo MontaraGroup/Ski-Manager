@@ -9,6 +9,7 @@ import { MapPanel } from './resort-map/MapPanel';
 import { MapKey } from './resort-map/MapKey';
 import { BuildFooter, BuildView } from './resort-map/BuildView';
 import { BuiltRunView } from './resort-map/BuiltRunView';
+import type { LiftSwapOption } from './resort-map/LiftSwapDialog';
 import { BrowseView, type BuildNotice, type SortOrder, type Suggestion } from './resort-map/BrowseView';
 import { TrailSign, buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
 
@@ -321,6 +322,11 @@ export default function ResortMapPage(props: ResortMapProps) {
         setSelectedSeg(null);
       }
     });
+  }
+
+  function handleSwap(option: LiftSwapOption, done: (ok: boolean) => void) {
+    if (!selectedSeg) return done(false);
+    engineRef.current?.swapLift(selectedSeg, option.lift_type, option.seats, done);
   }
 
   function handleResortChange(eOrVal: React.ChangeEvent<HTMLSelectElement> | string | number) {
@@ -702,6 +708,8 @@ export default function ResortMapPage(props: ResortMapProps) {
                 economyV2={props.economyV2}
                 onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
                 onDemolish={handleDemolish}
+                cash={userCash}
+                onSwap={handleSwap}
               />
             </MapPanel>
           ) : selectedSeg && !selectedIsBuilt ? (
