@@ -468,7 +468,11 @@ class GameTick extends BaseCommand
                 ->get()->getResultArray();
             foreach ($endedTournaments as $et) {
                 $db->table('tournaments')->where('id', $et['id'])->update(['status' => 'ended']);
-                log_activity($userId, 'Tournament', $et['name'] . ' has concluded successfully!', 'fa-solid fa-medal');
+                $repBoost = (int) ($et['reputation_boost'] ?? 0);
+                if ($repBoost > 0) {
+                    $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . $repBoost, false)->update();
+                }
+                log_activity($userId, 'Tournament', $et['name'] . ' has concluded: +' . $repBoost . ' Reputation.', 'fa-solid fa-medal');
             }
 
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;

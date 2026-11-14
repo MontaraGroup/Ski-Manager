@@ -36,7 +36,7 @@ class Tournaments extends BaseController
             'freestyle' => ['name' => 'Freestyle Competition', 'icon' => 'fa-solid fa-person-snowboarding', 'visitors' => 1000, 'reputation' => 300, 'cost' => 60000, 'duration' => 2, 'desc' => 'Tricks, jumps, and style'],
             'cross_country' => ['name' => 'Cross-Country Marathon', 'icon' => 'fa-solid fa-person-skiing-nordic', 'visitors' => 600, 'reputation' => 150, 'cost' => 30000, 'duration' => 1, 'desc' => 'Endurance skiing event'],
             'winter_festival' => ['name' => 'Winter Festival', 'icon' => 'fa-solid fa-snowflake', 'visitors' => 2000, 'reputation' => 500, 'cost' => 150000, 'duration' => 3, 'desc' => 'Massive multi-day winter celebration'],
-            'night_race' => ['name' => 'Night Race', 'icon' => 'fa-solid fa-moon', 'visitors' => 700, 'reputation' => 200, 'cost' => 40000, 'duration' => 1, 'desc' => 'Racing under the lights. Needs night skiing.'],
+            'night_race' => ['name' => 'Night Race', 'icon' => 'fa-solid fa-moon', 'visitors' => 1100, 'reputation' => 200, 'cost' => 40000, 'duration' => 1, 'desc' => 'Racing under the lights. Needs night skiing.'],
             'kids_cup' => ['name' => "Kids' Cup", 'icon' => 'fa-solid fa-child', 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1, 'desc' => 'Youth skiing competition'],
         ];
 
@@ -142,7 +142,7 @@ class Tournaments extends BaseController
             'freestyle' => ['name' => 'Freestyle Competition', 'visitors' => 1000, 'reputation' => 300, 'cost' => 60000, 'duration' => 2],
             'cross_country' => ['name' => 'Cross-Country Marathon', 'visitors' => 600, 'reputation' => 150, 'cost' => 30000, 'duration' => 1],
             'winter_festival' => ['name' => 'Winter Festival', 'visitors' => 2000, 'reputation' => 500, 'cost' => 150000, 'duration' => 3],
-            'night_race' => ['name' => 'Night Race', 'visitors' => 700, 'reputation' => 200, 'cost' => 40000, 'duration' => 1],
+            'night_race' => ['name' => 'Night Race', 'visitors' => 1100, 'reputation' => 200, 'cost' => 40000, 'duration' => 1],
             'kids_cup' => ['name' => "Kids' Cup", 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1],
         ];
 
@@ -151,6 +151,23 @@ class Tournaments extends BaseController
         }
 
         $t = $types[$type];
+
+        $existing = $db->table('tournaments')
+            ->where('host_id', $userId)
+            ->where('metric', $type)
+            ->where('status !=', 'ended')
+            ->where('end_day >=', $gameDay)
+            ->countAllResults();
+        if ($existing > 0) {
+            return redirect()->back()->with('error', $t['name'] . ' is already scheduled or running.');
+        }
+
+        if ($type === 'night_race') {
+            $activeLights = $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults();
+            if ($activeLights <= 0) {
+                return redirect()->back()->with('error', 'Night Race requires at least one active floodlight in Night Skiing.');
+            }
+        }
 
         $db->transStart();
         if (!Ledger::charge($userId, (int) $t['cost'], 'Tournaments', 'Hosted ' . $t['name'])) {
