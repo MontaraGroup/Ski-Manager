@@ -139,7 +139,6 @@ class Government extends BaseController
         if (empty($nonCompliant)) return redirect()->to('/government')->with('error', 'Already fully compliant!');
         $db->table('regulations')->where('user_id', $userId)->update(['compliant' => 1]);
         log_activity($userId, 'Government', 'Opted into full compliance with all ' . count($nonCompliant) . ' regulations', 'fa-solid fa-building-columns');
-        notify($userId, 'government', 'Full Compliance Achieved', 'Your resort is now fully compliant with all government regulations.', 'fa-solid fa-circle-check', '/government');
         return redirect()->to('/government')->with('success', 'Now compliant with all ' . count($nonCompliant) . ' regulations!');
     }
 }
