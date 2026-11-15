@@ -1,3 +1,19 @@
+## Release 2026-11-15 18:36
+
+* Merge branch 'MontaraGroup:main' into main (076a60ca)
+* Merge pull request #103 from Montara-Group/feat/snowmaking-revamp (f0847b16)
+* Merge remote-tracking branch 'upstream/main' into feat/snowmaking-revamp (f2662650)
+* Merge pull request #102 from Montara-Group/feat/resort-vote (8e7c9ce6)
+* Merge remote-tracking branch 'upstream/main' into feat/resort-vote (d466bc69)
+
+## Release 2026-11-14 23:51
+
+* Merge pull request #100 from Montara-Group/main (6ef2a15d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c194de6e)
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+
 ## Release 2026-11-14 21:34
 
 * Merge branch 'MontaraGroup:main' into main (3ee53166)
