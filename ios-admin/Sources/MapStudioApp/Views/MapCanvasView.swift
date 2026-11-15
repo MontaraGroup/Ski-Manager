@@ -8,9 +8,9 @@ public struct MapCanvasView: View {
     private let maxZoomScale: CGFloat = 36.0
     
     @State private var zoomScale: CGFloat = 1.0
-    @State private var currentZoomDelta: CGFloat = 1.0
+    @State private var activeZoomDelta: CGFloat = 1.0
     @State private var panOffset: CGSize = .zero
-    @State private var currentPanDelta: CGSize = .zero
+    @State private var activePanDelta: CGSize = .zero
     
     // Active dragging vertex
     @State private var draggingVertexIndex: Int? = nil
@@ -28,40 +28,39 @@ public struct MapCanvasView: View {
             // Calculate base mountain frame maintaining 600:340 aspect
             let baseSize: CGSize = {
                 if viewportSize.width / viewportSize.height > canvasAspect {
-                    // Height constrained
+                    // Viewport is wider than 600:340 -> height constrained
                     let h = viewportSize.height
                     return CGSize(width: h * canvasAspect, height: h)
                 } else {
-                    // Width constrained
+                    // Viewport is taller than 600:340 -> width constrained
                     let w = viewportSize.width
                     return CGSize(width: w, height: w / canvasAspect)
                 }
             }()
             
-            let totalScale = max(minZoomScale, min(maxZoomScale, zoomScale * currentZoomDelta))
+            let totalScale = max(minZoomScale, min(maxZoomScale, zoomScale * activeZoomDelta))
             let totalOffset = CGSize(
-                width: panOffset.width + currentPanDelta.width,
-                height: panOffset.height + currentPanDelta.height
+                width: panOffset.width + activePanDelta.width,
+                height: panOffset.height + activePanDelta.height
             )
             
             ZStack {
-                // Background void
-                StudioTheme.canvasBackground.ignoresSafeArea()
+                // Background void filling full screen
+                StudioTheme.canvasBackground
+                    .ignoresSafeArea()
                 
-                // Centered Mountain Canvas
+                // Centered Mountain Canvas Container
                 ZStack {
-                    // 1. Mountain Map Imagery
+                    // 1. Mountain Map Imagery (Exactly matches 600x340 CRS coordinate space)
                     if let platformImg = store.imageLoader.displayedImage {
                         #if canImport(UIKit)
                         Image(uiImage: platformImg)
                             .resizable()
                             .interpolation(.high)
-                            .aspectRatio(contentMode: .fit)
                             .frame(width: baseSize.width, height: baseSize.height)
                         #elseif canImport(AppKit)
                         Image(nsImage: platformImg)
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
                             .frame(width: baseSize.width, height: baseSize.height)
                         #endif
                     } else {
@@ -89,9 +88,24 @@ public struct MapCanvasView: View {
                 .frame(width: baseSize.width, height: baseSize.height)
                 .scaleEffect(totalScale)
                 .offset(totalOffset)
-                .gesture(canvasMagnificationGesture)
-                .simultaneousGesture(canvasPanGesture)
+                .gesture(
+                    SimultaneousGesture(
+                        canvasMagnificationGesture(baseSize: baseSize, viewportSize: viewportSize),
+                        canvasPanGesture(baseSize: baseSize, viewportSize: viewportSize)
+                    )
+                )
                 .simultaneousGesture(canvasTapGesture(canvasSize: baseSize, totalScale: totalScale, totalOffset: totalOffset, viewportSize: viewportSize))
+                .onTapGesture(count: 2) {
+                    withAnimation(.spring(response: 0.35)) {
+                        if zoomScale > 1.2 {
+                            zoomScale = 1.0
+                            panOffset = .zero
+                        } else {
+                            zoomScale = 3.0
+                            store.imageLoader.notifyZoomScale(3.0, baseURL: MapStudioAPIClient.shared.baseURLString)
+                        }
+                    }
+                }
                 
                 // 4. Floating HUD (Zoom controls, zoom level & HD badge)
                 VStack {
@@ -115,11 +129,12 @@ public struct MapCanvasView: View {
                     }
                     Spacer()
                     
-                    // Bottom-left Zoom Controls & Scale Indicator
+                    // Bottom-left Zoom Controls & Multiplier Indicator
                     HStack(spacing: 8) {
                         Button {
                             withAnimation(.spring(response: 0.3)) {
                                 zoomScale = min(maxZoomScale, zoomScale * 1.5)
+                                clampPanOffset(baseSize: baseSize, viewportSize: viewportSize)
                                 store.imageLoader.notifyZoomScale(zoomScale, baseURL: MapStudioAPIClient.shared.baseURLString)
                             }
                         } label: {
@@ -138,6 +153,8 @@ public struct MapCanvasView: View {
                                 if zoomScale <= 1.05 {
                                     zoomScale = 1.0
                                     panOffset = .zero
+                                } else {
+                                    clampPanOffset(baseSize: baseSize, viewportSize: viewportSize)
                                 }
                             }
                         } label: {
@@ -180,7 +197,8 @@ public struct MapCanvasView: View {
                         Spacer()
                     }
                     .padding(.leading, 16)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 16)
+                    .safeAreaPadding(.bottom)
                 }
             }
         }
@@ -227,7 +245,6 @@ public struct MapCanvasView: View {
         let midRadius = max(1.0, 6.0 / totalScale)
         
         for seg in store.segments {
-            // If currently editing this segment, the active overlay draws it with handles
             if let activeId = editingSegId, seg.id == activeId { continue }
             
             // Filter checks
@@ -464,40 +481,60 @@ public struct MapCanvasView: View {
         }
     }
     
-    // MARK: - Gestures
+    // MARK: - Gestures & Pan Clamping
     
-    private var canvasMagnificationGesture: some Gesture {
+    private func clampPanOffset(baseSize: CGSize, viewportSize: CGSize) {
+        if zoomScale <= 1.05 {
+            withAnimation(.spring(response: 0.25)) {
+                panOffset = .zero
+            }
+            return
+        }
+        
+        let overflowX = max(0, (baseSize.width * zoomScale - viewportSize.width) / 2)
+        let overflowY = max(0, (baseSize.height * zoomScale - viewportSize.height) / 2)
+        let maxPanX = overflowX + 60
+        let maxPanY = overflowY + 60
+        
+        withAnimation(.spring(response: 0.25)) {
+            panOffset.width = min(maxPanX, max(-maxPanX, panOffset.width))
+            panOffset.height = min(maxPanY, max(-maxPanY, panOffset.height))
+        }
+    }
+    
+    private func canvasMagnificationGesture(baseSize: CGSize, viewportSize: CGSize) -> some Gesture {
         MagnificationGesture()
             .onChanged { delta in
-                currentZoomDelta = delta
+                activeZoomDelta = delta
             }
             .onEnded { delta in
                 zoomScale = max(minZoomScale, min(maxZoomScale, zoomScale * delta))
-                currentZoomDelta = 1.0
+                activeZoomDelta = 1.0
+                clampPanOffset(baseSize: baseSize, viewportSize: viewportSize)
                 store.imageLoader.notifyZoomScale(zoomScale, baseURL: MapStudioAPIClient.shared.baseURLString)
             }
     }
     
-    private var canvasPanGesture: some Gesture {
-        DragGesture(minimumDistance: 10)
+    private func canvasPanGesture(baseSize: CGSize, viewportSize: CGSize) -> some Gesture {
+        DragGesture(minimumDistance: 6)
             .onChanged { val in
-                // Only pan if not currently dragging a vertex
-                if draggingVertexIndex == nil {
-                    currentPanDelta = val.translation
-                }
+                guard draggingVertexIndex == nil else { return }
+                activePanDelta = val.translation
             }
             .onEnded { val in
-                if draggingVertexIndex == nil {
-                    panOffset.width += val.translation.width
-                    panOffset.height += val.translation.height
-                    currentPanDelta = .zero
-                }
+                guard draggingVertexIndex == nil else { return }
+                panOffset.width += val.translation.width
+                panOffset.height += val.translation.height
+                activePanDelta = .zero
+                clampPanOffset(baseSize: baseSize, viewportSize: viewportSize)
             }
     }
     
     private func canvasTapGesture(canvasSize: CGSize, totalScale: CGFloat, totalOffset: CGSize, viewportSize: CGSize) -> some Gesture {
         SpatialTapGesture()
             .onEnded { val in
+                guard draggingVertexIndex == nil else { return }
+                
                 // Convert viewport touch to mountain canvas coordinate
                 let localX = (val.location.x - viewportSize.width / 2 - totalOffset.width) / totalScale + canvasSize.width / 2
                 let localY = (val.location.y - viewportSize.height / 2 - totalOffset.height) / totalScale + canvasSize.height / 2
@@ -510,7 +547,6 @@ public struct MapCanvasView: View {
                 var mapPt = MapCoordinateSpace.screenToMap(screenPoint: tapPoint, in: canvasSize)
                 
                 if store.editorMode.isDrawing || (store.editorMode != .browse && store.appendMode) {
-                    // Check snap
                     if store.snapEnabled {
                         if let snap = MapCoordinateSpace.findSnapTarget(
                             for: mapPt,
@@ -523,7 +559,6 @@ public struct MapCanvasView: View {
                     }
                     store.addPoint(mapPt)
                 } else if store.editorMode == .browse {
-                    // Hit test segments to select
                     hitTestSegments(at: mapPt, totalScale: totalScale)
                 }
             }

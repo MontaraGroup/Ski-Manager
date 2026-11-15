@@ -104,17 +104,32 @@ public final class MapStudioStore: ObservableObject {
     }
     
     public func selectMountain(key: String) async {
-        guard key != currentMapKey || currentMapConfig == nil else { return }
         self.currentMapKey = key
         cancelEditing()
         
+        // Immediately switch the active config from available/default maps so UI responds instantly
+        if let config = self.availableMaps[key] ?? StudioMapConfig.defaultMaps[key] {
+            self.currentMapConfig = config
+            imageLoader.loadMap(config: config, baseURL: apiClient.baseURLString)
+        }
+        
+        // Reset or load initial segments for this mountain
+        if key == "ParkCity" {
+            self.segments = StudioSegment.defaultParkCitySegments
+            self.sectors = StudioSector.defaultParkCitySectors
+        } else {
+            self.segments = []
+            self.sectors = []
+        }
+        
+        // Attempt server change-map and load segments
         do {
             try await apiClient.changeMap(mapKey: key)
-            await loadSegments(mapKey: key)
         } catch {
-            // Still attempt to load segments directly with query param
-            await loadSegments(mapKey: key)
+            // Server may not have change-map endpoint or be on production
         }
+        
+        await loadSegments(mapKey: key)
     }
     
     public func loadSegments(mapKey: String) async {
@@ -122,22 +137,23 @@ public final class MapStudioStore: ObservableObject {
             let payload = try await apiClient.fetchSegments(map: mapKey)
             self.currentMapKey = payload.resortMap
             self.currentMapConfig = payload.mapConfig
-            if !payload.sectors.isEmpty {
-                self.sectors = payload.sectors
-            }
+            self.sectors = payload.sectors
             if !payload.segments.isEmpty {
                 self.segments = payload.segments
-            } else if mapKey == "ParkCity" && self.segments.isEmpty {
+            } else if mapKey == "ParkCity" {
                 self.segments = StudioSegment.defaultParkCitySegments
+            } else {
+                self.segments = []
             }
             
             imageLoader.loadMap(config: payload.mapConfig, baseURL: apiClient.baseURLString)
+            showToast("\(payload.mapConfig.name) loaded (\(self.segments.count) paths)")
         } catch {
             if self.segments.isEmpty && mapKey == "ParkCity" {
                 self.segments = StudioSegment.defaultParkCitySegments
                 self.sectors = StudioSector.defaultParkCitySectors
             }
-            showToast("Showing mountain paths (\(self.segments.count) loaded)")
+            showToast("\(currentMapConfig?.name ?? mapKey) ready")
         }
     }
     

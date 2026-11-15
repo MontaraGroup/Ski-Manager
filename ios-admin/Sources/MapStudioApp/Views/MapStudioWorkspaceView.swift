@@ -18,7 +18,7 @@ public struct MapStudioWorkspaceView: View {
                 // Floating Action Toolbar
                 EditorToolbarView(store: store)
                     .padding(.horizontal, 16)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                 
                 // Status / Save Pill (if saving, offline, or toast)
                 HStack {
@@ -29,6 +29,7 @@ public struct MapStudioWorkspaceView: View {
                 
                 Spacer()
             }
+            .safeAreaPadding(.top)
             
             // Toast Notification Overlay
             if let toast = store.toastMessage {
@@ -54,6 +55,7 @@ public struct MapStudioWorkspaceView: View {
                     .padding(.bottom, 28)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                .safeAreaPadding(.bottom)
                 .animation(.spring(response: 0.3), value: store.toastMessage)
             }
         }

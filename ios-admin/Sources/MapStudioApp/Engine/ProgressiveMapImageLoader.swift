@@ -39,26 +39,45 @@ public final class ProgressiveMapImageLoader: ObservableObject {
             return
         }
         self.currentConfig = config
-        self.displayedImage = nil
         self.loadedTier = .none
         self.isLoadingHighRes = false
+        
+        // 1. Immediately check for local bundled image for instant cold-start display
+        let localName = (config.image as NSString).lastPathComponent
+        let baseName = (localName as NSString).deletingPathExtension
+        #if canImport(UIKit)
+        if let bundlePath = Bundle.main.path(forResource: baseName, ofType: "jpg") ?? Bundle.main.path(forResource: config.key, ofType: "jpg"),
+           let localImg = UIImage(contentsOfFile: bundlePath) {
+            self.displayedImage = localImg
+            self.loadedTier = .low
+        } else {
+            self.displayedImage = nil
+        }
+        #elseif canImport(AppKit)
+        if let bundlePath = Bundle.main.path(forResource: baseName, ofType: "jpg") ?? Bundle.main.path(forResource: config.key, ofType: "jpg"),
+           let localImg = NSImage(contentsOfFile: bundlePath) {
+            self.displayedImage = localImg
+            self.loadedTier = .low
+        } else {
+            self.displayedImage = nil
+        }
+        #endif
         
         let urls = config.urls
         let lowUrlStr = resolveUrl(urls.low, fallback: urls.fallbackLow, baseURL: baseURL)
         let medUrlStr = resolveUrl(urls.med, fallback: urls.fallbackMed, baseURL: baseURL)
         
-        // 1. Immediately load low
+        // 2. Fetch progressive web variants
         Task {
             if let lowImg = await fetchImage(urlString: lowUrlStr) {
-                if currentConfig?.key == config.key && loadedTier < .low {
+                if self.currentConfig?.key == config.key && self.loadedTier <= .low {
                     self.displayedImage = lowImg
                     self.loadedTier = .low
                 }
             }
             
-            // 2. Seamlessly upgrade to medium
             if let medImg = await fetchImage(urlString: medUrlStr) {
-                if currentConfig?.key == config.key && loadedTier < .med {
+                if self.currentConfig?.key == config.key && self.loadedTier < .med {
                     self.displayedImage = medImg
                     self.loadedTier = .med
                 }

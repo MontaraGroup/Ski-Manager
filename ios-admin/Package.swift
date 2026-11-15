@@ -19,7 +19,10 @@ let package = Package(
             name: "MapStudioApp",
             dependencies: [],
             path: "Sources/MapStudioApp",
-            exclude: ["Resources/DefaultParkCitySegments.json"]
+            exclude: [
+                "Resources/DefaultParkCitySegments.json",
+                "Resources/ParkCity.jpg"
+            ]
         )
     ]
 )

@@ -242,6 +242,79 @@ public struct StudioMapConfig: Identifiable, Codable, Equatable {
         case adminImage = "admin_image"
     }
 
+    public init(
+        key: String,
+        name: String,
+        location: String,
+        width: Double,
+        height: Double,
+        image: String,
+        adminImage: String? = nil,
+        urls: StudioMapUrls
+    ) {
+        self.key = key
+        self.name = name
+        self.location = location
+        self.width = width
+        self.height = height
+        self.image = image
+        self.adminImage = adminImage
+        self.urls = urls
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        let decodedImage = (try? container.decode(String.self, forKey: .image)) ?? "/img/ParkCity.jpg"
+        self.image = decodedImage
+        self.adminImage = try? container.decodeIfPresent(String.self, forKey: .adminImage)
+        
+        if let decodedKey = try? container.decode(String.self, forKey: .key), !decodedKey.isEmpty {
+            self.key = decodedKey
+        } else {
+            let fn = (decodedImage as NSString).lastPathComponent
+            let baseName = (fn as NSString).deletingPathExtension
+                .replacingOccurrences(of: "-Big", with: "")
+                .replacingOccurrences(of: "_low", with: "")
+                .replacingOccurrences(of: "_med", with: "")
+            self.key = baseName.isEmpty ? "ParkCity" : baseName
+        }
+        
+        self.name = (try? container.decode(String.self, forKey: .name)) ?? self.key
+        self.location = (try? container.decode(String.self, forKey: .location)) ?? ""
+        
+        if let wDbl = try? container.decode(Double.self, forKey: .width) {
+            self.width = wDbl
+        } else if let wInt = try? container.decode(Int.self, forKey: .width) {
+            self.width = Double(wInt)
+        } else {
+            self.width = 600.0
+        }
+        
+        if let hDbl = try? container.decode(Double.self, forKey: .height) {
+            self.height = hDbl
+        } else if let hInt = try? container.decode(Int.self, forKey: .height) {
+            self.height = Double(hInt)
+        } else {
+            self.height = 340.0
+        }
+        
+        if let decodedUrls = try? container.decode(StudioMapUrls.self, forKey: .urls) {
+            self.urls = decodedUrls
+        } else {
+            let activeImg = self.adminImage ?? self.image
+            let basePath = (activeImg as NSString).deletingPathExtension
+            self.urls = StudioMapUrls(
+                low: "\(basePath)_low.jpg",
+                med: "\(basePath)_med.jpg",
+                full: activeImg,
+                fallbackLow: "\(basePath)_low.jpg",
+                fallbackMed: "\(basePath)_med.jpg",
+                fallbackFull: activeImg
+            )
+        }
+    }
+
     public static let defaultMaps: [String: StudioMapConfig] = [
         "ParkCity": StudioMapConfig(
             key: "ParkCity",
