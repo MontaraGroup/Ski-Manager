@@ -635,6 +635,16 @@ export default function ResortMapPage(props: ResortMapProps) {
 
                     <Button
                       size="sm"
+                      variant="outline"
+                      onPress={() => engineRef.current?.redo()}
+                      className="h-7 text-xs text-foreground"
+                      aria-label="Redo point (Shift+Z)"
+                    >
+                      <Icon name="fa-rotate-right" /> Redo
+                    </Button>
+
+                    <Button
+                      size="sm"
                       variant="secondary"
                       onPress={() => engineRef.current?.saveEditor(false)}
                       className="h-7 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500"
@@ -668,8 +678,20 @@ export default function ResortMapPage(props: ResortMapProps) {
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-1 text-xs text-muted">
                     <span>
-                      <b>Click map</b> to add • <b>Drag dots</b> to move • <b>Click/drag + midpoints</b> to bend •{' '}
-                      <b>Right-click</b> point to delete
+                      {editorState.mode === 'draw' && editorState.type === 'lift' ? (
+                        <>
+                          <b>Click</b> the bottom station, then the top: the lift saves itself • <b>Shift-click</b> the top to add bends
+                        </>
+                      ) : editorState.mode === 'draw' ? (
+                        <>
+                          <b>Click</b> from the top down • <b>Double-click</b> or <b>Enter</b> to finish • <b>Alt</b> to skip snapping
+                        </>
+                      ) : (
+                        <>
+                          <b>Click map</b> to add • <b>Drag dots</b> to move • <b>Click/drag + midpoints</b> to bend •{' '}
+                          <b>Right-click</b> point to delete
+                        </>
+                      )}
                     </span>
                     {editorState.snapStatus && (
                       <span className="font-mono text-link">Snapped: {editorState.snapStatus}</span>
@@ -1057,6 +1079,8 @@ export default function ResortMapPage(props: ResortMapProps) {
                                 setSegments(updated);
                                 engineRef.current?.setFilter(mapFilter);
                                 triggerToast(`Deleted "${seg.name || 'Segment'}"`, 'success');
+                              } else {
+                                triggerToast(res?.error || 'Failed to delete segment', 'error');
                               }
                             });
                           }}
