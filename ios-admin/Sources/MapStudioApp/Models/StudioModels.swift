@@ -428,3 +428,22 @@ public enum StudioEditorMode: Equatable {
         }
     }
 }
+
+// MARK: - Built-in Resort Segments & Sectors
+extension StudioSegment {
+    public static let defaultParkCitySegments: [StudioSegment] = {
+        guard let data = DefaultParkCityData.rawJSON.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode([StudioSegment].self, from: data) else {
+            return []
+        }
+        return decoded
+    }()
+}
+
+extension StudioSector {
+    public static let defaultParkCitySectors: [StudioSector] = [
+        StudioSector(id: 6, name: "Park City Mountain", color: "#3B82F6", description: "Main mountain area", boundaryPoints: [], visible: true),
+        StudioSector(id: 2, name: "Canyons Village", color: "#10B981", description: "Canyons side", boundaryPoints: [], visible: true)
+    ]
+}
+

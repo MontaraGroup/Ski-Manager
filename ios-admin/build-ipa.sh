@@ -54,8 +54,11 @@ else
         $SWIFT_FILES
 fi
 
-echo "Copying Info.plist..."
+echo "Copying Info.plist and Resources..."
 cp Info.plist "$APP_DIR/Info.plist"
+if [ -d "Sources/MapStudioApp/Resources" ]; then
+    cp -R Sources/MapStudioApp/Resources/* "$APP_DIR/" 2>/dev/null || true
+fi
 
 echo "Ad-hoc codesigning app bundle (no developer identity / unsigned)..."
 codesign --force --deep --sign - "$APP_DIR"

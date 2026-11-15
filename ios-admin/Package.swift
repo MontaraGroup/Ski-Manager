@@ -18,7 +18,8 @@ let package = Package(
         .executableTarget(
             name: "MapStudioApp",
             dependencies: [],
-            path: "Sources/MapStudioApp"
+            path: "Sources/MapStudioApp",
+            exclude: ["Resources/DefaultParkCitySegments.json"]
         )
     ]
 )

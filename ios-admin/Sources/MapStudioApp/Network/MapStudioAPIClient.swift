@@ -202,8 +202,12 @@ public final class MapStudioAPIClient: @unchecked Sendable {
     // MARK: - Maps & Segments API
     
     public func fetchMaps() async throws -> StudioMapsPayload {
-        let req = try makeRequest(path: "/api/v1/app/admin/map/maps")
-        return try await execute(request: req)
+        do {
+            let req = try makeRequest(path: "/api/v1/app/admin/map/maps")
+            return try await execute(request: req)
+        } catch {
+            return StudioMapsPayload(currentMap: "ParkCity", maps: StudioMapConfig.defaultMaps)
+        }
     }
     
     public func fetchSegments(map: String? = nil) async throws -> StudioSegmentsPayload {
@@ -211,8 +215,19 @@ public final class MapStudioAPIClient: @unchecked Sendable {
         if let mapKey = map {
             queryItems = [URLQueryItem(name: "map", value: mapKey)]
         }
-        let req = try makeRequest(path: "/api/v1/app/admin/map", queryItems: queryItems)
-        return try await execute(request: req)
+        do {
+            let req = try makeRequest(path: "/api/v1/app/admin/map", queryItems: queryItems)
+            return try await execute(request: req)
+        } catch let err as MapStudioAPIError {
+            switch err {
+            case .serverError(let code, _) where code == 404:
+                // Fall back to live production /api/v1/app/map endpoint
+                let fallbackReq = try makeRequest(path: "/api/v1/app/map", queryItems: queryItems)
+                return try await execute(request: fallbackReq)
+            default:
+                throw err
+            }
+        }
     }
     
     public func changeMap(mapKey: String) async throws {

@@ -4,6 +4,9 @@ public struct MapCanvasView: View {
     @ObservedObject var store: MapStudioStore
     
     // Zoom and Pan State
+    private let minZoomScale: CGFloat = 1.0
+    private let maxZoomScale: CGFloat = 36.0
+    
     @State private var zoomScale: CGFloat = 1.0
     @State private var currentZoomDelta: CGFloat = 1.0
     @State private var panOffset: CGSize = .zero
@@ -11,7 +14,7 @@ public struct MapCanvasView: View {
     
     // Active dragging vertex
     @State private var draggingVertexIndex: Int? = nil
-    @State private var draggingPosition: CGPoint? = nil
+    @State private var dragInitialVertexPoint: StudioPoint? = nil
     
     public init(store: MapStudioStore) {
         self.store = store
@@ -35,7 +38,7 @@ public struct MapCanvasView: View {
                 }
             }()
             
-            let totalScale = max(1.0, min(8.0, zoomScale * currentZoomDelta))
+            let totalScale = max(minZoomScale, min(maxZoomScale, zoomScale * currentZoomDelta))
             let totalOffset = CGSize(
                 width: panOffset.width + currentPanDelta.width,
                 height: panOffset.height + currentPanDelta.height
@@ -74,14 +77,14 @@ public struct MapCanvasView: View {
                     
                     // 2. Vector Map Geometry Overlay
                     Canvas { context, size in
-                        renderSectors(context: context, canvasSize: size)
-                        renderSegments(context: context, canvasSize: size)
-                        renderEditorActiveOverlay(context: context, canvasSize: size)
+                        renderSectors(context: context, canvasSize: size, totalScale: totalScale)
+                        renderSegments(context: context, canvasSize: size, totalScale: totalScale)
+                        renderEditorActiveOverlay(context: context, canvasSize: size, totalScale: totalScale)
                     }
                     .frame(width: baseSize.width, height: baseSize.height)
                     
                     // 3. Interactive Handles Overlay (Vertices & Midpoints)
-                    interactiveHandlesOverlay(canvasSize: baseSize)
+                    interactiveHandlesOverlay(canvasSize: baseSize, totalScale: totalScale)
                 }
                 .frame(width: baseSize.width, height: baseSize.height)
                 .scaleEffect(totalScale)
@@ -90,7 +93,7 @@ public struct MapCanvasView: View {
                 .simultaneousGesture(canvasPanGesture)
                 .simultaneousGesture(canvasTapGesture(canvasSize: baseSize, totalScale: totalScale, totalOffset: totalOffset, viewportSize: viewportSize))
                 
-                // 4. Floating HUD (Zoom controls & HD badge)
+                // 4. Floating HUD (Zoom controls, zoom level & HD badge)
                 VStack {
                     HStack {
                         Spacer()
@@ -112,11 +115,11 @@ public struct MapCanvasView: View {
                     }
                     Spacer()
                     
-                    // Bottom-left Zoom Controls
+                    // Bottom-left Zoom Controls & Scale Indicator
                     HStack(spacing: 8) {
                         Button {
                             withAnimation(.spring(response: 0.3)) {
-                                zoomScale = min(8.0, zoomScale * 1.3)
+                                zoomScale = min(maxZoomScale, zoomScale * 1.5)
                                 store.imageLoader.notifyZoomScale(zoomScale, baseURL: MapStudioAPIClient.shared.baseURLString)
                             }
                         } label: {
@@ -131,8 +134,11 @@ public struct MapCanvasView: View {
                         
                         Button {
                             withAnimation(.spring(response: 0.3)) {
-                                zoomScale = max(1.0, zoomScale / 1.3)
-                                if zoomScale == 1.0 { panOffset = .zero }
+                                zoomScale = max(minZoomScale, zoomScale / 1.5)
+                                if zoomScale <= 1.05 {
+                                    zoomScale = 1.0
+                                    panOffset = .zero
+                                }
                             }
                         } label: {
                             Image(systemName: "minus")
@@ -160,6 +166,17 @@ public struct MapCanvasView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(StudioTheme.borderSubtle, lineWidth: 1))
                         }
                         
+                        // Zoom multiplier badge
+                        Text(String(format: "%.1fx", totalScale))
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .frame(height: 38)
+                            .background(StudioTheme.panelGlass)
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(StudioTheme.borderSubtle, lineWidth: 1))
+                        
                         Spacer()
                     }
                     .padding(.leading, 16)
@@ -171,7 +188,7 @@ public struct MapCanvasView: View {
     
     // MARK: - Canvas Rendering (Core Graphics / SwiftUI Canvas)
     
-    private func renderSectors(context: GraphicsContext, canvasSize: CGSize) {
+    private func renderSectors(context: GraphicsContext, canvasSize: CGSize, totalScale: CGFloat) {
         guard store.showSectorPolygons else { return }
         
         for sector in store.sectors {
@@ -190,16 +207,24 @@ public struct MapCanvasView: View {
             let col = Color(hex: sector.color)
             context.fill(path, with: .color(col.opacity(0.18)))
             
-            let strokeStyle = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round, dash: [6, 4])
+            let sWidth = max(1.0, 2.0 / totalScale)
+            let sDash: [CGFloat] = [max(1.0, 6.0 / totalScale), max(1.0, 4.0 / totalScale)]
+            let strokeStyle = StrokeStyle(lineWidth: sWidth, lineCap: .round, lineJoin: .round, dash: sDash)
             context.stroke(path, with: .color(col), style: strokeStyle)
         }
     }
     
-    private func renderSegments(context: GraphicsContext, canvasSize: CGSize) {
+    private func renderSegments(context: GraphicsContext, canvasSize: CGSize, totalScale: CGFloat) {
         let editingSegId: Int? = {
             if case .editSegment(let id) = store.editorMode { return id }
             return nil
         }()
+        
+        let liftLineWidth = max(1.2, min(7.0, 3.8 + 0.6 * log2(totalScale))) / totalScale
+        let liftDash: [CGFloat] = [max(1.0, 9.0 / totalScale), max(1.0, 5.0 / totalScale)]
+        let slopeLineWidth = max(1.2, min(7.5, 3.6 + 0.8 * log2(totalScale))) / totalScale
+        let stationRadius = max(1.0, 6.0 / totalScale)
+        let midRadius = max(1.0, 6.0 / totalScale)
         
         for seg in store.segments {
             // If currently editing this segment, the active overlay draws it with handles
@@ -229,51 +254,56 @@ public struct MapCanvasView: View {
             
             // Halo if selected
             if isSelected {
+                let haloWidth = max(3.0, 11.0 / totalScale)
                 context.stroke(
                     path,
                     with: .color(Color.white.opacity(0.65)),
-                    style: StrokeStyle(lineWidth: 12, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: haloWidth, lineCap: .round, lineJoin: .round)
                 )
             }
             
             if seg.isLift {
                 // Lift: Dashed amber line
-                let style = StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round, dash: [8, 5])
+                let style = StrokeStyle(lineWidth: liftLineWidth, lineCap: .round, lineJoin: .round, dash: liftDash)
                 context.stroke(path, with: .color(baseColor), style: style)
                 
                 // Draw Base Station 'S' and Top Station 'E'
                 let baseScreen = MapCoordinateSpace.mapToScreen(point: pts[0], in: canvasSize)
                 let topScreen = MapCoordinateSpace.mapToScreen(point: pts[pts.count - 1], in: canvasSize)
                 
-                context.fill(Path(ellipseIn: CGRect(x: baseScreen.x - 5, y: baseScreen.y - 5, width: 10, height: 10)), with: .color(StudioTheme.baseStationColor))
-                context.fill(Path(ellipseIn: CGRect(x: topScreen.x - 5, y: topScreen.y - 5, width: 10, height: 10)), with: .color(StudioTheme.topStationColor))
+                let baseRect = CGRect(x: baseScreen.x - stationRadius, y: baseScreen.y - stationRadius, width: stationRadius * 2, height: stationRadius * 2)
+                let topRect = CGRect(x: topScreen.x - stationRadius, y: topScreen.y - stationRadius, width: stationRadius * 2, height: stationRadius * 2)
+                
+                context.fill(Path(ellipseIn: baseRect), with: .color(StudioTheme.baseStationColor))
+                context.fill(Path(ellipseIn: topRect), with: .color(StudioTheme.topStationColor))
                 
                 // Draw Midstations if any
                 for mid in seg.parsedMidstations {
                     let midScreen = MapCoordinateSpace.mapToScreen(point: mid, in: canvasSize)
                     var diamond = Path()
-                    diamond.move(to: CGPoint(x: midScreen.x, y: midScreen.y - 6))
-                    diamond.addLine(to: CGPoint(x: midScreen.x + 6, y: midScreen.y))
-                    diamond.addLine(to: CGPoint(x: midScreen.x, y: midScreen.y + 6))
-                    diamond.addLine(to: CGPoint(x: midScreen.x - 6, y: midScreen.y))
+                    diamond.move(to: CGPoint(x: midScreen.x, y: midScreen.y - midRadius))
+                    diamond.addLine(to: CGPoint(x: midScreen.x + midRadius, y: midScreen.y))
+                    diamond.addLine(to: CGPoint(x: midScreen.x, y: midScreen.y + midRadius))
+                    diamond.addLine(to: CGPoint(x: midScreen.x - midRadius, y: midScreen.y))
                     diamond.closeSubpath()
                     context.fill(diamond, with: .color(StudioTheme.midstationColor))
                 }
             } else {
                 // Slope: Solid (or dashed for crosscountry)
                 let isDashed = seg.type.lowercased() == "crosscountry" || seg.type.lowercased() == "luge"
+                let slopeDash: [CGFloat] = isDashed ? [max(1.0, 6.0 / totalScale), max(1.0, 4.0 / totalScale)] : []
                 let style = StrokeStyle(
-                    lineWidth: 4.5,
+                    lineWidth: slopeLineWidth,
                     lineCap: .round,
                     lineJoin: .round,
-                    dash: isDashed ? [6, 4] : []
+                    dash: slopeDash
                 )
                 context.stroke(path, with: .color(baseColor), style: style)
             }
         }
     }
     
-    private func renderEditorActiveOverlay(context: GraphicsContext, canvasSize: CGSize) {
+    private func renderEditorActiveOverlay(context: GraphicsContext, canvasSize: CGSize, totalScale: CGFloat) {
         guard store.editorMode != .browse && !store.editorPoints.isEmpty else { return }
         
         let pts = store.editorPoints
@@ -286,34 +316,41 @@ public struct MapCanvasView: View {
         if case .drawSectorBoundary = store.editorMode {
             path.closeSubpath()
             context.fill(path, with: .color(StudioTheme.blueDifficulty.opacity(0.2)))
-            context.stroke(path, with: .color(StudioTheme.blueDifficulty), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round, dash: [6, 4]))
+            let bWidth = max(1.0, 3.0 / totalScale)
+            let bDash: [CGFloat] = [max(1.0, 6.0 / totalScale), max(1.0, 4.0 / totalScale)]
+            context.stroke(path, with: .color(StudioTheme.blueDifficulty), style: StrokeStyle(lineWidth: bWidth, lineCap: .round, lineJoin: .round, dash: bDash))
         } else {
             let isLift = store.editorType.lowercased() == "lift"
             let accentColor = isLift ? StudioTheme.liftColor : StudioTheme.colorForSlopeType(store.editorType, fallbackDifficulty: store.editorDifficulty)
             
             // Halo
-            context.stroke(path, with: .color(Color.white.opacity(0.4)), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+            let activeHalo = max(3.0, 11.0 / totalScale)
+            context.stroke(path, with: .color(Color.white.opacity(0.4)), style: StrokeStyle(lineWidth: activeHalo, lineCap: .round, lineJoin: .round))
             
             // Line
-            let dash: [CGFloat] = isLift ? [8, 5] : []
-            context.stroke(path, with: .color(accentColor), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round, dash: dash))
+            let activeLineWidth = max(1.5, min(8.0, 4.2 + 0.8 * log2(totalScale))) / totalScale
+            let dash: [CGFloat] = isLift ? [max(1.0, 8.0 / totalScale), max(1.0, 5.0 / totalScale)] : []
+            context.stroke(path, with: .color(accentColor), style: StrokeStyle(lineWidth: activeLineWidth, lineCap: .round, lineJoin: .round, dash: dash))
         }
         
         // Draw Magnetic Snap indicator ring if active
         if let snap = store.currentSnapTarget {
             let snapScreen = MapCoordinateSpace.mapToScreen(point: snap.snappedPoint, in: canvasSize)
-            let snapRect = CGRect(x: snapScreen.x - 14, y: snapScreen.y - 14, width: 28, height: 28)
-            context.stroke(Path(ellipseIn: snapRect), with: .color(StudioTheme.borderActive), style: StrokeStyle(lineWidth: 2.5, dash: [4, 4]))
+            let snapRadius = max(3.0, 14.0 / totalScale)
+            let snapRect = CGRect(x: snapScreen.x - snapRadius, y: snapScreen.y - snapRadius, width: snapRadius * 2, height: snapRadius * 2)
+            let ringWidth = max(1.0, 2.5 / totalScale)
+            let ringDash: [CGFloat] = [max(1.0, 4.0 / totalScale), max(1.0, 4.0 / totalScale)]
+            context.stroke(Path(ellipseIn: snapRect), with: .color(StudioTheme.borderActive), style: StrokeStyle(lineWidth: ringWidth, dash: ringDash))
         }
     }
     
     // MARK: - Interactive Handles (SwiftUI Views for Vertex & Midpoint Drags)
     
     @ViewBuilder
-    private func interactiveHandlesOverlay(canvasSize: CGSize) -> some View {
+    private func interactiveHandlesOverlay(canvasSize: CGSize, totalScale: CGFloat) -> some View {
         if store.editorMode != .browse {
             ZStack {
-                // 1. Midpoint '+' Handles (Click or drag to bend line)
+                // 1. Midpoint '+' Handles (Click to insert vertex)
                 if store.editorPoints.count >= 2 {
                     ForEach(0..<(store.editorPoints.count - 1), id: \.self) { idx in
                         let p1 = MapCoordinateSpace.mapToScreen(point: store.editorPoints[idx], in: canvasSize)
@@ -322,9 +359,10 @@ public struct MapCanvasView: View {
                         
                         Circle()
                             .fill(StudioTheme.borderActive)
-                            .frame(width: 18, height: 18)
+                            .frame(width: 20, height: 20)
                             .overlay(Text("+").font(.system(size: 14, weight: .bold)).foregroundColor(.black))
-                            .shadow(radius: 3)
+                            .shadow(radius: 2)
+                            .scaleEffect(1.0 / totalScale)
                             .position(mid)
                             .onTapGesture {
                                 let newMapPt = MapCoordinateSpace.screenToMap(screenPoint: mid, in: canvasSize)
@@ -349,7 +387,7 @@ public struct MapCanvasView: View {
                     ZStack {
                         Circle()
                             .fill(handleColor)
-                            .frame(width: 22, height: 22)
+                            .frame(width: 24, height: 24)
                             .shadow(color: .black.opacity(0.5), radius: 3)
                         
                         if isStart {
@@ -363,15 +401,32 @@ public struct MapCanvasView: View {
                         if isSelected {
                             Circle()
                                 .stroke(StudioTheme.borderActive, lineWidth: 3)
-                                .frame(width: 32, height: 32)
+                                .frame(width: 34, height: 34)
                         }
                     }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .scaleEffect(1.0 / totalScale)
                     .position(screenPt)
                     .gesture(
-                        DragGesture(minimumDistance: 1, coordinateSpace: .local)
+                        DragGesture(minimumDistance: 1)
                             .onChanged { val in
-                                draggingVertexIndex = idx
-                                var mapPt = MapCoordinateSpace.screenToMap(screenPoint: val.location, in: canvasSize)
+                                if draggingVertexIndex != idx {
+                                    draggingVertexIndex = idx
+                                    dragInitialVertexPoint = store.editorPoints[idx]
+                                }
+                                guard let startPt = dragInitialVertexPoint else { return }
+                                
+                                let deltaCanvasX = val.translation.width / totalScale
+                                let deltaCanvasY = val.translation.height / totalScale
+                                let deltaMapX = deltaCanvasX * (600.0 / canvasSize.width)
+                                let deltaMapY = -deltaCanvasY * (340.0 / canvasSize.height)
+                                
+                                var mapPt = StudioPoint(
+                                    y: max(0, min(340, startPt.y + deltaMapY)),
+                                    x: max(0, min(600, startPt.x + deltaMapX))
+                                )
+                                
                                 if store.snapEnabled {
                                     if let target = MapCoordinateSpace.findSnapTarget(
                                         for: mapPt,
@@ -389,6 +444,7 @@ public struct MapCanvasView: View {
                             }
                             .onEnded { _ in
                                 draggingVertexIndex = nil
+                                dragInitialVertexPoint = nil
                                 store.currentSnapTarget = nil
                                 store.pushUndoState()
                             }
@@ -416,7 +472,7 @@ public struct MapCanvasView: View {
                 currentZoomDelta = delta
             }
             .onEnded { delta in
-                zoomScale = max(1.0, min(8.0, zoomScale * delta))
+                zoomScale = max(minZoomScale, min(maxZoomScale, zoomScale * delta))
                 currentZoomDelta = 1.0
                 store.imageLoader.notifyZoomScale(zoomScale, baseURL: MapStudioAPIClient.shared.baseURLString)
             }
@@ -468,13 +524,13 @@ public struct MapCanvasView: View {
                     store.addPoint(mapPt)
                 } else if store.editorMode == .browse {
                     // Hit test segments to select
-                    hitTestSegments(at: mapPt)
+                    hitTestSegments(at: mapPt, totalScale: totalScale)
                 }
             }
     }
     
-    private func hitTestSegments(at mapPt: StudioPoint) {
-        let thresholdMapUnits = 14.0
+    private func hitTestSegments(at mapPt: StudioPoint, totalScale: CGFloat) {
+        let thresholdMapUnits = max(2.0, 14.0 / totalScale)
         var bestSeg: StudioSegment? = nil
         var bestDist = thresholdMapUnits
         

@@ -60,6 +60,16 @@ public final class MapStudioStore: ObservableObject {
     private let syncQueue = DraftSyncQueue.shared
     
     public init() {
+        self.availableMaps = StudioMapConfig.defaultMaps
+        self.currentMapKey = "ParkCity"
+        self.currentMapConfig = StudioMapConfig.defaultMaps["ParkCity"]
+        self.segments = StudioSegment.defaultParkCitySegments
+        self.sectors = StudioSector.defaultParkCitySectors
+        
+        if let cfg = self.currentMapConfig {
+            imageLoader.loadMap(config: cfg, baseURL: apiClient.baseURLString)
+        }
+        
         if apiClient.token != nil {
             self.isAuthenticated = true
         }
@@ -68,6 +78,15 @@ public final class MapStudioStore: ObservableObject {
     // MARK: - Mountain Data Loading
     
     public func loadInitialData() async {
+        if currentMapConfig == nil {
+            self.availableMaps = StudioMapConfig.defaultMaps
+            self.currentMapKey = "ParkCity"
+            self.currentMapConfig = self.availableMaps["ParkCity"]
+        }
+        if let cfg = self.currentMapConfig {
+            imageLoader.loadMap(config: cfg, baseURL: apiClient.baseURLString)
+        }
+        
         do {
             let mapsPayload = try await apiClient.fetchMaps()
             self.availableMaps = mapsPayload.maps
@@ -76,13 +95,9 @@ public final class MapStudioStore: ObservableObject {
             await loadSegments(mapKey: self.currentMapKey)
             await drainOfflineQueue()
         } catch {
-            if self.availableMaps.isEmpty {
-                self.availableMaps = StudioMapConfig.defaultMaps
-                self.currentMapKey = "ParkCity"
-                self.currentMapConfig = self.availableMaps["ParkCity"]
-                if let cfg = self.currentMapConfig {
-                    imageLoader.loadMap(config: cfg, baseURL: apiClient.baseURLString)
-                }
+            if self.segments.isEmpty {
+                self.segments = StudioSegment.defaultParkCitySegments
+                self.sectors = StudioSector.defaultParkCitySectors
             }
             showToast("\(error.localizedDescription)")
         }
@@ -107,12 +122,22 @@ public final class MapStudioStore: ObservableObject {
             let payload = try await apiClient.fetchSegments(map: mapKey)
             self.currentMapKey = payload.resortMap
             self.currentMapConfig = payload.mapConfig
-            self.sectors = payload.sectors
-            self.segments = payload.segments
+            if !payload.sectors.isEmpty {
+                self.sectors = payload.sectors
+            }
+            if !payload.segments.isEmpty {
+                self.segments = payload.segments
+            } else if mapKey == "ParkCity" && self.segments.isEmpty {
+                self.segments = StudioSegment.defaultParkCitySegments
+            }
             
             imageLoader.loadMap(config: payload.mapConfig, baseURL: apiClient.baseURLString)
         } catch {
-            showToast("Failed to load segments: \(error.localizedDescription)")
+            if self.segments.isEmpty && mapKey == "ParkCity" {
+                self.segments = StudioSegment.defaultParkCitySegments
+                self.sectors = StudioSector.defaultParkCitySectors
+            }
+            showToast("Showing mountain paths (\(self.segments.count) loaded)")
         }
     }
     
