@@ -84,7 +84,14 @@ export type OutlookItem = {
   capacityText: string | null;
 };
 
-export type HourItem = { hour: number; temp: number; tempText: string; wetBulb: number; wetBulbText: string };
+export type HourItem = {
+  hour: number;
+  temp: number;
+  tempText: string;
+  wetBulb: number;
+  wetBulbText: string;
+  wetBulbShort: string;
+};
 export type LimitItem = { label: string; hours: boolean[]; guns: string[] };
 
 export type SnowmakingPageProps = {
@@ -449,7 +456,7 @@ function HourStrip({ hourly, limits }: { hourly: HourItem[]; limits: LimitItem[]
               title={`${String(h.hour).padStart(2, '0')}:00 · air ${h.tempText}, wet-bulb ${h.wetBulbText}`}
               className="text-center tabular-nums text-foreground"
             >
-              {h.hour % 3 === 0 ? Math.round(h.wetBulb) : ''}
+              {h.hour % 3 === 0 ? h.wetBulbShort : ''}
             </span>
           ))}
         </div>

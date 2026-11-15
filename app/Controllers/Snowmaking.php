@@ -170,7 +170,9 @@ class Snowmaking extends BaseController
         $hourly = [];
         foreach (SM::HOURLY_OFFSETS as $h => $o) {
             $wb = SM::wetBulb($baseTemp + $o, $humidity);
-            $hourly[] = ['hour' => $h, 'temp' => $baseTemp + $o, 'tempText' => temp($baseTemp + $o), 'wetBulb' => round($wb, 1), 'wetBulbText' => temp((int) round($wb))];
+            $hourly[] = ['hour' => $h, 'temp' => $baseTemp + $o, 'tempText' => temp($baseTemp + $o), 'wetBulb' => round($wb, 1), 'wetBulbText' => temp((int) round($wb)),
+                // Compact label for the hour strip, in the player's units: "-7°" / "19°"
+                'wetBulbShort' => preg_replace('/°[CF]$/', '°', temp((int) round($wb)))];
         }
         $limits = [];
         foreach ($today['all_guns'] as $g) {
@@ -180,7 +182,7 @@ class Snowmaking extends BaseController
             $limits[$key]['guns'][] = (string) $g['name'];
         }
         if (!$limits) {
-            $limits['std'] = ['label' => temp(W::SNOWMAKING_MAX_TEMP) . ' or colder (standard gun)', 'hours' => array_map(fn($e) => $e > 0, SM::hourly($standard, $baseTemp, $humidity)), 'guns' => []];
+            $limits['std'] = ['label' => temp(W::SNOWMAKING_MAX_TEMP) . ' or colder', 'hours' => array_map(fn($e) => $e > 0, SM::hourly($standard, $baseTemp, $humidity)), 'guns' => []];
         }
 
         // Next five days (deterministic forecast): hours, and how much snow switched-on guns could make
