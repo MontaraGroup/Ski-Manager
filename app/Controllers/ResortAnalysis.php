@@ -328,20 +328,20 @@ class ResortAnalysis extends BaseController
         $groomable = count(array_filter($slopes, [Grooming::class, 'groomable']));
         $brokenSlopes = count(array_filter($slopes, fn($s) => $s['status'] === 'broken'));
         $slopeCond = $avg($openSlopes, 'condition_pct');
-        $thinBase = (int) ($weather['snow_base'] ?? 99) < Weather::THIN_BASE;
-        $covered = count(Snowmaking::coverage($openSlopes, array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker'), (int) ($weather['base_temp'] ?? 0)));
+        $natural = (int) ($weather['snow_base'] ?? 99);
+        $thinSlopes = count(array_filter($openSlopes, fn($s) => Snowmaking::base($s, $natural) < Weather::THIN_BASE));
         $sections['slopes'] = [
             'score' => !$slopes ? 0 : (int) round(Economy::conditionFactor($slopeCond) * 100 * (count($openSlopes) / count($slopes))),
             'summary' => !$slopes ? 'No slopes yet.' : count($openSlopes) . ' of ' . count($slopes) . ' slopes open at ' . $slopeCond . '% average condition; skiers come less to worn slopes.',
             'metrics' => [['Open slopes', count($openSlopes) . ' / ' . count($slopes)], ['Average condition', $slopeCond . '%'],
-                ['Groomed each night', $fleet['capacity'] . ' slopes'], ['Covered by snow guns', $thinBase ? $covered . ' of ' . count($openSlopes) : 'not needed (deep base)']],
+                ['Groomed each night', $fleet['capacity'] . ' slopes'], ['Slopes on a thin base', $thinSlopes . ' of ' . count($openSlopes)]],
         ];
         if (!$slopes) $add('critical', 'Slopes & grooming', 'You have no slopes: they are what bring skiers. Build one on the trail map.', '/map');
         if ($brokenSlopes) $add('warning', 'Slopes & grooming', $brokenSlopes . ' slope' . ($brokenSlopes === 1 ? '' : 's') . ' wore down to 0% and closed. Grooming brings them back.', '/grooming');
         if ($fleet['idle_machines'] > 0) $add('warning', 'Slopes & grooming', $fleet['idle_machines'] . ' groomer' . ($fleet['idle_machines'] === 1 ? ' has' : 's have') . ' no operator and stay parked. Hire groomer operators.', '/staff/hire');
         elseif ($slopes && $fleet['capacity'] === 0) $add('warning', 'Slopes & grooming', 'Nothing grooms your slopes, so they only wear down. Buy a groomer and hire an operator.', '/equipment');
         elseif ($slopes && $fleet['capacity'] < min($groomable, (int) ceil(count($slopes) / 2))) $add('info', 'Slopes & grooming', 'Your groomers reach ' . $fleet['capacity'] . ' slopes a night but ' . $groomable . ' need it. Another groomer would keep them in better shape.', '/equipment');
-        if ($thinBase && $openSlopes && $covered < count($openSlopes) && !in_array('snowmaking', $hidden, true)) $add('info', 'Slopes & grooming', 'The natural snow base is thin: ' . (count($openSlopes) - $covered) . ' open slope' . (count($openSlopes) - $covered === 1 ? '' : 's') . ' without a snow gun wear faster.', '/snowmaking');
+        if ($thinSlopes && !in_array('snowmaking', $hidden, true)) $add('info', 'Slopes & grooming', $thinSlopes . ' open slope' . ($thinSlopes === 1 ? ' has' : 's have') . ' less than ' . snow(Weather::THIN_BASE) . ' of snow and wear' . ($thinSlopes === 1 ? 's' : '') . ' faster. Snow guns can build them up.', '/snowmaking');
 
         // --- Buildings (occupancy from the tick) ---
         $occupancy = is_array($tick['occupancy'] ?? null) ? $tick['occupancy'] : [];

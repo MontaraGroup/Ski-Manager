@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { Button, Chip } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Empty, Figure, Page, Panel, PostButton } from '@/components/Page';
 import { Select } from '@/components/Select';
+
+type Tone = 'success' | 'warning' | 'danger' | 'neutral';
+type Mode = 'off' | 'auto' | 'max';
+
+export type GunUpgrade = {
+  key: string;
+  label: string;
+  icon: string;
+  effect: string;
+  owned: boolean;
+  cost: number;
+  costText: string;
+  useless: boolean;
+};
 
 export type GunItem = {
   id: number;
@@ -11,18 +25,26 @@ export type GunItem = {
   capacity: number;
   condition_pct: number;
   status: string;
-  state: 'running' | 'idle' | 'off' | 'broken';
+  mode: Mode;
+  state: 'running' | 'standby' | 'idle' | 'off' | 'broken';
   stateLabel: string;
-  stateTone: 'success' | 'warning' | 'danger' | 'neutral';
+  stateTone: Tone;
   tempLimitText: string;
-  operatingCostText: string;
-  energyKwhText: string;
-  waterLitersText: string;
   hours: number;
+  hoursRunText: string;
+  cmTodayText: string;
+  potentialText: string;
+  outputPct: number;
   coversNames: string[];
   priority: number;
   crew: string | null;
+  crewLevel: number | null;
   crewReliefPct: number;
+  operatingCostText: string;
+  costTodayText: string;
+  energyKwhText: string;
+  waterLitersText: string;
+  upgrades: GunUpgrade[];
   repairCost: number;
   repairCostText: string;
   resale: number;
@@ -35,9 +57,17 @@ export type SlopeItem = {
   difficulty: string;
   status: string;
   condition_pct: number;
+  made: number;
+  base: number;
+  target: number;
+  madeText: string;
+  baseText: string;
+  targetText: string;
+  thin: boolean;
   gunId: number | null;
   gunName: string | null;
   isPriority: boolean;
+  addingText: string | null;
   wearText: string;
 };
 
@@ -45,56 +75,65 @@ export type OutlookItem = {
   day: number;
   icon: string;
   tempText: string;
+  humidityText: string;
   snowfallText: string | null;
+  hours: number;
   hoursText: string;
   gunsCanRunText: string | null;
   canRun: boolean;
+  capacityText: string | null;
 };
+
+export type HourItem = { hour: number; temp: number; tempText: string; wetBulb: number; wetBulbText: string };
+export type LimitItem = { label: string; hours: boolean[]; guns: string[] };
 
 export type SnowmakingPageProps = {
   overview: {
     baseTempText: string;
     nightTempText: string;
     dayTempText: string;
+    humidityText: string;
+    wetBulbRangeText: string;
     standardHours: number;
     snowBaseText: string;
     thinBaseThresholdText: string;
     thinBase: boolean;
+    thinSlopes: number;
+    belowTarget: number;
     coveredCount: number;
     openCount: number;
     runningGunsCount: number;
     totalGunsCount: number;
-    capacity: number;
+    cmTodayText: string;
     totalOperatingCostText: string;
     operatingCostGunsText: string;
     energyImportText: string | null;
     waterImportText: string | null;
   };
+  hourly: HourItem[];
+  limits: LimitItem[];
   outlook: OutlookItem[];
   guns: GunItem[];
   slopes: SlopeItem[];
+  targets: { value: number; label: string }[];
   crewCount: number;
   utilities: {
-    energy: {
-      hidden: boolean;
-      needText: string;
-      totalText: string;
-      supplyText: string;
-      ok: boolean;
-    };
-    water: {
-      hidden: boolean;
-      needText: string;
-      supplyText: string;
-      ok: boolean;
-    };
+    energy: { hidden: boolean; needText: string; totalText: string; supplyText: string; ok: boolean };
+    water: { hidden: boolean; needText: string; supplyText: string; ok: boolean };
   };
   rules: {
+    thinBaseText: string;
     thinBaseExtra: number;
     crewWearRelief: number;
+    uncrewedPct: number;
+    crewLevelBonus: number;
+    minEfficiency: number;
+    rampText: string;
+    maxMadeText: string;
     repairSharePct: number;
     resaleSharePct: number;
   };
+  cash: { raw: number; text: string };
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -105,145 +144,168 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   double_black: 'bg-foreground',
 };
 
+const CHIP_COLOR: Record<Tone, 'success' | 'warning' | 'danger' | 'default'> = {
+  success: 'success',
+  warning: 'warning',
+  danger: 'danger',
+  neutral: 'default',
+};
+
+const linkButton =
+  'inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default';
+
 export default function SnowmakingPage({
   overview,
+  hourly,
+  limits,
   outlook,
   guns,
   slopes,
+  targets,
   crewCount,
   utilities,
   rules,
+  cash,
 }: SnowmakingPageProps) {
-  const uncovered = overview.openCount - overview.coveredCount;
+  const open = slopes.filter((s) => s.status === 'open');
+  // Bars on the base chart share one scale: the deepest base or target on the page
+  const scale = Math.max(80, ...open.map((s) => Math.max(s.base, s.target)));
 
   return (
     <Page
       title="Snowmaking"
       icon="fa-snowflake"
       iconTone="text-accent"
-      subtitle="Snow guns keep slopes skiable when the natural base is thin"
+      subtitle="Build each slope's base with made snow when the natural snow is not enough"
       width="max-w-6xl"
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {guns.length > 0 && (
             <>
-              <form action="/snowmaking/toggle-all" method="post">
-                <CsrfInput />
-                <input type="hidden" name="action" value="on" />
-                <Button type="submit" variant="primary" size="sm">
-                  <Icon name="fa-power-off" className="mr-1 text-xs" />
-                  All on
-                </Button>
-              </form>
-              <form action="/snowmaking/toggle-all" method="post">
-                <CsrfInput />
-                <input type="hidden" name="action" value="off" />
-                <Button type="submit" variant="secondary" size="sm">
-                  <Icon name="fa-power-off" className="mr-1 text-xs" />
-                  All off
-                </Button>
-              </form>
+              <PostButton action="/snowmaking/toggle-all" data={{ action: 'on' }} variant="primary" size="sm">
+                <Icon name="fa-power-off" className="mr-1 text-xs" />
+                All on
+              </PostButton>
+              <PostButton action="/snowmaking/toggle-all" data={{ action: 'off' }} variant="secondary" size="sm">
+                <Icon name="fa-power-off" className="mr-1 text-xs" />
+                All off
+              </PostButton>
             </>
           )}
-          <a
-            href="/equipment"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default"
-          >
+          <a href="/equipment" className={linkButton}>
             <Icon name="fa-shop" />
             Buy snow guns
           </a>
         </div>
       }
     >
-      {/* 4 Overview figures */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Figure
-          label="Today's temperature"
-          value={overview.baseTempText}
-          note={`Night ${overview.nightTempText} · Day ${overview.dayTempText}`}
-        />
         <Figure
           label="Snowmaking window"
           value={overview.standardHours > 0 ? `${overview.standardHours} h` : 'Too warm'}
           tone={overview.standardHours > 0 ? 'text-accent' : 'text-danger'}
-          note="Hours at freezing or colder"
+          note={`${overview.baseTempText} at ${overview.humidityText} humidity`}
         />
         <Figure
           label="Natural snow base"
           value={overview.snowBaseText}
           tone={overview.thinBase ? 'text-warning' : 'text-success'}
-          note={
-            overview.thinBase
-              ? `Thin: under ${overview.thinBaseThresholdText}`
-              : 'Deep enough: guns optional'
-          }
+          note={overview.thinBase ? `Thin: under ${overview.thinBaseThresholdText}` : 'Deep enough on its own'}
         />
         <Figure
-          label="Slopes covered today"
-          value={`${overview.coveredCount} / ${overview.openCount}`}
-          tone={uncovered > 0 && overview.thinBase ? 'text-warning' : 'text-foreground'}
-          note={`${overview.runningGunsCount} of ${overview.totalGunsCount} running · room for ${overview.capacity}`}
+          label="Snow made tonight"
+          value={overview.cmTodayText}
+          note={`${overview.runningGunsCount} of ${overview.totalGunsCount} guns running`}
+        />
+        <Figure
+          label="Cost tonight"
+          value={overview.totalOperatingCostText}
+          note={`${overview.operatingCostGunsText} guns${overview.energyImportText ? ` + ${overview.energyImportText} grid` : ''}${
+            overview.waterImportText ? ` + ${overview.waterImportText} water` : ''
+          }`}
         />
       </div>
 
-      {/* Thin Base Notice */}
-      {overview.thinBase && overview.openCount > 0 && (
-        <div
-          className={`flex items-center gap-2.5 rounded-xl border p-4 text-sm ${
-            uncovered > 0
-              ? 'border-warning/40 bg-surface text-foreground'
-              : 'border-success/40 bg-surface text-foreground'
-          }`}
-        >
-          <Icon
-            name={uncovered > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check'}
-            className={uncovered > 0 ? 'text-warning shrink-0' : 'text-success shrink-0'}
-          />
+      {open.length > 0 && (overview.thinSlopes > 0 || overview.belowTarget > 0) && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-warning/40 bg-surface p-4 text-sm text-foreground">
+          <Icon name="fa-triangle-exclamation" className="mt-0.5 shrink-0 text-warning" />
           <span>
-            {uncovered <= 0 ? (
-              'The natural base is thin, but every open slope has a snow gun today.'
-            ) : guns.length === 0 ? (
-              `The natural base is thin: all ${overview.openCount} open slopes wear an extra ${rules.thinBaseExtra}% a day. Buy snow guns to protect them.`
-            ) : overview.standardHours === 0 && overview.runningGunsCount === 0 ? (
-              `The natural base is thin and it's too warm for your guns today: ${uncovered} ${
-                uncovered === 1 ? 'slope wears' : 'slopes wear'
-              } an extra ${rules.thinBaseExtra}% a day.`
-            ) : (
-              `The natural base is thin: ${uncovered} uncovered ${
-                uncovered === 1 ? 'slope wears' : 'slopes wear'
-              } an extra ${rules.thinBaseExtra}% a day. Switch on more guns or buy guns with higher capacity.`
-            )}
+            {overview.thinSlopes > 0
+              ? `${overview.thinSlopes} open ${overview.thinSlopes === 1 ? 'slope has' : 'slopes have'} less than ${
+                  rules.thinBaseText
+                } of snow and ${overview.thinSlopes === 1 ? 'wears' : 'wear'} an extra ${rules.thinBaseExtra}% a day.`
+              : `${overview.belowTarget} open ${overview.belowTarget === 1 ? 'slope is' : 'slopes are'} under target.`}{' '}
+            {guns.length === 0
+              ? 'Buy snow guns to build them up.'
+              : overview.standardHours === 0 && overview.runningGunsCount === 0
+                ? 'Too warm for your guns today: check the next five days.'
+                : overview.runningGunsCount === 0
+                  ? 'Switch guns on to build them up.'
+                  : null}
           </span>
         </div>
       )}
 
-      {/* Next 5 Days Outlook */}
+      <Panel title="Today, hour by hour">
+        <HourStrip hourly={hourly} limits={limits} />
+        <p className="mt-2 text-xs text-muted">
+          Wet-bulb {overview.wetBulbRangeText}. Guns work off the wet-bulb temperature: dry air lets them make snow on
+          days just above freezing, damp air shortens the window.
+        </p>
+      </Panel>
+
       {outlook.length > 0 && (
         <Panel title="Next 5 days">
           <div className="grid grid-cols-5 gap-2">
             {outlook.map((o) => (
               <div key={o.day} className="rounded-lg bg-default p-2 text-center">
                 <div className="text-xs text-muted">Day {o.day}</div>
-                <Icon name={o.icon} className="my-1.5 text-lg text-foreground block" />
-                <div className="font-semibold text-sm text-foreground">{o.tempText}</div>
+                <Icon name={o.icon} className="my-1.5 block text-lg text-foreground" />
+                <div className="text-sm font-semibold text-foreground">{o.tempText}</div>
+                <div className="text-xs text-muted">{o.humidityText}</div>
                 {o.snowfallText && <div className="text-xs text-accent">{o.snowfallText}</div>}
-                <div className={`text-xs mt-1 ${o.canRun ? 'text-accent' : 'text-danger'}`}>{o.hoursText}</div>
-                {o.gunsCanRunText && <div className="text-xs text-success font-medium">{o.gunsCanRunText}</div>}
+                <div className={`mt-1 text-xs ${o.canRun ? 'text-accent' : 'text-danger'}`}>{o.hoursText}</div>
+                {o.gunsCanRunText && <div className="text-xs font-medium text-success">{o.gunsCanRunText}</div>}
+                {o.capacityText && <div className="text-xs text-muted">{o.capacityText}</div>}
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted mt-2">
-            Hours a standard gun can run. Guns left switched on simply wait out warm days at no cost.
+          <p className="mt-2 text-xs text-muted">
+            Hours a standard gun can run, and the most snow your switched-on guns could make that day.
           </p>
         </Panel>
       )}
 
-      {/* Snow guns roster */}
+      {slopes.length > 0 && (
+        <Panel
+          title="Slope bases"
+          actions={
+            <TargetForm
+              slopeId="all"
+              value={null}
+              targets={targets}
+              label="Set every slope's target"
+              placeholder="Target for all"
+            />
+          }
+        >
+          <p className="mb-3 text-xs text-muted">
+            Base = natural snow + made snow. Guns in auto stop once a slope reaches its target. Under{' '}
+            {rules.thinBaseText}, a slope wears an extra {rules.thinBaseExtra}% a day.
+          </p>
+          <ul className="divide-y divide-border">
+            {slopes.map((sl) => (
+              <SlopeRow key={sl.id} slope={sl} scale={scale} targets={targets} />
+            ))}
+          </ul>
+        </Panel>
+      )}
+
       <section className="space-y-3">
         <h2 className="text-lg font-bold text-foreground">Snow guns</h2>
         {guns.length === 0 ? (
           <Empty icon="fa-snowflake" title="No snow guns yet">
-            Each gun covers one or more slopes on cold days. Buy them in the equipment shop.
+            Guns build up made snow on your slopes on cold nights. Buy them in the equipment shop.
             <div className="mt-4">
               <a
                 href="/equipment"
@@ -257,157 +319,51 @@ export default function SnowmakingPage({
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {guns.map((g) => (
-              <GunCard key={g.id} gun={g} slopes={slopes} />
+              <GunCard key={g.id} gun={g} slopes={slopes} cash={cash.raw} />
             ))}
           </div>
         )}
       </section>
 
-      {/* Slope coverage today table */}
-      {slopes.length > 0 && (
-        <Panel title="Slope coverage today">
-          <p className="text-xs text-muted mb-3">
-            Each gun takes its priority slope first, then the worst-condition slopes no other gun covers.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border text-xs text-muted">
-                <tr>
-                  <th className="pb-2 font-medium">Slope</th>
-                  <th className="pb-2 font-medium">Condition</th>
-                  <th className="pb-2 font-medium">Snow gun</th>
-                  <th className="pb-2 font-medium text-right">Base wear</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {slopes.map((sl) => {
-                  const isOpen = sl.status === 'open';
-                  return (
-                    <tr key={sl.id} className={isOpen ? '' : 'opacity-50'}>
-                      <td className="py-2.5">
-                        <div className="flex items-center gap-2">
-                          {sl.difficulty && (
-                            <span
-                              className={`size-2 shrink-0 rounded-full ${
-                                DIFFICULTY_COLORS[sl.difficulty] ?? 'bg-muted'
-                              }`}
-                            />
-                          )}
-                          <span className="font-medium text-foreground">{sl.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5">
-                        <span
-                          className={
-                            sl.condition_pct < 40
-                              ? 'text-danger font-semibold'
-                              : sl.condition_pct < 70
-                                ? 'text-warning font-semibold'
-                                : 'text-foreground'
-                          }
-                        >
-                          {sl.condition_pct}%
-                        </span>
-                      </td>
-                      <td className="py-2.5">
-                        {!isOpen ? (
-                          <span className="text-muted capitalize">{sl.status}</span>
-                        ) : sl.gunName ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-accent font-medium flex items-center gap-1">
-                              <Icon name="fa-snowflake" className="text-xs" />
-                              {sl.gunName}
-                            </span>
-                            {sl.isPriority && (
-                              <Chip variant="soft" size="sm">
-                                Priority
-                              </Chip>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted">Not covered</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        {!isOpen ? (
-                          ''
-                        ) : sl.gunId || !overview.thinBase ? (
-                          <span className="text-success font-medium">Normal</span>
-                        ) : (
-                          <span className="text-warning font-medium">+{rules.thinBaseExtra}% / day</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
+      {(!utilities.energy.hidden || !utilities.water.hidden) && guns.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {!utilities.energy.hidden && (
+            <UtilityCard
+              icon="fa-bolt"
+              iconTone="text-warning"
+              label="Energy for snowmaking tonight"
+              href="/energy"
+              value={`${utilities.energy.needText} kWh`}
+              ok={utilities.energy.ok}
+              note={`Resort total ${utilities.energy.totalText} kWh, your sources make ${utilities.energy.supplyText} kWh${
+                utilities.energy.ok ? '' : ': the rest is bought'
+              }`}
+            />
+          )}
+          {!utilities.water.hidden && (
+            <UtilityCard
+              icon="fa-droplet"
+              iconTone="text-accent"
+              label="Water for snowmaking tonight"
+              href="/water"
+              value={`${utilities.water.needText} L`}
+              ok={utilities.water.ok}
+              note={`Your sources supply ${utilities.water.supplyText} L${utilities.water.ok ? '' : ': the rest is bought'}`}
+            />
+          )}
+        </div>
       )}
-
-      {/* Utilities & Costs */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Figure
-          label="Running cost today"
-          value={overview.totalOperatingCostText}
-          note={`${overview.operatingCostGunsText} guns${
-            overview.energyImportText ? ` + ${overview.energyImportText} grid power` : ''
-          }${overview.waterImportText ? ` + ${overview.waterImportText} bought water` : ''}`}
-        />
-
-        {!utilities.energy.hidden && (
-          <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted flex items-center gap-1">
-                <Icon name="fa-bolt" className="text-warning" />
-                Energy for snowmaking
-              </span>
-              <a href="/energy" className="text-xs text-link font-medium hover:underline">
-                Manage
-              </a>
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {utilities.energy.needText} <span className="text-sm font-normal text-muted">kWh</span>
-            </div>
-            <div className={`text-xs ${utilities.energy.ok ? 'text-success' : 'text-warning'}`}>
-              Resort total {utilities.energy.totalText} kWh, sources make {utilities.energy.supplyText} kWh
-              {!utilities.energy.ok && ' · remainder bought'}
-            </div>
-          </div>
-        )}
-
-        {!utilities.water.hidden && (
-          <div className="flex flex-col justify-between rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted flex items-center gap-1">
-                <Icon name="fa-droplet" className="text-accent" />
-                Water for snowmaking
-              </span>
-              <a href="/water" className="text-xs text-link font-medium hover:underline">
-                Manage
-              </a>
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {utilities.water.needText} <span className="text-sm font-normal text-muted">L</span>
-            </div>
-            <div className={`text-xs ${utilities.water.ok ? 'text-success' : 'text-warning'}`}>
-              Your sources supply {utilities.water.supplyText} L{!utilities.water.ok && ' · remainder bought'}
-            </div>
-          </div>
-        )}
-      </div>
 
       {crewCount === 0 && guns.length > 0 && (
         <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-4 text-sm text-foreground">
-          <Icon name="fa-user-plus" className="text-accent shrink-0" />
+          <Icon name="fa-user-plus" className="shrink-0 text-accent" />
           <span>
-            Snowmaking crew is optional: a crew member assigned to a gun cuts its wear by {rules.crewWearRelief}% a day.{' '}
-            <a href="/staff/hire" className="text-link font-medium hover:underline">
+            Without a crew member, a gun makes {rules.uncrewedPct}% of its snow.{' '}
+            <a href="/staff/hire" className="font-medium text-link hover:underline">
               Hire snowmakers
             </a>
-            , then assign them on the{' '}
-            <a href="/staff" className="text-link font-medium hover:underline">
+            , then assign one to each gun on the{' '}
+            <a href="/staff" className="font-medium text-link hover:underline">
               staff page
             </a>
             .
@@ -415,60 +371,55 @@ export default function SnowmakingPage({
         </div>
       )}
 
-      {/* How it works details */}
       <details className="rounded-xl border border-border bg-surface">
-        <summary className="p-4 cursor-pointer font-semibold text-sm select-none">How snowmaking works</summary>
-        <ul className="px-4 pb-4 text-sm text-muted space-y-1.5 list-disc pl-9">
+        <summary className="cursor-pointer select-none p-4 text-sm font-semibold">How snowmaking works</summary>
+        <ul className="list-disc space-y-1.5 px-4 pb-4 pl-9 text-sm text-muted">
           <li>
-            When the natural base is under {overview.thinBaseThresholdText}, slopes wear an extra {rules.thinBaseExtra}% a
-            day unless a snow gun covers them. With a deep base, guns do not change wear.
+            Each slope&apos;s base is the natural snow plus its own made snow. Under {rules.thinBaseText} it wears an
+            extra {rules.thinBaseExtra}% a day. Made snow melts in warm weather and rain, like natural snow, and a slope
+            holds up to {rules.maxMadeText}.
           </li>
           <li>
-            A switched-on gun runs on any day with at least one hour cold enough for its model. On warmer days it waits at no
-            cost.
+            A gun makes snow in hours whose wet-bulb temperature is at or below its limit. Right at the limit it makes{' '}
+            {rules.minEfficiency}% of its snow; {rules.rampText} colder it makes all of it.
           </li>
           <li>
-            Each running gun covers as many open slopes as its capacity: its priority slope first, then the worst-condition
-            slopes left.
+            Auto: the gun runs only while one of its slopes is under target, and only as long as it needs to. Max: it
+            runs every cold hour, to build a deep base before a warm spell.
           </li>
           <li>
-            Running guns cost their daily running cost and use energy and water; anything your own sources do not supply is
-            bought from the grid.
+            A gun covers up to its capacity in slopes: its priority slope first, then the slopes furthest under target.
+            Its snow is shared between them, so fewer slopes fill faster.
           </li>
           <li>
-            Guns wear 1–3% a day while running and break at 0%. Repairs cost up to {rules.repairSharePct}% of the gun price;
-            selling returns up to {rules.resaleSharePct}%.
+            Running cost, energy and water count only for the hours a gun runs. Energy and water your own sources do
+            not supply are bought.
+          </li>
+          <li>
+            A crew member gives full output, +{rules.crewLevelBonus}% per level, and {rules.crewWearRelief}% less wear a
+            day. Without one, a gun makes {rules.uncrewedPct}%, unless it has the automation kit.
+          </li>
+          <li>
+            Guns wear 1–3% a day while running and break at 0%. Repairs cost up to {rules.repairSharePct}% of the gun
+            price; selling returns up to {rules.resaleSharePct}%.
           </li>
         </ul>
       </details>
 
-      {/* Navigation footer */}
       <div className="flex flex-wrap items-center gap-2 pt-2">
-        <a
-          href="/equipment"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default"
-        >
+        <a href="/equipment" className={linkButton}>
           <Icon name="fa-toolbox" />
           Equipment shop
         </a>
-        <a
-          href="/weather"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default"
-        >
+        <a href="/weather" className={linkButton}>
           <Icon name="fa-cloud-sun" />
           Weather
         </a>
-        <a
-          href="/grooming"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default"
-        >
+        <a href="/grooming" className={linkButton}>
           <Icon name="fa-tractor" />
           Grooming
         </a>
-        <a
-          href="/staff"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-medium hover:bg-default"
-        >
+        <a href="/staff" className={linkButton}>
           <Icon name="fa-users" />
           Staff
         </a>
@@ -477,84 +428,244 @@ export default function SnowmakingPage({
   );
 }
 
-function GunCard({ gun, slopes }: { gun: GunItem; slopes: SlopeItem[] }) {
+/** One row per wet-bulb limit your guns have; a filled cell is an hour that limit can make snow */
+function HourStrip({ hourly, limits }: { hourly: HourItem[]; limits: LimitItem[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[36rem] space-y-1.5">
+        <div className="grid grid-cols-[9rem_repeat(24,minmax(0,1fr))] gap-px text-[10px] text-muted">
+          <span />
+          {hourly.map((h) => (
+            <span key={h.hour} className="text-center tabular-nums">
+              {h.hour % 3 === 0 ? String(h.hour).padStart(2, '0') : ''}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-[9rem_repeat(24,minmax(0,1fr))] gap-px text-[10px]">
+          <span className="pr-2 text-xs text-muted">Wet-bulb</span>
+          {hourly.map((h) => (
+            <span
+              key={h.hour}
+              title={`${String(h.hour).padStart(2, '0')}:00 · air ${h.tempText}, wet-bulb ${h.wetBulbText}`}
+              className="text-center tabular-nums text-foreground"
+            >
+              {h.hour % 3 === 0 ? Math.round(h.wetBulb) : ''}
+            </span>
+          ))}
+        </div>
+        {limits.map((l) => {
+          const n = l.hours.filter(Boolean).length;
+          return (
+            <div key={l.label} className="grid grid-cols-[9rem_repeat(24,minmax(0,1fr))] items-center gap-px">
+              <span className="truncate pr-2 text-xs text-foreground" title={l.guns.join(', ')}>
+                {l.label} <span className="text-muted">· {n} h</span>
+              </span>
+              {l.hours.map((on, h) => (
+                <span key={h} className={`h-4 first:rounded-l last:rounded-r ${on ? 'bg-accent' : 'bg-default'}`} />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TargetForm({
+  slopeId,
+  value,
+  targets,
+  label,
+  placeholder,
+}: {
+  slopeId: number | 'all';
+  value: number | null;
+  targets: SnowmakingPageProps['targets'];
+  label: string;
+  placeholder?: string;
+}) {
+  const form = useRef<HTMLFormElement>(null);
+  return (
+    <form ref={form} action="/snowmaking/target" method="post" className="w-40 shrink-0">
+      <CsrfInput />
+      <input type="hidden" name="slope_id" value={slopeId} />
+      <Select
+        name="target_cm"
+        aria-label={label}
+        placeholder={placeholder}
+        defaultValue={value === null ? undefined : String(value)}
+        onChange={() => setTimeout(() => form.current?.submit(), 0)}
+        options={targets.map((t) => ({ id: String(t.value), label: t.label }))}
+      />
+    </form>
+  );
+}
+
+function SlopeRow({
+  slope: sl,
+  scale,
+  targets,
+}: {
+  slope: SlopeItem;
+  scale: number;
+  targets: SnowmakingPageProps['targets'];
+}) {
+  const isOpen = sl.status === 'open';
+  const natural = Math.max(0, sl.base - sl.made);
+  const pct = (v: number) => `${Math.min(100, (v / scale) * 100)}%`;
+  return (
+    <li className={`flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4 ${isOpen ? '' : 'opacity-50'}`}>
+      <div className="flex min-w-0 items-center gap-2 sm:w-44">
+        {sl.difficulty && (
+          <span className={`size-2 shrink-0 rounded-full ${DIFFICULTY_COLORS[sl.difficulty] ?? 'bg-muted'}`} />
+        )}
+        <span className="truncate font-medium text-foreground">{sl.name}</span>
+        {!isOpen && <span className="text-xs capitalize text-muted">{sl.status}</span>}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div
+          className="relative h-3 overflow-hidden rounded-full bg-default"
+          role="img"
+          aria-label={`${sl.baseText} base, ${sl.madeText} made, target ${sl.targetText}`}
+        >
+          <div className="absolute inset-y-0 left-0 bg-foreground/25" style={{ width: pct(natural) }} />
+          <div
+            className={`absolute inset-y-0 ${sl.thin ? 'bg-warning' : 'bg-accent'}`}
+            style={{ left: pct(natural), width: pct(sl.made) }}
+          />
+          {sl.target > 0 && (
+            <div className="absolute inset-y-0 w-0.5 bg-foreground" style={{ left: pct(sl.target) }} />
+          )}
+        </div>
+        <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
+          <span className={sl.thin ? 'font-semibold text-warning' : 'font-semibold text-foreground'}>
+            {sl.baseText} base
+          </span>
+          <span>{sl.madeText} made</span>
+          {sl.addingText && (
+            <span className="text-accent">
+              <Icon name="fa-snowflake" className="mr-0.5 text-[10px]" />
+              {sl.addingText} tonight{sl.gunName ? ` from ${sl.gunName}` : ''}
+              {sl.isPriority ? ' (priority)' : ''}
+            </span>
+          )}
+          {isOpen && sl.thin && <span className="text-warning">{sl.wearText} wear</span>}
+        </div>
+      </div>
+
+      <TargetForm slopeId={sl.id} value={sl.target} targets={targets} label={`Target base for ${sl.name}`} />
+    </li>
+  );
+}
+
+function UtilityCard({
+  icon,
+  iconTone,
+  label,
+  href,
+  value,
+  ok,
+  note,
+}: {
+  icon: string;
+  iconTone: string;
+  label: string;
+  href: string;
+  value: string;
+  ok: boolean;
+  note: string;
+}) {
+  return (
+    <div className="flex flex-col justify-between gap-1 rounded-xl border border-border bg-surface p-4">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1 text-xs text-muted">
+          <Icon name={icon} className={iconTone} />
+          {label}
+        </span>
+        <a href={href} className="text-xs font-medium text-link hover:underline">
+          Manage
+        </a>
+      </div>
+      <div className="text-2xl font-bold tabular-nums text-foreground">{value}</div>
+      <div className={`text-xs ${ok ? 'text-success' : 'text-warning'}`}>{note}</div>
+    </div>
+  );
+}
+
+const MODES: { mode: Mode; label: string }[] = [
+  { mode: 'off', label: 'Off' },
+  { mode: 'auto', label: 'Auto' },
+  { mode: 'max', label: 'Max' },
+];
+
+function GunCard({ gun, slopes, cash }: { gun: GunItem; slopes: SlopeItem[]; cash: number }) {
   const isBroken = gun.state === 'broken';
   const cond = gun.condition_pct;
 
   return (
     <div
-      className={`flex flex-col justify-between rounded-xl border bg-surface p-4 gap-2.5 ${
-        isBroken ? 'border-danger/40' : 'border-border'
-      }`}
+      className={`flex flex-col gap-3 rounded-xl border bg-surface p-4 ${isBroken ? 'border-danger/40' : 'border-border'}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-semibold text-sm truncate text-foreground">{gun.name}</div>
-          <div className="text-xs text-muted">
-            {gun.brand} · works at {gun.tempLimitText}
-          </div>
+          <div className="truncate text-sm font-semibold text-foreground">{gun.name}</div>
+          <div className="text-xs text-muted">Works at {gun.tempLimitText}</div>
         </div>
-        <Chip
-          variant="soft"
-          size="sm"
-          color={
-            gun.stateTone === 'success'
-              ? 'success'
-              : gun.stateTone === 'warning'
-                ? 'warning'
-                : gun.stateTone === 'danger'
-                  ? 'danger'
-                  : 'default'
-          }
-          className="shrink-0"
-        >
+        <Chip variant="soft" size="sm" color={CHIP_COLOR[gun.stateTone]} className="shrink-0">
           {gun.stateLabel}
         </Chip>
       </div>
 
-      <dl className="grid grid-cols-3 gap-2 text-xs text-center">
+      {!isBroken && (
+        <form action={`/snowmaking/mode/${gun.id}`} method="post">
+          <CsrfInput />
+          <div role="group" aria-label={`Mode for ${gun.name}`} className="grid grid-cols-3 gap-1 rounded-lg bg-default p-1">
+            {MODES.map((m) => (
+              <button
+                key={m.mode}
+                type="submit"
+                name="mode"
+                value={m.mode}
+                aria-pressed={gun.mode === m.mode}
+                className={`min-h-9 rounded-md text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+                  gun.mode === m.mode ? 'bg-surface text-foreground shadow-sm' : 'text-muted hover:text-foreground'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </form>
+      )}
+
+      <dl className="grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded bg-default p-1.5">
-          <dt className="text-muted">Covers</dt>
-          <dd className="font-semibold text-foreground">
-            {gun.capacity} {gun.capacity === 1 ? 'slope' : 'slopes'}
+          <dt className="text-muted">Tonight</dt>
+          <dd className="font-semibold tabular-nums text-foreground">{gun.cmTodayText}</dd>
+        </div>
+        <div className="rounded bg-default p-1.5">
+          <dt className="text-muted">Runs</dt>
+          <dd className="font-semibold tabular-nums text-foreground">
+            {gun.hoursRunText} / {gun.hours} h
           </dd>
         </div>
         <div className="rounded bg-default p-1.5">
-          <dt className="text-muted">Daily cost</dt>
-          <dd className="font-semibold text-foreground">{gun.operatingCostText}</dd>
-        </div>
-        <div className="rounded bg-default p-1.5">
-          <dt className="text-muted">Uses</dt>
-          <dd className="font-semibold text-foreground">
-            {gun.energyKwhText} · {gun.waterLitersText}
-          </dd>
+          <dt className="text-muted">Cost</dt>
+          <dd className="font-semibold tabular-nums text-foreground">{gun.costTodayText}</dd>
         </div>
       </dl>
 
-      {/* Health progress */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted w-12">Health</span>
-        <div className="relative flex-1 h-1.5 rounded-full bg-default overflow-hidden">
-          <div
-            className={`h-full rounded-full ${
-              cond >= 60 ? 'bg-success' : cond >= 30 ? 'bg-warning' : 'bg-danger'
-            }`}
-            style={{ width: `${cond}%` }}
-          />
-        </div>
-        <span className="text-xs font-mono w-9 text-right text-foreground">{cond}%</span>
-      </div>
-
-      {/* Status line */}
       <div className="text-xs">
         {gun.state === 'running' ? (
-          <span className="text-accent flex items-center gap-1">
-            <Icon name="fa-snowflake" className="text-xs" />
-            {gun.hours} h today, covering{' '}
-            {gun.coversNames.length > 0 ? gun.coversNames.join(', ') : 'no open slopes left'}
+          <span className="text-accent">
+            <Icon name="fa-snowflake" className="mr-1 text-xs" />
+            Covering {gun.coversNames.join(', ')}
           </span>
+        ) : gun.state === 'standby' ? (
+          <span className="text-muted">Every slope it can reach is at target: no cost tonight.</span>
         ) : gun.state === 'idle' ? (
-          <span className="text-warning">Waiting for a colder day: no cost or wear today.</span>
+          <span className="text-warning">Too warm today: no cost or wear.</span>
         ) : gun.state === 'off' ? (
           <span className="text-muted">Switched off.</span>
         ) : (
@@ -562,49 +673,81 @@ function GunCard({ gun, slopes }: { gun: GunItem; slopes: SlopeItem[] }) {
         )}
       </div>
 
-      <div className="text-xs text-muted flex items-center gap-1.5">
-        <Icon name="fa-user" className="text-xs" />
-        <span>
-          {gun.crew ? `Crew: ${gun.crew} (−${gun.crewReliefPct}% wear a day)` : 'No crew assigned'}
-        </span>
+      <div className="space-y-1 text-xs text-muted">
+        <div>
+          Up to {gun.potentialText} a day at {gun.outputPct}% output, across up to {gun.capacity}{' '}
+          {gun.capacity === 1 ? 'slope' : 'slopes'}. Full day {gun.operatingCostText}, {gun.energyKwhText},{' '}
+          {gun.waterLitersText}.
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Icon name="fa-user" className="text-xs" />
+          {gun.crew ? `${gun.crew}, level ${gun.crewLevel} (−${gun.crewReliefPct}% wear a day)` : 'No crew member'}
+        </div>
       </div>
 
-      {/* Priority slope assignment form */}
-      <form action="/snowmaking/assign" method="post" className="flex items-center gap-2 pt-1">
+      <div className="flex flex-wrap gap-1.5">
+        {gun.upgrades
+          .filter((u) => !u.useless)
+          .map((u) =>
+            u.owned ? (
+              <Chip key={u.key} variant="soft" size="sm" color="accent">
+                <Icon name={u.icon} className="mr-1 text-[10px]" />
+                {u.label}
+              </Chip>
+            ) : (
+              <PostButton
+                key={u.key}
+                action={`/snowmaking/upgrade/${gun.id}`}
+                data={{ upgrade: u.key }}
+                variant="tertiary"
+                size="sm"
+                disabled={cash < u.cost}
+                confirm={{
+                  title: `Fit ${u.label.toLowerCase()} to ${gun.name}?`,
+                  body: `${u.effect}. Costs ${u.costText}, paid now.`,
+                  confirmLabel: `Pay ${u.costText}`,
+                }}
+              >
+                <Icon name={u.icon} className="mr-1 text-xs" />
+                {u.label} {u.costText}
+              </PostButton>
+            ),
+          )}
+      </div>
+
+      <form action="/snowmaking/assign" method="post" className="flex items-center gap-2">
         <CsrfInput />
         <input type="hidden" name="cannon_id" value={gun.id} />
         <Select
           name="slope_id"
           defaultValue={gun.priority ? String(gun.priority) : ''}
           aria-label={`Priority slope for ${gun.name}`}
-          className="flex-1 min-w-0"
+          className="min-w-0 flex-1"
           options={[
-            { id: '', label: 'Auto: worst slopes first' },
+            { id: '', label: 'No priority: furthest under target' },
             ...slopes.map((sl) => ({
               id: String(sl.id),
               label: `First: ${sl.name}${sl.status !== 'open' ? ` (${sl.status})` : ''}`,
             })),
           ]}
         />
-        <Button type="submit" variant="primary" size="sm" isIconOnly aria-label="Save priority slope">
+        <Button type="submit" variant="secondary" size="sm" isIconOnly aria-label="Save priority slope">
           <Icon name="fa-check" />
         </Button>
       </form>
 
-      {/* Actions */}
-      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border mt-auto">
-        {!isBroken && (
-          <PostButton
-            action={`/snowmaking/toggle/${gun.id}`}
-            variant={gun.status === 'active' ? 'ghost' : 'secondary'}
-            size="sm"
-            className="flex-1"
-          >
-            <Icon name="fa-power-off" className="mr-1 text-xs" />
-            {gun.status === 'active' ? 'Switch off' : 'Switch on'}
-          </PostButton>
-        )}
+      <div className="mt-auto flex items-center gap-2 border-t border-border pt-2">
+        <span className="w-12 text-xs text-muted">Health</span>
+        <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-default">
+          <div
+            className={`h-full rounded-full ${cond >= 60 ? 'bg-success' : cond >= 30 ? 'bg-warning' : 'bg-danger'}`}
+            style={{ width: `${cond}%` }}
+          />
+        </div>
+        <span className="w-9 text-right font-mono text-xs text-foreground">{cond}%</span>
+      </div>
 
+      <div className="flex flex-wrap items-center gap-1.5">
         {cond < 100 && (
           <PostButton
             action={`/snowmaking/repair/${gun.id}`}
@@ -621,7 +764,6 @@ function GunCard({ gun, slopes }: { gun: GunItem; slopes: SlopeItem[] }) {
             Repair {gun.repairCostText}
           </PostButton>
         )}
-
         <PostButton
           action={`/snowmaking/sell/${gun.id}`}
           variant="ghost"
