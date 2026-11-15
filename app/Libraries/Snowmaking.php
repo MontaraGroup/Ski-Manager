@@ -29,7 +29,7 @@ class Snowmaking
     public const CREW_LEVEL_BONUS = 3;    // % output per crew member level
     public const RAMP = 4;                // °C below the limit where output reaches 100%
     public const MIN_EFFICIENCY = 50;     // % output in an hour right at the limit
-    public const CM_PER_OUTPUT = 2;       // cm of snow a day per catalog output point, at full output
+    public const CM_PER_OUTPUT = 4;       // cm of snow a day per catalog output point, at full output
     public const MAX_MADE = 150;          // cm of made snow a slope can hold
     public const TARGETS = [0, 30, 50, 80];
     public const DEFAULT_TARGET = 30;
