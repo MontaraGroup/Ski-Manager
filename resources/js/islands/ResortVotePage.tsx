@@ -55,7 +55,7 @@ export default function ResortVotePage(props: ResortVotePageProps) {
     <Page
       title="Resort Vote"
       icon="fa-check-to-slot"
-      subtitle={open ? `Pick the real North American resort we add next. ${round.label} voting closes at the end of ${round.closesLabel}.` : `Voting for ${round.label} is closed. The winner is picked by hand from the results.`}
+      subtitle={open ? `Pick the real North American resort we add next. Voting for ${round.label} runs until ${round.closesLabel}.` : `Voting for ${round.label} is closed. The winner is picked by hand from the results.`}
     >
       <div className="flex flex-col gap-6">
         <Panel title="Your vote">
@@ -87,7 +87,7 @@ export default function ResortVotePage(props: ResortVotePageProps) {
                     <SearchField.ClearButton />
                   </SearchField.Group>
                 </SearchField>
-                <SearchResults search={search} myPickId={myPick?.id ?? null} busy={busy} onVote={(a) => send('resort-vote', { areaId: a.id }, a.id, `You voted for ${a.name}. You can change it until the end of ${round.closesLabel}.`)} />
+                <SearchResults search={search} myPickId={myPick?.id ?? null} busy={busy} onVote={(a) => send('resort-vote', { areaId: a.id }, a.id, `You voted for ${a.name}. You can change it until ${round.closesLabel}.`)} />
               </div>
             ) : null}
           </div>

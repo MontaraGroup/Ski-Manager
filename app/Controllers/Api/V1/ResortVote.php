@@ -26,7 +26,7 @@ class ResortVote extends ApiController
         if (!$area) return $this->fail('Pick a resort from the list.', 422, ['areaId' => 'Pick a resort from the list.']);
 
         Poll::vote((int) $round['id'], $userId, $areaId);
-        return $this->ok(Poll::page($userId), 'You voted for ' . $area['name'] . '. You can change it until ' . Poll::summary($round)['closesLabel'] . '.');
+        return $this->ok(Poll::page($userId), 'You voted for ' . $area['name'] . '.');
     }
 
     public function retract(): ResponseInterface

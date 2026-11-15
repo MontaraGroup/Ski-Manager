@@ -66,7 +66,7 @@ export default function AdminResortVotePage({ flagLevel, rounds, inGame, season4
 function RoundPanel({ round }: { round: AdminRound }) {
   const tie = round.tally.length > 1 && round.tally[0].votes === round.tally[1].votes;
   const [pick, setPick] = useState<number | null>(round.winner?.id ?? round.tally[0]?.id ?? null);
-  const status = round.open ? `Open until the end of ${round.closesLabel}` : round.closedLabel ? `Closed ${round.closedLabel}` : 'Closed';
+  const status = round.open ? `Open until ${round.closesLabel}` : round.closedLabel ? `Closed ${round.closedLabel}` : 'Closed';
 
   return (
     <Panel
