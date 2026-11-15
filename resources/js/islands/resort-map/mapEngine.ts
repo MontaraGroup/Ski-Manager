@@ -576,6 +576,32 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
+  /** Replace a built lift with another system on the same line (ResortMap::swapLift). The dialog asks first. */
+  function swapLift(seg: MapSegment, liftType: string, seats: number, cb?: (ok: boolean) => void) {
+    const item = builtItems[seg.id];
+    if (!item || !item.id) {
+      if (cb) cb(false);
+      return;
+    }
+    const name = seg.name || 'this lift';
+    postJSON('/map/upgrade/' + item.id, { lift_type: liftType, seats }, (res) => {
+      if (!res || !res.success) {
+        callbacks.onToast(res?.error || 'Could not replace ' + name + '. Nothing was changed.', 'error');
+        if (cb) cb(false);
+        return;
+      }
+      if (res.item) builtItems[seg.id] = res.item;
+      if (typeof res.new_cash === 'number') {
+        userCash = res.new_cash;
+        callbacks.onCashUpdate(userCash);
+      }
+      callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+      renderSegments(buildMode);
+      callbacks.onToast(res.message || name + ' replaced.', 'success');
+      if (cb) cb(true);
+    });
+  }
+
   /** Demolish a built run for its salvage refund. The panel asks first; this only does it. */
   function demolish(seg: MapSegment, cb?: (ok: boolean) => void) {
     const item = builtItems[seg.id];
@@ -1396,6 +1422,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       map.fitBounds(bounds, { animate: false, paddingTopLeft: [16, 56], paddingBottomRight: [16, bottomPad + 16] });
     },
     demolish,
+    swapLift,
     startDraw,
     startEditSegment,
     startEditSectorBoundary,
