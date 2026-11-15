@@ -34,6 +34,37 @@ function readShowAvailable(): boolean {
   }
 }
 
+interface LastDraw {
+  sector: number;
+  slopeType: string;
+  difficulty: string;
+}
+
+function readLastDraw(): LastDraw {
+  const fallback: LastDraw = { sector: 0, slopeType: 'downhill', difficulty: 'blue' };
+  try {
+    const raw = JSON.parse(localStorage.getItem('map_editor_last') || 'null');
+    if (!raw || typeof raw !== 'object') return fallback;
+    return {
+      sector: Number(raw.sector) || 0,
+      slopeType: typeof raw.slopeType === 'string' && raw.slopeType ? raw.slopeType : fallback.slopeType,
+      difficulty: typeof raw.difficulty === 'string' && raw.difficulty ? raw.difficulty : fallback.difficulty,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+/** Closest point to p on the line a-b, in the map's [lat, lng] (= [y, x]) space */
+function closestOnLine(p: [number, number], a: [number, number], b: [number, number]): [number, number] {
+  const dy = b[0] - a[0];
+  const dx = b[1] - a[1];
+  const len2 = dy * dy + dx * dx;
+  if (len2 === 0) return a;
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dy + (p[1] - a[1]) * dx) / len2));
+  return [a[0] + t * dy, a[1] + t * dx];
+}
+
 export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallbacks) {
   let map: any = null;
   let mapBounds: any = null;
@@ -75,6 +106,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let selectedVertexIdx = -1;
   let editorPoints: [number, number][] = [];
   let undoStack: [number, number][][] = [];
+  let redoStack: [number, number][][] = [];
+  // Esc on a line with work in it only arms the discard; a second Esc before this time cancels
+  let discardArmedUntil = 0;
   let editorLine: any = null;
   let rubberBandLine: any = null;
   let snapMarker: any = null;
@@ -83,10 +117,21 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let midpointMarkers: any[] = [];
   let lastClickTime = 0;
 
+  // A new line starts with the sector, slope type and difficulty used last (remembered per browser)
+  const lastDraw = readLastDraw();
   let editorSegName = '';
-  let editorSegSector = 0;
-  let editorSlopeType = 'downhill';
-  let editorSegDiff = 'blue';
+  let editorSegSector = lastDraw.sector;
+  let editorSlopeType = lastDraw.slopeType;
+  let editorSegDiff = lastDraw.difficulty;
+
+  function rememberDrawSettings() {
+    lastDraw.sector = editorSegSector;
+    lastDraw.slopeType = editorSlopeType;
+    lastDraw.difficulty = editorSegDiff;
+    try {
+      localStorage.setItem('map_editor_last', JSON.stringify(lastDraw));
+    } catch {}
+  }
 
   function escHtml(str: any): string {
     return String(str == null ? '' : str)
@@ -158,6 +203,39 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function pushUndoState() {
     undoStack.push(editorPoints.map((p) => [p[0], p[1]]));
     if (undoStack.length > 40) undoStack.shift();
+    redoStack = [];
+    discardArmedUntil = 0;
+  }
+
+  /** Adds a point where the admin clicked (snapped unless Alt is held). A lift is a straight line: its second point saves it. */
+  function addEditorPoint(latlng: any, altKey: boolean, shiftKey: boolean) {
+    const L = (window as any).L;
+    const targetLl = getSnappedLatLng(latlng, altKey);
+
+    // The two clicks of a double-click land on the same spot: keep one point
+    const now = Date.now();
+    if (now - lastClickTime < 280 && editorPoints.length > 0) {
+      const prev = editorPoints[editorPoints.length - 1];
+      const a = map.latLngToContainerPoint(L.latLng(prev[0], prev[1]));
+      const b = map.latLngToContainerPoint(targetLl);
+      if (a.distanceTo(b) < 6) return;
+    }
+    lastClickTime = now;
+
+    pushUndoState();
+    editorPoints.push([targetLl.lat, targetLl.lng]);
+    selectedVertexIdx = editorPoints.length - 1;
+    updateEditorDisplay(true);
+    notifyEditorState();
+
+    // Shift-click keeps a lift open for a bent line
+    if (editorMode === 'draw' && editorType === 'lift' && editorPoints.length === 2 && !shiftKey) {
+      saveEditor(false);
+    }
+  }
+
+  function isAppending(): boolean {
+    return editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
   }
 
   function notifyEditorState() {
@@ -227,9 +305,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     // Map Event Listeners for Editor
     map.on('mousemove', (e: any) => {
       if (!editorMode) return;
-      const isAppending =
-        editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
-      if (!isAppending) {
+      if (!isAppending()) {
         if (rubberBandLine) {
           map.removeLayer(rubberBandLine);
           rubberBandLine = null;
@@ -261,33 +337,13 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     map.on('click', (e: any) => {
       if (!editorMode) return;
-      const isAppending =
-        editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
-      if (!isAppending) {
+      if (!isAppending()) {
         selectedVertexIdx = -1;
         updateEditorDisplay(true);
         return;
       }
-
-      const now = Date.now();
-      const altKey = e.originalEvent && e.originalEvent.altKey;
-      const targetLl = getSnappedLatLng(e.latlng, altKey);
-
-      if (now - lastClickTime < 280 && editorPoints.length > 0) {
-        const prev = editorPoints[editorPoints.length - 1];
-        const dy = prev[0] - targetLl.lat;
-        const dx = prev[1] - targetLl.lng;
-        if (Math.sqrt(dy * dy + dx * dx) < 1.5) {
-          return;
-        }
-      }
-      lastClickTime = now;
-
-      pushUndoState();
-      editorPoints.push([targetLl.lat, targetLl.lng]);
-      selectedVertexIdx = editorPoints.length - 1;
-      updateEditorDisplay(true);
-      notifyEditorState();
+      const orig = e.originalEvent;
+      addEditorPoint(e.latlng, !!(orig && orig.altKey), !!(orig && orig.shiftKey));
     });
 
     map.on('dblclick', (e: any) => {
@@ -311,7 +367,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         saveEditor(e.shiftKey);
       } else if (e.key === 'Escape' && editorMode) {
         e.preventDefault();
-        cancelEditor();
+        escapeEditor();
       }
       return;
     }
@@ -322,10 +378,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         saveEditor(e.shiftKey);
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        cancelEditor();
-      } else if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+        escapeEditor();
+      } else if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
-        undo();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if ((e.key === 'y' || e.key === 'Y') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        redo();
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         reverse();
@@ -345,6 +405,17 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         fitBounds();
       }
     }
+  }
+
+  /** Esc cancels at once on a fresh line; with work in it, the first press only warns */
+  function escapeEditor() {
+    const hasWork = editorMode === 'draw' || editorMode === 'sector_boundary' ? editorPoints.length >= 3 : undoStack.length > 0;
+    if (!hasWork || Date.now() < discardArmedUntil) {
+      cancelEditor();
+      return;
+    }
+    discardArmedUntil = Date.now() + 2500;
+    callbacks.onToast(editorMode === 'edit' ? 'Press Esc again to discard your changes' : 'Press Esc again to discard this line', 'warning');
   }
 
   function initProgressiveOverlays() {
@@ -515,12 +586,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       hitLine.on('click', (e: any) => {
         if (L.DomEvent) L.DomEvent.stopPropagation(e);
         if (editorMode) {
-          if (editorMode === 'draw' || (editorMode === 'edit' && appendInEditMode)) {
-            const pt = getSnappedLatLng(e.latlng);
-            pushUndoState();
-            editorPoints.push([pt.lat, pt.lng]);
-            updateEditorDisplay(true);
-            notifyEditorState();
+          if (isAppending()) {
+            const orig = e.originalEvent;
+            addEditorPoint(e.latlng, !!(orig && orig.altKey), !!(orig && orig.shiftKey));
           }
           return;
         }
@@ -784,6 +852,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     let bestDist = maxDist;
     let bestPt: [number, number] | null = null;
     let bestLabel = '';
+    // Nearest spot along a run or lift, used only when no existing point is in reach
+    let lineDist = maxDist * 0.7;
+    let linePt: [number, number] | null = null;
+    let lineLabel = '';
+    const here: [number, number] = [latlng.lat, latlng.lng];
 
     segments.forEach((seg) => {
       if (editingSegId && String(seg.id) === String(editingSegId)) return;
@@ -800,8 +873,22 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           bestPt = pt;
           bestLabel = (seg.name || seg.type) + (idx === 0 ? ' (Start)' : idx === pts.length - 1 ? ' (End)' : '');
         }
+        if (idx > 0) {
+          const c = closestOnLine(here, pts[idx - 1], pt);
+          const d2 = Math.hypot(c[0] - here[0], c[1] - here[1]);
+          if (d2 < lineDist) {
+            lineDist = d2;
+            linePt = c;
+            lineLabel = (seg.name || seg.type) + ' (on line)';
+          }
+        }
       });
     });
+
+    if (!bestPt && linePt) {
+      bestPt = linePt;
+      bestLabel = lineLabel;
+    }
 
     if (bestPt) {
       currentSnapTarget = { lat: bestPt[0], lng: bestPt[1], label: bestLabel };
@@ -946,6 +1033,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         deleteVertexAt(index);
         return;
       }
+      // Already selected: leave the marker in place so a double-click on it still arrives
+      if (selectedVertexIdx === index) return;
       selectedVertexIdx = index;
       updateEditorDisplay(true);
     });
@@ -953,6 +1042,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     marker.on('contextmenu', (e: any) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
       deleteVertexAt(index);
+    });
+
+    // A double-click to finish lands its second click on the point the first click just placed
+    marker.on('dblclick', (e: any) => {
+      if (L.DomEvent) L.DomEvent.stopPropagation(e);
+      if (editorMode === 'draw' && index === editorPoints.length - 1 && editorPoints.length >= 2) {
+        saveEditor(false);
+      }
     });
 
     return marker;
@@ -1124,19 +1221,15 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     editorSegName = nextSuggestedName(type);
     if (!preserveSettings) {
-      editorSegDiff = 'blue';
-      editorSlopeType = 'downhill';
+      editorSegSector = lastDraw.sector;
+      editorSegDiff = lastDraw.difficulty;
+      editorSlopeType = lastDraw.slopeType;
     }
 
     setAppendMode(true);
     if (map) map.doubleClickZoom.disable();
     updateEditorDisplay(true);
     notifyEditorState();
-
-    callbacks.onToast(
-      'Drawing ' + (type === 'lift' ? 'Lift (Bottom → Top)' : 'Slope (Top → Bottom)') + ': click map to place points',
-      'info'
-    );
   }
 
   function startEditSegment(seg: MapSegment) {
@@ -1160,11 +1253,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     if (map) map.doubleClickZoom.disable();
     updateEditorDisplay(true);
     notifyEditorState();
-
-    callbacks.onToast(
-      'Editing "' + (seg.name || seg.type) + '": drag points to move, drag/click + midpoints to bend',
-      'info'
-    );
   }
 
   function startEditSectorBoundary(sec: Sector) {
@@ -1187,11 +1275,20 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function cancelEditor(skipRender?: boolean) {
+    const wasEditing = editorMode === 'edit';
     editorMode = null;
     editingSegId = null;
     editingSectorId = null;
     editorPoints = [];
     undoStack = [];
+    redoStack = [];
+    discardArmedUntil = 0;
+    // Editing loaded another line's settings: the idle toolbar goes back to the ones for new lines
+    if (wasEditing) {
+      editorSegSector = lastDraw.sector;
+      editorSegDiff = lastDraw.difficulty;
+      editorSlopeType = lastDraw.slopeType;
+    }
     selectedVertexIdx = -1;
     setAppendMode(false);
 
@@ -1223,6 +1320,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           callbacks.onSectorsUpdate([...sectors]);
           callbacks.onToast('Sector boundary saved!', 'success');
           cancelEditor(false);
+        } else {
+          callbacks.onToast(res?.error || 'Failed to save the sector boundary', 'error');
         }
       });
       return;
@@ -1280,6 +1379,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           callbacks.onToast('Updated "' + name + '" (' + lengthM + ' ' + distUnit + ')', 'success');
         } else {
           segments.push(updatedSeg);
+          rememberDrawSettings();
           callbacks.onToast('Created "' + name + '" (' + lengthM + ' ' + distUnit + ')', 'success');
         }
 
@@ -1297,19 +1397,33 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
+  function snapshot(): [number, number][] {
+    return editorPoints.map((p) => [p[0], p[1]] as [number, number]);
+  }
+
   function undo() {
     if (!editorMode) return;
     if (undoStack.length > 0) {
+      redoStack.push(snapshot());
       editorPoints = undoStack.pop()!;
-      selectedVertexIdx = -1;
-      updateEditorDisplay(true);
-      notifyEditorState();
     } else if (editorPoints.length > 0) {
+      redoStack.push(snapshot());
       editorPoints.pop();
-      selectedVertexIdx = -1;
-      updateEditorDisplay(true);
-      notifyEditorState();
+    } else {
+      return;
     }
+    selectedVertexIdx = -1;
+    updateEditorDisplay(true);
+    notifyEditorState();
+  }
+
+  function redo() {
+    if (!editorMode || redoStack.length === 0) return;
+    undoStack.push(snapshot());
+    editorPoints = redoStack.pop()!;
+    selectedVertexIdx = -1;
+    updateEditorDisplay(true);
+    notifyEditorState();
   }
 
   function reverse() {
@@ -1366,8 +1480,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       })
       .catch((err) => {
         console.error('API Error:', err);
-        callbacks.onToast(err.message || 'Request failed', 'error');
+        // A caller with a callback shows its own error; without one this is the only message
         if (callback) callback({ success: false, error: err.message || 'Request failed' });
+        else callbacks.onToast(err.message || 'Request failed', 'error');
       });
   }
 
@@ -1429,6 +1544,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     cancelEditor,
     saveEditor,
     undo,
+    redo,
     reverse,
     toggleSnap,
     toggleSectors,
@@ -1439,6 +1555,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     },
     setEditorSector: (s: number) => {
       editorSegSector = s;
+      // Picked on the idle toolbar: that is the sector for the next new line
+      if (!editorMode) rememberDrawSettings();
       notifyEditorState();
     },
     setEditorSlopeType: (t: string) => {
@@ -1491,6 +1609,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
             callbacks.onSectorsUpdate([...sectors]);
             callbacks.onToast(sec.name + ' is now ' + (sec.visible ? 'visible' : 'hidden'), 'info');
           }
+        } else {
+          callbacks.onToast(res?.error || 'Failed to change sector visibility', 'error');
         }
       });
     },
