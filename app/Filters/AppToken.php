@@ -47,7 +47,7 @@ class AppToken implements FilterInterface
             return $this->deny(403, 'feature_off', 'This feature is currently unavailable.');
         }
 
-        if (!in_array($path, self::WITHOUT_PROFILE, true)) {
+        if (!$isAdmin && !in_array($path, self::WITHOUT_PROFILE, true)) {
             $finance = $db->table('player_finances')->select('profile_completed')->where('user_id', $user->id)->get()->getRowArray();
             if ($finance && !$finance['profile_completed']) {
                 return $this->deny(403, 'profile_incomplete', 'Choose your start first.');

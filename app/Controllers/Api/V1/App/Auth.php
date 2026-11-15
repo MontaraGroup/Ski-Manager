@@ -126,9 +126,14 @@ class Auth extends AuthActivation
     private function session(User $user): array
     {
         $finance = db_connect()->table('player_finances')->select('profile_completed')->where('user_id', $user->id)->get()->getRowArray();
+        $isAdmin = (int) $user->id === 1 || $user->inGroup('admin', 'superadmin');
         return [
             'token' => $user->generateAccessToken('android')->raw_token,
-            'user' => ['id' => (int) $user->id, 'username' => (string) $user->username],
+            'user' => [
+                'id' => (int) $user->id,
+                'username' => (string) $user->username,
+                'isAdmin' => $isAdmin,
+            ],
             'profileComplete' => (bool) ($finance['profile_completed'] ?? false),
         ];
     }

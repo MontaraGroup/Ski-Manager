@@ -232,6 +232,29 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->post('equipment/(:num)/sell', 'Equipment::sellAction/$1');
         $routes->post('equipment/sell/(:num)', 'Equipment::sellAction/$1');
         $routes->post('account/delete', 'Account::delete');
+
+        // Admin Map Studio routes (apptoken + admin privileges required)
+        $routes->group('admin/map', static function ($routes) {
+            $routes->get('maps', 'Admin\Map::maps');
+            $routes->get('images/(:segment)', 'Admin\Map::images/$1');
+            $routes->post('change-map', 'Admin\Map::changeMap');
+            $routes->get('', 'Admin\Map::segments');
+            $routes->get('segments', 'Admin\Map::segments');
+            $routes->post('segment', 'Admin\Map::saveSegment');
+            $routes->post('segment/delete/(:num)', 'Admin\Map::deleteSegment/$1');
+            $routes->post('segment/(:num)/delete', 'Admin\Map::deleteSegment/$1');
+            $routes->post('segment/midstation/(:num)', 'Admin\Map::saveMidstation/$1');
+            $routes->post('segment/(:num)/midstation', 'Admin\Map::saveMidstation/$1');
+            $routes->post('sector/create', 'Admin\Map::createSector');
+            $routes->post('sector/create-with-boundary', 'Admin\Map::createSectorWithBoundary');
+            $routes->post('sector/boundary/(:num)', 'Admin\Map::saveSectorBoundary/$1');
+            $routes->post('sector/(:num)/boundary', 'Admin\Map::saveSectorBoundary/$1');
+            $routes->post('sector/toggle/(:num)', 'Admin\Map::toggleSector/$1');
+            $routes->post('sector/(:num)/toggle', 'Admin\Map::toggleSector/$1');
+            $routes->post('sector/delete/(:num)', 'Admin\Map::deleteSector/$1');
+            $routes->post('sector/(:num)/delete', 'Admin\Map::deleteSector/$1');
+            $routes->post('sector/auto-assign', 'Admin\Map::autoAssignSectors');
+        });
     });
 });
 $routes->get('/ui-kit', 'UiKit::index', ['filter' => 'admin']);
