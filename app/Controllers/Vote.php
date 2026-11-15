@@ -267,6 +267,11 @@ class Vote extends BaseController
 
     public function index(): string
     {
+        // With the monthly vote on, /vote is that vote; the Season 4 rows stay in resort_votes
+        if (\App\Libraries\ResortVote::flagOn()) {
+            $page = \App\Libraries\ResortVote::page(auth()->loggedIn() ? (int) auth()->id() : 0);
+            return view('vote/monthly', ['page' => $page]);
+        }
         self::ensureSchema();
         helper(['season', 'activity', 'time']);
 
@@ -420,6 +425,9 @@ class Vote extends BaseController
 
     public function cast()
     {
+        if (\App\Libraries\ResortVote::flagOn()) {
+            return redirect()->to('/vote')->with('error', 'The Season 4 vote has closed.');
+        }
         self::ensureSchema();
         helper(['activity', 'season']);
 
@@ -461,6 +469,9 @@ class Vote extends BaseController
 
     public function retract()
     {
+        if (\App\Libraries\ResortVote::flagOn()) {
+            return redirect()->to('/vote')->with('error', 'The Season 4 vote has closed.');
+        }
         self::ensureSchema();
         helper(['activity']);
 
