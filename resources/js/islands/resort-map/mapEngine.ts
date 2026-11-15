@@ -26,6 +26,9 @@ export interface MapEngineCallbacks {
   onToast: (msg: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
+// Two clicks on the same spot within this time are a double-click
+const DOUBLE_CLICK_MS = 400;
+
 function readShowAvailable(): boolean {
   try {
     return localStorage.getItem('map_show_available') !== '0';
@@ -116,6 +119,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let vertexMarkers: any[] = [];
   let midpointMarkers: any[] = [];
   let lastClickTime = 0;
+  // A save is on its way: Enter or a double-click again must not post the line twice
+  let saving = false;
 
   // A new line starts with the sector, slope type and difficulty used last (remembered per browser)
   const lastDraw = readLastDraw();
@@ -212,13 +217,16 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const L = (window as any).L;
     const targetLl = getSnappedLatLng(latlng, altKey);
 
-    // The two clicks of a double-click land on the same spot: keep one point
+    // The two clicks of a double-click land on the same spot: keep one point, and finish a new line
     const now = Date.now();
-    if (now - lastClickTime < 280 && editorPoints.length > 0) {
+    if (now - lastClickTime < DOUBLE_CLICK_MS && editorPoints.length > 0) {
       const prev = editorPoints[editorPoints.length - 1];
       const a = map.latLngToContainerPoint(L.latLng(prev[0], prev[1]));
       const b = map.latLngToContainerPoint(targetLl);
-      if (a.distanceTo(b) < 6) return;
+      if (a.distanceTo(b) < 6) {
+        finishOnDoubleClick();
+        return;
+      }
     }
     lastClickTime = now;
 
@@ -232,6 +240,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     if (editorMode === 'draw' && editorType === 'lift' && editorPoints.length === 2 && !shiftKey) {
       saveEditor(false);
     }
+  }
+
+  function finishOnDoubleClick() {
+    lastClickTime = 0;
+    if (editorMode === 'draw' && editorPoints.length >= 2) saveEditor(false);
   }
 
   function isAppending(): boolean {
@@ -348,10 +361,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     map.on('dblclick', (e: any) => {
       if (!editorMode) return;
+      // The second click already finished the line (addEditorPoint / vertex click)
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
-      if (editorMode === 'draw' && editorPoints.length >= 2) {
-        saveEditor(false);
-      }
     });
 
     // Keyboard Shortcuts
@@ -1033,7 +1044,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         deleteVertexAt(index);
         return;
       }
-      // Already selected: leave the marker in place so a double-click on it still arrives
+      // The second click of a double-click lands on the point the first click just placed
+      if (index === editorPoints.length - 1 && Date.now() - lastClickTime < DOUBLE_CLICK_MS) {
+        finishOnDoubleClick();
+        return;
+      }
       if (selectedVertexIdx === index) return;
       selectedVertexIdx = index;
       updateEditorDisplay(true);
@@ -1044,12 +1059,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       deleteVertexAt(index);
     });
 
-    // A double-click to finish lands its second click on the point the first click just placed
     marker.on('dblclick', (e: any) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
-      if (editorMode === 'draw' && index === editorPoints.length - 1 && editorPoints.length >= 2) {
-        saveEditor(false);
-      }
     });
 
     return marker;
@@ -1331,6 +1342,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       callbacks.onToast('Please place at least 2 points for a lift or slope', 'warning');
       return;
     }
+    if (saving) return;
+    saving = true;
 
     let name = editorSegName.trim();
     if (!name) {
@@ -1358,6 +1371,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const currentEditorType = editorType;
 
     postJSON('/map/segment', payload, (res) => {
+      saving = false;
       if (res && res.success) {
         const savedId = Number(res.id || editingSegId);
         const updatedSeg: MapSegment = {
