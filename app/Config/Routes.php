@@ -33,6 +33,10 @@ $routes->post("/admin/seasons/activate/(:num)", "Admin::activateSeason/$1");
 $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/admin/season-vote", "Admin::seasonVote");
 $routes->post("/admin/season-vote/settings", "Admin::saveSeasonVote");
+$routes->get("/admin/resort-vote", "Admin::resortVote");
+$routes->post("/admin/resort-vote/(:num)/open", "Admin::resortVoteOpen/$1");
+$routes->post("/admin/resort-vote/(:num)/winner", "Admin::resortVoteWinner/$1");
+$routes->post("/admin/resort-vote/area/(:num)/in-game", "Admin::resortVoteInGame/$1");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");
 $routes->get("auth/google/callback", "GoogleAuth::callback");
@@ -153,6 +157,10 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->get('me', 'Me::index');
     $routes->post('season-vote', 'SeasonVote::vote');
     $routes->post('season-vote/snooze', 'SeasonVote::snooze');
+    // Monthly resort vote (App\Libraries\ResortVote)
+    $routes->get('resort-vote/search', 'ResortVote::search');
+    $routes->post('resort-vote', 'ResortVote::vote');
+    $routes->post('resort-vote/retract', 'ResortVote::retract');
     // Beta program (App\Libraries\Beta): join, leave, per-feature switch, feedback
     $routes->post('beta/join', 'Beta::join');
     $routes->post('beta/leave', 'Beta::leave');
@@ -187,6 +195,7 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->get('map', 'Map::show');
         $routes->post('map/build', 'Map::build');
         $routes->post('map/demolish/(:num)', 'Map::demolish/$1');
+        $routes->post('map/upgrade/(:num)', 'Map::upgrade/$1');
         $routes->get('settings', 'Settings::show');
         $routes->post('settings/units', 'Settings::units');
         $routes->get('buildings', 'Buildings::show');
@@ -254,6 +263,7 @@ $routes->post("/dashboard/reset-widgets", "Dashboard::resetWidgets");
 $routes->post("/dashboard/batch-update-widgets", "Dashboard::batchUpdateWidgets");
 $routes->post("/map/build", "ResortMap::buildItem");
 $routes->post("/map/demolish/(:num)", "ResortMap::demolishItem/$1");
+$routes->post("/map/upgrade/(:num)", "ResortMap::swapLift/$1");
 $routes->match(['get', 'head'], '/api/map-image/(:segment)', 'MapImage::serve/$1');
 $routes->post("/map/change-map", "ResortMap::changeMap");
 $routes->post("/map/sector/create", "ResortMap::createSector");

@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
+use App\Libraries\LiftSwap;
 use App\Models\MapSegmentModel;
 
 class ResortMap extends BaseController
@@ -128,13 +130,13 @@ class ResortMap extends BaseController
         $userCash        = 0;
         if ($userId) {
             $built = $db->table('player_items')
-                ->select('id, segment_id, item_type, subtype, name, length_meters, capacity, difficulty, sector, status, snow_quality')
+                ->select('id, segment_id, item_type, subtype, name, length_meters, capacity, seats, difficulty, sector, status, snow_quality')
                 ->where('user_id', $userId)
                 ->where('segment_id IS NOT NULL')
                 ->get()->getResultArray();
             $builtSegmentIds = array_column($built, 'segment_id');
             foreach ($built as $b) {
-                $builtItems[(int) $b['segment_id']] = $b + ['salvage' => self::salvageValue($b)];
+                $builtItems[(int) $b['segment_id']] = self::withSwaps($b + ['salvage' => self::salvageValue($b)]);
             }
             $finRow   = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
             $userCash = (int) ($finRow['cash'] ?? 0);
@@ -469,6 +471,7 @@ class ResortMap extends BaseController
         $db->table('player_items')->insert($itemData);
         $itemData['id']      = (int) $db->insertID();
         $itemData['salvage'] = self::salvageValue($itemData);
+        $itemData = self::withSwaps($itemData);
 
         $db->table('financial_transactions')->insert([
             'user_id'     => $userId,
@@ -574,6 +577,113 @@ class ResortMap extends BaseController
         ]);
     }
 
+    /** A built lift with the systems it can be swapped to (LiftSwap), for the map and the app */
+    public static function withSwaps(array $item): array
+    {
+        if (($item['item_type'] ?? '') === 'lift') {
+            $item['seats']    = LiftSwap::currentSeats($item);
+            $item['run_cost'] = (int) round(\App\Libraries\Economy::liftRunningCost((string) $item['subtype'], (int) ($item['length_meters'] ?? 0)));
+            $item['swaps']    = LiftSwap::options($item);
+        }
+        return $item;
+    }
+
+    /**
+     * Replace a built lift with another system on the same line (POST JSON {lift_type, seats}). Costs what
+     * demolish + rebuild would, less LiftSwap::DISCOUNT; a swap to a cheaper lift pays back the difference.
+     * The lift keeps its name, line and anything assigned to it, and comes back at 100% condition.
+     */
+    public function swapLift($id = null)
+    {
+        $userId = auth()->id();
+        $fail = fn(int $code, string $msg) => $this->response->setStatusCode($code)->setJSON(['error' => $msg, 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
+        if (!$userId) {
+            return $fail(401, 'Login required');
+        }
+
+        $data  = $this->request->getJSON(true) ?? [];
+        $type  = (string) ($data['lift_type'] ?? '');
+        $seats = (int) ($data['seats'] ?? 0);
+        if (!LiftSwap::isValid($type, $seats)) {
+            return $fail(400, 'Pick a lift system and seat count from the list.');
+        }
+
+        $db = db_connect();
+        $db->transStart();
+        $item = $db->query("SELECT * FROM player_items WHERE id = ? AND user_id = ? AND item_type = 'lift' FOR UPDATE", [(int) $id, $userId])->getRowArray();
+        if (!$item) {
+            $db->transRollback();
+            return $fail(404, 'That lift was not found.');
+        }
+        if ($item['subtype'] === $type && LiftSwap::currentSeats($item) === $seats) {
+            $db->transRollback();
+            return $fail(400, $item['name'] . ' already is that lift.');
+        }
+        if (!in_array($item['status'], ['open', 'closed', 'broken'], true)) {
+            $db->transRollback();
+            return $fail(400, $item['name'] . ' isn\'t ready yet.');
+        }
+
+        $price   = LiftSwap::quote($item, $type, $seats)['price'];
+        $oldName = self::liftLabel($item['subtype'], LiftSwap::currentSeats($item));
+        $newName = self::liftLabel($type, $seats);
+        $what    = 'Replaced ' . $item['name'] . ': ' . $oldName . ' to ' . $newName;
+        if ($price > 0 && !Ledger::charge($userId, $price, 'Construction', $what)) {
+            $db->transRollback();
+            $cash = (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash') ?? 0);
+            return $fail(400, 'Not enough cash: this costs ' . currency($price) . ' and you have ' . currency($cash) . '.');
+        }
+        if ($price < 0) {
+            Ledger::credit($userId, -$price, 'Construction', $what);
+        }
+        $update = [
+            'subtype'       => $type,
+            'seats'         => $seats,
+            'capacity'      => \App\Libraries\Economy::liftCapacityPerHour($type, $seats),
+            'condition_pct' => 100,
+            'status'        => $item['status'] === 'closed' ? 'closed' : 'open',
+            'updated_at'    => date('Y-m-d H:i:s'),
+        ];
+        $db->table('player_items')->where('id', $item['id'])->update($update);
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            return $fail(500, 'Could not replace ' . $item['name'] . '. Nothing was changed.');
+        }
+
+        $money = $price > 0 ? ' for ' . currency($price) : ($price < 0 ? ', ' . currency(-$price) . ' back' : '');
+        log_activity($userId, 'Construction', $what . $money, 'fa-solid fa-arrows-rotate');
+
+        $item = self::withSwaps(array_merge($item, $update));
+        $item['salvage'] = self::salvageValue($item);
+        $fin = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
+        return $this->response->setJSON([
+            'success'    => true,
+            'message'    => $item['name'] . ' is now a ' . $newName . ($price > 0 ? '. Paid ' . currency($price) . '.' : ($price < 0 ? '. ' . currency(-$price) . ' paid back.' : '.')),
+            'price'      => $price,
+            'item'       => array_intersect_key($item, array_flip(['id', 'segment_id', 'item_type', 'subtype', 'name', 'length_meters', 'capacity', 'seats', 'difficulty', 'sector', 'status', 'snow_quality', 'salvage', 'run_cost', 'swaps'])),
+            'new_cash'   => (int) ($fin['cash'] ?? 0),
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
+    }
+
+    /** "Fixed-grip chairlift, 4 seats" */
+    public static function liftLabel(string $type, int $seats): string
+    {
+        $name = self::LIFT_NAMES[$type] ?? ucwords(str_replace('_', ' ', $type));
+        return $name . ', ' . $seats . ($seats === 1 ? ' seat' : ' seats');
+    }
+
+    /** Same names the map panel uses (resort-map/shared.tsx LIFT_TYPES) */
+    public const LIFT_NAMES = [
+        'button'       => 'Surface lift',
+        'chair_fixed'  => 'Fixed-grip chairlift',
+        'chair_detach' => 'Detachable chairlift',
+        'gondola'      => 'Gondola',
+        'cable_car'    => 'Cable car',
+    ];
+
     /** 25% of what the item cost to build */
     public static function salvageValue(array $item): int
     {
@@ -590,10 +700,7 @@ class ResortMap extends BaseController
         if (($item['item_type'] ?? '') !== 'lift') {
             return self::calcCost('slope', null, 0, $meters);
         }
-        $seats = (int) ($item['seats'] ?? 0) ?: match ($item['subtype'] ?? '') {
-            'button' => 1, 'chair_detach' => 4, 'gondola' => 6, 'cable_car' => 20, default => 2,
-        };
-        return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', $seats, $meters);
+        return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', LiftSwap::currentSeats($item), $meters);
     }
 
     /** Build price per metre for each lift type; the map page gets these too, so its prices match the charge */

@@ -1412,6 +1412,78 @@ class Admin extends BaseController
         return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
     }
 
+    /** GET /admin/resort-vote: this month's tally, past months, winner picks */
+    public function resortVote(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $rv = \App\Libraries\ResortVote::class;
+        $current = $rv::rollover();
+        $db = db_connect();
+        $rounds = $db->table('resort_vote_rounds')->orderBy('month', 'DESC')->limit(24)->get()->getResultArray();
+        $flag = $db->table('feature_flags')->select('id')->where('flag_key', $rv::FLAG)->get()->getRowArray();
+
+        // The old Season 4 vote (resort_votes), read only, so its result isn't lost when the flag goes on
+        $season4 = [];
+        if ($db->tableExists('resort_votes')) {
+            $names = array_map(fn($o) => $o['name'], (new \App\Controllers\Vote())->getResortOptions());
+            foreach ($db->query('SELECT resort_key, COUNT(*) AS n FROM resort_votes GROUP BY resort_key ORDER BY n DESC')->getResultArray() as $r) {
+                $key = \App\Controllers\Vote::resolveResortKey($r['resort_key']) ?? $r['resort_key'];
+                $season4[] = ['name' => $names[$key] ?? $key, 'votes' => (int) $r['n']];
+            }
+        }
+
+        $page = [
+            'flagLevel' => featureLevel($rv::FLAG),
+            'flagId' => $flag ? (int) $flag['id'] : null,
+            'currentId' => (int) $current['id'],
+            'rounds' => array_map(fn($r) => $rv::summary($r) + [
+                'status' => $r['status'],
+                'tally' => $rv::tally((int) $r['id'], 50),
+                'isCurrent' => $r['month'] === $rv::currentMonth(),
+            ], $rounds),
+            'inGame' => array_map([$rv, 'area'], $db->table('vote_ski_areas')->where('in_game', 1)->orderBy('name')->get()->getResultArray()),
+            'season4' => $season4,
+            'attribution' => $rv::ATTRIBUTION,
+        ];
+        return view('admin/resort_vote', ['page' => $page]);
+    }
+
+    /** POST /admin/resort-vote/{id}/open with open=1|0: reopen or close the current month */
+    public function resortVoteOpen(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $open = $this->request->getPost('open') === '1';
+        if (!\App\Libraries\ResortVote::setOpen($id, $open)) {
+            return redirect()->to('/admin/resort-vote')->with('error', 'Only the current month can be closed or reopened.');
+        }
+        $this->auditLog('resort_vote_' . ($open ? 'reopen' : 'close'), null, 'round ' . $id);
+        return redirect()->to('/admin/resort-vote')->with('success', $open ? 'Voting reopened.' : 'Voting closed for this month.');
+    }
+
+    /** POST /admin/resort-vote/{id}/winner: area_id, note, roadmap, notify */
+    public function resortVoteWinner(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $areaId = (int) $this->request->getPost('area_id');
+        $note = trim((string) $this->request->getPost('note'));
+        $note = $note === '' ? null : mb_substr($note, 0, \App\Libraries\ResortVote::NOTE_MAX);
+        $error = \App\Libraries\ResortVote::pickWinner($id, $areaId, $note,
+            $this->request->getPost('roadmap') === '1', $this->request->getPost('notify') === '1');
+        if ($error) return redirect()->to('/admin/resort-vote')->with('error', $error);
+        $this->auditLog('resort_vote_winner', null, 'round ' . $id . ', area ' . $areaId);
+        return redirect()->to('/admin/resort-vote')->with('success', 'Winner saved.');
+    }
+
+    /** POST /admin/resort-vote/area/{id}/in-game with in_game=1|0 */
+    public function resortVoteInGame(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $inGame = $this->request->getPost('in_game') === '1';
+        \App\Libraries\ResortVote::setInGame($id, $inGame);
+        $this->auditLog('resort_vote_in_game', null, 'area ' . $id . ' ' . ($inGame ? 'on' : 'off'));
+        return redirect()->to('/admin/resort-vote')->with('success', $inGame ? 'Marked as playable. It is off the ballot.' : 'Back on the ballot.');
+    }
+
     /** GET /admin/search?q= : players by username, email or ID (JSON, at most 10) */
     public function searchPlayers()
     {

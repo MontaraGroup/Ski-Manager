@@ -114,7 +114,8 @@ class Shell
         return [
             'href' => $locked ? '/achievements' : $it['url'],
             'url' => $it['url'],
-            'label' => $it['label'],
+            // /vote is the monthly resort vote once its flag is on
+            'label' => $it['url'] === '/vote' && \App\Libraries\ResortVote::flagOn() ? 'Resort Vote' : $it['label'],
             'icon' => $it['icon'],
             'locked' => $locked,
             'flagOff' => $flagOff,
