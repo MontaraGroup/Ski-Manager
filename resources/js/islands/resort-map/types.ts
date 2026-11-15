@@ -1,3 +1,5 @@
+import type { LiftSwapOption } from './LiftSwapDialog';
+
 export interface MapSegment {
   id: number | string;
   name?: string;
@@ -33,6 +35,10 @@ export interface BuiltItem {
   status?: string;
   snow_quality?: string;
   salvage?: number;
+  seats?: number;
+  /** Lifts: running cost per day, and the systems it can be swapped to (LiftSwapDialog) */
+  run_cost?: number;
+  swaps?: LiftSwapOption[];
 }
 
 export interface MapConfig {
