@@ -54,11 +54,16 @@ class Resort extends BaseController
         foreach ($sectors as $secNum => $sec) {
             $formattedLifts = array_map(function($lift) use ($cash) {
                 $repairCost = self::liftRepairCost($lift);
+                $lift = ResortMap::withSwaps($lift);
                 return [
                     'id' => (int) $lift['id'],
                     'name' => $lift['name'],
                     'subtype' => $lift['subtype'] ?? 'chairlift',
-                    'subtypeName' => ucwords(str_replace('_', ' ', $lift['subtype'] ?? 'chairlift')),
+                    'subtypeName' => ResortMap::liftLabel((string) ($lift['subtype'] ?? 'chair_fixed'), (int) $lift['seats']),
+                    'seats' => (int) $lift['seats'],
+                    'capacity' => (int) ($lift['capacity'] ?? 0),
+                    'run_cost' => (int) $lift['run_cost'],
+                    'swaps' => $lift['swaps'],
                     'status' => $lift['status'],
                     'condition_pct' => (int) ($lift['condition_pct'] ?? 100),
                     'repair_cost' => $repairCost,
@@ -119,6 +124,7 @@ class Resort extends BaseController
             ],
             'cash' => $cash,
             'cashFormatted' => currency($cash),
+            'isImperial' => isImperial(),
             'sectors' => $formattedSectors,
         ];
 
