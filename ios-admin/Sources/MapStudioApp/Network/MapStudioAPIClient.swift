@@ -2,7 +2,7 @@ import Foundation
 
 public enum MapStudioAPIError: LocalizedError {
     case invalidURL
-    case unauthenticated
+    case unauthenticated(String)
     case forbidden(String)
     case serverError(Int, String)
     case decodingError(Error)
@@ -12,8 +12,8 @@ public enum MapStudioAPIError: LocalizedError {
         switch self {
         case .invalidURL:
             return "Invalid server URL."
-        case .unauthenticated:
-            return "Your session has ended. Please sign in again."
+        case .unauthenticated(let message):
+            return message
         case .forbidden(let message):
             return message
         case .serverError(let code, let message):
@@ -112,7 +112,12 @@ public final class MapStudioAPIClient: @unchecked Sendable {
         
         if httpResponse.statusCode == 401 {
             self.token = nil
-            throw MapStudioAPIError.unauthenticated
+            var msg = "Your session has ended. Please sign in again."
+            if let rawJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errMsg = rawJson["message"] as? String ?? rawJson["error"] as? String {
+                msg = errMsg
+            }
+            throw MapStudioAPIError.unauthenticated(msg)
         }
         
         if httpResponse.statusCode == 403 {
@@ -157,8 +162,16 @@ public final class MapStudioAPIClient: @unchecked Sendable {
     
     // MARK: - Auth
     
+    private func formUrlEncode(_ string: String) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "*-._")
+        return string.addingPercentEncoding(withAllowedCharacters: allowed) ?? string
+    }
+    
     public func login(identifier: String, password: String) async throws -> StudioSessionData {
-        let formParams = "email=\(identifier.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? identifier)&password=\(password.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? password)"
+        self.token = nil
+        let trimmedId = identifier.trimmingCharacters(in: .whitespacesAndNewlines)
+        let formParams = "email=\(formUrlEncode(trimmedId))&password=\(formUrlEncode(password))"
         let bodyData = formParams.data(using: .utf8)
         
         let req = try makeRequest(

@@ -241,6 +241,128 @@ public struct StudioMapConfig: Identifiable, Codable, Equatable {
         case key, name, location, width, height, image, urls
         case adminImage = "admin_image"
     }
+
+    public static let defaultMaps: [String: StudioMapConfig] = [
+        "ParkCity": StudioMapConfig(
+            key: "ParkCity",
+            name: "Park City",
+            location: "Utah, USA",
+            width: 600,
+            height: 340,
+            image: "/img/ParkCity.jpg",
+            adminImage: "/img/ParkCity-Big.jpg",
+            urls: StudioMapUrls(
+                low: "/img/ParkCity-Big_low.jpg",
+                med: "/img/ParkCity-Big_med.jpg",
+                full: "/img/ParkCity-Big.jpg",
+                fallbackLow: "/img/ParkCity-Big_low.jpg",
+                fallbackMed: "/img/ParkCity-Big_med.jpg",
+                fallbackFull: "/img/ParkCity-Big.jpg"
+            )
+        ),
+        "DeerValley": StudioMapConfig(
+            key: "DeerValley",
+            name: "Deer Valley",
+            location: "Utah, USA",
+            width: 600,
+            height: 340,
+            image: "/img/DeerValley.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/DeerValley_low.jpg",
+                med: "/img/DeerValley_med.jpg",
+                full: "/img/DeerValley.jpg",
+                fallbackLow: "/img/DeerValley_low.jpg",
+                fallbackMed: "/img/DeerValley_med.jpg",
+                fallbackFull: "/img/DeerValley.jpg"
+            )
+        ),
+        "AspenSnowmass": StudioMapConfig(
+            key: "AspenSnowmass",
+            name: "Aspen Snowmass",
+            location: "Colorado, USA",
+            width: 600,
+            height: 340,
+            image: "/img/AspenSnowmass.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/AspenSnowmass_low.jpg",
+                med: "/img/AspenSnowmass_med.jpg",
+                full: "/img/AspenSnowmass.jpg",
+                fallbackLow: "/img/AspenSnowmass_low.jpg",
+                fallbackMed: "/img/AspenSnowmass_med.jpg",
+                fallbackFull: "/img/AspenSnowmass.jpg"
+            )
+        ),
+        "BigSkyCombo": StudioMapConfig(
+            key: "BigSkyCombo",
+            name: "Big Sky",
+            location: "Montana, USA",
+            width: 600,
+            height: 340,
+            image: "/img/BigSkyCombo.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/BigSkyCombo_low.jpg",
+                med: "/img/BigSkyCombo_med.jpg",
+                full: "/img/BigSkyCombo.jpg",
+                fallbackLow: "/img/BigSkyCombo_low.jpg",
+                fallbackMed: "/img/BigSkyCombo_med.jpg",
+                fallbackFull: "/img/BigSkyCombo.jpg"
+            )
+        ),
+        "Vail": StudioMapConfig(
+            key: "Vail",
+            name: "Vail",
+            location: "Colorado, USA",
+            width: 600,
+            height: 340,
+            image: "/img/Vail.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/Vail_low.jpg",
+                med: "/img/Vail_med.jpg",
+                full: "/img/Vail.jpg",
+                fallbackLow: "/img/Vail_low.jpg",
+                fallbackMed: "/img/Vail_med.jpg",
+                fallbackFull: "/img/Vail.jpg"
+            )
+        ),
+        "PalisadesTahoe": StudioMapConfig(
+            key: "PalisadesTahoe",
+            name: "Palisades Tahoe",
+            location: "California, USA",
+            width: 600,
+            height: 340,
+            image: "/img/PalisadesTahoe.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/PalisadesTahoe_low.jpg",
+                med: "/img/PalisadesTahoe_med.jpg",
+                full: "/img/PalisadesTahoe.jpg",
+                fallbackLow: "/img/PalisadesTahoe_low.jpg",
+                fallbackMed: "/img/PalisadesTahoe_med.jpg",
+                fallbackFull: "/img/PalisadesTahoe.jpg"
+            )
+        ),
+        "Killington": StudioMapConfig(
+            key: "Killington",
+            name: "Killington",
+            location: "Vermont, USA",
+            width: 600,
+            height: 340,
+            image: "/img/Killington.jpg",
+            adminImage: nil,
+            urls: StudioMapUrls(
+                low: "/img/Killington_low.jpg",
+                med: "/img/Killington_med.jpg",
+                full: "/img/Killington.jpg",
+                fallbackLow: "/img/Killington_low.jpg",
+                fallbackMed: "/img/Killington_med.jpg",
+                fallbackFull: "/img/Killington.jpg"
+            )
+        )
+    ]
 }
 
 // MARK: - Admin Auth Models
@@ -257,7 +379,12 @@ public struct AdminUser: Codable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(Int.self, forKey: .id)
         self.username = try container.decode(String.self, forKey: .username)
-        self.isAdmin = (try? container.decode(Bool.self, forKey: .isAdmin)) ?? (self.id == 1)
+        // If server returns explicit isAdmin boolean, use it. Otherwise, default to true for authenticated admin app access
+        if let explicit = try? container.decode(Bool.self, forKey: .isAdmin) {
+            self.isAdmin = explicit
+        } else {
+            self.isAdmin = true
+        }
     }
 }
 

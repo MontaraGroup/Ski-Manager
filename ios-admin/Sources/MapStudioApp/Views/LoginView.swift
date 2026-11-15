@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct LoginView: View {
     @ObservedObject var store: MapStudioStore
-    @State private var serverEnvironment: ServerEnv = .staging
+    @AppStorage("mapstudio_server_env") private var serverEnvironment: ServerEnv = .production
     @State private var customServerURL: String = ""
     @State private var identifier: String = ""
     @State private var password: String = ""
@@ -112,6 +112,7 @@ public struct LoginView: View {
                                     .foregroundColor(.white)
                                     #if os(iOS)
                                     .textInputAutocapitalization(.never)
+                                    .keyboardType(.emailAddress)
                                     #endif
                                     .disableAutocorrection(true)
                             }
@@ -204,9 +205,16 @@ public struct LoginView: View {
         }
         client.baseURLString = targetURL
         
+        let cleanId = identifier.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanId.isEmpty else {
+            errorMessage = "Please enter your administrator username or email."
+            isLoading = false
+            return
+        }
+        
         Task {
             do {
-                let sessionData = try await client.login(identifier: identifier, password: password)
+                let sessionData = try await client.login(identifier: cleanId, password: password)
                 await MainActor.run {
                     self.store.currentUser = sessionData.user
                     self.store.isAuthenticated = true

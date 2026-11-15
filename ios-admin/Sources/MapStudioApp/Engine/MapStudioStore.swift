@@ -76,7 +76,15 @@ public final class MapStudioStore: ObservableObject {
             await loadSegments(mapKey: self.currentMapKey)
             await drainOfflineQueue()
         } catch {
-            showToast("Failed to load maps: \(error.localizedDescription)")
+            if self.availableMaps.isEmpty {
+                self.availableMaps = StudioMapConfig.defaultMaps
+                self.currentMapKey = "ParkCity"
+                self.currentMapConfig = self.availableMaps["ParkCity"]
+                if let cfg = self.currentMapConfig {
+                    imageLoader.loadMap(config: cfg, baseURL: apiClient.baseURLString)
+                }
+            }
+            showToast("\(error.localizedDescription)")
         }
     }
     
