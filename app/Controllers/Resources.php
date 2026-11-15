@@ -36,7 +36,8 @@ class Resources extends BaseController
         $costMult = ((int) getDifficultyConfig('cost_multiplier', '100')) / 100;
         $sources = $db->table($meta['table'])->where('user_id', $userId)->orderBy('id')->get()->getResultArray();
 
-        $snowmakers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray();
+        // Only the hours snow guns actually run today count (App\Libraries\Snowmaking)
+        $snowmakers = \App\Libraries\Snowmaking::today($userId)['running'];
         if ($category === 'energy') {
             $demand = Utilities::energyDemand(
                 $snowmakers,
