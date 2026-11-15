@@ -1,3 +1,11 @@
+## Release 2026-11-15 20:20
+
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+* fix(map-studio): finish a line on double-click by click timing, never post a line twice (592d0b6f)
+* feat(map-studio): faster lift and slope drawing (4557063d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d51de4b8)
+
 ## Release 2026-11-15 18:36
 
 * Merge branch 'MontaraGroup:main' into main (076a60ca)
