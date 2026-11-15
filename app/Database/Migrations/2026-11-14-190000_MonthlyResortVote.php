@@ -2,7 +2,7 @@
 
 namespace App\Database\Migrations;
 
-use App\Libraries\ResortVote;
+use App\Libraries\ResortVote as Poll;
 use CodeIgniter\Database\Migration;
 
 /**
@@ -10,7 +10,7 @@ use CodeIgniter\Database\Migration;
  * pick from, one round per calendar month, and one ballot per player per round. The
  * `resort_vote` flag starts off. The old Season 4 table `resort_votes` is left as it is.
  */
-class ResortVote extends Migration
+class MonthlyResortVote extends Migration
 {
     public function up()
     {
@@ -76,12 +76,12 @@ class ResortVote extends Migration
         }
 
         if (!$this->db->table('vote_ski_areas')->countAllResults()) {
-            ResortVote::importAreas();
+            Poll::importAreas();
         }
 
-        if (!$this->db->table('feature_flags')->where('flag_key', ResortVote::FLAG)->countAllResults()) {
+        if (!$this->db->table('feature_flags')->where('flag_key', Poll::FLAG)->countAllResults()) {
             $this->db->table('feature_flags')->insert([
-                'flag_key'    => ResortVote::FLAG,
+                'flag_key'    => Poll::FLAG,
                 'name'        => 'Monthly resort vote',
                 'description' => 'Players vote each calendar month on the North American resort to add next (/vote). Results and the winner on /admin/resort-vote',
                 'enabled'     => 0,
@@ -91,7 +91,7 @@ class ResortVote extends Migration
 
     public function down()
     {
-        $this->db->table('feature_flags')->where('flag_key', ResortVote::FLAG)->delete();
+        $this->db->table('feature_flags')->where('flag_key', Poll::FLAG)->delete();
         $this->forge->dropTable('resort_vote_ballots', true);
         $this->forge->dropTable('resort_vote_rounds', true);
         $this->forge->dropTable('vote_ski_areas', true);
