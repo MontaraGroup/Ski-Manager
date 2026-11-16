@@ -214,6 +214,9 @@
     <link rel="manifest" href="/site.webmanifest">
     <title><?= $this->renderSection('title') ?> - Ski Manager</title>
     <link rel="preload" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" as="style">
+    <?php if (!auth()->loggedIn() && (uri_string() === '' || uri_string() === '/')) : ?>
+    <link rel="preload" as="image" href="/img/ParkCity_low.webp" type="image/webp" fetchpriority="high">
+    <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
     <?php $__mapPrefetch = preg_replace('/[^A-Za-z]/', '', (string) (db_connect()->table("player_finances")->select("resort_map")->where("user_id", auth()->id())->get()->getRow("resort_map") ?? "ParkCity")); ?>
     <?php // Warm the files the trail map will ask for: the WebP copies when the server has them
@@ -602,7 +605,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Game -->
                 <div>
-                    <h6 class="">Game</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Game</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/register">Play Now</a></li>
                         <li><a href="/leaderboard">Leaderboard</a></li>
@@ -614,7 +617,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Resources -->
                 <div>
-                    <h6 class="">Resources</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Resources</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/guides">Guides</a></li>
                         <li><a href="/faq">FAQ</a></li>
@@ -625,7 +628,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Legal -->
                 <div>
-                    <h6 class="">Legal</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Legal</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/terms">Terms</a></li>
                         <li><a href="/privacy">Privacy</a></li>
@@ -757,7 +760,7 @@ document.querySelectorAll("[data-count]").forEach(function(el){
 </script>
 
 <!-- Cookie Consent Banner -->
-<div id="cookieConsent" class="fixed bottom-0 left-0 right-0 bg-base-200 border-t border-base-300 p-4 shadow-lg" style="z-index:99999;display:none;">
+<div id="cookieConsent" role="region" aria-label="Cookie consent" class="fixed bottom-0 left-0 right-0 bg-base-200 border-t border-base-300 p-4 shadow-lg" style="z-index:99999;display:none;">
     <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-sm text-base-content/80">We use cookies for analytics and advertising. You can choose which to accept.</p>
         <div class="flex gap-2 shrink-0">
