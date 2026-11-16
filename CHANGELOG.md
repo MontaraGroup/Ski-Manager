@@ -1,3 +1,11 @@
+## Release 2026-11-16 13:45
+
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (bebe0287)
+* Merge pull request #105 from Montara-Group/main (af38645f)
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+
 ## Release 2026-11-15 20:20
 
 * Merge branch 'MontaraGroup:main' into main (0e2099e9)
