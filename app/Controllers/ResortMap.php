@@ -152,8 +152,12 @@ class ResortMap extends BaseController
         $resortMap  = $this->getSelectedMap();
         $mapConfig  = self::RESORT_MAPS[$resortMap] ?? self::RESORT_MAPS['ParkCity'];
         $isAdmin    = $this->isAdmin();
-        if ($isAdmin && !empty($mapConfig['admin_image'])) {
-            $mapConfig['image'] = $mapConfig['admin_image'];
+        // Admins trace runs over <Map>-Big.jpg (the same view with lifts and runs drawn in) when it is on the server
+        if ($isAdmin) {
+            $adminImage = $mapConfig['admin_image'] ?? preg_replace('/\.jpe?g$/i', '-Big.jpg', $mapConfig['image']);
+            if (is_file(FCPATH . ltrim($adminImage, '/'))) {
+                $mapConfig['image'] = $adminImage;
+            }
         }
         $userId     = auth()->id();
         $db         = db_connect();

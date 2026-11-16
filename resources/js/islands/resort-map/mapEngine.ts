@@ -43,10 +43,15 @@ interface LastDraw {
   difficulty: string;
 }
 
-function readLastDraw(): LastDraw {
+// Sectors belong to one trail map, so each map keeps its own last settings
+function lastDrawKey(mapName: string): string {
+  return 'map_editor_last:' + mapName;
+}
+
+function readLastDraw(mapName: string): LastDraw {
   const fallback: LastDraw = { sector: 0, slopeType: 'downhill', difficulty: 'blue' };
   try {
-    const raw = JSON.parse(localStorage.getItem('map_editor_last') || 'null');
+    const raw = JSON.parse(localStorage.getItem(lastDrawKey(mapName)) || 'null');
     if (!raw || typeof raw !== 'object') return fallback;
     return {
       sector: Number(raw.sector) || 0,
@@ -123,7 +128,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let saving = false;
 
   // A new line starts with the sector, slope type and difficulty used last (remembered per browser)
-  const lastDraw = readLastDraw();
+  const lastDraw = readLastDraw(props.mapConfig.name);
+  // A sector that is not on this map (deleted since) falls back to Default (0)
+  if (!props.sectors.some((sec) => Number(sec.id) === lastDraw.sector)) lastDraw.sector = 0;
   let editorSegName = '';
   let editorSegSector = lastDraw.sector;
   let editorSlopeType = lastDraw.slopeType;
@@ -134,7 +141,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     lastDraw.slopeType = editorSlopeType;
     lastDraw.difficulty = editorSegDiff;
     try {
-      localStorage.setItem('map_editor_last', JSON.stringify(lastDraw));
+      localStorage.setItem(lastDrawKey(mapConfig.name), JSON.stringify(lastDraw));
     } catch {}
   }
 
