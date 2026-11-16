@@ -8,7 +8,7 @@ use App\Models\MapSegmentModel;
 
 class ResortMap extends BaseController
 {
-    private const RESORT_MAPS = [
+    protected const RESORT_MAPS = [
         'ParkCity'       => ['name' => 'Park City',       'location' => 'Utah, USA',       'image' => '/img/ParkCity.jpg',       'admin_image' => '/img/ParkCity-Big.jpg', 'width' => 600, 'height' => 340],
         'DeerValley'     => ['name' => 'Deer Valley',     'location' => 'Utah, USA',       'image' => '/img/DeerValley.jpg',     'width' => 600, 'height' => 340],
         'AspenSnowmass'  => ['name' => 'Aspen Snowmass',  'location' => 'Colorado, USA',   'image' => '/img/AspenSnowmass.jpg',  'width' => 600, 'height' => 340],
@@ -19,8 +19,58 @@ class ResortMap extends BaseController
     ];
 
     public static function getResortMapNames(): array { return array_map(fn($m) => $m["name"], self::RESORT_MAPS); }
-    private function getSelectedMap(): string
+
+    public static function mapImageUrls(string $mapKey, bool $isAdmin = true): array
     {
+        $config = self::RESORT_MAPS[$mapKey] ?? self::RESORT_MAPS['ParkCity'];
+        $image = ($isAdmin && !empty($config['admin_image'])) ? $config['admin_image'] : $config['image'];
+        $webp = self::webpSizes((string)$image);
+        $basePath = preg_replace('/\.jpe?g$/i', '', $image);
+        return [
+            'key'         => $mapKey,
+            'name'        => $config['name'],
+            'location'    => $config['location'],
+            'width'       => $config['width'] ?? 600,
+            'height'      => $config['height'] ?? 340,
+            'image'       => $image,
+            'admin_image' => $config['admin_image'] ?? null,
+            'webp'        => $webp,
+            'urls'        => [
+                'low'          => $basePath . ($webp['low'] ? '_low.webp' : '_low.jpg'),
+                'med'          => $basePath . ($webp['med'] ? '_med.webp' : '_med.jpg'),
+                'full'         => $webp['full'] ? ($basePath . '.webp') : $image,
+                'fallbackLow'  => $basePath . '_low.jpg',
+                'fallbackMed'  => $basePath . '_med.jpg',
+                'fallbackFull' => $image,
+            ],
+        ];
+    }
+
+    public static function getAllResortMaps(bool $isAdmin = true): array
+    {
+        $result = [];
+        foreach (self::RESORT_MAPS as $key => $cfg) {
+            $result[$key] = self::mapImageUrls($key, $isAdmin);
+        }
+        return $result;
+    }
+
+    protected function getSelectedMap(?string $requestedMap = null): string
+    {
+        $candidate = $requestedMap;
+        if (!$candidate && $this->request) {
+            $candidate = $this->request->getGet('map') ?? $this->request->getGet('resort_map');
+            if (!$candidate) {
+                $json = $this->request->getJSON(true);
+                if (is_array($json)) {
+                    $candidate = $json['map'] ?? $json['resort_map'] ?? null;
+                }
+            }
+        }
+        if ($candidate && isset(self::RESORT_MAPS[$candidate])) {
+            return $candidate;
+        }
+
         $userId = auth()->id();
         if ($userId) {
             $fin = db_connect()->table('player_finances')
@@ -33,7 +83,7 @@ class ResortMap extends BaseController
         return 'ParkCity';
     }
 
-    private function isAdmin(): bool
+    protected function isAdmin(): bool
     {
         if (!function_exists('auth') || !auth()->loggedIn()) {
             return false;
@@ -47,7 +97,8 @@ class ResortMap extends BaseController
         $userId = auth()->id();
         if (!$userId) return redirect()->to('/login');
 
-        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map');
+        $json = $this->request->getJSON(true);
+        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map') ?? ($json['map'] ?? $json['resort_map'] ?? null);
 
         // Check either key or name
         $foundKey = null;
@@ -62,8 +113,12 @@ class ResortMap extends BaseController
             }
         }
 
+        $isJsonOrAjax = $this->request->isAJAX() ||
+            str_contains((string) $this->request->getHeaderLine('Accept'), 'application/json') ||
+            str_starts_with(trim($this->request->getUri()->getPath(), '/'), 'api/');
+
         if (!$foundKey) {
-            if ($this->request->isAJAX()) {
+            if ($isJsonOrAjax) {
                 return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid map selected.', 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
             }
             return redirect()->to('/map')->with('error', 'Invalid map selected.');
@@ -75,7 +130,7 @@ class ResortMap extends BaseController
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        if ($this->request->isAJAX()) {
+        if ($isJsonOrAjax) {
             return $this->response->setJSON(['success' => true, 'map' => $foundKey, 'mapName' => self::RESORT_MAPS[$foundKey]['name'], 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
         }
 
@@ -924,7 +979,7 @@ class ResortMap extends BaseController
         ]);
     }
 
-    private function pip(array $pt, array $poly): bool
+    protected function pip(array $pt, array $poly): bool
     {
         $x = (float) ($pt[1] ?? $pt['lng'] ?? 0);
         $y = (float) ($pt[0] ?? $pt['lat'] ?? 0);
