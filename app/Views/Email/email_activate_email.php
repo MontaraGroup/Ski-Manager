@@ -27,6 +27,9 @@
     <p><?= lang('Auth.emailIpAddress') ?> <?= esc($ipAddress) ?></p>
     <p><?= lang('Auth.emailDevice') ?> <?= esc($userAgent) ?></p>
     <p><?= lang('Auth.emailDate') ?> <?= esc($date) ?></p>
+    <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 12px; font-size: 11px; color: #9ca3af;">
+        You received this email because an account was registered on <a href="https://ski-manager.net" style="color: #6b7280; text-decoration: underline;">Ski Manager</a>. If you did not create an account, you can safely ignore this email.
+    </div>
 </body>
 
 </html>
