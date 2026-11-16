@@ -1,3 +1,11 @@
+## Release 2026-11-16 13:49
+
+* Merge branch 'MontaraGroup:main' into main (4e726a1a)
+* Merge pull request #106 from Montara-Group/feat/ios-map-studio (bf55d668)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (1512f766)
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* fix(email): enable sendMultipart and set default mailType to html (017cc0d0)
+
 ## Release 2026-11-16 13:45
 
 * Merge branch 'MontaraGroup:main' into main (c33a3482)
