@@ -18,6 +18,10 @@
             </tr>
         </tbody>
     </table>
+    <p style="font-size: 13px; color: #6b7280; margin-top: 12px; word-break: break-all;">
+        If the button above does not work, copy and paste this link into your browser:<br>
+        <a href="<?= url_to('verify-magic-link') ?>?token=<?= $token ?>" style="color: #0d6efd; text-decoration: underline;"><?= url_to('verify-magic-link') ?>?token=<?= $token ?></a>
+    </p>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%;" width="100%">
         <tbody>
             <tr>
@@ -32,6 +36,9 @@
     <p><?= lang('Auth.emailIpAddress') ?> <?= esc($ipAddress) ?></p>
     <p><?= lang('Auth.emailDevice') ?> <?= esc($userAgent) ?></p>
     <p><?= lang('Auth.emailDate') ?> <?= esc($date) ?></p>
+    <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 12px; font-size: 11px; color: #9ca3af;">
+        You received this email because a sign-in link was requested for your <a href="https://ski-manager.net" style="color: #6b7280; text-decoration: underline;">Ski Manager</a> account. If you did not request this, you can safely ignore this email.
+    </div>
 </body>
 
 </html>
