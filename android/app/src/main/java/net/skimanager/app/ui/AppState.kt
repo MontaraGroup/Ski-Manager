@@ -26,13 +26,15 @@ class AppState(context: Context) {
         if (signedIn) forget("Your session has ended. Sign in again.")
     })
 
-    /** data: { token, user, profileComplete } from sign-in or the email code */
-    fun signIn(data: JsonObject) {
-        token = data.str("token")
-        store.write(data.str("token"))
+    /** data: { token, user, profileComplete } from sign-in or the email code. False if the answer had no token */
+    fun signIn(data: JsonObject): Boolean {
+        val newToken = data.str("token").ifBlank { return false }
+        token = newToken
+        store.write(newToken)
         needsStart = !data.bool("profileComplete")
         signedOutNote = null
         signedIn = true
+        return true
     }
 
     fun forget(note: String? = null) {

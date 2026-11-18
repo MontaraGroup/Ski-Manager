@@ -390,6 +390,9 @@ $routes->get("/faq", "Faq::index");
 $routes->get('/guides', 'Guides::index');
 $routes->get('/guides/(:segment)', 'Guides::show/$1');
 $routes->get("/disclaimer", "Legal::disclaimer");
+// Before Shield's routes so this one wins (the first definition of a path is kept): Shield's
+// verify throws when the player is already signed in (App\Controllers\MagicLink)
+$routes->get('login/verify-magic-link', '\App\Controllers\MagicLink::verify', ['as' => 'verify-magic-link']);
 service("auth")->routes($routes);
 $routes->get('magic-link', static function () {
     return redirect()->to(site_url('login/magic-link'));

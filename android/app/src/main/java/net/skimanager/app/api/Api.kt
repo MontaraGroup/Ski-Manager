@@ -18,7 +18,10 @@ import java.util.concurrent.TimeUnit
 
 /** What the server answered. It decides every rule and formats every number; the app only shows it */
 sealed interface ApiResult {
-    data class Ok(val data: JsonElement?, val message: String?) : ApiResult
+    data class Ok(val data: JsonElement?, val message: String?) : ApiResult {
+        /** data as an object, or an empty one when the server sent something else */
+        fun dataObject(): JsonObject = data?.takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
+    }
 
     /** code: the server's errors.code, such as "maintenance". fields: field name to message, for forms */
     data class Failed(val status: Int, val message: String, val code: String?, val fields: Map<String, String>) : ApiResult
@@ -58,12 +61,15 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
     }
 
     private suspend fun send(builder: Request.Builder): ApiResult = withContext(Dispatchers.IO) {
-        tokens()?.let { builder.header("Authorization", "Bearer $it") }
+        val token = tokens()
+        token?.let { builder.header("Authorization", "Bearer $it") }
         builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
         try {
             client.newCall(builder.build()).execute().use { response ->
                 val result = parseBody(response.code, response.body?.string())
-                if (result is ApiResult.Failed && result.code == "unauthenticated") withContext(Dispatchers.Main) { onSignedOut() }
+                // A 401 on a signed-in request means the token expired or was revoked, whatever the body says
+                val expired = result is ApiResult.Failed && (result.code == "unauthenticated" || (token != null && response.code == 401))
+                if (expired) withContext(Dispatchers.Main) { onSignedOut() }
                 result
             }
         } catch (e: IOException) {
