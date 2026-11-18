@@ -1,3 +1,11 @@
+## Release 2026-11-18 13:47
+
+* Merge pull request #116 from Montara-Group/feat/android-native-pages (b99430f3)
+* fix(android): More tab returns to its list; debug builds can target a local server (984328ca)
+* Merge pull request #115 from Montara-Group/fix/alliance-manage-member-route (1272f15b)
+* fix(alliances): point member-management buttons at manage-member route (b38bfcd9)
+* feat(android): native screens for every website page (bf721cee)
+
 ## Release 2026-11-18 03:41
 
 * Merge pull request #114 from Montara-Group/main (7a158a09)
