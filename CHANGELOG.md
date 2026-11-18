@@ -1,3 +1,11 @@
+## Release 2026-11-18 03:41
+
+* Merge pull request #114 from Montara-Group/main (7a158a09)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (658c7e2a)
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+
 ## Release 2026-11-18 03:34
 
 * Merge branch 'MontaraGroup:main' into main (200e6a5f)
