@@ -283,6 +283,12 @@ class Roadmap extends BaseController
 
     public function index(): string
     {
+        return view('roadmap/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         self::ensureSchema();
         helper('notify');
 
@@ -359,7 +365,7 @@ class Roadmap extends BaseController
             'releases' => $releases,
         ];
 
-        return view('roadmap/index', ['page' => $page]);
+        return $page;
     }
 
     public function vote(int $itemId)

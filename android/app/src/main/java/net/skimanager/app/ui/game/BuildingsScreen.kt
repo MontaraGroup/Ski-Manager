@@ -72,9 +72,9 @@ private val BUILDING_CATEGORIES = listOf(
 )
 
 @Composable
-fun BuildingsScreen(app: AppState) {
+fun BuildingsScreen(app: AppState, initialType: String = "hotel") {
     val scope = rememberCoroutineScope()
-    var selectedType by remember { mutableStateOf("hotel") }
+    var selectedType by remember { mutableStateOf(initialType) }
     var note by remember { mutableStateOf<String?>(null) }
     var failed by remember { mutableStateOf(false) }
 

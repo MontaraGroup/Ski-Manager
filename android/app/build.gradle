@@ -42,7 +42,8 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField "String", "BASE_URL", '"https://staging.ski-manager.net"'
+            // -PdebugBaseUrl=http://10.0.2.2:8899 points an emulator at a server on this computer
+            buildConfigField "String", "BASE_URL", "\"${findProperty('debugBaseUrl') ?: 'https://staging.ski-manager.net'}\""
         }
         release {
             // -PreleaseBaseUrl lets a test build run the shrunk code against staging

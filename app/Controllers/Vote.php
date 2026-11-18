@@ -272,6 +272,12 @@ class Vote extends BaseController
             $page = \App\Libraries\ResortVote::page(auth()->loggedIn() ? (int) auth()->id() : 0);
             return view('vote/monthly', ['page' => $page]);
         }
+        return view('vote/index', ['page' => $this->season4Data()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function season4Data(): array
+    {
         self::ensureSchema();
         helper(['season', 'activity', 'time']);
 
@@ -420,7 +426,7 @@ class Vote extends BaseController
             'recentVotes' => $formattedRecent,
         ];
 
-        return view('vote/index', ['page' => $page]);
+        return $page;
     }
 
     public function cast()

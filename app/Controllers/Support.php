@@ -9,6 +9,12 @@ class Support extends BaseController
 
     public function index(): string
     {
+        return view('support/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -37,7 +43,7 @@ class Support extends BaseController
             'defaultMessage' => (string) (old('message') ?? ''),
         ];
 
-        return view('support/index', ['page' => $page]);
+        return $page;
     }
 
     /** GET /support/messages?after={id}: new messages for the open chat (polled while the tab is visible) */
