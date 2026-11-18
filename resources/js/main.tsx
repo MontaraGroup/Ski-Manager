@@ -74,6 +74,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AdminIndexPage: () => import('./islands/AdminIndexPage'),
   AdminNav: () => import('./islands/AdminNav'),
   AdminSupportInboxPage: () => import('./islands/AdminSupportInboxPage'),
+  AdminFeedbackPage: () => import('./islands/AdminFeedbackPage'),
   AdminSupportChatPage: () => import('./islands/AdminSupportChatPage'),
   SettingsPage: () => import('./islands/SettingsPage'),
   GenepisPage: () => import('./islands/GenepisPage'),
