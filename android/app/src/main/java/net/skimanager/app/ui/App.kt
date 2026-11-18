@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,10 +51,44 @@ import net.skimanager.app.ui.game.EquipmentScreen
 import net.skimanager.app.ui.game.GroomingScreen
 import net.skimanager.app.ui.game.SnowmakingScreen
 import net.skimanager.app.ui.game.LeaderboardScreen
-import net.skimanager.app.ui.game.MoreScreen
 import net.skimanager.app.ui.game.NotificationsScreen
 import net.skimanager.app.ui.game.SettingsScreen
 import net.skimanager.app.ui.game.WeatherScreen
+import net.skimanager.app.ui.game.AchievementsScreen
+import net.skimanager.app.ui.game.ActivityScreen
+import net.skimanager.app.ui.game.AllianceDirectoryScreen
+import net.skimanager.app.ui.game.AllianceLeaderboardScreen
+import net.skimanager.app.ui.game.AllianceViewScreen
+import net.skimanager.app.ui.game.AlliancesScreen
+import net.skimanager.app.ui.game.BetaScreen
+import net.skimanager.app.ui.game.ComplianceScreen
+import net.skimanager.app.ui.game.DailyBonusScreen
+import net.skimanager.app.ui.game.EmergencyScreen
+import net.skimanager.app.ui.game.EnvironmentScreen
+import net.skimanager.app.ui.game.GenepisScreen
+import net.skimanager.app.ui.game.GovernmentScreen
+import net.skimanager.app.ui.game.InsuranceScreen
+import net.skimanager.app.ui.game.LocalOpen
+import net.skimanager.app.ui.game.MarketingScreen
+import net.skimanager.app.ui.game.MenuScreen
+import net.skimanager.app.ui.game.MoraleScreen
+import net.skimanager.app.ui.game.NightSkiingScreen
+import net.skimanager.app.ui.game.OffSeasonScreen
+import net.skimanager.app.ui.game.ParkingScreen
+import net.skimanager.app.ui.game.RealEstateScreen
+import net.skimanager.app.ui.game.ReportScreen
+import net.skimanager.app.ui.game.ResortAnalysisScreen
+import net.skimanager.app.ui.game.ResortScreen
+import net.skimanager.app.ui.game.RoadmapScreen
+import net.skimanager.app.ui.game.ScenicLiftsScreen
+import net.skimanager.app.ui.game.SkiLessonsScreen
+import net.skimanager.app.ui.game.SupportScreen
+import net.skimanager.app.ui.game.TerrainParksScreen
+import net.skimanager.app.ui.game.TournamentsScreen
+import net.skimanager.app.ui.game.UpdatesScreen
+import net.skimanager.app.ui.game.UtilityScreen
+import net.skimanager.app.ui.game.VipGuestsScreen
+import net.skimanager.app.ui.game.VoteScreen
 import java.io.File
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
@@ -69,6 +104,16 @@ private val TABS = listOf(
 private val TITLES = mapOf(
     "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "buildings" to "Buildings", "bank" to "Bank", "equipment" to "Equipment", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "weather" to "Weather",
     "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings",
+    "buildings/{type}" to "Buildings", "resort" to "Resort", "night-skiing" to "Night skiing", "scenic-lifts" to "Scenic lifts",
+    "terrain-parks" to "Terrain parks", "parking" to "Parking", "resort-analysis" to "Resort analysis",
+    "resort-analysis/view/{id}" to "Analysis report", "energy" to "Energy", "water" to "Water", "real-estate" to "Real estate",
+    "off-season" to "Off-season", "marketing" to "Marketing", "ski-lessons" to "Ski school", "compliance" to "Compliance",
+    "alliances" to "Alliances", "alliances/directory" to "Find an alliance", "alliances/leaderboard" to "Alliance rankings",
+    "alliances/view/{id}" to "Alliance", "emergency" to "Emergency", "tournaments" to "Events", "vip-guests" to "VIP guests",
+    "achievements" to "Achievements", "daily-bonus" to "Daily bonus", "genepis" to "Génépis", "activity" to "Activity log",
+    "vote" to "Resort vote", "roadmap" to "Roadmap", "support" to "Support", "insurance" to "Insurance",
+    "government" to "Government", "environment" to "Environment", "morale" to "Staff morale", "updates" to "Updates",
+    "beta" to "Beta program",
 )
 
 /** The save file the offline version of the app left behind */
@@ -148,6 +193,7 @@ private fun GameShell(app: AppState) {
             }
         },
     ) { padding ->
+        CompositionLocalProvider(LocalOpen provides { route -> nav.navigate(route) }) {
         NavHost(nav, "dashboard", Modifier.padding(padding)) {
             composable("dashboard") { DashboardScreen(app) }
             composable("map") { MapScreen(app) }
@@ -155,8 +201,9 @@ private fun GameShell(app: AppState) {
             composable("hire") { HireScreen(app) }
             composable("tickets") { TicketsScreen(app) }
             composable("finances") { FinancesScreen(app) }
-            composable("more") { MoreScreen { nav.navigate(it) } }
+            composable("more") { MenuScreen(app) { nav.navigate(it) } }
             composable("buildings") { BuildingsScreen(app) }
+            composable("buildings/{type}") { BuildingsScreen(app, it.arguments?.getString("type") ?: "hotel") }
             composable("bank") { BankScreen(app) }
             composable("equipment") { EquipmentScreen(app) }
             composable("grooming") { GroomingScreen(app) }
@@ -165,6 +212,41 @@ private fun GameShell(app: AppState) {
             composable("notifications") { NotificationsScreen(app) }
             composable("leaderboard") { LeaderboardScreen(app) }
             composable("settings") { SettingsScreen(app) }
+            composable("resort") { ResortScreen(app) }
+            composable("night-skiing") { NightSkiingScreen(app) }
+            composable("scenic-lifts") { ScenicLiftsScreen(app) }
+            composable("terrain-parks") { TerrainParksScreen(app) }
+            composable("parking") { ParkingScreen(app) }
+            composable("energy") { UtilityScreen(app, "energy") }
+            composable("water") { UtilityScreen(app, "water") }
+            composable("resort-analysis") { ResortAnalysisScreen(app) }
+            composable("resort-analysis/view/{id}") { ReportScreen(app, it.arguments?.getString("id").orEmpty()) }
+            composable("real-estate") { RealEstateScreen(app) }
+            composable("off-season") { OffSeasonScreen(app) }
+            composable("marketing") { MarketingScreen(app) }
+            composable("ski-lessons") { SkiLessonsScreen(app) }
+            composable("compliance") { ComplianceScreen(app) }
+            composable("insurance") { InsuranceScreen(app) }
+            composable("government") { GovernmentScreen(app) }
+            composable("environment") { EnvironmentScreen(app) }
+            composable("morale") { MoraleScreen(app) }
+            composable("alliances") { AlliancesScreen(app) }
+            composable("alliances/directory") { AllianceDirectoryScreen(app) }
+            composable("alliances/leaderboard") { AllianceLeaderboardScreen(app) }
+            composable("alliances/view/{id}") { AllianceViewScreen(app, it.arguments?.getString("id").orEmpty()) }
+            composable("tournaments") { TournamentsScreen(app) }
+            composable("vote") { VoteScreen(app) }
+            composable("roadmap") { RoadmapScreen(app) }
+            composable("support") { SupportScreen(app) }
+            composable("updates") { UpdatesScreen(app) }
+            composable("beta") { BetaScreen(app) }
+            composable("emergency") { EmergencyScreen(app) }
+            composable("vip-guests") { VipGuestsScreen(app) }
+            composable("achievements") { AchievementsScreen(app) }
+            composable("daily-bonus") { DailyBonusScreen(app) }
+            composable("genepis") { GenepisScreen(app) }
+            composable("activity") { ActivityScreen(app) }
+        }
         }
     }
 }
