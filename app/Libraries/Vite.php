@@ -28,7 +28,7 @@ class Vite
         }
 
         $chunk = $manifest[$entry];
-        $tags = [];
+        $tags = [self::translateGuard()];
         foreach (self::cssFor($manifest, $entry) as $css) {
             $tags[] = '<link rel="stylesheet" href="/build/' . self::attr($css) . '">';
         }
@@ -66,6 +66,21 @@ class Vite
             $css = array_merge($css, self::cssFor($manifest, $import, $seen));
         }
         return array_values(array_unique($css));
+    }
+
+    /**
+     * Browser page translation (Chrome, Edge) swaps React's text nodes for <font> wrappers, so React's
+     * next removeChild / insertBefore on the original node throws NotFoundError and the island dies.
+     * Skip those calls when the node has already been moved, as in facebook/react#11538. Runs before
+     * the islands load; calls on nodes that are still in place are untouched.
+     */
+    private static function translateGuard(): string
+    {
+        return '<script data-cfasync="false">(function(){if(typeof Node!=="function"||!Node.prototype)return;'
+            . 'var rc=Node.prototype.removeChild,ib=Node.prototype.insertBefore;'
+            . 'Node.prototype.removeChild=function(c){if(c&&c.parentNode!==this)return c;return rc.apply(this,arguments);};'
+            . 'Node.prototype.insertBefore=function(n,r){if(r&&r.parentNode!==this)return n;return ib.apply(this,arguments);};'
+            . '})();</script>';
     }
 
     private static function manifest(): array
