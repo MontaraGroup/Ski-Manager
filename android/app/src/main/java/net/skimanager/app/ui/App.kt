@@ -162,6 +162,12 @@ private fun GameShell(app: AppState) {
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: "dashboard"
     val isTab = TABS.any { it.route == route }
+    // The tab a screen belongs to: Hire is opened from Staff, every other screen from More
+    val ownerTab = when {
+        isTab -> route
+        route == "hire" -> "staff"
+        else -> "more"
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -178,12 +184,17 @@ private fun GameShell(app: AppState) {
             ShortNavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 TABS.forEach { tab ->
                     ShortNavigationBarItem(
-                        selected = route == tab.route,
+                        selected = ownerTab == tab.route,
                         onClick = {
-                            nav.navigate(tab.route) {
-                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (ownerTab == tab.route) {
+                                // Tapping the current tab goes back to its first screen
+                                nav.popBackStack(tab.route, inclusive = false)
+                            } else {
+                                nav.navigate(tab.route) {
+                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         icon = { Icon(tab.icon, null) },

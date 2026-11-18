@@ -512,8 +512,10 @@ fun UpdatesScreen(app: AppState) {
                 u.objects("categories").forEach { c ->
                     Heading(c.str("label"))
                     c.objects("items").forEach { i ->
-                        Text("• ${i.str("title")}", style = MaterialTheme.typography.bodyMedium)
-                        Muted(i.str("description"))
+                        // Most items have only a description; the title is often empty
+                        val title = i.str("title")
+                        Text("• ${title.ifBlank { i.str("description") }}", style = MaterialTheme.typography.bodyMedium)
+                        if (title.isNotBlank()) Muted(i.str("description"))
                     }
                 }
             }
