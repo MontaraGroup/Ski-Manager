@@ -9,8 +9,10 @@ import net.skimanager.app.api.Api
 import net.skimanager.app.api.TokenStore
 import net.skimanager.app.api.bool
 import net.skimanager.app.api.str
+import net.skimanager.app.feedback.Capture
+import net.skimanager.app.feedback.FeedbackPrefs
 
-class AppState(context: Context) {
+class AppState(private val context: Context) {
     private val store = TokenStore(context)
     private val token0 = store.read()
 
@@ -21,6 +23,18 @@ class AppState(context: Context) {
     var needsStart by mutableStateOf(false)
 
     private var token: String? = token0
+
+    /** The screen captured by a shake, read once by the feedback screen */
+    var feedbackCapture: Capture? = null
+
+    /** Shaking the phone opens feedback. Settings can switch it off */
+    var shakeToFeedback by mutableStateOf(FeedbackPrefs.shake(context))
+        private set
+
+    fun changeShakeToFeedback(on: Boolean) {
+        FeedbackPrefs.setShake(context, on)
+        shakeToFeedback = on
+    }
 
     val api = Api(tokens = { token }, onSignedOut = {
         if (signedIn) forget("Your session has ended. Sign in again.")

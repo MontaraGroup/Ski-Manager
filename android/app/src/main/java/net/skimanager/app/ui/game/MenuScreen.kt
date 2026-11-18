@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ConfirmationNumber
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Handshake
@@ -122,6 +123,7 @@ private val ICONS: Map<String, ImageVector> = mapOf(
     "fa-headset" to Icons.Default.SupportAgent, "fa-gear" to Icons.Default.Settings, "fa-leaf" to Icons.Default.Eco,
     "fa-face-smile" to Icons.Default.Mood, "fa-newspaper" to Icons.Default.Newspaper, "fa-flask" to Icons.Default.Science,
     "fa-bell" to Icons.Default.Notifications, "fa-landmark" to Icons.Default.AccountBalanceWallet,
+    "fa-comment-dots" to Icons.Default.Feedback,
 )
 
 /** The More tab: the website's menu (GET menu), so switched-off and locked features match the site */
@@ -150,6 +152,7 @@ fun MenuScreen(app: AppState, onOpen: (String) -> Unit) {
         }
         // Notifications live in the site's top bar rather than its menu
         MenuRow(JsonObject().apply { addProperty("label", "Notifications"); addProperty("icon", "fa-bell") }) { onOpen("notifications") }
+        MenuRow(JsonObject().apply { addProperty("label", "Send feedback"); addProperty("icon", "fa-comment-dots") }) { onOpen("feedback") }
     }
 }
 
