@@ -1,6 +1,7 @@
 package net.skimanager.app.feedback
 
 import android.content.Context
+import androidx.core.content.edit
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -18,7 +19,7 @@ import kotlin.math.sqrt
 object FeedbackPrefs {
     private fun prefs(context: Context) = context.getSharedPreferences("feedback", Context.MODE_PRIVATE)
     fun shake(context: Context): Boolean = prefs(context).getBoolean("shake", true)
-    fun setShake(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shake", on).apply()
+    fun setShake(context: Context, on: Boolean) = prefs(context).edit { putBoolean("shake", on) }
 }
 
 /**

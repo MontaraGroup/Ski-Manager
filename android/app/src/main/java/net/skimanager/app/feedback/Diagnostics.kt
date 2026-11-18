@@ -1,5 +1,6 @@
 package net.skimanager.app.feedback
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -17,13 +18,18 @@ import android.os.SystemClock
 import android.view.PixelCopy
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.WorkerThread
 import androidx.compose.ui.platform.ViewRootForTest
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import net.skimanager.app.BuildConfig
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -61,14 +67,19 @@ object Diagnostics {
     private suspend fun screenshot(activity: Activity): ByteArray? {
         val view = activity.window.decorView
         if (view.width == 0 || view.height == 0) return null
-        val full = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val full = createBitmap(view.width, view.height)
         val ok = suspendCancellableCoroutine { done ->
             PixelCopy.request(activity.window, full, { result -> done.resume(result == PixelCopy.SUCCESS) }, Handler(Looper.getMainLooper()))
         }
         if (!ok) return null
+        return withContext(Dispatchers.Default) { encode(full) }
+    }
+
+    /** Scaled down and saved as JPEG, lowering the quality until it fits the server's 2 MB */
+    @WorkerThread
+    private fun encode(full: Bitmap): ByteArray? {
         val scale = minOf(1f, MAX_SHOT_SIDE.toFloat() / maxOf(full.width, full.height))
-        val bitmap = if (scale < 1f) Bitmap.createScaledBitmap(full, (full.width * scale).toInt(), (full.height * scale).toInt(), true) else full
-        // The server takes 2 MB; lower the quality until it fits
+        val bitmap = if (scale < 1f) full.scale((full.width * scale).toInt(), (full.height * scale).toInt()) else full
         for (quality in listOf(80, 65, 50, 35)) {
             val bytes = ByteArrayOutputStream().use { out ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
@@ -79,13 +90,19 @@ object Diagnostics {
         return null
     }
 
-    /** The Compose semantics tree: roles, labels and bounds. What the player typed is never included */
+    /**
+     * The Compose semantics tree: roles, labels and bounds. What the player typed is never included.
+     * ViewRootForTest is the public way to reach the tree outside accessibility services; it is marked
+     * for tests, and a missing tree only leaves the Screen layout toggle hidden.
+     */
+    @SuppressLint("VisibleForTests")
     private fun layout(root: View): JsonObject? {
         val compose = findCompose(root) ?: return null
         val count = intArrayOf(0)
         return node(compose.semanticsOwner.unmergedRootSemanticsNode, count)
     }
 
+    @SuppressLint("VisibleForTests")
     private fun findCompose(view: View): ViewRootForTest? {
         if (view is ViewRootForTest) return view
         if (view is ViewGroup) for (i in 0 until view.childCount) findCompose(view.getChildAt(i))?.let { return it }
