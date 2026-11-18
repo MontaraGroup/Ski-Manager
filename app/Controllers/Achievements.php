@@ -13,6 +13,12 @@ class Achievements extends BaseController
     public function index()
     {
         if (!auth()->loggedIn()) return redirect()->to('/login');
+        return view('achievements/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         Rules::sync($userId, false);
 
@@ -65,7 +71,7 @@ class Achievements extends BaseController
             ];
         }
 
-        return view('achievements/index', ['page' => [
+        return [
             'completed' => $completed,
             'total' => count($rows),
             'readyCount' => count($ready),
@@ -73,7 +79,7 @@ class Achievements extends BaseController
             'earned' => currency(array_sum(array_map(fn($a) => $a['claimed'] ? (int) $a['reward_amount'] : 0, $rows))),
             'lockedFeatures' => getDifficulty() === 'easy' ? [] : $lockedFeatures,
             'groups' => $list,
-        ]]);
+        ];
     }
 
     public function claim(int $id)

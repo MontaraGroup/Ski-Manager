@@ -29,6 +29,12 @@ class Resources extends BaseController
     private function page(string $category): string
     {
         if (isPageHidden($category)) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        return view('resources/page', ['page' => $this->pageData($category)]);
+    }
+
+    /** What /energy or /water shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(string $category): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $meta = self::CATEGORIES[$category];
@@ -181,7 +187,7 @@ class Resources extends BaseController
             'availableSources' => $availableSources,
         ];
 
-        return view('resources/page', ['page' => $page]);
+        return $page;
     }
 
     public function buildEnergy()

@@ -30,6 +30,12 @@ class ResortAnalysis extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('resort_analysis'); if ($locked) return $locked;
+        return view('resort_analysis/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $reports = $db->table('resort_reports')->where('user_id', $userId)->orderBy('id', 'DESC')->get()->getResultArray();
@@ -96,7 +102,7 @@ class ResortAnalysis extends BaseController
             'reports' => $formattedReports,
         ];
 
-        return view('resort_analysis/index', ['page' => $page]);
+        return $page;
     }
 
     /** This season's report for today's game day, if one was ordered */
@@ -138,8 +144,16 @@ class ResortAnalysis extends BaseController
 
     public function view(int $id)
     {
+        $page = $this->reportData($id);
+        if ($page === null) return redirect()->to('/resort-analysis')->with('error', 'Report not found.');
+        return view('resort_analysis/view', ['page' => $page]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function reportData(int $id): ?array
+    {
         $report = db_connect()->table('resort_reports')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$report) return redirect()->to('/resort-analysis')->with('error', 'Report not found.');
+        if (!$report) return null;
         $data = json_decode((string) $report['report_data'], true) ?: [];
 
         $overall = (int) ($data['overall_score'] ?? 0);
@@ -234,7 +248,7 @@ class ResortAnalysis extends BaseController
             'legacyScores' => $legacyScores,
         ];
 
-        return view('resort_analysis/view', ['page' => $page]);
+        return $page;
     }
 
     private function generateReport(int $userId): array

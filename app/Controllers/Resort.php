@@ -11,6 +11,12 @@ class Resort extends BaseController
 {
     public function index(): string
     {
+        return view('resort/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
         $resort = session()->get('resort') ?? [
@@ -128,7 +134,7 @@ class Resort extends BaseController
             'sectors' => $formattedSectors,
         ];
 
-        return view('resort/index', ['page' => $page]);
+        return $page;
     }
 
     public function edit()
