@@ -24,6 +24,7 @@ const GROUPS: NavGroup[] = [
       { href: '/admin/broadcast', label: 'Broadcast', icon: 'fa-bullhorn' },
       { href: '/admin/season-vote', label: 'Season vote', icon: 'fa-check-to-slot' },
       { href: '/admin/resort-vote', label: 'Resort vote', icon: 'fa-mountain-sun' },
+      { href: '/admin/android-testing', label: 'Android testing', icon: 'fa-mobile-screen' },
     ],
   },
   { name: 'Support', links: [{ href: '/admin/support', label: 'Support inbox', icon: 'fa-headset' }] },
