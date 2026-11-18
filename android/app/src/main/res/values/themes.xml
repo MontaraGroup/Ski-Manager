@@ -1,5 +1,7 @@
 <resources>
+    <!-- windowBackground matches the Compose background, so the Android 12+ splash and first frame don't flash -->
     <style name="Theme.SkiManager" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
