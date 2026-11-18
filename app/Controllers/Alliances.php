@@ -802,7 +802,7 @@ class Alliances extends BaseController
                 if ($myMembership['role'] !== 'founder') {
                     return redirect()->to('/alliances')->with('error', 'Only the Founder can appoint Officers.');
                 }
-                $this->memberModel->where('id', $target['id'])->update(['role' => 'officer']);
+                $this->memberModel->update($target['id'], ['role' => 'officer']);
                 $db->table('alliance_activity_log')->insert([
                     'alliance_id' => $myMembership['alliance_id'],
                     'message'     => "{$targetName} was promoted to Officer.",
@@ -814,7 +814,7 @@ class Alliances extends BaseController
                 if ($myMembership['role'] !== 'founder') {
                     return redirect()->to('/alliances')->with('error', 'Only the Founder can demote Officers.');
                 }
-                $this->memberModel->where('id', $target['id'])->update(['role' => 'member']);
+                $this->memberModel->update($target['id'], ['role' => 'member']);
                 $db->table('alliance_activity_log')->insert([
                     'alliance_id' => $myMembership['alliance_id'],
                     'message'     => "{$targetName} was demoted to Member.",
@@ -835,9 +835,11 @@ class Alliances extends BaseController
                 if ($myMembership['role'] !== 'founder') {
                     return redirect()->to('/alliances')->with('error', 'Only the Founder can transfer leadership.');
                 }
-                $this->memberModel->where('id', $myMembership['id'])->update(['role' => 'officer']);
-                $this->memberModel->where('id', $target['id'])->update(['role' => 'founder']);
+                $db->transException(true)->transStart();
+                $this->memberModel->update($myMembership['id'], ['role' => 'officer']);
+                $this->memberModel->update($target['id'], ['role' => 'founder']);
                 $this->allianceModel->update($myMembership['alliance_id'], ['founder_id' => $targetUserId]);
+                $db->transComplete();
                 $db->table('alliance_activity_log')->insert([
                     'alliance_id' => $myMembership['alliance_id'],
                     'message'     => "Leadership transferred to {$targetName}!",
