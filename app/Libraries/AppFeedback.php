@@ -18,7 +18,7 @@ class AppFeedback
     public const CATEGORIES = ['bug', 'idea', 'other'];
     public const MAX_MESSAGE = 2000;
     public const MAX_DIAGNOSTICS = 262144; // 256 KB of JSON
-    public const MAX_SCREENSHOT = 3145728; // 3 MB
+    public const MAX_SCREENSHOT = 2097152; // 2 MB, PHP's upload_max_filesize
     public const PER_HOUR = 5;
     public const PER_DAY = 20;
     public const RETENTION_DAYS = 90;
@@ -55,8 +55,8 @@ class AppFeedback
             elseif (!is_array(json_decode($diagnostics, true))) $errors['diagnostics'] = 'The attached details could not be read.';
         }
         if ($shot !== null && $shot->getError() !== UPLOAD_ERR_NO_FILE) {
-            if (!$shot->isValid()) $errors['screenshot'] = 'The screenshot did not upload.';
-            elseif ($shot->getSize() > self::MAX_SCREENSHOT) $errors['screenshot'] = 'The screenshot is over 3 MB.';
+            if (!$shot->isValid()) $errors['screenshot'] = $shot->getError() === UPLOAD_ERR_INI_SIZE ? 'The screenshot is over 2 MB.' : 'The screenshot did not upload.';
+            elseif ($shot->getSize() > self::MAX_SCREENSHOT) $errors['screenshot'] = 'The screenshot is over 2 MB.';
             elseif (self::imageType($shot->getTempName()) === null) $errors['screenshot'] = 'The screenshot must be a PNG or JPEG.';
         }
         return $errors;

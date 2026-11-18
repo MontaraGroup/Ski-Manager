@@ -49,6 +49,7 @@ class Capture(val route: String, val screenshot: ByteArray?, val layout: JsonObj
 object Diagnostics {
     private const val MAX_SHOT_SIDE = 1600
     private const val MAX_NODES = 400
+    private const val MAX_SHOT_BYTES = 1_900_000
 
     /** Screenshot and layout of what the activity shows now. Only the app's own window */
     suspend fun capture(activity: Activity, route: String, fromShake: Boolean): Capture {
@@ -67,10 +68,15 @@ object Diagnostics {
         if (!ok) return null
         val scale = minOf(1f, MAX_SHOT_SIDE.toFloat() / maxOf(full.width, full.height))
         val bitmap = if (scale < 1f) Bitmap.createScaledBitmap(full, (full.width * scale).toInt(), (full.height * scale).toInt(), true) else full
-        return ByteArrayOutputStream().use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
-            out.toByteArray()
+        // The server takes 2 MB; lower the quality until it fits
+        for (quality in listOf(80, 65, 50, 35)) {
+            val bytes = ByteArrayOutputStream().use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+                out.toByteArray()
+            }
+            if (bytes.size <= MAX_SHOT_BYTES) return bytes
         }
+        return null
     }
 
     /** The Compose semantics tree: roles, labels and bounds. What the player typed is never included */
