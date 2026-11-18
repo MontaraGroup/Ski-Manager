@@ -1,3 +1,19 @@
+## Release 2026-11-18 03:34
+
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+* Merge pull request #111 from Montara-Group/fix/magic-link-signed-in (062dc200)
+* Merge pull request #110 from Montara-Group/fix/stale-chunk-reload (1f1a1eec)
+
+## Release 2026-11-17 04:47
+
+* feat(seo): add llms.txt, og-image, breadcrumbs and rich structured data schemas (6469b51b)
+* Merge pull request #109 from Montara-Group/fix/map-editor-build (1facf134)
+* chore: synchronize compiled React islands build with main (bd18fd6a)
+* build: rebuild islands for map studio changes (62f04162)
+* Merge pull request #108 from Montara-Group/feat/map-editor-drawing (9a39fffb)
+
 ## Release 2026-11-16 13:49
 
 * Merge branch 'MontaraGroup:main' into main (4e726a1a)
