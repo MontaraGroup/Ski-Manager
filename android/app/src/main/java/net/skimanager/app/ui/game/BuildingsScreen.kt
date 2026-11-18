@@ -126,7 +126,7 @@ fun BuildingsScreen(app: AppState) {
                     border = BorderStroke(1.dp, (if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success).copy(alpha = 0.35f)),
                 ) {
                     Text(
-                        note!!,
+                        note.orEmpty(),
                         color = if (failed) LocalSkiColors.current.danger else LocalSkiColors.current.success,
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodyMedium,

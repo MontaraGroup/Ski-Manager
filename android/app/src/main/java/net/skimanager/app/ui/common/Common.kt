@@ -1,8 +1,10 @@
 package net.skimanager.app.ui.common
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,8 +54,13 @@ import net.skimanager.app.ui.theme.LocalSkiColors
 
 const val OFFLINE_TEXT = "You're offline. Connect to the internet to play."
 
-fun openWebsite(context: Context, path: String) {
+/** Opens a site page in the browser. False when the device has no app that opens links */
+fun openWebsite(context: Context, path: String): Boolean = try {
     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.BASE_URL + path)))
+    true
+} catch (e: ActivityNotFoundException) {
+    Toast.makeText(context, "No browser found to open ${BuildConfig.BASE_URL + path}", Toast.LENGTH_LONG).show()
+    false
 }
 
 /** The screen a failed request leaves: offline, maintenance, season not started, or a server error */
@@ -203,7 +210,7 @@ fun ChoiceRow(options: List<Pair<String, String>>, selected: String?, onSelect: 
                     checkedContentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
                 border = if (checked) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            ) { Text(label, maxLines = 1, textAlign = TextAlign.Center, fontWeight = if (checked) FontWeight.Bold else FontWeight.Medium) }
+            ) { Text(label, maxLines = 2, textAlign = TextAlign.Center, fontWeight = if (checked) FontWeight.Bold else FontWeight.Medium) }
         }
     }
 }

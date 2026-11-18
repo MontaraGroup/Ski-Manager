@@ -47,7 +47,8 @@ android {
         release {
             // -PreleaseBaseUrl lets a test build run the shrunk code against staging
             buildConfigField "String", "BASE_URL", "\"${findProperty('releaseBaseUrl') ?: 'https://ski-manager.net'}\""
-            signingConfig signingConfigs.release
+            // Without a keystore (a local check build) the release is left unsigned instead of failing
+            if (signingValue("SKI_KEYSTORE_PATH")) signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
