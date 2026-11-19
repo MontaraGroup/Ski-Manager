@@ -89,6 +89,16 @@ import net.skimanager.app.ui.game.UpdatesScreen
 import net.skimanager.app.ui.game.UtilityScreen
 import net.skimanager.app.ui.game.VipGuestsScreen
 import net.skimanager.app.ui.game.VoteScreen
+import net.skimanager.app.feedback.AppLog
+import net.skimanager.app.feedback.Diagnostics
+import net.skimanager.app.feedback.FeedbackScreen
+import net.skimanager.app.feedback.ShakeEffect
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
@@ -113,7 +123,7 @@ private val TITLES = mapOf(
     "achievements" to "Achievements", "daily-bonus" to "Daily bonus", "genepis" to "Génépis", "activity" to "Activity log",
     "vote" to "Resort vote", "roadmap" to "Roadmap", "support" to "Support", "insurance" to "Insurance",
     "government" to "Government", "environment" to "Environment", "morale" to "Staff morale", "updates" to "Updates",
-    "beta" to "Beta program",
+    "beta" to "Beta program", "feedback" to "Send feedback",
 )
 
 /** The save file the offline version of the app left behind */
@@ -167,6 +177,16 @@ private fun GameShell(app: AppState) {
         isTab -> route
         route == "hire" -> "staff"
         else -> "more"
+    }
+    val activity = LocalContext.current.findActivity()
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(route) { AppLog.screen(route) }
+    // Shake: capture the screen the player is on, then open feedback over it
+    ShakeEffect(enabled = app.shakeToFeedback && route != "feedback") {
+        scope.launch {
+            app.feedbackCapture = activity?.let { Diagnostics.capture(it, route, fromShake = true) }
+            nav.navigate("feedback") { launchSingleTop = true }
+        }
     }
 
     Scaffold(
@@ -257,7 +277,20 @@ private fun GameShell(app: AppState) {
             composable("daily-bonus") { DailyBonusScreen(app) }
             composable("genepis") { GenepisScreen(app) }
             composable("activity") { ActivityScreen(app) }
+            composable("feedback") {
+                FeedbackScreen(
+                    app,
+                    onOpenSupport = { nav.navigate("support") { popUpTo("feedback") { inclusive = true } } },
+                    onDone = { nav.popBackStack() },
+                )
+            }
         }
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

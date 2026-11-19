@@ -26,7 +26,13 @@ const GROUPS: NavGroup[] = [
       { href: '/admin/resort-vote', label: 'Resort vote', icon: 'fa-mountain-sun' },
     ],
   },
-  { name: 'Support', links: [{ href: '/admin/support', label: 'Support inbox', icon: 'fa-headset' }] },
+  {
+    name: 'Support',
+    links: [
+      { href: '/admin/support', label: 'Support inbox', icon: 'fa-headset' },
+      { href: '/admin/feedback', label: 'App feedback', icon: 'fa-comment-dots' },
+    ],
+  },
   {
     name: 'System',
     links: [

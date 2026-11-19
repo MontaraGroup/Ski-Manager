@@ -3,6 +3,9 @@ package net.skimanager.app.ui.game
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -256,6 +259,21 @@ fun SettingsScreen(app: AppState) {
                 ChoiceRow(listOf("metric" to "Metric, €", "imperial" to "Imperial, $"), if (imperial) "imperial" else "metric") { key ->
                     scope.launch { app.api.post("settings/units", mapOf("units" to key)); reload() }
                 }
+            }
+            Panel("Feedback") {
+                val open = LocalOpen.current
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .toggleable(app.shakeToFeedback, role = Role.Switch, onValueChange = { app.changeShakeToFeedback(it) }),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text("Shake to send feedback", fontWeight = FontWeight.SemiBold)
+                        Text("Shake your phone on any screen to report a problem with a screenshot.", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(app.shakeToFeedback, onCheckedChange = null)
+                }
+                SecondaryButton("Send feedback", { open("feedback") }, Modifier.fillMaxWidth())
             }
             SecondaryButton("Sign out", {
                 scope.launch {

@@ -37,6 +37,10 @@ $routes->get("/admin/resort-vote", "Admin::resortVote");
 $routes->post("/admin/resort-vote/(:num)/open", "Admin::resortVoteOpen/$1");
 $routes->post("/admin/resort-vote/(:num)/winner", "Admin::resortVoteWinner/$1");
 $routes->post("/admin/resort-vote/area/(:num)/in-game", "Admin::resortVoteInGame/$1");
+$routes->get("/admin/feedback", "AdminFeedback::index");
+$routes->get("/admin/feedback/(:num)", "AdminFeedback::index/$1");
+$routes->get("/admin/feedback/(:num)/screenshot", "AdminFeedback::screenshot/$1");
+$routes->post("/admin/feedback/(:num)/status", "AdminFeedback::setStatus/$1");
 $routes->get("/tutorial/check", "Tutorial::checkStep");
 $routes->get("auth/google", "GoogleAuth::redirect");
 $routes->get("auth/google/callback", "GoogleAuth::callback");
@@ -235,6 +239,7 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->post('equipment/(:num)/sell', 'Equipment::sellAction/$1');
         $routes->post('equipment/sell/(:num)', 'Equipment::sellAction/$1');
         $routes->post('account/delete', 'Account::delete');
+        $routes->post('feedback', 'Feedback::submit');
 
         // Admin Map Studio routes (apptoken + admin privileges required)
         $routes->group('admin/map', static function ($routes) {
