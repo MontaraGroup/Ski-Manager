@@ -1,3 +1,11 @@
+## Release 2026-11-19 04:08
+
+* Merge branch 'MontaraGroup:main' into main (abbee588)
+* Merge pull request #120 from Montara-Group/chore/android-version-111 (4c1006b7)
+* chore(release): bump VERSION_CODE to 111 (2.0.1); Play already has 110 (98180761)
+* Merge pull request #119 from Montara-Group/feat/android-closed-testing-v2 (eeb32c0f)
+* Merge feat/android-closed-testing into current main (22478dbe)
+
 ## Release 2026-11-19 02:14
 
 * Merge branch 'MontaraGroup:main' into main (5bcc3d71)
