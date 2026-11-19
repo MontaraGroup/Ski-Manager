@@ -13,7 +13,7 @@ class SeasonReset
 {
     /** Per-player game state that a new season clears */
     public const RESET_TABLES = [
-        'player_items', 'buildings', 'staff', 'equipment', 'snow_cannons', 'night_skiing',
+        'player_items', 'buildings', 'staff', 'equipment', 'night_skiing',
         'marketing_campaigns', 'loans', 'insurance', 'regulations', 'environmental',
         'energy_management', 'water_management', 'vip_guests', 'parking', 'terrain_parks',
         'scenic_lifts', 'lift_tickets', 'ticket_sales', 'avalanche_zones', 'staff_candidates',

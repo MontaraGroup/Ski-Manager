@@ -45,6 +45,33 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # public/build and style.css are not in git: build them here and upload them, so the
+      # 1-CPU server never builds and every deploy ships the bundle that matches its code
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+          test -f public/build/.vite/manifest.json
+          tar -czf "$RUNNER_TEMP/assets.tgz" public/build public/css/style.css
+
+      - name: Upload assets to the server
+        env:
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          SSH_HOST: ${{ secrets.PROD_HOST }}
+          SSH_USER: ${{ secrets.PROD_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$RUNNER_TEMP/assets.tgz" "$SSH_USER@$SSH_HOST:/tmp/ski-assets-${{ github.sha }}.tgz"
+          rm -f ~/.ssh/deploy_key
+
       - name: Execute Staging Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -53,7 +80,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
             set -e
-            TARGET_DIR="/opt/1panel/www/sites/skiv2-staging/ci4"
+            TARGET_DIR="/srv/ski-manager/sites/skiv2-staging/ci4"
             if [ -n "${{ secrets.STAGING_PATH }}" ]; then
               TARGET_DIR="${{ secrets.STAGING_PATH }}"
             fi
@@ -63,6 +90,7 @@ jobs:
 
             git fetch origin staging
             git reset --hard origin/staging
+            bash scripts/install-assets.sh /tmp/ski-assets-${{ github.sha }}.tgz "$(pwd)"
             chmod +x scripts/deploy.sh
             ./scripts/deploy.sh staging
 

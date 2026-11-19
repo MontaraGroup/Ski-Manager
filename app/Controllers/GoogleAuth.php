@@ -109,7 +109,7 @@ class GoogleAuth extends BaseController
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
         log_activity($user->id, 'register', 'Joined Ski Manager via Google Sign-In');
 
-        notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by hiring staff and building your first slope. Check the tutorial for a guided walkthrough!', 'fa-solid fa-mountain-sun', '/dashboard');
+        notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by building a slope and a lift on the Trail Map. The tutorial walks you through it.', 'fa-solid fa-mountain-sun', '/dashboard');
 
         auth()->login($user);
         return redirect()->to('/complete-profile');

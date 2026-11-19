@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { Switch } from '@/components/Switch';
 
 export type ResortEditProps = {
   resort: {
@@ -18,7 +19,7 @@ export default function ResortEditPage({ resort }: ResortEditProps) {
   const [name, setName] = useState(resort?.name ?? 'My Resort');
   const [location, setLocation] = useState(resort?.location ?? '');
   const [description, setDescription] = useState(resort?.description ?? '');
-  const [isOpen, setIsOpen] = useState(resort?.is_open ?? true);
+  const [isOpen, setIsOpen] = useState(Boolean(resort?.is_open ?? true));
 
   return (
     <Page
@@ -100,24 +101,21 @@ export default function ResortEditPage({ resort }: ResortEditProps) {
             </span>
           }
         >
-          <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-base-200/40">
-            <div>
-              <div className="text-xs font-bold text-foreground">Resort Open for Guests</div>
-              <div className="text-[11px] text-muted mt-0.5">
-                When closed, visitors stop arriving and ticket revenue pauses, but daily upkeep still applies.
+          <div className="p-3 rounded-xl border border-border bg-base-200/40">
+            <Switch
+              name="is_open"
+              isSelected={isOpen}
+              onChange={setIsOpen}
+              placement="end"
+              className="w-full"
+            >
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-foreground">Resort Open for Guests</span>
+                <span className="text-[11px] text-muted mt-0.5">
+                  When closed, visitors stop arriving and ticket revenue pauses, but daily upkeep still applies.
+                </span>
               </div>
-            </div>
-
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name="is_open"
-                checked={isOpen}
-                onChange={(e) => setIsOpen(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-base-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
-            </label>
+            </Switch>
           </div>
         </Panel>
 

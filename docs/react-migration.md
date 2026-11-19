@@ -40,7 +40,7 @@ Status on 2026-11-05: 100% of all player-facing and guest-facing views have been
    - `Page` (title row with a back link), `Panel`, `Figure`, `Empty` (empty state with the reason and the next action).
    - `PostButton`: a normal form post with the CSRF field. Give it `confirm={{ title, body, confirmLabel }}` for destructive actions.
 5. **Actions:** keep them as ordinary form posts to the existing routes. The controller redirects back with `->with('success' | 'error', ...)`, and the shell shows the message as a toast. Only add `/api/v1` endpoints when a page needs to update without a reload.
-6. **Build:** run `npm run build:islands` (`tsc` + `vite build`) and commit `public/build`. CI fails the deploy if the committed build is stale, and the build is reproducible.
+6. **Build:** run `npm run build:islands` (`tsc` + `vite build`) to check locally. Don't commit `public/build` or `public/css/style.css`: the deploy workflows build them and upload them to the server (`scripts/install-assets.sh`). To test a branch on staging by hand, run `scripts/push-assets.sh staging`.
 
 ## Rules and gotchas (learned the hard way)
 
@@ -73,11 +73,11 @@ Status on 2026-11-05: 100% of all player-facing and guest-facing views have been
 
 ## Testing each batch
 
-1. **Lint:** run `npm run build:islands`, and lint every changed PHP file in the `PHP` container (`docker exec PHP php -l ...`).
+1. **Lint:** run `npm run build:islands`, and lint every changed PHP file in the `ski-php` container (`docker exec ski-php php -l ...`).
 2. **Deploy to staging** first:
    - Back up the files you overwrite (`tar czf /root/stg-<name>-<timestamp>.tgz ...`).
    - Then clear the cache (`spark cache:clear`).
-   - Staging (`/opt/1panel/www/sites/skiv2-staging/ci4`) is a checkout of the old `staging` branch with files copied over it, so compare its copy with the branch base before overwriting. If they differ, do a 3-way merge with `git merge-file`, and never deploy a file with conflict markers.
+   - Staging (`/srv/ski-manager/sites/skiv2-staging/ci4`) is a checkout of the `staging` branch with files copied over it, so compare its copy with the branch base before overwriting. If they differ, do a 3-way merge with `git merge-file`, and never deploy a file with conflict markers.
 3. **Throwaway player:** create one with a small CLI script in `writable/` that boots CodeIgniter, as earlier sessions did. Sign in with curl, fetch each page, and check for 200, valid island props, and no `Whoops` or `ErrorException`. Delete the player and the script afterwards.
 4. **Check in a browser:** contrast in both themes (`data-theme="carboncloud"` and `"winter"`), 375px width (no horizontal overflow, 44px controls), keyboard order and focus ring, and Escape on dialogs.
    - A local copy of the signed-in HTML served with the real `style.css` and `public/build` works well for this.

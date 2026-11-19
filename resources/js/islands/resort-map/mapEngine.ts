@@ -26,6 +26,53 @@ export interface MapEngineCallbacks {
   onToast: (msg: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
+// Two clicks on the same spot within this time are a double-click
+const DOUBLE_CLICK_MS = 400;
+
+function readShowAvailable(): boolean {
+  try {
+    return localStorage.getItem('map_show_available') !== '0';
+  } catch {
+    return true;
+  }
+}
+
+interface LastDraw {
+  sector: number;
+  slopeType: string;
+  difficulty: string;
+}
+
+// Sectors belong to one trail map, so each map keeps its own last settings
+function lastDrawKey(mapName: string): string {
+  return 'map_editor_last:' + mapName;
+}
+
+function readLastDraw(mapName: string): LastDraw {
+  const fallback: LastDraw = { sector: 0, slopeType: 'downhill', difficulty: 'blue' };
+  try {
+    const raw = JSON.parse(localStorage.getItem(lastDrawKey(mapName)) || 'null');
+    if (!raw || typeof raw !== 'object') return fallback;
+    return {
+      sector: Number(raw.sector) || 0,
+      slopeType: typeof raw.slopeType === 'string' && raw.slopeType ? raw.slopeType : fallback.slopeType,
+      difficulty: typeof raw.difficulty === 'string' && raw.difficulty ? raw.difficulty : fallback.difficulty,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+/** Closest point to p on the line a-b, in the map's [lat, lng] (= [y, x]) space */
+function closestOnLine(p: [number, number], a: [number, number], b: [number, number]): [number, number] {
+  const dy = b[0] - a[0];
+  const dx = b[1] - a[1];
+  const len2 = dy * dy + dx * dx;
+  if (len2 === 0) return a;
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dy + (p[1] - a[1]) * dx) / len2));
+  return [a[0] + t * dy, a[1] + t * dx];
+}
+
 export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallbacks) {
   let map: any = null;
   let mapBounds: any = null;
@@ -37,6 +84,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let selectedSegId: number | string | null = null;
   let buildMode: string | null = null;
   let mapFilter = 'all';
+  let selectionLayers: any[] = [];
+  // Set when the player drags, scrolls or touches the map; automatic fitting stops then
+  let userMoved = false;
+  // Players see the runs they can build unless they switch them off (remembered per browser)
+  let showAvailable = readShowAvailable();
 
   // State mirror
   let segments = [...props.segments];
@@ -48,7 +100,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   const isAdmin = props.isAdmin;
   const mapConfig = props.mapConfig;
   const distUnit = props.distUnit;
-  const isImperial = props.isImperial;
 
   let csrfName = props.csrf.name;
   let csrfHash = props.csrf.hash;
@@ -63,6 +114,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let selectedVertexIdx = -1;
   let editorPoints: [number, number][] = [];
   let undoStack: [number, number][][] = [];
+  let redoStack: [number, number][][] = [];
+  // Esc on a line with work in it only arms the discard; a second Esc before this time cancels
+  let discardArmedUntil = 0;
   let editorLine: any = null;
   let rubberBandLine: any = null;
   let snapMarker: any = null;
@@ -70,16 +124,25 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let vertexMarkers: any[] = [];
   let midpointMarkers: any[] = [];
   let lastClickTime = 0;
+  // A save is on its way: Enter or a double-click again must not post the line twice
+  let saving = false;
 
+  // A new line starts with the sector, slope type and difficulty used last (remembered per browser)
+  const lastDraw = readLastDraw(props.mapConfig.name);
+  // A sector that is not on this map (deleted since) falls back to Default (0)
+  if (!props.sectors.some((sec) => Number(sec.id) === lastDraw.sector)) lastDraw.sector = 0;
   let editorSegName = '';
-  let editorSegSector = 0;
-  let editorSlopeType = 'downhill';
-  let editorSegDiff = 'blue';
+  let editorSegSector = lastDraw.sector;
+  let editorSlopeType = lastDraw.slopeType;
+  let editorSegDiff = lastDraw.difficulty;
 
-  function fmtMoney(n: number) {
-    const prefix = isImperial ? '$' : '';
-    const suffix = isImperial ? '' : ' €';
-    return (n < 0 ? '-' : '') + prefix + Math.abs(Math.round(n)).toLocaleString('en-US') + suffix;
+  function rememberDrawSettings() {
+    lastDraw.sector = editorSegSector;
+    lastDraw.slopeType = editorSlopeType;
+    lastDraw.difficulty = editorSegDiff;
+    try {
+      localStorage.setItem(lastDrawKey(mapConfig.name), JSON.stringify(lastDraw));
+    } catch {}
   }
 
   function escHtml(str: any): string {
@@ -152,6 +215,47 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function pushUndoState() {
     undoStack.push(editorPoints.map((p) => [p[0], p[1]]));
     if (undoStack.length > 40) undoStack.shift();
+    redoStack = [];
+    discardArmedUntil = 0;
+  }
+
+  /** Adds a point where the admin clicked (snapped unless Alt is held). A lift is a straight line: its second point saves it. */
+  function addEditorPoint(latlng: any, altKey: boolean, shiftKey: boolean) {
+    const L = (window as any).L;
+    const targetLl = getSnappedLatLng(latlng, altKey);
+
+    // The two clicks of a double-click land on the same spot: keep one point, and finish a new line
+    const now = Date.now();
+    if (now - lastClickTime < DOUBLE_CLICK_MS && editorPoints.length > 0) {
+      const prev = editorPoints[editorPoints.length - 1];
+      const a = map.latLngToContainerPoint(L.latLng(prev[0], prev[1]));
+      const b = map.latLngToContainerPoint(targetLl);
+      if (a.distanceTo(b) < 6) {
+        finishOnDoubleClick();
+        return;
+      }
+    }
+    lastClickTime = now;
+
+    pushUndoState();
+    editorPoints.push([targetLl.lat, targetLl.lng]);
+    selectedVertexIdx = editorPoints.length - 1;
+    updateEditorDisplay(true);
+    notifyEditorState();
+
+    // Shift-click keeps a lift open for a bent line
+    if (editorMode === 'draw' && editorType === 'lift' && editorPoints.length === 2 && !shiftKey) {
+      saveEditor(false);
+    }
+  }
+
+  function finishOnDoubleClick() {
+    lastClickTime = 0;
+    if (editorMode === 'draw' && editorPoints.length >= 2) saveEditor(false);
+  }
+
+  function isAppending(): boolean {
+    return editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
   }
 
   function notifyEditorState() {
@@ -200,19 +304,28 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     initProgressiveOverlays();
 
     map.fitBounds(mapBounds);
+    // A full mountain's height of slack below, so on a tall phone the map can sit above the bottom sheet
+    // (Leaflet centres the map in the frame when the frame is taller than these bounds)
     map.setMaxBounds([
-      [-mapConfig.height * 0.2, -mapConfig.width * 0.2],
+      [-mapConfig.height * 1.0, -mapConfig.width * 0.2],
       [mapConfig.height * 1.2, mapConfig.width * 1.2],
     ]);
 
     renderSegments();
 
+    const markMoved = () => {
+      userMoved = true;
+    };
+    map.on('dragstart', markMoved);
+    container.addEventListener('wheel', markMoved, { passive: true });
+    container.addEventListener('touchstart', markMoved, { passive: true });
+    container.addEventListener('dblclick', markMoved);
+    map.zoomControl?.getContainer()?.addEventListener('click', markMoved);
+
     // Map Event Listeners for Editor
     map.on('mousemove', (e: any) => {
       if (!editorMode) return;
-      const isAppending =
-        editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
-      if (!isAppending) {
+      if (!isAppending()) {
         if (rubberBandLine) {
           map.removeLayer(rubberBandLine);
           rubberBandLine = null;
@@ -244,52 +357,24 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     map.on('click', (e: any) => {
       if (!editorMode) return;
-      const isAppending =
-        editorMode === 'draw' || editorMode === 'sector_boundary' || (editorMode === 'edit' && appendInEditMode);
-      if (!isAppending) {
+      if (!isAppending()) {
         selectedVertexIdx = -1;
         updateEditorDisplay(true);
         return;
       }
-
-      const now = Date.now();
-      const altKey = e.originalEvent && e.originalEvent.altKey;
-      const targetLl = getSnappedLatLng(e.latlng, altKey);
-
-      if (now - lastClickTime < 280 && editorPoints.length > 0) {
-        const prev = editorPoints[editorPoints.length - 1];
-        const dy = prev[0] - targetLl.lat;
-        const dx = prev[1] - targetLl.lng;
-        if (Math.sqrt(dy * dy + dx * dx) < 1.5) {
-          return;
-        }
-      }
-      lastClickTime = now;
-
-      pushUndoState();
-      editorPoints.push([targetLl.lat, targetLl.lng]);
-      selectedVertexIdx = editorPoints.length - 1;
-      updateEditorDisplay(true);
-      notifyEditorState();
+      const orig = e.originalEvent;
+      addEditorPoint(e.latlng, !!(orig && orig.altKey), !!(orig && orig.shiftKey));
     });
 
     map.on('dblclick', (e: any) => {
       if (!editorMode) return;
+      // The second click already finished the line (addEditorPoint / vertex click)
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
-      if (editorMode === 'draw' && editorPoints.length >= 2) {
-        saveEditor(false);
-      }
     });
 
     // Keyboard Shortcuts
     document.addEventListener('keydown', handleKeydown);
 
-    // Initial drawer open for new non-admin players with 0 built runs
-    if (builtIds.length === 0 && !isAdmin) {
-      setTimeout(() => {
-        callbacks.onOpenBuildDrawer('slope');
-      }, 300);
-    }
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -300,7 +385,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         saveEditor(e.shiftKey);
       } else if (e.key === 'Escape' && editorMode) {
         e.preventDefault();
-        cancelEditor();
+        escapeEditor();
       }
       return;
     }
@@ -311,10 +396,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         saveEditor(e.shiftKey);
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        cancelEditor();
-      } else if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+        escapeEditor();
+      } else if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
-        undo();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if ((e.key === 'y' || e.key === 'Y') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        redo();
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         reverse();
@@ -336,12 +425,24 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     }
   }
 
+  /** Esc cancels at once on a fresh line; with work in it, the first press only warns */
+  function escapeEditor() {
+    const hasWork = editorMode === 'draw' || editorMode === 'sector_boundary' ? editorPoints.length >= 3 : undoStack.length > 0;
+    if (!hasWork || Date.now() < discardArmedUntil) {
+      cancelEditor();
+      return;
+    }
+    discardArmedUntil = Date.now() + 2500;
+    callbacks.onToast(editorMode === 'edit' ? 'Press Esc again to discard your changes' : 'Press Esc again to discard this line', 'warning');
+  }
+
   function initProgressiveOverlays() {
     const L = (window as any).L;
     const basePath = mapConfig.image.replace(/\.jpg$/i, '');
-    const imgLow = basePath + '_low.jpg';
-    const imgMed = basePath + '_med.jpg';
-    const imgFull = mapConfig.image;
+    const webp = mapConfig.webp ?? { low: false, med: false, full: false };
+    const imgLow = basePath + (webp.low ? '_low.webp' : '_low.jpg');
+    const imgMed = basePath + (webp.med ? '_med.webp' : '_med.jpg');
+    const imgFull = webp.full ? basePath + '.webp' : mapConfig.image;
 
     L.imageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
     let fullOverlay: any = null;
@@ -369,6 +470,48 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         };
         fullPreload.src = imgFull;
       }
+    });
+  }
+
+  /**
+   * How a run is drawn. Built runs are solid in their trail colour (lifts dashed amber). Runs a player
+   * can build are thin and dotted in their own colour, so difficulty shows before anything is built.
+   */
+  function segStyle(seg: MapSegment) {
+    const built = isSegmentBuilt(seg.id);
+    if (isAdmin) {
+      return { color: segColor(seg), weight: built ? 5 : 4.5, opacity: built ? 0.95 : 0.85, dashArray: built ? (seg.type === 'lift' ? '10, 5' : null) : '6, 5' };
+    }
+    if (built) {
+      return { color: segColor(seg), weight: 5, opacity: 0.95, dashArray: seg.type === 'lift' ? '10, 5' : null };
+    }
+    // The tab the build panel is on stands out; the other type stays visible but quieter
+    const focused = !buildMode || (buildMode === 'lift') === (seg.type === 'lift');
+    return { color: segColor(seg), weight: focused ? 4 : 3, opacity: focused ? 0.75 : 0.35, dashArray: '2, 7' };
+  }
+
+  function clearSelectionMarks() {
+    selectionLayers.forEach((l) => map && map.removeLayer(l));
+    selectionLayers = [];
+  }
+
+  /** A halo under the selected run and a dot on each end, so it reads at any zoom */
+  function drawSelectionMarks(seg: MapSegment) {
+    const L = (window as any).L;
+    if (!L || !map) return;
+    clearSelectionMarks();
+    const ll = parsePoints(seg.points);
+    if (ll.length < 2) return;
+    selectionLayers.push(
+      L.polyline(ll, { color: '#ffffff', weight: 14, opacity: 0.55, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+    );
+    selectionLayers.push(
+      L.polyline(ll, { color: segColor(seg), weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+    );
+    [ll[0], ll[ll.length - 1]].forEach((pt) => {
+      selectionLayers.push(
+        L.circleMarker(pt, { radius: 6, color: '#ffffff', weight: 2, fillColor: segColor(seg), fillOpacity: 1, interactive: false }).addTo(map)
+      );
     });
   }
 
@@ -401,33 +544,23 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       if (mapFilter === 'built' && !built) return;
       if (mapFilter === 'unassigned' && Number(seg.sector || 0) !== 0) return;
 
-      // Visibility rules
-      if (!buildMode && !built && !isAdmin) return;
-      if (buildMode && !built) {
-        if (buildMode === 'lift' && seg.type !== 'lift') return;
-        if (buildMode === 'slope' && seg.type === 'lift') return;
-        if (!isSegmentReleased(seg)) return;
-      }
+      // Players see what they built, plus every run they can build unless they've hidden those
+      if (!isAdmin && !built && (!showAvailable || !isSegmentReleased(seg))) return;
 
-      const isAvailableHighlight = buildMode && !built;
-      const c = isAvailableHighlight ? '#a855f7' : segColor(seg);
-      const weight = built ? 5 : isAdmin ? 4.5 : 6;
-      const opacity = built ? 0.95 : 0.85;
-      const dashArray = built ? (seg.type === 'lift' ? '10, 5' : null) : '6, 5';
+      const style = segStyle(seg);
+      const { weight, opacity } = style;
 
       const line = L.polyline(ll, {
-        color: c,
-        weight,
-        opacity,
-        dashArray,
+        ...style,
         lineCap: 'round',
         lineJoin: 'round',
         interactive: false,
       }).addTo(map);
 
+      // Wide invisible line so a finger can hit a thin run
       const hitLine = L.polyline(ll, {
         color: '#000',
-        weight: 18,
+        weight: 24,
         opacity: 0.001,
         interactive: true,
       }).addTo(map);
@@ -448,8 +581,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         (isAdmin
           ? '<br><span style="opacity:.75;font-size:10px">' + escHtml(secName) + ' • Click to edit</span>'
           : !built
-            ? '<br><span style="color:#c084fc;font-weight:700">Click to construct</span>'
-            : '<br><span style="color:#4ade80;font-size:10px">✓ Operational</span>') +
+            ? '<br><span style="font-size:11px;font-weight:600">Not built · click for the price</span>'
+            : '<br><span style="font-size:11px;font-weight:600">Yours · click for details</span>') +
         '</div>';
 
       hitLine.bindTooltip(tooltipHtml, { sticky: true });
@@ -471,28 +604,29 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       hitLine.on('click', (e: any) => {
         if (L.DomEvent) L.DomEvent.stopPropagation(e);
         if (editorMode) {
-          if (editorMode === 'draw' || (editorMode === 'edit' && appendInEditMode)) {
-            const pt = getSnappedLatLng(e.latlng);
-            pushUndoState();
-            editorPoints.push([pt.lat, pt.lng]);
-            updateEditorDisplay(true);
-            notifyEditorState();
+          if (isAppending()) {
+            const orig = e.originalEvent;
+            addEditorPoint(e.latlng, !!(orig && orig.altKey), !!(orig && orig.shiftKey));
           }
           return;
         }
 
         if (isAdmin) {
           openAdminSegmentPopup(seg, e.latlng);
-        } else if (!built) {
-          selectSegment(seg);
         } else {
-          openBuiltSegmentPopup(seg, e.latlng);
+          // Built or not, the panel shows it: the build view or the run's details
+          selectSegment(seg);
         }
       });
 
       segmentLayers[seg.id] = line;
       hitLayers[seg.id] = hitLine;
     });
+
+    if (!isAdmin && selectedSegId !== null) {
+      const sel = segments.find((s) => String(s.id) === String(selectedSegId));
+      if (sel) drawSelectionMarks(sel);
+    }
 
     renderSectorPolygons();
   }
@@ -528,82 +662,44 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
-  function openBuiltSegmentPopup(seg: MapSegment, latlng: any) {
-    const L = (window as any).L;
-    const item = builtItems[seg.id] || {};
-    const capInfo =
-      seg.type === 'lift' && item.capacity
-        ? '<div class="flex justify-between"><span>Capacity:</span><b>' +
-          Number(item.capacity).toLocaleString() +
-          '/hr</b></div>'
-        : '';
-    const snowInfo =
-      seg.type !== 'lift' && item.snow_quality
-        ? '<div class="flex justify-between"><span>Condition:</span><b class="capitalize">' +
-          escHtml(item.snow_quality) +
-          '</b></div>'
-        : '';
-    const status = item.status || 'open';
-    const statusClass =
-      { open: 'text-success', closed: 'text-muted', broken: 'text-danger', building: 'text-link' }[status] ||
-      'text-muted';
-    const canDemolish = !!item.id;
-    const el = document.createElement('div');
-    el.className = 'p-2 text-xs min-w-[200px] text-foreground bg-surface rounded-lg';
-    el.innerHTML =
-      '<div class="font-bold text-sm mb-1.5 flex items-center gap-1.5">' +
-      (seg.type === 'lift'
-        ? '<i class="fa-solid fa-elevator text-warning"></i>'
-        : '<i class="fa-solid fa-person-skiing text-success"></i>') +
-      ' <span>' +
-      escHtml(seg.name || seg.type) +
-      '</span>' +
-      '</div>' +
-      '<div class="space-y-1 text-muted text-xs">' +
-      '<div class="flex justify-between"><span>Length:</span><b class="tabular-nums font-semibold text-foreground">' +
-      Math.round(seg.length_meters || 0) +
-      ' ' +
-      distUnit +
-      '</b></div>' +
-      capInfo +
-      snowInfo +
-      '<div class="flex justify-between"><span>Status:</span><span class="font-semibold ' +
-      statusClass +
-      ' capitalize">' +
-      escHtml(status) +
-      '</span></div>' +
-      '</div>' +
-      (canDemolish
-        ? '<button type="button" class="w-full mt-3 py-1.5 px-2 rounded-md bg-danger/10 hover:bg-danger/20 text-danger text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors" data-demolish>' +
-          '<i class="fa-solid fa-trash-can"></i> Demolish · refund ' +
-          fmtMoney(Number(item.salvage || 0)) +
-          '</button>'
-        : '');
-
-    const btn = el.querySelector('[data-demolish]') as HTMLButtonElement;
-    if (btn) {
-      btn.addEventListener('click', () => demolishBuilt(seg, item, btn));
+  /** Replace a built lift with another system on the same line (ResortMap::swapLift). The dialog asks first. */
+  function swapLift(seg: MapSegment, liftType: string, seats: number, cb?: (ok: boolean) => void) {
+    const item = builtItems[seg.id];
+    if (!item || !item.id) {
+      if (cb) cb(false);
+      return;
     }
-
-    L.popup({ className: 'admin-leaflet-popup' }).setLatLng(latlng).setContent(el).openOn(map);
+    const name = seg.name || 'this lift';
+    postJSON('/map/upgrade/' + item.id, { lift_type: liftType, seats }, (res) => {
+      if (!res || !res.success) {
+        callbacks.onToast(res?.error || 'Could not replace ' + name + '. Nothing was changed.', 'error');
+        if (cb) cb(false);
+        return;
+      }
+      if (res.item) builtItems[seg.id] = res.item;
+      if (typeof res.new_cash === 'number') {
+        userCash = res.new_cash;
+        callbacks.onCashUpdate(userCash);
+      }
+      callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+      renderSegments(buildMode);
+      callbacks.onToast(res.message || name + ' replaced.', 'success');
+      if (cb) cb(true);
+    });
   }
 
-  function demolishBuilt(seg: MapSegment, item: BuiltItem, btn: HTMLButtonElement) {
+  /** Demolish a built run for its salvage refund. The panel asks first; this only does it. */
+  function demolish(seg: MapSegment, cb?: (ok: boolean) => void) {
+    const item = builtItems[seg.id];
+    if (!item || !item.id) {
+      if (cb) cb(false);
+      return;
+    }
     const name = seg.name || (seg.type === 'lift' ? 'this lift' : 'this slope');
-    const ok = confirm(
-      'Demolish ' +
-        name +
-        '?\n\nYou get ' +
-        fmtMoney(Number(item.salvage || 0)) +
-        ' back (25% salvage). Snow cannons and terrain parks on it are kept but unassigned. This cannot be undone.'
-    );
-    if (!ok) return;
-
-    btn.disabled = true;
     postJSON('/map/demolish/' + item.id, {}, (res) => {
       if (!res || !res.success) {
-        btn.disabled = false;
-        callbacks.onToast(res?.error || 'Demolition failed', 'error');
+        callbacks.onToast(res?.error || 'Could not demolish ' + name + '. Nothing was changed.', 'error');
+        if (cb) cb(false);
         return;
       }
       builtIds = builtIds.filter((id) => String(id) !== String(seg.id) && Number(id) !== Number(seg.id));
@@ -612,10 +708,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         userCash = res.new_cash;
         callbacks.onCashUpdate(userCash);
       }
-      callbacks.onBuiltUpdate(builtIds, builtItems);
-      map.closePopup();
+      callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
       renderSegments(buildMode);
-      callbacks.onToast(res.message || 'Demolished ' + name, 'success');
+      callbacks.onToast(res.message || name + ' demolished.', 'success');
+      if (cb) cb(true);
     });
   }
 
@@ -711,10 +807,21 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const targetTab = seg.type === 'lift' ? 'lift' : 'slope';
 
     if (segmentLayers[seg.id]) {
-      segmentLayers[seg.id].setStyle({ weight: 8, opacity: 1, color: '#38bdf8', dashArray: null });
+      if (isAdmin) {
+        segmentLayers[seg.id].setStyle({ weight: 8, opacity: 1, color: '#38bdf8', dashArray: null });
+      } else {
+        drawSelectionMarks(seg);
+      }
       try {
         if (typeof segmentLayers[seg.id].getBounds === 'function') {
-          map.panTo(segmentLayers[seg.id].getBounds().getCenter(), { animate: true });
+          // On a phone the panel covers the lower part of the map: keep the run in the part still showing
+          const phone = window.matchMedia('(max-width: 767px)').matches;
+          const bounds = segmentLayers[seg.id].getBounds();
+          if (phone) {
+            map.fitBounds(bounds, { maxZoom: map.getZoom(), paddingTopLeft: [24, 24], paddingBottomRight: [24, Math.round(window.innerHeight * 0.55)], animate: true });
+          } else {
+            map.panTo(bounds.getCenter(), { animate: true });
+          }
         }
       } catch {}
     }
@@ -726,16 +833,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function deselectSegment() {
     if (selectedSegId && segmentLayers[selectedSegId]) {
       const s = segments.find((x) => String(x.id) === String(selectedSegId));
-      if (s) {
-        const b = isSegmentBuilt(s.id);
-        segmentLayers[selectedSegId].setStyle({
-          color: b || !buildMode ? segColor(s) : '#a855f7',
-          weight: b ? 5 : 6,
-          opacity: b ? 0.95 : 0.85,
-          dashArray: b ? (s.type === 'lift' ? '10, 5' : null) : '6, 5',
-        });
-      }
+      if (s) segmentLayers[selectedSegId].setStyle(segStyle(s));
     }
+    clearSelectionMarks();
     selectedSegId = null;
     callbacks.onSelectSegment(null);
   }
@@ -770,6 +870,11 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     let bestDist = maxDist;
     let bestPt: [number, number] | null = null;
     let bestLabel = '';
+    // Nearest spot along a run or lift, used only when no existing point is in reach
+    let lineDist = maxDist * 0.7;
+    let linePt: [number, number] | null = null;
+    let lineLabel = '';
+    const here: [number, number] = [latlng.lat, latlng.lng];
 
     segments.forEach((seg) => {
       if (editingSegId && String(seg.id) === String(editingSegId)) return;
@@ -786,8 +891,22 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           bestPt = pt;
           bestLabel = (seg.name || seg.type) + (idx === 0 ? ' (Start)' : idx === pts.length - 1 ? ' (End)' : '');
         }
+        if (idx > 0) {
+          const c = closestOnLine(here, pts[idx - 1], pt);
+          const d2 = Math.hypot(c[0] - here[0], c[1] - here[1]);
+          if (d2 < lineDist) {
+            lineDist = d2;
+            linePt = c;
+            lineLabel = (seg.name || seg.type) + ' (on line)';
+          }
+        }
       });
     });
+
+    if (!bestPt && linePt) {
+      bestPt = linePt;
+      bestLabel = lineLabel;
+    }
 
     if (bestPt) {
       currentSnapTarget = { lat: bestPt[0], lng: bestPt[1], label: bestLabel };
@@ -932,6 +1051,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         deleteVertexAt(index);
         return;
       }
+      // The second click of a double-click lands on the point the first click just placed
+      if (index === editorPoints.length - 1 && Date.now() - lastClickTime < DOUBLE_CLICK_MS) {
+        finishOnDoubleClick();
+        return;
+      }
+      if (selectedVertexIdx === index) return;
       selectedVertexIdx = index;
       updateEditorDisplay(true);
     });
@@ -939,6 +1064,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     marker.on('contextmenu', (e: any) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
       deleteVertexAt(index);
+    });
+
+    marker.on('dblclick', (e: any) => {
+      if (L.DomEvent) L.DomEvent.stopPropagation(e);
     });
 
     return marker;
@@ -1110,19 +1239,15 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     editorSegName = nextSuggestedName(type);
     if (!preserveSettings) {
-      editorSegDiff = 'blue';
-      editorSlopeType = 'downhill';
+      editorSegSector = lastDraw.sector;
+      editorSegDiff = lastDraw.difficulty;
+      editorSlopeType = lastDraw.slopeType;
     }
 
     setAppendMode(true);
     if (map) map.doubleClickZoom.disable();
     updateEditorDisplay(true);
     notifyEditorState();
-
-    callbacks.onToast(
-      'Drawing ' + (type === 'lift' ? 'Lift (Bottom → Top)' : 'Slope (Top → Bottom)') + ': click map to place points',
-      'info'
-    );
   }
 
   function startEditSegment(seg: MapSegment) {
@@ -1146,11 +1271,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     if (map) map.doubleClickZoom.disable();
     updateEditorDisplay(true);
     notifyEditorState();
-
-    callbacks.onToast(
-      'Editing "' + (seg.name || seg.type) + '": drag points to move, drag/click + midpoints to bend',
-      'info'
-    );
   }
 
   function startEditSectorBoundary(sec: Sector) {
@@ -1173,11 +1293,20 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function cancelEditor(skipRender?: boolean) {
+    const wasEditing = editorMode === 'edit';
     editorMode = null;
     editingSegId = null;
     editingSectorId = null;
     editorPoints = [];
     undoStack = [];
+    redoStack = [];
+    discardArmedUntil = 0;
+    // Editing loaded another line's settings: the idle toolbar goes back to the ones for new lines
+    if (wasEditing) {
+      editorSegSector = lastDraw.sector;
+      editorSegDiff = lastDraw.difficulty;
+      editorSlopeType = lastDraw.slopeType;
+    }
     selectedVertexIdx = -1;
     setAppendMode(false);
 
@@ -1209,6 +1338,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           callbacks.onSectorsUpdate([...sectors]);
           callbacks.onToast('Sector boundary saved!', 'success');
           cancelEditor(false);
+        } else {
+          callbacks.onToast(res?.error || 'Failed to save the sector boundary', 'error');
         }
       });
       return;
@@ -1218,6 +1349,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       callbacks.onToast('Please place at least 2 points for a lift or slope', 'warning');
       return;
     }
+    if (saving) return;
+    saving = true;
 
     let name = editorSegName.trim();
     if (!name) {
@@ -1245,6 +1378,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const currentEditorType = editorType;
 
     postJSON('/map/segment', payload, (res) => {
+      saving = false;
       if (res && res.success) {
         const savedId = Number(res.id || editingSegId);
         const updatedSeg: MapSegment = {
@@ -1266,6 +1400,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           callbacks.onToast('Updated "' + name + '" (' + lengthM + ' ' + distUnit + ')', 'success');
         } else {
           segments.push(updatedSeg);
+          rememberDrawSettings();
           callbacks.onToast('Created "' + name + '" (' + lengthM + ' ' + distUnit + ')', 'success');
         }
 
@@ -1283,19 +1418,33 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
+  function snapshot(): [number, number][] {
+    return editorPoints.map((p) => [p[0], p[1]] as [number, number]);
+  }
+
   function undo() {
     if (!editorMode) return;
     if (undoStack.length > 0) {
+      redoStack.push(snapshot());
       editorPoints = undoStack.pop()!;
-      selectedVertexIdx = -1;
-      updateEditorDisplay(true);
-      notifyEditorState();
     } else if (editorPoints.length > 0) {
+      redoStack.push(snapshot());
       editorPoints.pop();
-      selectedVertexIdx = -1;
-      updateEditorDisplay(true);
-      notifyEditorState();
+    } else {
+      return;
     }
+    selectedVertexIdx = -1;
+    updateEditorDisplay(true);
+    notifyEditorState();
+  }
+
+  function redo() {
+    if (!editorMode || redoStack.length === 0) return;
+    undoStack.push(snapshot());
+    editorPoints = redoStack.pop()!;
+    selectedVertexIdx = -1;
+    updateEditorDisplay(true);
+    notifyEditorState();
   }
 
   function reverse() {
@@ -1352,8 +1501,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       })
       .catch((err) => {
         console.error('API Error:', err);
-        callbacks.onToast(err.message || 'Request failed', 'error');
+        // A caller with a callback shows its own error; without one this is the only message
         if (callback) callback({ success: false, error: err.message || 'Request failed' });
+        else callbacks.onToast(err.message || 'Request failed', 'error');
       });
   }
 
@@ -1380,12 +1530,42 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       buildMode = m;
       renderSegments(buildMode);
     },
+    setShowAvailable: (show: boolean) => {
+      showAvailable = show;
+      try {
+        localStorage.setItem('map_show_available', show ? '1' : '0');
+      } catch {}
+      renderSegments(buildMode);
+    },
+    getShowAvailable: () => showAvailable,
+    /** The container changed size (the page fits itself to the screen after load): redraw and refit */
+    resize: (bottomPad = 0) => {
+      const L = (window as any).L;
+      if (!map || !L) return;
+      map.invalidateSize({ animate: false });
+      // Once the player has moved the map themselves, leave their view alone
+      if (userMoved || !mapBounds) return;
+      // Fit the part of the mountain with runs on it, in the space above the phone's bottom sheet
+      const layers = Object.values(segmentLayers).filter((l: any) => typeof l.getBounds === 'function');
+      let bounds = layers.length ? L.featureGroup(layers).getBounds() : L.latLngBounds(mapBounds);
+      const size = map.getSize();
+      if (size.x < size.y) {
+        // Portrait phone: the runs spread wider than the screen. Fit their height and centre them;
+        // fitting the width too would shrink the mountain to a strip the sheet then covers.
+        const c = bounds.getCenter();
+        bounds = L.latLngBounds([bounds.getSouth(), c.lng], [bounds.getNorth(), c.lng]);
+      }
+      map.fitBounds(bounds, { animate: false, paddingTopLeft: [16, 56], paddingBottomRight: [16, bottomPad + 16] });
+    },
+    demolish,
+    swapLift,
     startDraw,
     startEditSegment,
     startEditSectorBoundary,
     cancelEditor,
     saveEditor,
     undo,
+    redo,
     reverse,
     toggleSnap,
     toggleSectors,
@@ -1396,6 +1576,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     },
     setEditorSector: (s: number) => {
       editorSegSector = s;
+      // Picked on the idle toolbar: that is the sector for the next new line
+      if (!editorMode) rememberDrawSettings();
       notifyEditorState();
     },
     setEditorSlopeType: (t: string) => {
@@ -1448,6 +1630,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
             callbacks.onSectorsUpdate([...sectors]);
             callbacks.onToast(sec.name + ' is now ' + (sec.visible ? 'visible' : 'hidden'), 'info');
           }
+        } else {
+          callbacks.onToast(res?.error || 'Failed to change sector visibility', 'error');
         }
       });
     },
@@ -1483,11 +1667,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
             userCash = res.new_cash;
             callbacks.onCashUpdate(userCash);
           }
-          callbacks.onBuiltUpdate(builtIds, builtItems);
-          callbacks.onToast(
-            'Constructed "' + (seg.name || seg.type) + '" for ' + fmtMoney(Number(res.cost || 0)) + '!',
-            'success'
-          );
+          callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+          // The panel says what was built and what to do next
           deselectSegment();
           renderSegments(buildMode);
           if (typeof (window as any).loadTutorial === 'function') (window as any).loadTutorial();

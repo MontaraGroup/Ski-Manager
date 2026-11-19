@@ -51,9 +51,9 @@ class Auth extends ShieldAuth
         'layout'                      => 'layouts/main',
         'action_email_2fa'            => 'email_2fa_show',
         'action_email_2fa_verify'     => 'email_2fa_verify',
-        'action_email_2fa_email'      => '\CodeIgniter\Shield\Views\Email\email_2fa_email',
+        'action_email_2fa_email'      => 'Email/email_2fa_email',
         'action_email_activate_show'  => 'auth/email_activate_show',
-        'action_email_activate_email' => '\CodeIgniter\Shield\Views\Email\email_activate_email',
+        'action_email_activate_email' => 'Email/email_activate_email',
         'magic-link-login'            => 'magic_link_form',
         'magic-link-message'          => 'magic_link_message',
         'magic-link-email'            => 'Email/magic_link_email',
@@ -173,7 +173,9 @@ class Auth extends ShieldAuth
      *
      * @see https://codeigniter4.github.io/shield/quick_start_guide/using_session_auth/#protecting-pages for set filters.
      */
-    public bool $recordActiveDate = true;
+    // Off: BaseController::initController() records users.last_active itself, at most every few minutes,
+    // instead of an UPDATE on every request
+    public bool $recordActiveDate = false;
 
     /**
      * --------------------------------------------------------------------

@@ -1,0 +1,124 @@
+package net.skimanager.app.api
+
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import net.skimanager.app.BuildConfig
+import net.skimanager.app.feedback.AppLog
+import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+/** What the server answered. It decides every rule and formats every number; the app only shows it */
+sealed interface ApiResult {
+    data class Ok(val data: JsonElement?, val message: String?) : ApiResult {
+        /** data as an object, or an empty one when the server sent something else */
+        fun dataObject(): JsonObject = data?.takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
+    }
+
+    /** code: the server's errors.code, such as "maintenance". fields: field name to message, for forms */
+    data class Failed(val status: Int, val message: String, val code: String?, val fields: Map<String, String>) : ApiResult
+
+    data object Offline : ApiResult
+}
+
+const val SERVER_ERROR = "Something went wrong. Try again."
+
+/** /api/v1/app. onSignedOut runs when the server no longer accepts the token */
+class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit) {
+    private val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
+    private val base = BuildConfig.BASE_URL + "/api/v1/app/"
+
+    suspend fun get(path: String, query: Map<String, String> = emptyMap()): ApiResult {
+        val url = (base + path).toHttpUrl().newBuilder().apply { query.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
+        return send(Request.Builder().url(url).get())
+    }
+
+    suspend fun post(path: String, form: Map<String, String> = emptyMap()): ApiResult {
+        val body = FormBody.Builder().apply { form.forEach { (k, v) -> add(k, v) } }.build()
+        return send(Request.Builder().url(base + path).post(body))
+    }
+
+    suspend fun postJson(path: String, json: JsonObject): ApiResult =
+        send(Request.Builder().url(base + path).post(json.toString().toRequestBody("application/json".toMediaType())))
+
+    /** A form with one optional file, such as a feedback report with its screenshot */
+    suspend fun postMultipart(path: String, form: Map<String, String>, file: Pair<String, ByteArray>?, fileField: String = "file"): ApiResult {
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM).apply {
+            form.forEach { (k, v) -> addFormDataPart(k, v) }
+            file?.let { (name, bytes) -> addFormDataPart(fileField, name, bytes.toRequestBody("image/jpeg".toMediaType())) }
+        }.build()
+        return send(Request.Builder().url(base + path).post(body))
+    }
+
+    /** A file from the site, such as the map image. Null if it can't be fetched */
+    suspend fun bytes(path: String): ByteArray? = withContext(Dispatchers.IO) {
+        try {
+            client.newCall(Request.Builder().url(BuildConfig.BASE_URL + path).build()).execute().use { response ->
+                if (response.isSuccessful) response.body?.bytes() else null
+            }
+        } catch (e: IOException) {
+            null
+        }
+    }
+
+    private suspend fun send(builder: Request.Builder): ApiResult = withContext(Dispatchers.IO) {
+        val token = tokens()
+        token?.let { builder.header("Authorization", "Bearer $it") }
+        builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
+            // The server counts days of Android app use for the closed-test reward (AppToken filter)
+            .header("X-Client", "android/${BuildConfig.VERSION_CODE}")
+        val request = builder.build()
+        val started = System.currentTimeMillis()
+        try {
+            client.newCall(request).execute().use { response ->
+                val text = response.body?.string()
+                AppLog.call(request.method, request.url.encodedPath, response.code, System.currentTimeMillis() - started, text?.length?.toLong() ?: 0)
+                val result = parseBody(response.code, text)
+                if (result is ApiResult.Failed) AppLog.log("failed ${response.code} ${result.code ?: ""}: ${result.message}")
+                // A 401 on a signed-in request means the token expired or was revoked, whatever the body says
+                val expired = result is ApiResult.Failed && (result.code == "unauthenticated" || (token != null && response.code == 401))
+                if (expired) withContext(Dispatchers.Main) { onSignedOut() }
+                result
+            }
+        } catch (e: IOException) {
+            AppLog.call(request.method, request.url.encodedPath, 0, System.currentTimeMillis() - started, 0)
+            ApiResult.Offline
+        }
+    }
+
+    companion object {
+        internal fun parse(status: Int, root: JsonObject?): ApiResult {
+            if (root != null && root.bool("ok")) {
+                return ApiResult.Ok(root.get("data")?.takeUnless { it.isJsonNull }, root.strOrNull("message"))
+            }
+            val errors = root?.get("errors")?.takeIf { it.isJsonObject }?.asJsonObject
+            val fields = errors?.entrySet().orEmpty()
+                .filter { it.key != "code" && it.key != "email" && it.value.isJsonPrimitive }
+                .associate { it.key to it.value.asString }
+            return ApiResult.Failed(status, root?.strOrNull("message") ?: SERVER_ERROR, errors?.strOrNull("code"), fields)
+        }
+
+        internal fun parseBody(status: Int, body: String?): ApiResult {
+            val root = runCatching { JsonParser.parseString(body.orEmpty()).asJsonObject }.getOrNull()
+            return parse(status, root)
+        }
+    }
+}
+
+fun JsonObject.strOrNull(name: String): String? = get(name)?.takeIf { it.isJsonPrimitive }?.asString
+fun JsonObject.str(name: String): String = strOrNull(name).orEmpty()
+fun JsonObject.bool(name: String): Boolean = runCatching { get(name)?.takeIf { it.isJsonPrimitive }?.asBoolean }.getOrNull() ?: false
+fun JsonObject.int(name: String): Int = runCatching { get(name)?.takeIf { it.isJsonPrimitive }?.asInt }.getOrNull() ?: 0
+fun JsonObject.obj(name: String): JsonObject = get(name)?.takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
+fun JsonObject.objects(name: String): List<JsonObject> =
+    (get(name)?.takeIf { it.isJsonArray }?.asJsonArray ?: JsonArray()).filter { it.isJsonObject }.map { it.asJsonObject }

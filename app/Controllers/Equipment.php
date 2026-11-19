@@ -26,12 +26,20 @@ class Equipment extends BaseController
 
     public function index(): string
     {
+        return view('equipment/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         helper('weather');
         $userId = auth()->id();
         $db = db_connect();
         $discount = $this->discountPct($userId);
         $costMult = ((int) getDifficultyConfig('cost_multiplier', '100')) / 100;
-        $baseTemp = (int) (getCurrentWeather()['base_temp'] ?? 0);
+        $weather = getCurrentWeather();
+        $baseTemp = (int) ($weather['base_temp'] ?? 0);
+        $humidity = (int) ($weather['humidity'] ?? 70);
 
         $equipment = $db->table('equipment')->where('user_id', $userId)->orderBy('equipment_type')->orderBy('id')->get()->getResultArray();
         $staff = $db->table('staff')->where('user_id', $userId)->whereIn('role', ['groomer', 'snowmaker'])->where('status', 'active')->get()->getResultArray();
@@ -42,6 +50,9 @@ class Equipment extends BaseController
         $crewedIds = array_flip(array_map(fn($m) => (int) $m['id'], $fleet['machines']));
         $crewByName = array_column(array_filter($staff, fn($s) => !empty($s['assigned_to'])), 'name', 'assigned_to');
 
+        $openSlopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->get()->getResultArray();
+        $snow = Snowmaking::plan($guns, $openSlopes, ['temp' => $baseTemp] + $weather, Snowmaking::crewLevels($staff));
+
         $prices = Fleet::prices();
         foreach ($equipment as &$e) {
             $e['repair_cost'] = Fleet::repairCost($e, $prices);
@@ -51,9 +62,11 @@ class Equipment extends BaseController
             if ($e['equipment_type'] === 'groomer') {
                 $e['state'] = $broken ? 'broken' : ($e['status'] !== 'active' ? 'off' : (isset($crewedIds[(int) $e['id']]) ? 'running' : 'no_operator'));
             } else {
-                $e['state'] = $broken ? 'broken' : ($e['status'] !== 'active' ? 'off' : (Snowmaking::runs($e, $baseTemp) ? 'running' : 'idle'));
+                $e['state'] = $broken ? 'broken' : ($e['status'] !== 'active' ? 'off' : (isset($snow['guns'][(int) $e['id']]) ? 'running' : (Snowmaking::canRun($e, $baseTemp, $humidity) ? 'standby' : 'idle')));
             }
-            $e['daily_cost'] = $e['state'] === 'running' ? (int) round((int) $e['fuel_cost'] * $costMult) : 0;
+            // Snow guns cost only the hours they run (App\Libraries\Snowmaking::scaled)
+            $share = $e['equipment_type'] === 'snowmaker' ? ($snow['guns'][(int) $e['id']]['share'] ?? 0) : 1;
+            $e['daily_cost'] = $e['state'] === 'running' ? (int) round((int) $e['fuel_cost'] * $share * $costMult) : 0;
         }
         unset($e);
 
@@ -77,6 +90,7 @@ class Equipment extends BaseController
             'running' => ['tone' => 'success', 'label' => 'Running'],
             'no_operator' => ['tone' => 'warning', 'label' => 'No operator'],
             'idle' => ['tone' => 'warning', 'label' => 'Idle: too warm'],
+            'standby' => ['tone' => 'neutral', 'label' => 'Standby: slopes at target'],
             'off' => ['tone' => 'neutral', 'label' => 'Off'],
             'broken' => ['tone' => 'danger', 'label' => 'Broken'],
         ];
@@ -139,7 +153,7 @@ class Equipment extends BaseController
                 'operators' => count($operators),
                 'idleGroomers' => $fleet['idle_machines'],
                 'guns' => count($guns),
-                'gunCapacity' => count(Snowmaking::coverage($db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->get()->getResultArray(), $guns, $baseTemp)),
+                'gunCapacity' => count($snow['covered']),
                 'runningGuns' => count($runningGuns),
                 'dailyCostText' => currency(array_sum(array_column($equipment, 'daily_cost'))),
                 'fleetValueText' => currency(array_sum(array_column($equipment, 'resale'))),
@@ -153,7 +167,7 @@ class Equipment extends BaseController
             ],
         ];
 
-        return view('equipment/index', ['page' => $page]);
+        return $page;
     }
 
     public function buy()
@@ -210,7 +224,7 @@ class Equipment extends BaseController
     public function repair(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$eq) return redirect()->back()->with('error', 'Not found.');
+        if (!$eq) return redirect()->to('/equipment')->with('error', 'Not found.');
         if ((int) $eq['condition_pct'] >= 100) return redirect()->to('/equipment')->with('error', $eq['name'] . ' is already in perfect condition.');
 
         $cost = Fleet::repair(auth()->id(), $eq);
@@ -221,7 +235,7 @@ class Equipment extends BaseController
     public function sell(int $id)
     {
         $eq = db_connect()->table('equipment')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$eq) return redirect()->back()->with('error', 'Not found.');
+        if (!$eq) return redirect()->to('/equipment')->with('error', 'Not found.');
         $refund = Fleet::sell(auth()->id(), $eq);
         return redirect()->to('/equipment')->with('success', $eq['name'] . ' sold for ' . currency($refund) . '.');
     }

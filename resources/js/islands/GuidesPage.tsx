@@ -1,4 +1,3 @@
-import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Page } from '@/components/Page';
 
@@ -54,10 +53,11 @@ export default function GuidesPage({ guides = [], isLoggedIn = true }: GuidesPag
         </div>
 
         <div className="text-center pt-2">
-          <a href={isLoggedIn ? '/dashboard' : '/register'}>
-            <Button variant="primary" className="min-h-[44px] px-8 font-semibold text-sm">
-              {isLoggedIn ? 'Back to Resort Dashboard' : 'Play Ski Manager Free'}
-            </Button>
+          <a
+            href={isLoggedIn ? '/dashboard' : '/register'}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-8 text-sm font-semibold text-accent-foreground hover:opacity-90"
+          >
+            {isLoggedIn ? 'Back to Resort Dashboard' : 'Play Ski Manager Free'}
           </a>
         </div>
       </div>

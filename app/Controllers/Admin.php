@@ -11,6 +11,28 @@ class Admin extends BaseController
         return auth()->id() === 1 || ($user && $user->inGroup('admin', 'superadmin'));
     }
 
+    /**
+     * users.active = 0 means two things: Shield sets it until the player confirms their email, and
+     * banUser() sets it too. A pending email_activate identity tells them apart; deleted accounts have
+     * no users row at all (AccountPurge and deleteUser remove it), so they never reach these lists.
+     */
+    private const UNCONFIRMED_SQL = "EXISTS (SELECT 1 FROM auth_identities ai WHERE ai.user_id = users.id AND ai.type = 'email_activate')";
+
+    /** 'active', 'banned' or 'unconfirmed' for one users row (needs the pending-activation ids) */
+    private static function accountState(array $user, array $unconfirmedIds): string
+    {
+        if (!isset($user['active']) || (int) $user['active'] === 1) return 'active';
+        return in_array((int) $user['id'], $unconfirmedIds, true) ? 'unconfirmed' : 'banned';
+    }
+
+    /** Ids among $ids that still have a pending email confirmation */
+    private static function unconfirmedIds(array $ids): array
+    {
+        if ($ids === []) return [];
+        return array_map('intval', array_column(db_connect()->table('auth_identities')->select('user_id')->distinct()
+            ->where('type', 'email_activate')->whereIn('user_id', $ids)->get()->getResultArray(), 'user_id'));
+    }
+
     public function index(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
@@ -89,7 +111,8 @@ class Admin extends BaseController
         $onlineRecentRow = $db->query("SELECT COUNT(DISTINCT user_id) as cnt FROM activity_log WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)")->getRowArray();
         $onlineRecent = $onlineRecentRow['cnt'] ?? 0;
         $newUsers7d = $db->table('users')->where('created_at >', date('Y-m-d H:i:s', strtotime('-7 days')))->countAllResults();
-        $bannedUsers = $db->table('users')->where('active', 0)->countAllResults();
+        $bannedUsers = $db->table('users')->where('active', 0)->where('NOT ' . self::UNCONFIRMED_SQL, null, false)->countAllResults();
+        $unconfirmedUsers = $db->table('users')->where('active', 0)->where(self::UNCONFIRMED_SQL, null, false)->countAllResults();
 
         $season = $db->table('seasons')->where('active', 1)->get()->getRowArray() ?? [];
         $unreadSupport = $db->table('support_messages')->where('sender', 'player')->where('is_read', 0)->countAllResults();
@@ -120,7 +143,9 @@ class Admin extends BaseController
         $avgCash = $totalUsers > 0 ? (int) ($totalCash / $totalUsers) : 0;
         $gb = fn($b) => number_format($b / 1073741824, 1) . ' GB';
 
-        $playersFormatted = array_map(function($u) {
+        $unconfirmed = self::unconfirmedIds(array_column($users, 'id'));
+        $playersFormatted = array_map(function($u) use ($unconfirmed) {
+            $state = self::accountState($u, $unconfirmed);
             $lastTs = !empty($u['last_active']) ? strtotime($u['last_active']) : 0;
             return [
                 'id' => (int) $u['id'],
@@ -135,7 +160,8 @@ class Admin extends BaseController
                 'last_active_ts' => $lastTs,
                 'lastActiveFormatted' => $lastTs ? timeAgo($u['last_active']) : 'Never',
                 'isOnline' => $lastTs > strtotime('-15 minutes'),
-                'isBanned' => isset($u['active']) && !$u['active'],
+                'state' => $state,
+                'isBanned' => $state === 'banned',
                 'lastActivityMessage' => $u['last_activity']['message'] ?? '',
             ];
         }, $users);
@@ -151,7 +177,32 @@ class Admin extends BaseController
             ];
         }, $recentLogs);
 
+        // What needs attention: every number is a live query
+        $since = fn(string $mod) => date('Y-m-d H:i:s', strtotime($mod));
+        $errors24h = 0;
+        foreach ([date('Y-m-d'), date('Y-m-d', strtotime('-1 day'))] as $day) {
+            $f = WRITEPATH . 'logs/log-' . $day . '.log';
+            if (!is_file($f)) continue;
+            foreach (file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+                if (preg_match('/^(ERROR|CRITICAL|ALERT|EMERGENCY) - (\S+ \S+)/', $line, $m) && strtotime($m[2]) >= strtotime('-24 hours')) $errors24h++;
+            }
+        }
+        $attention = [
+            'supportOpen' => (int) $db->query("SELECT COUNT(DISTINCT user_id) n FROM support_messages WHERE sender = 'player' AND is_read = 0")->getRow('n'),
+            'errors24h' => $errors24h,
+            'signupsToday' => $db->table('users')->where('created_at >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'signups7d' => $db->table('users')->where('created_at >=', $since('-7 days'))->countAllResults(),
+            'activeToday' => $db->table('users')->where('last_active >=', date('Y-m-d 00:00:00'))->countAllResults(),
+            'active7d' => $db->table('users')->where('last_active >=', $since('-7 days'))->countAllResults(),
+            'roadmapToReview' => $db->tableExists('roadmap_items') ? $db->table('roadmap_items')->where('status', 'suggested')->countAllResults() : 0,
+            // Players /admin/suspicious lists that nobody has reviewed yet
+            'suspicious' => count(array_filter(\App\Libraries\Suspicion::scan(), fn($x) => empty($x['review']))),
+            'backupMonitorUrl' => 'https://ski-manager.sentry.io/crons/ski-manager/db-dump/',
+        ];
+
         $page = [
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
+            'attention' => $attention,
             'season' => [
                 'name' => $season['name'] ?? 'Season 1',
                 'season_number' => (int) ($season['season_number'] ?? 1),
@@ -178,6 +229,7 @@ class Admin extends BaseController
                 'totalUsers' => number_format($totalUsers),
                 'newUsers7d' => (int) $newUsers7d,
                 'bannedUsers' => (int) $bannedUsers,
+                'unconfirmedUsers' => (int) $unconfirmedUsers,
                 'onlineRecent' => number_format($onlineRecent),
                 'activePct' => $activePct,
                 'totalCashFormatted' => currency((int) $totalCash),
@@ -286,17 +338,59 @@ class Admin extends BaseController
             ];
         }, $logsRaw);
 
-        $achievements = array_map(function($a) {
+        $achievements = array_values(array_map(function($a) {
             return [
-                'key' => $a['achievement_key'] ?? $a['name'] ?? (string) $a['id'],
+                'key' => $a['achievement_key'] ?? (string) $a['id'],
+                'name' => $a['name'] ?? $a['achievement_key'] ?? '',
+                'claimed' => (bool) ($a['claimed'] ?? 0),
             ];
-        }, $achievementsRaw);
+        }, array_filter($achievementsRaw, fn($a) => (int) ($a['completed'] ?? 0) === 1)));
+
+        $transactions = array_map(fn($t) => [
+            'id' => (int) $t['id'],
+            'gameDay' => (int) $t['game_day'],
+            'category' => (string) $t['category'],
+            'description' => (string) $t['description'],
+            'amountFormatted' => ($t['type'] === 'expense' ? '−' : '+') . currency(abs((int) $t['amount'])),
+            'isExpense' => $t['type'] === 'expense',
+            'when' => $t['created_at'] ? date('M j, H:i', strtotime($t['created_at'])) : '',
+        ], $db->table('financial_transactions')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        $genepisLog = array_map(fn($g) => [
+            'id' => (int) $g['id'],
+            'amountFormatted' => ($g['type'] === 'spent' ? '−' : '+') . number_format(abs((int) $g['amount'])),
+            'isSpent' => $g['type'] === 'spent',
+            'reason' => (string) $g['reason'],
+            'when' => $g['created_at'] ? date('M j, H:i', strtotime($g['created_at'])) : '',
+        ], $db->table('genepis_log')->where('user_id', $id)->orderBy('id', 'DESC')->limit(20)->get()->getResultArray());
+
+        // Keep the network, drop the host: 203.0.113.42 -> 203.0.113.x, IPv6 keeps its first 3 groups
+        $maskIp = function (string $ip): string {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) return preg_replace('/\.\d+$/', '.x', $ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return implode(':', array_slice(explode(':', $ip), 0, 3)) . ':x';
+            return 'unknown';
+        };
+        $logins = array_map(fn($l) => [
+            'id' => (int) $l['id'],
+            'when' => date('M j, Y H:i', strtotime($l['date'])),
+            'success' => (bool) $l['success'],
+            'ip' => $maskIp((string) $l['ip_address']),
+        ], $db->table('auth_logins')->select('id, date, success, ip_address')->where('user_id', $id)->orderBy('id', 'DESC')->limit(10)->get()->getResultArray());
+
+        $notes = $db->tableExists('admin_notes') ? array_map(fn($n) => [
+            'id' => (int) $n['id'],
+            'note' => (string) $n['note'],
+            'admin' => (string) ($n['admin_name'] ?? ('#' . $n['admin_id'])),
+            'when' => date('M j, Y H:i', strtotime($n['created_at'])),
+        ], $db->table('admin_notes n')->select('n.*, u.username AS admin_name')->join('users u', 'u.id = n.admin_id', 'left')
+            ->where('n.user_id', $id)->orderBy('n.id', 'DESC')->get()->getResultArray()) : [];
 
         $page = [
             'user' => [
                 'id' => (int) $user['id'],
                 'username' => $user['username'],
                 'active' => isset($user['active']) ? (bool) $user['active'] : true,
+                'state' => self::accountState($user, self::unconfirmedIds([(int) $user['id']])),
                 'isOwner' => ((int) $user['id'] === 1),
                 'createdFormatted' => date('M j, Y', strtotime($user['created_at'])),
                 'email' => $identity['secret'] ?? 'N/A',
@@ -309,6 +403,9 @@ class Admin extends BaseController
                 'units' => $finance['units'] ?? 'metric',
                 'resortMap' => $finance['resort_map'] ?? 'ParkCity',
                 'resortOpen' => (bool) ($finance['resort_open'] ?? true),
+                'resortName' => (string) ($finance['resort_name'] ?? ''),
+                'dailyVisitors' => number_format((int) ($finance['daily_visitors'] ?? 0)),
+                'lastActive' => !empty($finance['last_active']) ? timeAgo($finance['last_active']) : 'never',
             ],
             'genepis' => [
                 'balance' => (int) ($genepis['balance'] ?? 0),
@@ -331,6 +428,11 @@ class Admin extends BaseController
                 'step' => (int) ($tutorial['current_step'] ?? 1),
             ] : null,
             'logs' => $logs,
+            'transactions' => $transactions,
+            'money' => ['symbol' => currencySymbol(), 'prefix' => isImperial()],
+            'genepisLog' => $genepisLog,
+            'logins' => $logins,
+            'notes' => $notes,
         ];
 
         return view('admin/user', ['page' => $page]);
@@ -341,7 +443,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $cash = (int) $this->request->getPost('cash');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash') ?? 0);
         db_connect()->table('player_finances')->where('user_id', $userId)->update(['cash' => $cash]);
+        $this->auditLog('set_cash', $userId, json_encode(['from' => $before, 'to' => $cash, 'reason' => $reason]));
         log_activity($userId, 'admin_cash', "Admin set cash to " . currency($cash));
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Cash updated.');
     }
@@ -351,7 +457,11 @@ class Admin extends BaseController
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
         $userId = (int) $this->request->getPost('user_id');
         $amount = (int) $this->request->getPost('genepis');
+        $reason = trim((string) $this->request->getPost('reason'));
+        if ($reason === '') return redirect()->to('/admin/user/' . $userId)->with('error', 'Give a reason for the change.');
+        $before = (int) (db_connect()->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRow('balance') ?? 0);
         db_connect()->table('genepis')->where('user_id', $userId)->update(['balance' => $amount]);
+        $this->auditLog('set_genepis', $userId, json_encode(['from' => $before, 'to' => $amount, 'reason' => $reason]));
         log_activity($userId, 'admin_genepis', "Admin set génépis to " . $amount);
         return redirect()->to('/admin/user/' . $userId)->with('success', 'Génépis updated.');
     }
@@ -378,7 +488,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin() || $id === 1) return redirect()->to('/admin');
         $db = db_connect();
-        $tables = ['staff', 'buildings', 'snow_cannons', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
+        $tables = ['staff', 'buildings', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
         foreach ($tables as $t) { try { $db->table($t)->where('user_id', $id)->delete(); } catch (\Exception $e) {} }
         $db->table('player_finances')->where('user_id', $id)->update(['cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'reputation' => 0]);
         $db->table('genepis')->where('user_id', $id)->update(['balance' => 0]);
@@ -404,7 +514,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin() || $id === 1) return redirect()->to('/admin');
         $db = db_connect();
-        $tables = ['staff', 'buildings', 'snow_cannons', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'player_finances', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
+        $tables = ['staff', 'buildings', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'player_finances', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
         foreach ($tables as $t) { try { $db->table($t)->where('user_id', $id)->delete(); } catch (\Exception $e) {} }
         $db->table('auth_identities')->where('user_id', $id)->delete();
         $db->table('auth_logins')->where('user_id', $id)->delete();
@@ -508,6 +618,9 @@ class Admin extends BaseController
     public function grantAchievement()
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard');
+        $userId = (int) $this->request->getPost('user_id');
+        $achievementId = (int) $this->request->getPost('achievement_id');
+        if ($userId <= 0 || $achievementId <= 0) return redirect()->to('/admin')->with('error', 'Give a player ID and an achievement ID.');
         $achRow = db_connect()->table('achievement_defs')->where('id', $achievementId)->get()->getRowArray() ?: db_connect()->table('achievements')->where('id', $achievementId)->get()->getRowArray();
         $target = $achRow['target'] ?? 100;
         db_connect()->table('achievements')->where('id', $achievementId)->where('user_id', $userId)->update(['completed' => 1, 'progress' => $target]);
@@ -995,12 +1108,15 @@ class Admin extends BaseController
         $usage = $this->featureFlagUsage();
 
         $flags = [];
-        $counts = ['everyone' => 0, 'admins' => 0, 'off' => 0, 'unused' => 0];
+        $counts = ['everyone' => 0, 'admins' => 0, 'beta' => 0, 'off' => 0, 'unused' => 0];
+        $beta = \App\Libraries\Beta::adminSummary();
+        $counts['members'] = $beta['members'];
 
         foreach ($flagsRaw as $f) {
             $lvl = (int) $f['enabled'];
             if ($lvl === 2) $counts['everyone']++;
             elseif ($lvl === 1) $counts['admins']++;
+            elseif ($lvl === FEATURE_LEVEL_BETA) $counts['beta']++;
             else $counts['off']++;
 
             $isUnused = empty($usage[$f['flag_key']]);
@@ -1018,6 +1134,10 @@ class Admin extends BaseController
                 'enabled' => $lvl,
                 'isBeta' => $isBeta,
                 'usage' => $usage[$f['flag_key']] ?? null,
+                // Beta level: members with it on (members minus those who switched it off), and feedback
+                'betaMembersOn' => $lvl === FEATURE_LEVEL_BETA ? max(0, $beta['members'] - ($beta['off'][$f['flag_key']] ?? 0)) : null,
+                'betaSince' => !empty($f['beta_since']) ? date('j M Y', strtotime($f['beta_since'])) : null,
+                'feedback' => $beta['feedback'][$f['flag_key']] ?? null,
             ];
         }
 
@@ -1035,6 +1155,9 @@ class Admin extends BaseController
      */
     private function featureFlagUsage(): array
     {
+        // Cached for a day; every deploy runs spark cache:clear, which is when this can change
+        $cached = cache('admin_feature_flag_usage');
+        if (is_array($cached)) return $cached;
         $usage = [];
         foreach (\App\Filters\FeatureGate::ROUTE_FLAGS as $route => $flag) {
             $usage[$flag]['pages'][] = '/' . $route;
@@ -1048,24 +1171,29 @@ class Admin extends BaseController
                 $usage[$flag]['code'][] = $where;
             }
         }
+        cache()->save('admin_feature_flag_usage', $usage, DAY);
         return $usage;
     }
 
-    /** POST /admin/features/set/{id} with level 0 (off), 1 (admins only) or 2 (everyone) */
+    /** POST /admin/features/set/{id} with level 0 (off), 1 (admins only), 3 (beta: admins and beta members) or 2 (everyone) */
     public function setFlag(int $id)
     {
         if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
         $level = (int) $this->request->getPost('level');
-        if (!in_array($level, [0, 1, 2], true)) return redirect()->to('/admin/features')->with('error', 'Unknown level.');
+        if (!in_array($level, [0, 1, 2, FEATURE_LEVEL_BETA], true)) return redirect()->to('/admin/features')->with('error', 'Unknown level.');
 
         $db = db_connect();
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if (!$flag) return redirect()->to('/admin/features')->with('error', 'Flag not found.');
 
-        $labels = ['off', 'admins only', 'everyone'];
+        $labels = [0 => 'off', 1 => 'admins only', 2 => 'everyone', FEATURE_LEVEL_BETA => 'beta'];
         if ((int) $flag['enabled'] !== $level) {
-            $db->table('feature_flags')->where('id', $id)->update(['enabled' => $level]);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ': ' . $labels[(int) $flag['enabled']] . ' -> ' . $labels[$level]);
+            $update = ['enabled' => $level];
+            // When it entered beta, for the "In beta since" line on /beta; cleared once it leaves beta
+            if ($level === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
+            elseif ((int) $flag['enabled'] === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
+            $db->table('feature_flags')->where('id', $id)->update($update);
+            $this->auditLog('feature_flag', null, $flag['flag_key'] . ': ' . ($labels[(int) $flag['enabled']] ?? $flag['enabled']) . ' -> ' . $labels[$level]);
         }
         return redirect()->to('/admin/features#flag-' . $id)->with('success', $flag['name'] . ' is now ' . $labels[$level] . '.');
     }
@@ -1077,9 +1205,15 @@ class Admin extends BaseController
         $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
         if ($flag) {
             $isBeta = str_starts_with($flag["flag_key"], "beta_");
-            $new = $isBeta ? ((int) $flag["enabled"] + 1) % 3 : ($flag["enabled"] ? 0 : 2);
-            $db->table("feature_flags")->where("id", $id)->update(["enabled" => $new]);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ["off","admin only","everyone"][$new]);
+            // beta_ keys step through off, admins only, beta, everyone; others switch off/everyone
+            $cycle = [0 => 1, 1 => FEATURE_LEVEL_BETA, FEATURE_LEVEL_BETA => 2, 2 => 0];
+            $old = (int) $flag["enabled"];
+            $new = $isBeta ? ($cycle[$old] ?? 0) : ($old ? 0 : 2);
+            $update = ["enabled" => $new];
+            if ($new === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
+            elseif ($old === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
+            $db->table("feature_flags")->where("id", $id)->update($update);
+            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ([0 => "off", 1 => "admin only", 2 => "everyone", FEATURE_LEVEL_BETA => "beta"][$new]));
         }
         return redirect()->to('/admin/features')->with('success', 'Flag updated.');
     }
@@ -1087,62 +1221,29 @@ class Admin extends BaseController
     public function suspiciousActivity(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $db = db_connect();
-        $suspectsRaw = $db->query("
-            SELECT u.id, u.username, f.cash, f.difficulty,
-                (SELECT COUNT(*) FROM admin_audit_log WHERE target_user_id = u.id AND action = 'flagged') as times_flagged,
-                (SELECT message FROM activity_log WHERE user_id = u.id AND message LIKE '%income%' ORDER BY created_at DESC LIMIT 1) as last_income
-            FROM users u
-            JOIN player_finances f ON f.user_id = u.id
-            WHERE f.cash > (
-                CASE f.difficulty
-                    WHEN 'easy' THEN 5000000
-                    WHEN 'hard' THEN 2000000
-                    ELSE 3000000
-                END
-            )
-            ORDER BY f.cash DESC
-            LIMIT 20
-        ")->getResultArray();
+        $players = array_map(function ($x) {
+            $u = db_connect()->table('player_finances')->select('cash, difficulty')->where('user_id', $x['id'])->get()->getRowArray() ?? [];
+            return array_merge($x, [
+                'cashFormatted' => currency((int) ($u['cash'] ?? 0)),
+                'difficulty' => (string) ($u['difficulty'] ?? 'standard'),
+                'adminEdits' => (int) ($x['adminEdits'] ?? 0),
+                'review' => isset($x['review']) ? ['decision' => $x['review']['decision'], 'when' => timeAgo($x['review']['at'])] : null,
+            ]);
+        }, \App\Libraries\Suspicion::scan());
+        return view('admin/suspicious', ['page' => ['players' => $players]]);
+    }
 
-        $suspects = array_map(function($s) {
-            return [
-                'id' => (int) $s['id'],
-                'username' => $s['username'],
-                'cashFormatted' => currency((int) $s['cash']),
-                'difficulty' => $s['difficulty'] ?? 'standard',
-                'times_flagged' => (int) ($s['times_flagged'] ?? 0),
-                'last_income' => $s['last_income'] ?? '-',
-            ];
-        }, $suspectsRaw);
-
-        $recentRaw = $db->query("
-            SELECT u.id, u.username, f.cash, f.difficulty,
-                a1.message as latest, a1.created_at
-            FROM users u
-            JOIN player_finances f ON f.user_id = u.id
-            JOIN activity_log a1 ON a1.user_id = u.id
-            WHERE a1.message LIKE '%Admin set cash%'
-            ORDER BY a1.created_at DESC
-            LIMIT 10
-        ")->getResultArray();
-
-        $recent = array_map(function($r) {
-            return [
-                'id' => (int) $r['id'],
-                'username' => $r['username'],
-                'cashFormatted' => currency((int) ($r['cash'] ?? 0)),
-                'latest' => $r['latest'] ?? '',
-                'timeFormatted' => isset($r['created_at']) ? date('M j H:i', strtotime($r['created_at'])) : '-',
-            ];
-        }, $recentRaw);
-
-        $page = [
-            'suspects' => $suspects,
-            'recent' => $recent,
-        ];
-
-        return view('admin/suspicious', ['page' => $page]);
+    /** POST /admin/suspicious/{id}/review : flag a player as cheating, or clear them, with a note */
+    public function reviewSuspect(int $userId)
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard');
+        $decision = (string) $this->request->getPost('decision');
+        $note = trim((string) $this->request->getPost('note'));
+        if (!in_array($decision, ['flagged', 'cleared'], true) || $note === '') {
+            return redirect()->to('/admin/suspicious')->with('error', 'Choose flag or clear, and write a note.');
+        }
+        $this->auditLog($decision, $userId, json_encode(['note' => mb_substr($note, 0, 500)]));
+        return redirect()->to('/admin/suspicious')->with('success', $decision === 'flagged' ? 'Player flagged.' : 'Player cleared.');
     }
 
     public function createSeason()
@@ -1309,5 +1410,188 @@ class Admin extends BaseController
         setting('SeasonVote.closesAt', date('Y-m-d H:i:s', $ts));
         $this->auditLog('season_vote_close_date', null, date('Y-m-d H:i', $ts));
         return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
+    }
+
+    /** GET /admin/resort-vote: this month's tally, past months, winner picks */
+    /** GET /admin/android-testing: the Android closed test's links and the invite (App\Libraries\AndroidTesting) */
+    public function androidTesting(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $page = ['groupUrl' => \App\Libraries\AndroidTesting::groupUrl(), 'joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats(), 'rewards' => \App\Libraries\AndroidTesting::rewardStats()];
+        return view('admin/android_testing', ['page' => $page]);
+    }
+
+    /** POST /admin/android-testing/notify: the invite notification for every eligible account that hasn't had it */
+    public function androidTestingNotify(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $n = \App\Libraries\AndroidTesting::notifyAll();
+        $this->auditLog('android_invite', null, $n . ' notified');
+        return redirect()->to('/admin/android-testing')->with('success', $n === 0
+            ? 'Everyone eligible already has the notification.'
+            : 'Sent the notification to ' . number_format($n) . ($n === 1 ? ' player.' : ' players.'));
+    }
+
+    /** POST /admin/android-testing/link: group_url (the testers Google Group) and join_url (the opt-in link) */
+    public function androidTestingLink(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $back = redirect()->to('/admin/android-testing');
+        $links = ['group_url' => 'AndroidTesting.groupUrl', 'join_url' => 'AndroidTesting.joinUrl'];
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !str_starts_with($url, 'https://'))) {
+                return $back->with('error', 'Use full https:// links, copied from Google Groups and Play Console.');
+            }
+        }
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            $url === '' ? setting()->forget($key) : setting($key, $url);
+        }
+        $this->auditLog('android_test_link', null, trim((string) $this->request->getPost('group_url')) . ' | ' . trim((string) $this->request->getPost('join_url')));
+        return $back->with('success', 'Links saved.');
+    }
+
+    public function resortVote(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $rv = \App\Libraries\ResortVote::class;
+        $current = $rv::rollover();
+        $db = db_connect();
+        $rounds = $db->table('resort_vote_rounds')->orderBy('month', 'DESC')->limit(24)->get()->getResultArray();
+        $flag = $db->table('feature_flags')->select('id')->where('flag_key', $rv::FLAG)->get()->getRowArray();
+
+        // The old Season 4 vote (resort_votes), read only, so its result isn't lost when the flag goes on
+        $season4 = [];
+        if ($db->tableExists('resort_votes')) {
+            $names = array_map(fn($o) => $o['name'], (new \App\Controllers\Vote())->getResortOptions());
+            foreach ($db->query('SELECT resort_key, COUNT(*) AS n FROM resort_votes GROUP BY resort_key ORDER BY n DESC')->getResultArray() as $r) {
+                $key = \App\Controllers\Vote::resolveResortKey($r['resort_key']) ?? $r['resort_key'];
+                $season4[] = ['name' => $names[$key] ?? $key, 'votes' => (int) $r['n']];
+            }
+        }
+
+        $page = [
+            'flagLevel' => featureLevel($rv::FLAG),
+            'flagId' => $flag ? (int) $flag['id'] : null,
+            'currentId' => (int) $current['id'],
+            'rounds' => array_map(fn($r) => $rv::summary($r) + [
+                'status' => $r['status'],
+                'tally' => $rv::tally((int) $r['id'], 50),
+                'isCurrent' => $r['month'] === $rv::currentMonth(),
+            ], $rounds),
+            'inGame' => array_map([$rv, 'area'], $db->table('vote_ski_areas')->where('in_game', 1)->orderBy('name')->get()->getResultArray()),
+            'season4' => $season4,
+            'attribution' => $rv::ATTRIBUTION,
+        ];
+        return view('admin/resort_vote', ['page' => $page]);
+    }
+
+    /** POST /admin/resort-vote/{id}/open with open=1|0: reopen or close the current month */
+    public function resortVoteOpen(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $open = $this->request->getPost('open') === '1';
+        if (!\App\Libraries\ResortVote::setOpen($id, $open)) {
+            return redirect()->to('/admin/resort-vote')->with('error', 'Only the current month can be closed or reopened.');
+        }
+        $this->auditLog('resort_vote_' . ($open ? 'reopen' : 'close'), null, 'round ' . $id);
+        return redirect()->to('/admin/resort-vote')->with('success', $open ? 'Voting reopened.' : 'Voting closed for this month.');
+    }
+
+    /** POST /admin/resort-vote/{id}/winner: area_id, note, roadmap, notify */
+    public function resortVoteWinner(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $areaId = (int) $this->request->getPost('area_id');
+        $note = trim((string) $this->request->getPost('note'));
+        $note = $note === '' ? null : mb_substr($note, 0, \App\Libraries\ResortVote::NOTE_MAX);
+        $error = \App\Libraries\ResortVote::pickWinner($id, $areaId, $note,
+            $this->request->getPost('roadmap') === '1', $this->request->getPost('notify') === '1');
+        if ($error) return redirect()->to('/admin/resort-vote')->with('error', $error);
+        $this->auditLog('resort_vote_winner', null, 'round ' . $id . ', area ' . $areaId);
+        return redirect()->to('/admin/resort-vote')->with('success', 'Winner saved.');
+    }
+
+    /** POST /admin/resort-vote/area/{id}/in-game with in_game=1|0 */
+    public function resortVoteInGame(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $inGame = $this->request->getPost('in_game') === '1';
+        \App\Libraries\ResortVote::setInGame($id, $inGame);
+        $this->auditLog('resort_vote_in_game', null, 'area ' . $id . ' ' . ($inGame ? 'on' : 'off'));
+        return redirect()->to('/admin/resort-vote')->with('success', $inGame ? 'Marked as playable. It is off the ballot.' : 'Back on the ballot.');
+    }
+
+    /** GET /admin/search?q= : players by username, email or ID (JSON, at most 10) */
+    public function searchPlayers()
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['results' => []]);
+        $q = trim((string) $this->request->getGet('q'));
+        if ($q === '') return $this->response->setJSON(['results' => []]);
+        $db = db_connect();
+        $b = $db->table('users u')->select('u.id, u.username, ai.secret AS email')
+            ->join('auth_identities ai', "ai.user_id = u.id AND ai.type = 'email_password'", 'left');
+        if (ctype_digit($q)) {
+            $b->where('u.id', (int) $q);
+        } else {
+            $b->groupStart()->like('u.username', $q)->orLike('ai.secret', $q)->groupEnd();
+        }
+        $rows = $b->orderBy('u.id', 'DESC')->limit(10)->get()->getResultArray();
+        return $this->response->setJSON(['results' => array_map(fn($r) => [
+            'id' => (int) $r['id'], 'username' => (string) $r['username'], 'email' => (string) ($r['email'] ?? ''),
+        ], $rows)]);
+    }
+
+    /** POST /admin/user/{id}/adjust : add or take cash or Génépis, with a reason, through the ledger */
+    public function adjustBalance(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $currency = (string) $this->request->getPost('currency');
+        $amount = (int) $this->request->getPost('amount');
+        $reason = trim((string) $this->request->getPost('reason'));
+        // 180: the reason goes into description/reason columns of 200 after the "Admin adjustment: " prefix
+        if (!in_array($currency, ['cash', 'genepis'], true) || $amount === 0 || $reason === '' || mb_strlen($reason) > 180) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Choose cash or Génépis, a non-zero amount and a reason.']);
+        }
+        if (!db_connect()->table('users')->where('id', $userId)->countAllResults()) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Player not found.']);
+        }
+        $label = 'Admin adjustment: ' . $reason;
+        $ok = true;
+        if ($currency === 'cash') {
+            if ($amount > 0) \App\Libraries\Ledger::credit($userId, $amount, 'Admin', $label);
+            else $ok = \App\Libraries\Ledger::charge($userId, -$amount, 'Admin', $label);
+        } else {
+            if ($amount > 0) \App\Libraries\Ledger::creditGenepis($userId, $amount, $label);
+            else $ok = \App\Libraries\Ledger::chargeGenepis($userId, -$amount, $label);
+        }
+        // With DBDebug off (production) a failed write doesn't throw; the ledger's transaction rolls back and only transStatus() says so
+        if (!db_connect()->transStatus()) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The change was not saved. Nothing was written.']);
+        }
+        if (!$ok) {
+            return $this->response->setStatusCode(409)->setJSON(['success' => false, 'message' => 'The player does not have that much to take.']);
+        }
+        $this->auditLog('adjust_' . $currency, $userId, json_encode(['amount' => $amount, 'reason' => $reason]));
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /** POST /admin/user/{id}/note : a private admin note on the player */
+    public function addNote(int $userId)
+    {
+        if (!$this->checkAdmin()) return $this->response->setStatusCode(403)->setJSON(['success' => false]);
+        $note = trim((string) $this->request->getPost('note'));
+        if ($note === '' || mb_strlen($note) > 2000) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'message' => 'Write a note of up to 2000 characters.']);
+        }
+        $saved = db_connect()->table('admin_notes')->insert([
+            'user_id' => $userId, 'admin_id' => (int) auth()->id(), 'note' => $note, 'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        if (!$saved) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => 'The note was not saved.']);
+        }
+        $this->auditLog('note', $userId, json_encode(['note' => mb_substr($note, 0, 200)]));
+        return $this->response->setJSON(['success' => true]);
     }
 }

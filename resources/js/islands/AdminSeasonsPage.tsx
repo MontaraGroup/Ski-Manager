@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel, PostButton } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type AdminSeasonRecord = {
   id: number;
@@ -157,18 +158,17 @@ export default function AdminSeasonsPage({
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted">Resort Map</label>
-                <select
+                <Select
                   name="resort_map"
                   value={newSeason.resort_map}
-                  onChange={(e) => setNewSeason({ ...newSeason, resort_map: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-surface-raised px-3 py-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-hidden"
-                >
-                  {Object.entries(resortMaps).map(([key, name]) => (
-                    <option key={key} value={key}>
-                      {name} ({key})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewSeason({ ...newSeason, resort_map: String(val) })}
+                  aria-label="Resort Map"
+                  options={Object.entries(resortMaps).map(([key, name]) => ({
+                    id: key,
+                    label: `${name} (${key})`,
+                  }))}
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-1">

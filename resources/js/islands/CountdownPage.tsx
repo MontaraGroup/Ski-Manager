@@ -48,10 +48,7 @@ export default function CountdownPage({
     <div className="relative isolate min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-hidden">
       {/* Mountain Background Art */}
       <div
-        className="absolute inset-0 -z-20 bg-cover bg-center opacity-40 transform scale-105"
-        style={{
-          backgroundImage: 'url(/img/ParkCity_med.jpg), url(/img/ParkCity_low.jpg)',
-        }}
+        className="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-40 transform scale-105"
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background/90 via-background/80 to-background/95" />
 

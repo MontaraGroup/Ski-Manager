@@ -1,3 +1,315 @@
+## Release 2026-11-19 16:33
+
+* Merge branch 'MontaraGroup:main' into main (c15c260a)
+* Merge pull request #123 from Montara-Group/feat/android-play-games (19ed4a14)
+* feat(android): Google Play Games sign-in, achievements and leaderboard (33a0a082)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (04f70d4a)
+* Merge branch 'MontaraGroup:main' into main (69693135)
+
+## Release 2026-11-19 13:38
+
+* Merge branch 'MontaraGroup:main' into main (69693135)
+* Merge pull request #122 from Montara-Group/feat/android-beta-invite (1512f700)
+* feat(beta): notify players about the Android test; /beta/android shows the code right away (c9b77c9b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3310db6d)
+* Merge pull request #121 from Montara-Group/main (bee40db0)
+
+## Release 2026-11-19 04:08
+
+* Merge branch 'MontaraGroup:main' into main (abbee588)
+* Merge pull request #120 from Montara-Group/chore/android-version-111 (4c1006b7)
+* chore(release): bump VERSION_CODE to 111 (2.0.1); Play already has 110 (98180761)
+* Merge pull request #119 from Montara-Group/feat/android-closed-testing-v2 (eeb32c0f)
+* Merge feat/android-closed-testing into current main (22478dbe)
+
+## Release 2026-11-19 02:14
+
+* Merge branch 'MontaraGroup:main' into main (5bcc3d71)
+* Merge pull request #118 from Montara-Group/feat/android-feedback (82e2b40a)
+* fix(android): encode feedback screenshots off the main thread (f016187d)
+* fix(feedback): delete a player's feedback screenshots with their account (e9382d6b)
+* fix(feedback): cap screenshots at 2 MB to match PHP's upload limit (cd37c92f)
+
+## Release 2026-11-18 13:47
+
+* Merge pull request #116 from Montara-Group/feat/android-native-pages (b99430f3)
+* fix(android): More tab returns to its list; debug builds can target a local server (984328ca)
+* Merge pull request #115 from Montara-Group/fix/alliance-manage-member-route (1272f15b)
+* fix(alliances): point member-management buttons at manage-member route (b38bfcd9)
+* feat(android): native screens for every website page (bf721cee)
+
+## Release 2026-11-18 03:41
+
+* Merge pull request #114 from Montara-Group/main (7a158a09)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (658c7e2a)
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+
+## Release 2026-11-18 03:34
+
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+* Merge pull request #111 from Montara-Group/fix/magic-link-signed-in (062dc200)
+* Merge pull request #110 from Montara-Group/fix/stale-chunk-reload (1f1a1eec)
+
+## Release 2026-11-17 04:47
+
+* feat(seo): add llms.txt, og-image, breadcrumbs and rich structured data schemas (6469b51b)
+* Merge pull request #109 from Montara-Group/fix/map-editor-build (1facf134)
+* chore: synchronize compiled React islands build with main (bd18fd6a)
+* build: rebuild islands for map studio changes (62f04162)
+* Merge pull request #108 from Montara-Group/feat/map-editor-drawing (9a39fffb)
+
+## Release 2026-11-16 13:49
+
+* Merge branch 'MontaraGroup:main' into main (4e726a1a)
+* Merge pull request #106 from Montara-Group/feat/ios-map-studio (bf55d668)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (1512f766)
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* fix(email): enable sendMultipart and set default mailType to html (017cc0d0)
+
+## Release 2026-11-16 13:45
+
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (bebe0287)
+* Merge pull request #105 from Montara-Group/main (af38645f)
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+
+## Release 2026-11-15 20:20
+
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+* fix(map-studio): finish a line on double-click by click timing, never post a line twice (592d0b6f)
+* feat(map-studio): faster lift and slope drawing (4557063d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d51de4b8)
+
+## Release 2026-11-15 18:36
+
+* Merge branch 'MontaraGroup:main' into main (076a60ca)
+* Merge pull request #103 from Montara-Group/feat/snowmaking-revamp (f0847b16)
+* Merge remote-tracking branch 'upstream/main' into feat/snowmaking-revamp (f2662650)
+* Merge pull request #102 from Montara-Group/feat/resort-vote (8e7c9ce6)
+* Merge remote-tracking branch 'upstream/main' into feat/resort-vote (d466bc69)
+
+## Release 2026-11-14 23:51
+
+* Merge pull request #100 from Montara-Group/main (6ef2a15d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c194de6e)
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+
+## Release 2026-11-14 21:34
+
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+* Merge pull request #97 from Montara-Group/fix/parking-shuttle-balance (01e65135)
+* Merge pull request #96 from Montara-Group/fix/tournaments-reputation-and-night-race (948af292)
+
+## Release 2026-11-13 19:18
+
+* Merge pull request #95 from Montara-Group/feat/notifications-revamp (0337d4ef)
+* feat(notifications): categories, per-item read, paging and a better bell (aa08e09f)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (24596647)
+* Merge pull request #94 from Montara-Group/main (9ab8901b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (dd89ce57)
+
+## Release 2026-11-13 04:18
+
+* Merge pull request #94 from Montara-Group/main (9ab8901b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (dd89ce57)
+* Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (57f65417)
+* Merge pull request #93 from Montara-Group/main (2bd11fa7)
+
+## Release 2026-11-13 00:19
+
+* Merge branch 'MontaraGroup:main' into main (ce8bc1a2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (57f65417)
+* Merge pull request #93 from Montara-Group/main (2bd11fa7)
+* Merge branch 'MontaraGroup:main' into main (82b45b8f)
+* Merge pull request #92 from Montara-Group/fix/suspicion-ledger-gap (a2b3047d)
+
+## Release 2026-11-13 00:17
+
+* Merge branch 'MontaraGroup:main' into main (82b45b8f)
+* Merge pull request #92 from Montara-Group/fix/suspicion-ledger-gap (a2b3047d)
+* fix(admin): judge unexplained cash by the transaction rows (7bbd2920)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (875c446b)
+* Merge pull request #91 from Montara-Group/fix/updates-item-text (d2094101)
+
+## Release 2026-11-12 23:37
+
+* Merge pull request #91 from Montara-Group/fix/updates-item-text (d2094101)
+* Merge pull request #88 from MontaraGroup/seer/fix-admin-attention-reload (942ab2fa)
+* Merge upstream/main into seer/fix-admin-attention-reload (32d32dd7)
+* Merge pull request #89 from Montara-Group/fix/deleted-not-banned (9049b81d)
+* Merge upstream/main into fix/updates-item-text (2d2c67ee)
+
+## Release 2026-11-12 21:51
+
+* Merge pull request #86 from Montara-Group/feat/admin-revamp (af72b24)
+* fix(admin): staging QA fixes (ae29468)
+* feat(admin): admin nav, attention overview, player page with adjust dialog and notes (f78835e)
+* wip(admin): overview attention numbers (7d353ca)
+* wip(admin): notes table, Génépis ledger, search/adjust/note endpoints, reasons on set cash/Génépis (cc2699f)
+
+## Release 2026-11-12 21:06
+
+* Merge pull request #85 from Montara-Group/fix/visual-qa (da35e57)
+* fix(ui): visual QA fixes from the site-wide check (842cc14)
+* Merge pull request #84 from Montara-Group/main (ef4371b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (cd7e359)
+* Merge pull request #83 from Montara-Group/feat/resort-clock (ae28cc0)
+
+## Release 2026-11-12 19:39
+
+* Merge pull request #83 from Montara-Group/feat/resort-clock (ae28cc0)
+* feat(shell): resort clock and next-day countdown in the top bar (ba48ff9)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e667b25)
+* Merge pull request #82 from Montara-Group/main (c4f5791)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (459cc56)
+
+## Release 2026-11-12 19:31
+
+* Merge pull request #82 from Montara-Group/main (c4f5791)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (459cc56)
+* Merge pull request #81 from Montara-Group/feat/roadmap-revamp (8001d9a)
+* Merge pull request #80 from Montara-Group/docs/roadmap (7ae6227)
+* feat(roadmap): revamp the page, make it easy to find, and reward taking part (068d173)
+
+## Release 2026-11-12 18:38
+
+* Merge pull request #81 from Montara-Group/feat/roadmap-revamp (8001d9a)
+* Merge pull request #80 from Montara-Group/docs/roadmap (7ae6227)
+* feat(roadmap): revamp the page, make it easy to find, and reward taking part (068d173)
+* docs: add quarterly roadmap through 2027 (0ed0594)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3774c6d)
+
+## Release 2026-11-12 02:22
+
+* Merge branch 'MontaraGroup:main' into main (3d496d2)
+* Merge pull request #79 from Montara-Group/perf/backend-audit (d3daaff)
+* chore: ignore generated WebP map images (30108cc)
+* perf: ~58 fewer queries per page, no per-request writes, enforced CSP, WebP maps (6fd5f53)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3c60898)
+
+## Release 2026-11-11 19:28
+
+* Merge branch 'MontaraGroup:main' into main (95ed154)
+* Merge pull request #77 from Montara-Group/feat/beta-program (e52acc4)
+* Merge pull request #76 from Montara-Group/fix/emergency-time-ago (60235c1)
+* feat(beta): opt-in beta program with per-feature switches and feedback (e531d6d)
+* fix(emergency): call timeAgo(), the helper's real name (a0f9d70)
+
+## Release 2026-11-11 18:05
+
+* Merge branch 'MontaraGroup:main' into main (da170bd)
+* Merge pull request #75 from Montara-Group/release/android-v2.0.0-vc110 (5f1806c)
+* chore(release): bump VERSION_CODE to 110 for Google Play release (a352704)
+* Merge pull request #74 from Montara-Group/feat/player-retention-improvements (ebf4b27)
+* feat(retention): add launch checklist, fix new player alerts, and protect inactive players (5b858c9)
+
+## Release 2026-11-10 00:03
+
+* Merge branch 'MontaraGroup:main' into main (c6157fd)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e71177d)
+* Merge pull request #72 from Montara-Group/feat/heroui-components-migration (3b2f112)
+* Merge branch 'MontaraGroup:main' into main (23002ea)
+* feat(ui): migrate checkboxes, switches, selects, sliders and buttons to heroui (67289bc)
+
+## Release 2026-11-09 23:45
+
+* Merge branch 'MontaraGroup:main' into main (23002ea)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (9779662)
+* Merge pull request #71 from Montara-Group/feat/map-first-build (b6537b4)
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* feat(map): show buildable runs, guide the first build, fit phones (144cf51)
+
+## Release 2026-11-09 19:16
+
+* Merge branch 'MontaraGroup:main' into main (3d74b8c)
+* Merge pull request #70 from Montara-Group/feat/android-expressive-complete (aa9193b)
+* feat(android): upgrade all native screens to material design 3 expressive (41237b2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (46bc782)
+* Merge pull request #69 from Montara-Group/fix/tutorial-revamp (100d041)
+
+## Release 2026-11-09 18:18
+
+* Merge branch 'MontaraGroup:main' into main (2cecf8f)
+* Merge pull request #67 from Montara-Group/fix/first-day-estimate (69f8ddc)
+* fix(dashboard): show tonight's estimate to new players, not only demos (7b18127)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3aaec49)
+* Merge pull request #66 from Montara-Group/feat/android-unit-tests (e0daa47)
+
+## Release 2026-11-09 17:38
+
+* Merge branch 'MontaraGroup:main' into main (66985b8)
+* Merge pull request #65 from Montara-Group/feat/android-equipment (ecc2714)
+* feat(android): add native equipment screen and API controllers (fe567ef)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d6e9ed0)
+* Merge pull request #64 from Montara-Group/main (0a101e1)
+
+## Release 2026-11-09 16:35
+
+* Merge branch 'MontaraGroup:main' into main (4478e9a)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d13fab3)
+* Merge pull request #63 from Montara-Group/feat/android-slopes (d9d1d38)
+* Merge branch 'MontaraGroup:main' into main (67e1458)
+* feat(android): add native grooming and snowmaking screens and API controllers (d3d0fe1)
+
+## Release 2026-11-09 16:34
+
+* Merge branch 'MontaraGroup:main' into main (67e1458)
+* Merge pull request #60 from Montara-Group/feat/android-bank (fc516b4)
+* feat(android): add native bank screen, API controllers, and update CI setup-java (9c1d40b)
+* Merge pull request #59 from Montara-Group/feat/android-buildings (14cd45e)
+* feat(android): add native buildings screen and API controllers (0b19aba)
+
+## Release 2026-11-09 03:06
+
+* Merge pull request #57 from Montara-Group/feat/android-game (d7fefc1)
+* Merge pull request #56 from Montara-Group/feat/android-core (9577904)
+* Merge pull request #55 from Montara-Group/main (02c3b83)
+* feat(android): trail map, tickets, staff and the Play release (674865b)
+* feat(android): play the real game on real accounts (76c5348)
+
+## Release 2026-11-09 01:47
+
+* Merge branch 'MontaraGroup:main' into main (58250ee)
+* Merge pull request #54 from Montara-Group/feat/mobile-api (a545c31)
+* Merge pull request #52 from Montara-Group/feat/demo-save (80a2f50)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e3c9a3e)
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+
+## Release 2026-11-09 01:40
+
+* Merge pull request #42 from Montara-Group/chore/standalone-docker-migration (b5ddd78)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e001647)
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+
+## Release 2026-11-09 01:35
+
+* Merge branch 'MontaraGroup:main' into main (e5ee5d3)
+* Merge pull request #53 from Montara-Group/fix/android-signing (a08d8e2)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (ea82aad)
+* Merge pull request #51 from Montara-Group/feat/demo-first-play (4cb32b4)
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+
+## Release 2026-11-09 01:32
+
+* Merge branch 'MontaraGroup:main' into main (75226a3)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (beed808)
+* android: add web targets to assetlinks for credential sharing (009d233)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (e4d746c)
+* android: add assetlinks.json for deep links and credential sharing (d476293)
+
 ## Release 2026-11-09 00:36
 
 * android: add web targets to assetlinks for credential sharing (009d233)

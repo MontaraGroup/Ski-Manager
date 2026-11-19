@@ -1,4 +1,5 @@
 import React from 'react';
+import { parkCityHasWebp } from '@/lib/webp';
 import { Button } from '@heroui/react/button';
 import { Chip } from '@heroui/react/chip';
 import { Icon } from '@/components/Icon';
@@ -94,10 +95,7 @@ export default function HomePage({
       <section className="relative isolate overflow-hidden bg-[#141b24] text-white py-14 sm:py-20 lg:py-24 border-b border-border">
         {/* Background Image & Gradient */}
         <div
-          className="absolute inset-0 -z-20 bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-1000"
-          style={{
-            backgroundImage: 'url(/img/ParkCity_med.jpg), url(/img/ParkCity_low.jpg)',
-          }}
+          className="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-1000"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t lg:bg-gradient-to-r from-[#0a0e14]/95 via-[#0a0e14]/80 to-[#0a0e14]/40" />
 
@@ -243,7 +241,7 @@ export default function HomePage({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
                     Season 1 Hall of Fame
                   </h3>
-                  <a href="/leaderboard" className="text-xs text-link hover:underline">
+                  <a href="/leaderboard" className="inline-flex min-h-11 items-center text-xs text-link hover:underline sm:min-h-0">
                     Full Board →
                   </a>
                 </div>
@@ -335,8 +333,10 @@ export default function HomePage({
           <div className="lg:col-span-6 space-y-2">
             <a
               href={isLoggedIn ? '/map' : '/register'}
-              className="block rounded-2xl overflow-hidden border border-border shadow-xl hover:border-primary/50 transition-all group"
+              className="block aspect-[600/340] w-full rounded-2xl overflow-hidden border border-border shadow-xl hover:border-primary/50 transition-all group bg-card"
             >
+              <picture className="block w-full h-full">
+              {parkCityHasWebp('low') && <source type="image/webp" srcSet="/img/ParkCity_low.webp" />}
               <img
                 src="/img/ParkCity_low.jpg"
                 alt="Park City trail map"
@@ -344,8 +344,9 @@ export default function HomePage({
                 height={340}
                 loading="lazy"
                 decoding="async"
-                className="w-full object-cover group-hover:scale-102 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
               />
+              </picture>
             </a>
             <p className="text-[11px] text-muted text-center">
               Authentic Park City topography. Cartography licensed from{' '}
@@ -366,7 +367,7 @@ export default function HomePage({
                 <h3 className="text-lg font-bold text-foreground">Recently Built</h3>
                 <p className="text-xs text-muted">Real infrastructure commissioned by players across resorts.</p>
               </div>
-              <a href="/activity" className="text-xs text-link hover:underline">
+              <a href="/activity" className="inline-flex min-h-11 items-center text-xs text-link hover:underline sm:min-h-0">
                 All Activity →
               </a>
             </div>
@@ -503,9 +504,9 @@ function DemoStartButton({ className, children }: { className: string; children:
   return (
     <form action="/demo" method="post" className="contents">
       <input type="hidden" name={meta?.dataset.field || 'csrf_test_name'} value={meta?.content || ''} />
-      <button type="submit" className={className}>
+      <Button type="submit" className={className}>
         <span>{children}</span>
-      </button>
+      </Button>
     </form>
   );
 }

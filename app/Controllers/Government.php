@@ -16,6 +16,12 @@ class Government extends BaseController
     public function index(): string
     {
         if (isPageHidden('government')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        return view('government/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $regConfig = $this->getRegulationTypes();
@@ -116,7 +122,7 @@ class Government extends BaseController
             'inspections' => $formattedInspections,
         ];
 
-        return view('government/index', ['page' => $page]);
+        return $page;
     }
 
     public function toggle(int $id)
@@ -139,7 +145,6 @@ class Government extends BaseController
         if (empty($nonCompliant)) return redirect()->to('/government')->with('error', 'Already fully compliant!');
         $db->table('regulations')->where('user_id', $userId)->update(['compliant' => 1]);
         log_activity($userId, 'Government', 'Opted into full compliance with all ' . count($nonCompliant) . ' regulations', 'fa-solid fa-building-columns');
-        notify($userId, 'government', 'Full Compliance Achieved', 'Your resort is now fully compliant with all government regulations.', 'fa-solid fa-circle-check', '/government');
         return redirect()->to('/government')->with('success', 'Now compliant with all ' . count($nonCompliant) . ' regulations!');
     }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export default function AdminBroadcastPage() {
   const [type, setType] = useState<'info' | 'warning' | 'success' | 'error'>('info');
@@ -52,33 +53,31 @@ export default function AdminBroadcastPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted">Alert Style</label>
-              <select
+              <Select
                 name="type"
                 value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                className="w-full rounded-xl border border-border bg-surface-raised px-3 py-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-hidden"
-              >
-                <option value="info">Info (Blue)</option>
-                <option value="warning">Warning (Yellow)</option>
-                <option value="success">Success (Green)</option>
-                <option value="error">Emergency (Red)</option>
-              </select>
+                onChange={(val) => setType(val as any)}
+                aria-label="Alert Style"
+                options={[
+                  { id: 'info', label: 'Info (Blue)' },
+                  { id: 'warning', label: 'Warning (Yellow)' },
+                  { id: 'success', label: 'Success (Green)' },
+                  { id: 'error', label: 'Emergency (Red)' },
+                ]}
+                className="w-full"
+              />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted">Display Icon</label>
-              <select
+              <Select
                 name="icon"
                 value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-raised px-3 py-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-hidden"
-              >
-                {iconOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setIcon(String(val))}
+                aria-label="Display Icon"
+                options={iconOptions.map((opt) => ({ id: opt.value, label: opt.label }))}
+                className="w-full"
+              />
             </div>
           </div>
 

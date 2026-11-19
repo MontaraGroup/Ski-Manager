@@ -1,3 +1,5 @@
+import type { LiftSwapOption } from './LiftSwapDialog';
+
 export interface MapSegment {
   id: number | string;
   name?: string;
@@ -33,6 +35,10 @@ export interface BuiltItem {
   status?: string;
   snow_quality?: string;
   salvage?: number;
+  seats?: number;
+  /** Lifts: running cost per day, and the systems it can be swapped to (LiftSwapDialog) */
+  run_cost?: number;
+  swaps?: LiftSwapOption[];
 }
 
 export interface MapConfig {
@@ -42,6 +48,8 @@ export interface MapConfig {
   admin_image?: string;
   width: number;
   height: number;
+  /** Which sizes also exist as .webp (smaller); the engine uses those and the JPEGs for the rest */
+  webp?: { low: boolean; med: boolean; full: boolean };
 }
 
 export interface EconomyV2Config {
@@ -51,6 +59,14 @@ export interface EconomyV2Config {
   slopeRun: number;
   perDay: number;
   liftKwh: Record<string, number>;
+}
+
+export interface BuildCosts {
+  liftPerM: Record<string, number>;
+  /** Keyed by seat count; JSON object keys arrive as strings */
+  seatMult: Record<string, number>;
+  seatOptions: Record<string, number[]>;
+  slopePerM: number;
 }
 
 export interface ResortMapProps {
@@ -71,6 +87,10 @@ export interface ResortMapProps {
   distUnit: string;
   isImperial: boolean;
   economyV2: EconomyV2Config | null;
+  /** ResortMap::calcCost's table, so the page shows what the server charges */
+  costs: BuildCosts;
+  /** Next nightly settle (ISO 8601) */
+  settleAt: string;
   csrf: {
     name: string;
     hash: string;

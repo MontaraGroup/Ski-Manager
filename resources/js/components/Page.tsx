@@ -3,6 +3,11 @@ import { AlertDialog, Button } from '@heroui/react';
 import { Icon } from './Icon';
 
 /** Page frame for the React game pages: width, title row with a way back, optional actions */
+/** Set by layouts/main.php when the player sees this page because it's in beta */
+function isBetaPage(): boolean {
+  return typeof document !== 'undefined' && document.body.dataset.betaPage === '1';
+}
+
 export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '/dashboard', actions, width = 'max-w-5xl', children }: {
   title: string;
   icon: string;
@@ -25,6 +30,15 @@ export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '
           <h1 className="flex items-center gap-2 text-2xl font-semibold">
             <Icon name={icon} className={iconTone} />
             {title}
+            {isBetaPage() && (
+              <a
+                href="/beta"
+                aria-label="Beta feature, see beta features"
+                className="inline-flex min-h-8 items-center rounded-full bg-warning/15 px-2.5 text-sm font-semibold text-warning hover:underline"
+              >
+                Beta
+              </a>
+            )}
           </h1>
           {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
         </div>

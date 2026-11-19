@@ -42,6 +42,42 @@ class Ledger
         $db->transComplete();
     }
 
+    /** Adds Génépis and logs it, in one transaction (creates the wallet row if the player has none) */
+    public static function creditGenepis(int $userId, int $amount, string $reason): void
+    {
+        if ($amount <= 0) return;
+        $db = db_connect();
+        $now = date('Y-m-d H:i:s');
+        $db->transStart();
+        if (!$db->table('genepis')->where('user_id', $userId)->countAllResults()) {
+            $db->table('genepis')->insert(['user_id' => $userId, 'balance' => 0, 'total_earned' => 0, 'total_spent' => 0, 'updated_at' => $now]);
+        }
+        $db->table('genepis')->where('user_id', $userId)
+            ->set('balance', 'balance + ' . $amount, false)->set('total_earned', 'total_earned + ' . $amount, false)
+            ->set('updated_at', $now)->update();
+        $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'earned', 'reason' => $reason, 'created_at' => $now]);
+        $db->transComplete();
+    }
+
+    /** Takes Génépis only if the player has them; false (and nothing written) when they don't */
+    public static function chargeGenepis(int $userId, int $amount, string $reason): bool
+    {
+        if ($amount <= 0) return true;
+        $db = db_connect();
+        $now = date('Y-m-d H:i:s');
+        $db->transStart();
+        $db->table('genepis')->where('user_id', $userId)->where('balance >=', $amount)
+            ->set('balance', 'balance - ' . $amount, false)->set('total_spent', 'total_spent + ' . $amount, false)
+            ->set('updated_at', $now)->update();
+        if ($db->affectedRows() !== 1) {
+            $db->transComplete();
+            return false;
+        }
+        $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'spent', 'reason' => $reason, 'created_at' => $now]);
+        $db->transComplete();
+        return true;
+    }
+
     private static function record(int $userId, int $amount, string $type, string $category, string $description): void
     {
         db_connect()->table('financial_transactions')->insert([

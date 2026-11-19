@@ -59,6 +59,7 @@ class Shell
             ['url' => '/genepis',       'label' => 'Génépis',       'icon' => 'fa-seedling'],
             ['url' => '/activity',      'label' => 'Activity Log',  'icon' => 'fa-clock-rotate-left'],
             ['url' => '/vote',          'label' => 'Vote Season 4', 'icon' => 'fa-check-to-slot'],
+            ['url' => '/roadmap',       'label' => 'Roadmap',       'icon' => 'fa-map-location-dot', 'badge' => 'roadmap'],
             ['url' => 'https://wiki.ski-manager.net', 'label' => 'Wiki', 'icon' => 'fa-book', 'ext' => true],
             ['url' => '/support',       'label' => 'Support',       'icon' => 'fa-headset'],
             ['url' => '/settings',      'label' => 'Settings',      'icon' => 'fa-gear'],
@@ -78,7 +79,7 @@ class Shell
         ['Insurance', '/insurance', 'fa-shield-halved'], ['Government', '/government', 'fa-building-columns'], ['Environment', '/environment', 'fa-leaf'],
         ['Emergency', '/emergency', 'fa-truck-medical'], ['Ski Lessons', '/ski-lessons', 'fa-chalkboard-user'], ['Achievements', '/achievements', 'fa-trophy'],
         ['Leaderboard', '/leaderboard', 'fa-ranking-star'], ['Tournaments', '/tournaments', 'fa-medal'], ['Daily Bonus', '/daily-bonus', 'fa-gift'],
-        ['Genepis', '/genepis', 'fa-seedling'], ['VIP Guests', '/vip-guests', 'fa-star'], ['Resort Analysis', '/resort-analysis', 'fa-clipboard-check'],
+        ['Genepis', '/genepis', 'fa-seedling'], ['Android beta', '/beta/android', 'fa-mobile-screen'], ['VIP Guests', '/vip-guests', 'fa-star'], ['Resort Analysis', '/resort-analysis', 'fa-clipboard-check'],
         ['Off-Season', '/off-season', 'fa-sun'], ['Morale', '/morale', 'fa-face-smile'], ['Activity Log', '/activity', 'fa-clock-rotate-left'],
         ['Notifications', '/notifications', 'fa-bell'], ['Settings', '/settings', 'fa-gear'], ['Account', '/account', 'fa-user-gear'], ['About', '/about', 'fa-circle-info'],
         ['FAQ', '/faq', 'fa-circle-question'], ['Updates', '/updates', 'fa-newspaper'], ['Roadmap', '/roadmap', 'fa-map-location-dot'], ['Contact', '/contact', 'fa-envelope'],
@@ -113,12 +114,17 @@ class Shell
         return [
             'href' => $locked ? '/achievements' : $it['url'],
             'url' => $it['url'],
-            'label' => $it['label'],
+            // /vote is the monthly resort vote once its flag is on
+            'label' => $it['url'] === '/vote' && \App\Libraries\ResortVote::flagOn() ? 'Resort Vote' : $it['label'],
             'icon' => $it['icon'],
             'locked' => $locked,
             'flagOff' => $flagOff,
             'external' => !empty($it['ext']),
             'bonusDue' => ($it['badge'] ?? null) === 'bonus' && $bonusDue,
+            // "New" until the player has opened the page once (users.roadmap_seen_at)
+            'isNew' => ($it['badge'] ?? null) === 'roadmap' && auth()->loggedIn() && empty(auth()->user()?->roadmap_seen_at),
+            // Shown because the page is in beta (flag level 3): the nav marks it "Beta"
+            'beta' => $flag !== null && !$flagOff && function_exists('featureIsBetaFor') && featureIsBetaFor($flag),
         ];
     }
 
@@ -155,8 +161,6 @@ class Shell
         $fin = $userId ? $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray() : null;
         $genepis = $userId ? $db->table('genepis')->select('balance')->where('user_id', $userId)->get()->getRowArray() : null;
         $rating = $userId ? resortRating($userId) : null;
-        $notifs = $userId ? $db->table('notifications')->select('id, title, message, icon, is_read')->where('user_id', $userId)
-            ->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray() : [];
 
         return [
             'path' => $currentPath,
@@ -172,16 +176,15 @@ class Shell
                 'snow' => snow((int) $weather['snow_base']),
                 'gameDay' => (int) $weather['game_day'],
                 'seasonLength' => getSeasonLength(),
+                // Resort clock: server time, so the browser's own clock is never trusted
+                'now' => time(),
+                'timezone' => 'America/New_York',
                 'genepis' => (int) ($genepis['balance'] ?? 0),
                 'stars' => (int) ($rating['stars'] ?? 0),
             ] : null,
             'notifications' => [
                 'unread' => $userId ? unreadNotificationCount($userId) : 0,
-                'latest' => array_map(fn($n) => [
-                    'id' => (int) $n['id'], 'title' => (string) $n['title'], 'message' => (string) $n['message'],
-                    'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $n['icon']) ? (string) $n['icon'] : 'fa-solid fa-bell',
-                    'isRead' => (bool) $n['is_read'],
-                ], $notifs),
+                'latest' => $userId ? NotificationFeed::latest((int) $userId) : [],
             ],
             'flash' => $flash,
             'demo' => $userId && session()->get('is_demo') ? \App\Controllers\Demo::barState((int) $userId) : null,

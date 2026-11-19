@@ -1,8 +1,16 @@
 <?php
 
 if (!function_exists('resortRating')) {
-    function resortRating(int $userId): array
+    function resortRating(int $userId, bool $forceRefresh = false): array
     {
+        $cacheKey = "user_resort_rating_{$userId}";
+        if (!$forceRefresh && function_exists('cache')) {
+            $cached = cache($cacheKey);
+            if (is_array($cached)) {
+                return $cached;
+            }
+        }
+
         $db = db_connect();
         $slopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults(false);
         $lifts = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults(false);
@@ -11,10 +19,10 @@ if (!function_exists('resortRating')) {
         $parking = $db->table('parking')->where('user_id', $userId)->where('status', 'open')->countAllResults(false);
         $parks = $db->table('terrain_parks')->where('user_id', $userId)->where('status', 'open')->countAllResults(false);
 
-        $items = $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray();
+        $items = $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->select('condition_pct')->get()->getResultArray();
         $avgCondition = count($items) > 0 ? array_sum(array_column($items, 'condition_pct')) / count($items) : 0;
 
-        $staffAll = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+        $staffAll = $db->table('staff')->where('user_id', $userId)->where('status', 'active')->select('morale')->get()->getResultArray();
         $avgMorale = count($staffAll) > 0 ? array_sum(array_column($staffAll, 'morale')) / count($staffAll) : 0;
 
         $score = 0;
@@ -36,6 +44,20 @@ if (!function_exists('resortRating')) {
             default => 0,
         };
 
-        return ['stars' => $stars, 'score' => round($score), 'max' => 200];
+        $result = ['stars' => $stars, 'score' => round($score), 'max' => 200];
+        if (function_exists('cache')) {
+            cache()->save($cacheKey, $result, 300);
+        }
+
+        return $result;
+    }
+}
+
+if (!function_exists('clearResortRatingCache')) {
+    function clearResortRatingCache(int $userId): void
+    {
+        if (function_exists('cache')) {
+            cache()->delete("user_resort_rating_{$userId}");
+        }
     }
 }

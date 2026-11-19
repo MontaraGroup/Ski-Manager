@@ -31,7 +31,7 @@ export default function AdminSeasonVotePage({ flagLevel, closesAt, closesLabel, 
             <p className="text-sm">{status}</p>
             <p className="text-sm text-muted">
               Flag <code>season_mode_vote</code>: {LEVELS[flagLevel] ?? flagLevel}.{' '}
-              <a href="/admin/features" className="font-medium text-accent-soft-foreground underline">Change it on Feature flags</a>
+              <a href="/admin/features" className="inline-flex min-h-11 items-center sm:min-h-0 font-medium text-accent-soft-foreground underline">Change it on Feature flags</a>
             </p>
             <form action="/admin/season-vote/settings" method="post" className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <CsrfInput />

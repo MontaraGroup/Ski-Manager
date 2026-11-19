@@ -21,17 +21,6 @@ function isMaintenanceMode(): bool
     // 2. Database seasons maintenance flag
     try {
         $db = db_connect();
-        if (!$db->tableExists('seasons')) {
-            $isMaint = false;
-            return false;
-        }
-
-        $fields = $db->getFieldNames('seasons');
-        if (!in_array('maintenance', $fields, true)) {
-            $isMaint = false;
-            return false;
-        }
-
         $row = $db->table('seasons')
             ->where('maintenance', 1)
             ->orderBy('season_number', 'DESC')
@@ -83,29 +72,23 @@ function getMaintenanceInfo(): array
     }
 
     try {
-        $db = db_connect();
-        if ($db->tableExists('seasons')) {
-            $fields = $db->getFieldNames('seasons');
-            if (in_array('maintenance', $fields, true)) {
-                $row = $db->table('seasons')
-                    ->where('maintenance', 1)
-                    ->orderBy('season_number', 'DESC')
-                    ->get()
-                    ->getRowArray();
-                if ($row) {
-                    $default['enabled'] = true;
-                    if (!empty($row['maintenance_until'])) {
-                        $default['until'] = $row['maintenance_until'] . ' UTC';
-                        $rem = strtotime($row['maintenance_until']) - time();
-                        $default['remaining_seconds'] = max(0, $rem);
-                        if ($rem <= 0) {
-                            $default['enabled'] = false;
-                        }
-                    }
-                    if (!empty($row['maintenance_message'])) {
-                        $default['message'] = $row['maintenance_message'];
-                    }
+        $row = db_connect()->table('seasons')
+            ->where('maintenance', 1)
+            ->orderBy('season_number', 'DESC')
+            ->get()
+            ->getRowArray();
+        if ($row) {
+            $default['enabled'] = true;
+            if (!empty($row['maintenance_until'])) {
+                $default['until'] = $row['maintenance_until'] . ' UTC';
+                $rem = strtotime($row['maintenance_until']) - time();
+                $default['remaining_seconds'] = max(0, $rem);
+                if ($rem <= 0) {
+                    $default['enabled'] = false;
                 }
+            }
+            if (!empty($row['maintenance_message'])) {
+                $default['message'] = $row['maintenance_message'];
             }
         }
     } catch (\Throwable $e) {
@@ -127,8 +110,6 @@ function checkAutoSeasonRollover(): void
         }
 
         $db = db_connect();
-        if (!$db->tableExists('seasons')) return;
-
         $curr = $db->table('seasons')->where('active', 1)->orderBy('season_number', 'DESC')->get()->getRowArray();
         if (!$curr) return;
 

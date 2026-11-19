@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\BuildingModel;
 
 class Buildings extends BaseController
@@ -39,7 +40,18 @@ class Buildings extends BaseController
         return $defs;
     }
 
-    public function show(string $type): string
+    public function show(string $type = 'hotel'): ResponseInterface|string
+    {
+        $page = $this->pageData($type);
+
+        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+        return view('buildings/' . $type, ['page' => $page]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(string $type = 'hotel'): array
     {
         $defs = $this->getBuildingDefs();
         if (!isset($defs[$type])) {
@@ -107,9 +119,12 @@ class Buildings extends BaseController
         $typeData = [];
         if ($type === 'hotel') {
             $receptionists = $db->table('staff')->where('user_id', $userId)->where('role', 'receptionist')->where('status', 'active')->countAllResults();
-            $visitors = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-            $dailyVisitors = (int) ($visitors['daily_visitors'] ?? 0);
-            $occupiedBeds = min($totalCapacity, round($dailyVisitors * 0.3));
+            $financeRow = $db->table('player_finances')->select('daily_visitors, last_tick')->where('user_id', $userId)->get()->getRowArray();
+            $dailyVisitors = (int) ($financeRow['daily_visitors'] ?? 0);
+            $lastTick = json_decode((string) ($financeRow['last_tick'] ?? ''), true) ?: [];
+            $occupiedBeds = isset($lastTick['occupancy']['hotel'])
+                ? (int) round($totalCapacity * (float) $lastTick['occupancy']['hotel'])
+                : min($totalCapacity, (int) round($dailyVisitors * \App\Libraries\Economy::BUILDING_SHARE['hotel']));
             $occupancyRate = $totalCapacity > 0 ? (int) round($occupiedBeds / $totalCapacity * 100) : 0;
             $starRating = count($buildings) > 0 ? min(5, round(array_sum(array_column($buildings, 'level')) / count($buildings) + ($receptionists > 0 ? 1 : 0), 1)) : 0;
             $hotelTiers = [
@@ -130,7 +145,12 @@ class Buildings extends BaseController
                 2 => ['name' => 'Standard', 'avg_price' => 45, 'avgPriceText' => currency(45), 'items' => [['icon' => 'fa-person-skiing', 'name' => 'All-Mountain Skis'], ['icon' => 'fa-person-snowboarding', 'name' => 'Snowboards'], ['icon' => 'fa-helmet-safety', 'name' => 'Helmets'], ['icon' => 'fa-glasses', 'name' => 'Goggles']]],
                 3 => ['name' => 'Premium', 'avg_price' => 85, 'avgPriceText' => currency(85), 'items' => [['icon' => 'fa-person-skiing', 'name' => 'Race Skis'], ['icon' => 'fa-person-snowboarding', 'name' => 'Pro Boards'], ['icon' => 'fa-helmet-safety', 'name' => 'MIPS Helmets'], ['icon' => 'fa-vest', 'name' => 'Impact Vests'], ['icon' => 'fa-wand-magic-sparkles', 'name' => 'Custom Fitting']]],
             ];
-            $totalSetsInUse = min($totalCapacity, round($totalCapacity * 0.7));
+            $financeRow = $db->table('player_finances')->select('daily_visitors, last_tick')->where('user_id', $userId)->get()->getRowArray();
+            $dailyVisitors = (int) ($financeRow['daily_visitors'] ?? 0);
+            $lastTick = json_decode((string) ($financeRow['last_tick'] ?? ''), true) ?: [];
+            $totalSetsInUse = isset($lastTick['occupancy']['rental'])
+                ? (int) round($totalCapacity * (float) $lastTick['occupancy']['rental'])
+                : min($totalCapacity, (int) round($dailyVisitors * \App\Libraries\Economy::BUILDING_SHARE['rental']));
             $utilization = $totalCapacity > 0 ? (int) round($totalSetsInUse / $totalCapacity * 100) : 0;
             $typeData = [
                 'totalSetsInUse' => (int) $totalSetsInUse,
@@ -228,7 +248,25 @@ class Buildings extends BaseController
         $rawIcon = $def['icon'] ?? 'fa-building';
         $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
 
-        $page = [
+        $supportedTypes = ['hotel', 'restaurant', 'rental', 'retail', 'ski_patrol', 'transportation'];
+        $typesList = [];
+        foreach ($supportedTypes as $st) {
+            if (isset($defs[$st])) {
+                $rawTypeIcon = $defs[$st]['icon'] ?? 'fa-building';
+                $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawTypeIcon);
+                $typesList[] = [
+                    'key' => $st,
+                    'label' => (string) $defs[$st]['label'],
+                    'singular' => (string) $defs[$st]['singular'],
+                    'icon' => $cleanIcon,
+                ];
+            }
+        }
+
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+
+        return [
             'type' => $type,
             'def' => [
                 'label' => (string) $def['label'],
@@ -244,16 +282,14 @@ class Buildings extends BaseController
                 'netProfitText' => currency((int) ($totalRevenue - $totalUpkeep)),
                 'openCount' => count($openBuildings),
                 'totalCount' => count($buildings),
+                'cash' => $cash,
+                'cashText' => currency($cash),
             ],
             'buildings' => $formattedBuildings,
             'catalog' => $catalog,
             'domain' => $typeData,
+            'types' => $typesList,
         ];
-
-        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
-        }
-        return view('buildings/' . $type, ['page' => $page]);
     }
 
     public function build()
@@ -300,6 +336,7 @@ class Buildings extends BaseController
             'upkeep_per_day' => $lvl['upkeep'], 'condition_pct' => 100, 'status' => 'open',
         ]);
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Constructed ' . $lvl['name'] . ' for ' . currency($cost), 'fa-solid fa-hotel');
         return redirect()->to('/' . $def['route'])->with('success', $lvl['name'] . ' built!');
@@ -367,6 +404,7 @@ class Buildings extends BaseController
             'name' => $next['name'] . ' #' . substr($building['name'], -2),
         ]);
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Upgraded ' . $building['name'] . ' to Lv.' . $nextLevel . ' for ' . currency($cost), 'fa-solid fa-arrow-up');
         return redirect()->to('/' . $defs[$type]['route'])->with('success', 'Upgraded to ' . $next['name'] . '!');
@@ -401,6 +439,7 @@ class Buildings extends BaseController
             ]);
         }
         $db->transComplete();
+        clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Demolished ' . $building['name'] . ' for ' . currency($refund) . ' salvage', 'fa-solid fa-money-bill-wave');
         return redirect()->to('/' . $route)->with('success', $building['name'] . ' demolished. ' . currency($refund) . ' refunded (25% salvage).');

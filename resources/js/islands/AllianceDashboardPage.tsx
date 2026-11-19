@@ -411,7 +411,8 @@ export default function AllianceDashboardPage({
                         <div className="flex items-center justify-end gap-1">
                           {user.isFounder && (
                             <PostButton
-                              action={`/alliances/transfer-founder/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'transfer_founder' }}
                               size="sm"
                               variant="ghost"
                               confirm={{
@@ -425,7 +426,8 @@ export default function AllianceDashboardPage({
                           )}
                           {m.role === 'officer' ? (
                             <PostButton
-                              action={`/alliances/demote/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'demote' }}
                               size="sm"
                               variant="ghost"
                             >
@@ -433,7 +435,8 @@ export default function AllianceDashboardPage({
                             </PostButton>
                           ) : (
                             <PostButton
-                              action={`/alliances/promote/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'promote' }}
                               size="sm"
                               variant="ghost"
                             >
@@ -441,7 +444,8 @@ export default function AllianceDashboardPage({
                             </PostButton>
                           )}
                           <PostButton
-                            action={`/alliances/kick/${m.membership_id}`}
+                            action="/alliances/manage-member"
+                            data={{ target_user_id: m.user_id, action: 'kick' }}
                             size="sm"
                             variant="ghost"
                             className="text-danger"
@@ -502,24 +506,28 @@ export default function AllianceDashboardPage({
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {quickAmounts.map((q) => (
-                  <button
+                  <Button
                     key={q}
                     type="button"
-                    onClick={() => setDonateAmount(q)}
-                    disabled={user.cash < q}
-                    className="rounded border border-border px-2 py-1 font-mono text-[11px] hover:bg-default disabled:opacity-40"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => setDonateAmount(q)}
+                    isDisabled={user.cash < q}
+                    className="font-mono text-[11px] px-2 py-1 min-h-7"
                   >
                     +{q.toLocaleString()} €
-                  </button>
+                  </Button>
                 ))}
-                <button
+                <Button
                   type="button"
-                  onClick={() => setDonateAmount(user.cash)}
-                  disabled={user.cash <= 0}
-                  className="rounded border border-border px-2 py-1 font-mono text-[11px] font-semibold text-accent hover:bg-default disabled:opacity-40"
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => setDonateAmount(user.cash)}
+                  isDisabled={user.cash <= 0}
+                  className="font-mono text-[11px] font-semibold text-accent px-2 py-1 min-h-7"
                 >
                   Max
-                </button>
+                </Button>
               </div>
             </div>
             <Button

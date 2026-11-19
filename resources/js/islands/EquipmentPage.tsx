@@ -11,7 +11,7 @@ export type EquipmentItem = {
   capacity: number;
   condition_pct: number;
   status: string;
-  state: 'running' | 'no_operator' | 'idle' | 'off' | 'broken';
+  state: 'running' | 'no_operator' | 'idle' | 'standby' | 'off' | 'broken';
   stateLabel: string;
   stateTone: 'success' | 'warning' | 'danger' | 'neutral';
   crew: string | null;
@@ -176,7 +176,7 @@ export default function EquipmentPage({
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground">Your groomers</h2>
-            <a href="/grooming" className="text-sm font-medium text-link hover:underline">
+            <a href="/grooming" className="inline-flex min-h-11 items-center text-sm font-medium text-link hover:underline sm:min-h-0">
               Grooming →
             </a>
           </div>

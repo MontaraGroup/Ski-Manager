@@ -4,6 +4,12 @@ class Emergency extends BaseController
 {
     public function index(): string
     {
+        return view('emergency/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -33,7 +39,7 @@ class Emergency extends BaseController
                 'category' => $cat,
                 'message' => $inc['message'] ?? '',
                 'created_at' => $inc['created_at'] ?? '',
-                'timeAgo' => !empty($inc['created_at']) ? time_ago($inc['created_at']) : 'recently',
+                'timeAgo' => !empty($inc['created_at']) ? timeAgo((string) $inc['created_at']) : 'recently',
             ];
         }, $incidents);
 
@@ -64,6 +70,6 @@ class Emergency extends BaseController
             'incidents' => $formattedIncidents,
         ];
 
-        return view('emergency/index', ['page' => $page]);
+        return $page;
     }
 }

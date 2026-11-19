@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Chip, Meter } from '@heroui/react';
+import { Button, Chip, Meter } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Empty, Page, Panel, PostButton } from '@/components/Page';
 
@@ -77,10 +77,11 @@ export default function CompliancePage({
       {/* 3 Interactive summary cards acting as tab selectors */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {/* Insurance tab button */}
-        <button
+        <Button
           type="button"
-          onClick={() => setActiveTab('insurance')}
-          className={`flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
+          variant="ghost"
+          onPress={() => setActiveTab('insurance')}
+          className={`h-auto flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
             activeTab === 'insurance'
               ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary'
               : 'border-border bg-surface hover:bg-surface-secondary/60'
@@ -94,13 +95,14 @@ export default function CompliancePage({
           <div className="text-xs text-success tabular-nums mt-0.5">
             {summary.totalPremiumText}/day
           </div>
-        </button>
+        </Button>
 
         {/* Government tab button */}
-        <button
+        <Button
           type="button"
-          onClick={() => setActiveTab('government')}
-          className={`flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
+          variant="ghost"
+          onPress={() => setActiveTab('government')}
+          className={`h-auto flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
             activeTab === 'government'
               ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary'
               : 'border-border bg-surface hover:bg-surface-secondary/60'
@@ -122,13 +124,14 @@ export default function CompliancePage({
           <div className="text-xs text-muted tabular-nums mt-0.5">
             {summary.compliantCount} / {summary.totalRegCount} compliant
           </div>
-        </button>
+        </Button>
 
         {/* Environment tab button */}
-        <button
+        <Button
           type="button"
-          onClick={() => setActiveTab('environment')}
-          className={`flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
+          variant="ghost"
+          onPress={() => setActiveTab('environment')}
+          className={`h-auto flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all ${
             activeTab === 'environment'
               ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary'
               : 'border-border bg-surface hover:bg-surface-secondary/60'
@@ -148,7 +151,7 @@ export default function CompliancePage({
           </div>
           <div className="text-xs text-muted font-medium">Eco Score</div>
           <div className="text-xs text-muted mt-0.5">Environmental impact</div>
-        </button>
+        </Button>
       </div>
 
       {/* Tab 1: Insurance */}

@@ -10,6 +10,10 @@ export type NavItem = {
   flagOff: boolean;
   external: boolean;
   bonusDue: boolean;
+  /** Not opened yet by this player: shows a "New" mark */
+  isNew?: boolean;
+  /** Visible because the page is in beta */
+  beta: boolean;
 };
 export type NavSection = { name: string; icon: string; items: NavItem[] };
 
@@ -21,11 +25,27 @@ export type Stats = {
   snow: string;
   gameDay: number;
   seasonLength: number;
+  /** Server Unix time in seconds, and the zone the resort clock runs in */
+  now: number;
+  timezone: string;
   genepis: number;
   stars: number;
 };
 
-export type Notice = { id: number; title: string; message: string; icon: string; isRead: boolean };
+/** One notification as NotificationFeed::item() sends it */
+export type Notice = {
+  id: number;
+  title: string;
+  message: string;
+  icon: string;
+  isRead: boolean;
+  time: string;
+  category: string;
+  alert: boolean;
+  link: string | null;
+  linkLabel: string | null;
+  createdAt: string;
+};
 
 export type Flash = { success?: string; info?: string; error?: string; warning?: string; errors?: string[] };
 

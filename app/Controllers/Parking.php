@@ -10,6 +10,12 @@ class Parking extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('parking'); if ($locked) return $locked;
+        return view('parking/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $parkingModel = new ParkingModel();
 
@@ -90,7 +96,7 @@ class Parking extends BaseController
             'catalog' => $formattedConfig,
         ];
 
-        return view('parking/index', ['page' => $page]);
+        return $page;
     }
 
     public function build()

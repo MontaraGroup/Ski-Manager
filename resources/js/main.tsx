@@ -44,6 +44,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   CompliancePage: () => import('./islands/CompliancePage'),
   TournamentsPage: () => import('./islands/TournamentsPage'),
   VotePage: () => import('./islands/VotePage'),
+  ResortVotePage: () => import('./islands/ResortVotePage'),
   ContactPage: () => import('./islands/ContactPage'),
   RoadmapPage: () => import('./islands/RoadmapPage'),
   SupportPage: () => import('./islands/SupportPage'),
@@ -56,10 +57,14 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   ResortAnalysisViewPage: () => import('./islands/ResortAnalysisViewPage'),
   ResortMapPage: () => import('./islands/ResortMapPage'),
   AdminFeaturesPage: () => import('./islands/AdminFeaturesPage'),
+  BetaPage: () => import('./islands/BetaPage'),
+  AndroidTestingPage: () => import('./islands/AndroidTestingPage'),
   AdminSettingsPage: () => import('./islands/AdminSettingsPage'),
   AdminEconomyPage: () => import('./islands/AdminEconomyPage'),
   AdminSeasonsPage: () => import('./islands/AdminSeasonsPage'),
   AdminSeasonVotePage: () => import('./islands/AdminSeasonVotePage'),
+  AdminResortVotePage: () => import('./islands/AdminResortVotePage'),
+  AdminAndroidTestingPage: () => import('./islands/AdminAndroidTestingPage'),
   AdminBroadcastPage: () => import('./islands/AdminBroadcastPage'),
   AdminChangelogsPage: () => import('./islands/AdminChangelogsPage'),
   AdminSuspiciousPage: () => import('./islands/AdminSuspiciousPage'),
@@ -69,7 +74,9 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AdminErrorsPage: () => import('./islands/AdminErrorsPage'),
   AdminUserPage: () => import('./islands/AdminUserPage'),
   AdminIndexPage: () => import('./islands/AdminIndexPage'),
+  AdminNav: () => import('./islands/AdminNav'),
   AdminSupportInboxPage: () => import('./islands/AdminSupportInboxPage'),
+  AdminFeedbackPage: () => import('./islands/AdminFeedbackPage'),
   AdminSupportChatPage: () => import('./islands/AdminSupportChatPage'),
   SettingsPage: () => import('./islands/SettingsPage'),
   GenepisPage: () => import('./islands/GenepisPage'),
@@ -140,7 +147,17 @@ function mount(el: HTMLElement) {
     <StrictMode>
       <UNSAFE_PortalProvider getContainer={overlayLayer}>
         <IslandErrorBoundary name={name}>
-          <Suspense fallback={<Spinner aria-label="Loading" />}>
+          <Suspense
+            fallback={
+              name.endsWith('Page') ? (
+                <div className="flex min-h-[60vh] items-center justify-center">
+                  <Spinner aria-label="Loading" />
+                </div>
+              ) : (
+                <Spinner aria-label="Loading" />
+              )
+            }
+          >
             <Island {...readProps(el)} />
           </Suspense>
         </IslandErrorBoundary>

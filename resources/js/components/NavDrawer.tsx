@@ -46,8 +46,10 @@ export default function NavDrawer({ isOpen, onOpenChange, nav, path, isAdmin, pl
                         >
                           <Icon name={item.icon} className="text-accent" />
                           <span className="truncate">{item.label}</span>
+                          {item.beta && <BetaChip />}
                           {item.locked && <Icon name="fa-lock" className="ml-auto text-muted" />}
                           {item.bonusDue && <span className="ml-auto rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>}
+                          {item.isNew && <span className="ml-auto rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">New</span>}
                         </a>
                       </li>
                     ))}
@@ -73,4 +75,9 @@ function itemClass(active: boolean, muted: boolean): string {
     active ? 'border-accent bg-accent-soft font-semibold text-accent-soft-foreground' : 'border-border hover:bg-default',
     muted ? 'text-muted' : '',
   ].join(' ');
+}
+
+/** Marks a nav item the player sees because it's in beta */
+function BetaChip() {
+  return <span className="shrink-0 rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>;
 }

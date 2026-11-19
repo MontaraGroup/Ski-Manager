@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
@@ -13,14 +12,14 @@ ext.signingValue = { String name -> System.getenv(name) ?: localProperties.getPr
 
 android {
     namespace 'net.skimanager.app'
-    compileSdk 35
+    compileSdk 37
 
     defaultConfig {
         applicationId "net.skimanager.app"
         minSdk 26
-        targetSdk 35
-        versionCode 1
-        versionName "1.0.0"
+        targetSdk 36
+        versionCode VERSION_CODE as Integer
+        versionName VERSION_NAME
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -42,9 +41,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // -PdebugBaseUrl=http://10.0.2.2:8899 points an emulator at a server on this computer
+            buildConfigField "String", "BASE_URL", "\"${findProperty('debugBaseUrl') ?: 'https://staging.ski-manager.net'}\""
+        }
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
+            // -PreleaseBaseUrl lets a test build run the shrunk code against staging
+            buildConfigField "String", "BASE_URL", "\"${findProperty('releaseBaseUrl') ?: 'https://ski-manager.net'}\""
+            // Without a keystore (a local check build) the release is left unsigned instead of failing
+            if (signingValue("SKI_KEYSTORE_PATH")) signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -54,12 +61,10 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     packaging {
@@ -70,20 +75,27 @@ android {
 }
 
 dependencies {
-    implementation platform('androidx.compose:compose-bom:2024.09.02')
+    implementation platform('androidx.compose:compose-bom:2025.10.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-graphics'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3'
+    // Expressive isn't in a stable release yet, so this overrides the BOM's 1.4.0
+    implementation 'androidx.compose.material3:material3:1.5.0-rc01'
     implementation 'androidx.compose.material:material-icons-extended'
 
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
-    implementation 'androidx.activity:activity-compose:1.9.2'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6'
+    implementation 'androidx.core:core-ktx:1.17.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.4'
+    implementation 'androidx.activity:activity-compose:1.11.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4'
+    implementation 'androidx.navigation:navigation-compose:2.9.5'
 
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.13.2'
+
+    // Google Play Games: sign-in, achievements and the leaderboard (games/PlayGames.kt)
+    implementation 'com.google.android.gms:play-services-games-v2:22.1.0'
+
+    testImplementation 'junit:junit:4.13.2'
 
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'

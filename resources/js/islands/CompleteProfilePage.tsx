@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@heroui/react/button';
+import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 
 interface DifficultyOption {
@@ -59,10 +60,7 @@ export default function CompleteProfilePage({
         {/* Left Side: Visual Alpine Panel */}
         <div className="relative isolate overflow-hidden bg-[#141b24] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between min-h-[16rem] lg:min-h-[38rem]">
           <div
-            className="absolute inset-0 -z-20 bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-700"
-            style={{
-              backgroundImage: 'url(/img/ParkCity_med.jpg), url(/img/ParkCity_low.jpg)',
-            }}
+            className="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-700"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-t lg:bg-gradient-to-r from-[#0a0e14]/95 via-[#0a0e14]/75 to-[#0a0e14]/40" />
 
@@ -218,16 +216,14 @@ export default function CompleteProfilePage({
 
               {/* Terms Checkbox */}
               <div className="pt-2">
-                <label className="cursor-pointer flex items-start gap-2.5 text-xs text-muted">
-                  <input
-                    type="checkbox"
-                    name="terms"
-                    value="1"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    required
-                    className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4"
-                  />
+                <Checkbox
+                  name="terms"
+                  value="1"
+                  isSelected={termsAccepted}
+                  onChange={setTermsAccepted}
+                  isRequired
+                  className="text-xs text-muted"
+                >
                   <span>
                     I agree to the{' '}
                     <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
@@ -238,7 +234,7 @@ export default function CompleteProfilePage({
                       Privacy Policy
                     </a>.
                   </span>
-                </label>
+                </Checkbox>
               </div>
 
               <Button

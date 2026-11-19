@@ -138,7 +138,7 @@ class DiscordAuth extends BaseController
         $db->table('daily_bonus')->insert(['user_id' => $user->id, 'last_claim_day' => 0, 'streak' => 0]);
 
         log_activity($user->id, 'register', 'Joined Ski Manager via Discord');
-        notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by hiring staff and building your first slope.', 'fa-solid fa-mountain-sun', '/dashboard');
+        notify($user->id, 'welcome', 'Welcome to Ski Manager!', 'Start by building a slope and a lift on the Trail Map. The tutorial walks you through it.', 'fa-solid fa-mountain-sun', '/dashboard');
 
         auth()->login($user);
         return redirect()->to('/complete-profile');

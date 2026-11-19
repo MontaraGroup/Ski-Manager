@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\RoadmapRewards;
 use CodeIgniter\Database\BaseConnection;
 
 class Roadmap extends BaseController
@@ -241,201 +242,279 @@ class Roadmap extends BaseController
                 $db->table('roadmap_items')->insertBatch($defaultItems);
             }
 
-            // Sync denormalized upvotes with actual count from roadmap_votes table so no fake or drifting counts exist
-            $db->query("
-                UPDATE roadmap_items i 
-                SET upvotes = (
-                    SELECT COUNT(*) 
-                    FROM roadmap_votes v 
-                    WHERE v.item_id = i.id
-                )
-            ");
+            // Sync denormalized upvotes with actual count from roadmap_votes table so no fake or drifting counts exist.
+            // A main idea counts each player once across itself and the ideas merged into it; merged ideas count 0.
+            if ($db->fieldExists('merged_into', 'roadmap_items')) {
+                $db->query("
+                    UPDATE roadmap_items i
+                    LEFT JOIN (
+                        SELECT COALESCE(g.merged_into, g.id) AS root_id, COUNT(DISTINCT v.voter_hash) AS n
+                        FROM roadmap_votes v
+                        JOIN roadmap_items g ON g.id = v.item_id
+                        GROUP BY root_id
+                    ) c ON c.root_id = i.id
+                    SET i.upvotes = COALESCE(c.n, 0)
+                ");
+            } else {
+                $db->query("
+                    UPDATE roadmap_items i
+                    SET upvotes = (
+                        SELECT COUNT(*)
+                        FROM roadmap_votes v
+                        WHERE v.item_id = i.id
+                    )
+                ");
+            }
         } catch (\Throwable $e) {
             log_message('error', 'Roadmap ensureSchema error: ' . $e->getMessage());
         }
     }
 
-    private function getVoterHash(): string
-    {
-        if (function_exists('auth') && auth()->loggedIn()) {
-            return 'u_' . auth()->id();
-        }
+    /** Where players join the in-game beta program, linked from "In beta" items */
+    public const BETA_URL = '/beta';
 
-        $ip = $this->request->getIPAddress() ?? '127.0.0.1';
-        $ua = $this->request->getUserAgent() ? $this->request->getUserAgent()->getAgentString() : 'guest';
-        return hash('sha256', 'guest_' . $ip . '|' . $ua);
+    public const COMMENT_MAX = 500;
+    public const COMMENTS_PER_DAY = 10;
+    public const COMMENT_EDIT_MINUTES = 15;
+
+    /** Statuses in page order, with how the page describes them */
+    private const STATUSES = [
+        'in_beta'     => ['In beta', 'Playable now in the beta program, before it ships to everyone.', 'fa-flask'],
+        'in_progress' => ['In progress', 'Being designed, built or tested now.', 'fa-code'],
+        'planned'     => ['Planned', 'Accepted and queued for a coming update.', 'fa-compass'],
+        'suggested'   => ['Ideas', 'Suggested by players. The most-voted ones get reviewed first.', 'fa-lightbulb'],
+        'completed'   => ['Shipped', 'Live in the game.', 'fa-circle-check'],
+    ];
+
+    /** Signed-in player who may vote and suggest (profile finished); null otherwise */
+    private function playerId(): ?int
+    {
+        if (!function_exists('auth') || !auth()->loggedIn()) return null;
+        $userId = (int) auth()->id();
+        $finance = $this->db->table('player_finances')->select('profile_completed')->where('user_id', $userId)->get()->getRowArray();
+        return !empty($finance['profile_completed']) ? $userId : null;
+    }
+
+    /** Ideas merged into this one */
+    private static function mergedIdeas(int $mainId): array
+    {
+        $db = db_connect();
+        if (!$db->fieldExists('merged_into', 'roadmap_items')) return [];
+        return $db->table('roadmap_items')->where('merged_into', $mainId)->get()->getResultArray();
+    }
+
+    /** The main idea's id followed by the ids of the ideas merged into it */
+    private static function groupIds(int $mainId): array
+    {
+        return array_merge([$mainId], array_map(fn($m) => (int) $m['id'], self::mergedIdeas($mainId)));
+    }
+
+    /**
+     * Store the real count from roadmap_votes, so the number can't drift. A player who voted on
+     * several ideas of a group counts once. Returns the new count.
+     */
+    private static function recount(int $mainId): int
+    {
+        $db = db_connect();
+        $row = $db->table('roadmap_votes')->select('COUNT(DISTINCT voter_hash) AS n')
+            ->whereIn('item_id', self::groupIds($mainId))->get()->getRowArray();
+        $upvotes = (int) ($row['n'] ?? 0);
+        $db->table('roadmap_items')->where('id', $mainId)->update(['upvotes' => $upvotes]);
+        return $upvotes;
+    }
+
+    /** The name shown on a card: the author's current username, or who added it */
+    private static function authorLabel(array $item, array $usernames): string
+    {
+        $id = (int) ($item['author_id'] ?? 0);
+        if ($id > 0 && isset($usernames[$id])) return $usernames[$id];
+        return ($item['author_name'] ?? '') === 'Ski Manager Team' ? 'Ski Manager team' : 'Community';
     }
 
     public function index(): string
     {
+        return view('roadmap/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         self::ensureSchema();
+        helper('notify');
 
-        $voterHash = $this->getVoterHash();
-        $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
+        $userId = $this->playerId();
+        $loggedIn = function_exists('auth') && auth()->loggedIn();
 
-        $items = $this->db->table('roadmap_items')
-            ->orderBy('upvotes', 'DESC')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
+        $all = $this->db->table('roadmap_items')->orderBy('upvotes', 'DESC')->orderBy('id', 'ASC')->get()->getResultArray();
 
-        // Get all items this voter has upvoted
-        $votedItemIds = [];
-        $voteBuilder = $this->db->table('roadmap_votes');
-        if ($userId !== null) {
-            $voteBuilder->groupStart()
-                ->where('user_id', $userId)
-                ->orWhere('voter_hash', $voterHash)
-            ->groupEnd();
-        } else {
-            $voteBuilder->where('voter_hash', $voterHash);
-        }
-        $votes = $voteBuilder->get()->getResultArray();
-        foreach ($votes as $v) {
-            $votedItemIds[(int)$v['item_id']] = true;
+        // Ideas merged into another one are shown inside the main idea's card, not as cards of their own
+        $items = [];
+        $mergedInto = [];
+        foreach ($all as $row) {
+            if (!empty($row['merged_into'])) $mergedInto[(int) $row['merged_into']][] = $row;
+            else $items[] = $row;
         }
 
-        // Categorize by status
-        $columns = [
-            'planned' => [
-                'title'       => 'Planned',
-                'description' => 'Confirmed features queued for upcoming seasons.',
-                'color'       => 'secondary',
-                'badge_color' => 'badge-secondary',
-                'icon'        => 'fa-solid fa-compass',
-                'items'       => [],
-            ],
-            'in_progress' => [
-                'title'       => 'In Progress',
-                'description' => 'Actively under design, testing, or development.',
-                'color'       => 'primary',
-                'badge_color' => 'badge-primary',
-                'icon'        => 'fa-solid fa-code',
-                'items'       => [],
-            ],
-            'completed' => [
-                'title'       => 'Completed / Shipped',
-                'description' => 'Live in the game and available to all managers.',
-                'color'       => 'success',
-                'badge_color' => 'badge-success',
-                'icon'        => 'fa-solid fa-circle-check',
-                'items'       => [],
-            ],
-        ];
+        $voted = [];
+        if ($loggedIn) {
+            $rows = $this->db->table('roadmap_votes')->select('item_id')->where('user_id', (int) auth()->id())->get()->getResultArray();
+            $voted = array_fill_keys(array_map('intval', array_column($rows, 'item_id')), true);
+        }
 
+        $authorIds = array_values(array_unique(array_filter(array_map(fn($i) => (int) ($i['author_id'] ?? 0), $all))));
+        $usernames = $authorIds
+            ? array_column($this->db->table('users')->select('id, username')->whereIn('id', $authorIds)->get()->getResultArray(), 'username', 'id')
+            : [];
+        $me = $loggedIn ? (int) auth()->id() : 0;
+
+        // Comment counts per idea; a main idea's count includes the ideas merged into it
+        $commentCounts = [];
+        if ($this->db->tableExists('roadmap_comments')) {
+            foreach ($this->db->table('roadmap_comments')->select('item_id, COUNT(*) AS n')->groupBy('item_id')->get()->getResultArray() as $row) {
+                $commentCounts[(int) $row['item_id']] = (int) $row['n'];
+            }
+        }
+
+        $columns = [];
+        foreach (self::STATUSES as $key => [$title, $desc, $icon]) {
+            $columns[$key] = ['status' => $key, 'title' => $title, 'description' => $desc, 'icon' => $icon, 'items' => []];
+            // Items in beta can be tried now: the column links to the in-game beta program
+            if ($key === 'in_beta') $columns[$key]['link'] = ['url' => self::BETA_URL, 'label' => 'Try it in the beta program'];
+        }
         foreach ($items as $item) {
-            $status = $item['status'];
-            if (!isset($columns[$status])) {
-                $status = 'planned';
+            $status = isset($columns[$item['status']]) ? $item['status'] : 'planned';
+            $id = (int) $item['id'];
+            $group = $mergedInto[$id] ?? [];
+            $merged = [];
+            $mine = $loggedIn && (int) ($item['author_id'] ?? 0) === $me;
+            $hasVoted = isset($voted[$id]);
+            $comments = $commentCounts[$id] ?? 0;
+            foreach ($group as $m) {
+                $mMine = $loggedIn && (int) ($m['author_id'] ?? 0) === $me;
+                $merged[] = [
+                    'id'          => (int) $m['id'],
+                    'title'       => (string) $m['title'],
+                    'description' => (string) ($m['description'] ?? ''),
+                    'author'      => self::authorLabel($m, $usernames),
+                    'mine'        => $mMine,
+                ];
+                $mine = $mine || $mMine;
+                $hasVoted = $hasVoted || isset($voted[(int) $m['id']]);
+                $comments += $commentCounts[(int) $m['id']] ?? 0;
             }
-            $item['voted'] = isset($votedItemIds[(int)$item['id']]);
-            $columns[$status]['items'][] = $item;
+            $columns[$status]['items'][] = [
+                'id'          => $id,
+                'title'       => (string) $item['title'],
+                'description' => (string) ($item['description'] ?? ''),
+                'status'      => $status,
+                'category'    => (string) ($item['category'] ?? 'gameplay'),
+                'upvotes'     => (int) ($item['upvotes'] ?? 0),
+                'author'      => self::authorLabel($item, $usernames),
+                // The player wrote this idea or one merged into it
+                'mine'        => $mine,
+                // A vote on any idea in the group counts as a vote for the main idea
+                'voted'       => $hasVoted,
+                'updatesUrl'  => !empty($item['updates_url']) ? (string) $item['updates_url'] : null,
+                'created_at'  => (string) ($item['created_at'] ?? ''),
+                'merged'      => $merged,
+                'comments'    => $comments,
+            ];
         }
 
-        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+        // Visiting the page clears the "New" mark in the menu
+        if ($loggedIn && empty(auth()->user()->roadmap_seen_at) && $this->db->fieldExists('roadmap_seen_at', 'users')) {
+            $this->db->table('users')->where('id', (int) auth()->id())->update(['roadmap_seen_at' => date('Y-m-d H:i:s')]);
+        }
 
-        $formattedColumns = [];
-        foreach ($columns as $statusKey => $col) {
-            $rawIcon = $col['icon'] ?? 'fa-compass';
-            $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
-            $formattedItems = [];
-            foreach ($col['items'] as $item) {
-                $formattedItems[] = [
-                    'id' => (int) $item['id'],
-                    'title' => (string) $item['title'],
-                    'description' => (string) ($item['description'] ?? ''),
-                    'status' => (string) $item['status'],
-                    'category' => (string) ($item['category'] ?? 'gameplay'),
-                    'upvotes' => (int) ($item['upvotes'] ?? 0),
-                    'author_name' => (string) ($item['author_name'] ?? 'Ski Manager Team'),
-                    'author_id' => isset($item['author_id']) ? (int) $item['author_id'] : null,
-                    'voted' => (bool) ($item['voted'] ?? false),
-                    'created_at' => (string) ($item['created_at'] ?? ''),
-                ];
+        $eligible = $userId !== null && RoadmapRewards::eligible($userId);
+        $releases = [];
+        if (self::checkAdmin() && $this->db->tableExists('updates')) {
+            foreach ($this->db->table('updates')->select('id, version, title')->orderBy('released_at', 'DESC')->limit(30)->get()->getResultArray() as $u) {
+                $releases[] = ['url' => '/updates#update-' . (int) $u['id'], 'label' => 'v' . $u['version'] . ' ' . ($u['title'] ?? '')];
             }
-            $formattedColumns[] = [
-                'status' => $statusKey,
-                'title' => (string) $col['title'],
-                'description' => (string) $col['description'],
-                'icon' => $icon,
-                'items' => $formattedItems,
-            ];
         }
 
         $page = [
             'isAdmin' => self::checkAdmin(),
             'stats' => [
                 'totalItems' => count($items),
-                'totalVotes' => $totalVotes,
+                'totalVotes' => (int) $this->db->table('roadmap_votes')->countAllResults(),
             ],
-            'columns' => $formattedColumns,
+            'columns' => array_values($columns),
+            'me' => [
+                'signedIn'         => $loggedIn,
+                'canVote'          => $userId !== null,
+                'canSuggest'       => $userId !== null && !\App\Controllers\Demo::isDemoUser(),
+                'canComment'       => $userId !== null && !\App\Controllers\Demo::isDemoUser(),
+                'isAdmin'          => self::checkAdmin(),
+                'earnsRewards'     => $eligible,
+                'weeklyRewardDone' => $eligible && RoadmapRewards::weeklyRewardTaken($userId),
+                'suggestionsLeft'  => $userId !== null ? RoadmapRewards::suggestionsLeft($userId) : 0,
+            ],
+            'comments' => [
+                'maxLength'   => self::COMMENT_MAX,
+                'perDay'      => self::COMMENTS_PER_DAY,
+                'editMinutes' => self::COMMENT_EDIT_MINUTES,
+            ],
+            'rewards' => [
+                'voteWeekly'   => RoadmapRewards::VOTE_WEEKLY_GENEPIS,
+                'ideaShipped'  => RoadmapRewards::IDEA_SHIPPED_GENEPIS,
+                'perWeek'      => RoadmapRewards::SUGGESTIONS_PER_WEEK,
+            ],
+            'releases' => $releases,
         ];
 
-        return view('roadmap/index', ['page' => $page]);
+        return $page;
     }
 
     public function vote(int $itemId)
     {
         self::ensureSchema();
+        helper('notify');
+
+        $userId = $this->playerId();
+        if ($userId === null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Sign in and finish setting up your resort to vote.'])->setStatusCode(401);
+        }
 
         $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
+        // A vote on a merged idea goes to the idea it was merged into
+        if ($item && !empty($item['merged_into'])) {
+            $item = $this->db->table('roadmap_items')->where('id', (int) $item['merged_into'])->get()->getRowArray();
+        }
         if (!$item) {
             return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
         }
-
-        $voterHash = $this->getVoterHash();
-        $userId = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
-
-        // Check if vote already exists for this voter
-        $voteBuilder = $this->db->table('roadmap_votes')->where('item_id', $itemId);
-        if ($userId !== null) {
-            $voteBuilder->groupStart()
-                ->where('user_id', $userId)
-                ->orWhere('voter_hash', $voterHash)
-            ->groupEnd();
-        } else {
-            $voteBuilder->where('voter_hash', $voterHash);
+        if ($item['status'] === 'completed') {
+            return $this->response->setJSON(['success' => false, 'message' => 'This idea has already shipped.'])->setStatusCode(400);
         }
-        $existingVote = $voteBuilder->get()->getRowArray();
+        $itemId = (int) $item['id'];
 
-        if ($existingVote) {
-            // Remove vote (toggle off)
-            $this->db->table('roadmap_votes')
-                ->where('id', (int) $existingVote['id'])
-                ->delete();
-
+        // A player has one vote per group: a vote on the main idea or any idea merged into it
+        $existing = $this->db->table('roadmap_votes')->select('id')
+            ->whereIn('item_id', self::groupIds($itemId))->where('user_id', $userId)->get()->getResultArray();
+        $reward = 0;
+        if ($existing) {
+            $this->db->table('roadmap_votes')->whereIn('id', array_map('intval', array_column($existing, 'id')))->delete();
             $voted = false;
         } else {
-            // Add vote
             $this->db->table('roadmap_votes')->insert([
-                'item_id'    => $itemId,
-                'user_id'    => $userId,
-                'voter_hash' => $voterHash,
-                'created_at' => date('Y-m-d H:i:s'),
+                'item_id' => $itemId, 'user_id' => $userId, 'voter_hash' => 'u_' . $userId, 'created_at' => date('Y-m-d H:i:s'),
             ]);
-
             $voted = true;
+            $reward = RoadmapRewards::onVote($userId, $itemId);
         }
 
-        // Calculate REAL upvote count from roadmap_votes table (zero fake numbers)
-        $newUpvotes = $this->db->table('roadmap_votes')
-            ->where('item_id', $itemId)
-            ->countAllResults();
-
-        $this->db->table('roadmap_items')
-            ->where('id', $itemId)
-            ->update([
-                'upvotes'    => $newUpvotes,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-        $totalVotes = (int) $this->db->table('roadmap_votes')->countAllResults();
+        $upvotes = self::recount($itemId);
 
         return $this->response->setJSON([
             'success'    => true,
+            'id'         => $itemId,
             'voted'      => $voted,
-            'upvotes'    => $newUpvotes,
-            'totalVotes' => $totalVotes,
+            'upvotes'    => $upvotes,
+            'totalVotes' => (int) $this->db->table('roadmap_votes')->countAllResults(),
+            'reward'     => $reward,
+            'message'    => $reward > 0 ? "Thanks for voting. You earned {$reward} Génépis this week." : null,
         ]);
     }
 
@@ -443,72 +522,51 @@ class Roadmap extends BaseController
     {
         self::ensureSchema();
 
+        $userId = $this->playerId();
+        if ($userId === null || \App\Controllers\Demo::isDemoUser()) {
+            return redirect()->to('/roadmap')->with('error', 'Sign in with a full account to suggest an idea.');
+        }
+
         $title = trim($this->request->getPost('title') ?? '');
         $description = trim($this->request->getPost('description') ?? '');
         $category = trim($this->request->getPost('category') ?? 'gameplay');
-
-        $allowedCategories = ['gameplay', 'quality_of_life', 'economy', 'mobile'];
-        if (!in_array($category, $allowedCategories, true)) {
+        if (!in_array($category, ['gameplay', 'quality_of_life', 'economy', 'mobile'], true)) {
             $category = 'gameplay';
         }
 
         if (mb_strlen($title) < 5 || mb_strlen($title) > 100) {
-            return redirect()->back()->with('error', 'Please provide a feature title between 5 and 100 characters.');
+            return redirect()->to('/roadmap')->with('error', 'The title needs 5 to 100 characters.');
         }
-
         if (mb_strlen($description) < 10 || mb_strlen($description) > 1000) {
-            return redirect()->back()->with('error', 'Please provide a feature description between 10 and 1000 characters.');
+            return redirect()->to('/roadmap')->with('error', 'The description needs 10 to 1000 characters.');
         }
-
-        $authorName = 'Community Player';
-        $authorId = null;
-        if (function_exists('auth') && auth()->loggedIn()) {
-            $user = auth()->user();
-            $authorName = $user ? ($user->username ?? 'Player') : 'Player';
-            $authorId = (int) auth()->id();
-        }
-
-        $voterHash = $this->getVoterHash();
-
-        // Anti-spam check: prevent multiple submissions within 60 seconds
-        $recentTime = date('Y-m-d H:i:s', time() - 60);
-        $recentQuery = $this->db->table('roadmap_items')->where('created_at >', $recentTime);
-        if ($authorId !== null) {
-            $recentQuery->where('author_id', $authorId);
-        } else {
-            $recentQuery->where('author_name', $authorName);
-        }
-        if ($recentQuery->countAllResults() > 0) {
-            return redirect()->to('/roadmap')->with('error', 'Please wait a moment before submitting another feature idea.');
+        if (RoadmapRewards::suggestionsLeft($userId) <= 0) {
+            return redirect()->to('/roadmap')->with('error', 'You can suggest ' . RoadmapRewards::SUGGESTIONS_PER_WEEK . ' ideas a week. Try again in a few days.');
         }
 
         $now = date('Y-m-d H:i:s');
         $this->db->transStart();
-
         $this->db->table('roadmap_items')->insert([
             'title'       => $title,
             'description' => $description,
-            'status'      => 'planned',
+            'status'      => 'suggested',
             'category'    => $category,
             'upvotes'     => 1,
-            'author_name' => $authorName,
-            'author_id'   => $authorId,
+            'author_name' => (string) (auth()->user()->username ?? 'Player'),
+            'author_id'   => $userId,
             'created_at'  => $now,
             'updated_at'  => $now,
         ]);
-
-        $itemId = $this->db->insertID();
-
+        $itemId = (int) $this->db->insertID();
         $this->db->table('roadmap_votes')->insert([
-            'item_id'    => $itemId,
-            'user_id'    => $authorId,
-            'voter_hash' => $voterHash,
-            'created_at' => $now,
+            'item_id' => $itemId, 'user_id' => $userId, 'voter_hash' => 'u_' . $userId, 'created_at' => $now,
         ]);
-
         $this->db->transComplete();
 
-        return redirect()->to('/roadmap')->with('success', 'Thank you! Your feature idea has been submitted and added to the community roadmap.');
+        // The author's own vote counts toward voting achievements but earns no Génépis
+        RoadmapRewards::onVote($userId, $itemId, false);
+
+        return redirect()->to('/roadmap#item-' . $itemId)->with('success', 'Your idea is in the Ideas list. If it ships, you earn ' . RoadmapRewards::IDEA_SHIPPED_GENEPIS . ' Génépis.');
     }
 
     public function updateStatus()
@@ -516,22 +574,300 @@ class Roadmap extends BaseController
         if (!self::checkAdmin()) {
             return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized'])->setStatusCode(403);
         }
+        helper('notify');
 
         $itemId = (int) $this->request->getPost('id');
         $status = trim($this->request->getPost('status') ?? '');
-
-        $allowed = ['planned', 'in_progress', 'completed'];
-        if (!in_array($status, $allowed, true)) {
+        if (!isset(self::STATUSES[$status])) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid status'])->setStatusCode(400);
         }
+        $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        if (!empty($item['merged_into'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'This idea is merged. Change the main idea instead.'])->setStatusCode(400);
+        }
 
-        $this->db->table('roadmap_items')
-            ->where('id', $itemId)
-            ->update([
-                'status'     => $status,
-                'updated_at' => date('Y-m-d H:i:s'),
+        $update = ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')];
+        $updatesUrl = trim((string) $this->request->getPost('updates_url'));
+        if ($updatesUrl !== '') {
+            if (!preg_match('~^/updates#update-\d+$~', $updatesUrl)) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Invalid release link'])->setStatusCode(400);
+            }
+            $update['updates_url'] = $updatesUrl;
+        }
+        $this->db->table('roadmap_items')->where('id', $itemId)->update($update);
+
+        // Merged ideas follow the main idea's status, so their authors' achievements count it
+        $merged = self::mergedIdeas($itemId);
+        if ($merged) {
+            $this->db->table('roadmap_items')->where('merged_into', $itemId)->update(['status' => $status, 'updated_at' => $update['updated_at']]);
+        }
+
+        $previous = (string) $item['status'];
+        $item = array_merge($item, $update);
+        if ($previous === 'suggested' && in_array($status, ['planned', 'in_progress', 'in_beta', 'completed'], true)) {
+            RoadmapRewards::onAccepted($item);
+            $told = [(int) ($item['author_id'] ?? 0) => true];
+            foreach ($merged as $m) {
+                $authorId = (int) ($m['author_id'] ?? 0);
+                if ($authorId <= 0 || isset($told[$authorId])) continue;
+                $told[$authorId] = true;
+                RoadmapRewards::onAccepted(['id' => $itemId, 'title' => $item['title'], 'author_id' => $authorId]);
+            }
+        }
+        if ($status === 'completed' && $previous !== 'completed') {
+            RoadmapRewards::onShipped($item, $merged);
+        }
+
+        return $this->response->setJSON(['success' => true, 'status' => $status, 'updatesUrl' => $item['updates_url'] ?? null]);
+    }
+
+    /**
+     * Admin: merge an idea into another one about the same thing. The merged idea is shown inside
+     * the main idea's card, its votes count toward the main idea (once per player), it takes the
+     * main idea's status, and its author gets the same credit when the main idea ships. Ideas
+     * already merged into the merged idea move to the main idea, so groups stay one level deep.
+     */
+    public function merge()
+    {
+        if (!self::checkAdmin()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized'])->setStatusCode(403);
+        }
+        helper('notify');
+
+        $id = (int) $this->request->getPost('id');
+        $intoId = (int) $this->request->getPost('into');
+        $idea = $this->db->table('roadmap_items')->where('id', $id)->get()->getRowArray();
+        $main = $this->db->table('roadmap_items')->where('id', $intoId)->get()->getRowArray();
+        if (!$idea || !$main) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        if ($id === $intoId || !empty($idea['merged_into']) || !empty($main['merged_into'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Pick two ideas that are not merged already.'])->setStatusCode(400);
+        }
+
+        $status = (string) $main['status'];
+        $now = date('Y-m-d H:i:s');
+        $moving = array_merge([$idea], self::mergedIdeas($id));
+
+        $this->db->transStart();
+        foreach ($moving as $m) {
+            $this->db->table('roadmap_items')->where('id', (int) $m['id'])->update([
+                'merged_into'     => $intoId,
+                // An idea moving from another group keeps the status it had before its first merge
+                'premerge_status' => $m['premerge_status'] ?? $m['status'],
+                'merged_at'       => $now,
+                'status'          => $status,
+                'updated_at'      => $now,
             ]);
+        }
+        $this->db->transComplete();
+        if (!$this->db->transStatus()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Not merged. Try again.'])->setStatusCode(500);
+        }
 
+        self::recount($intoId);
+
+        $link = !empty($main['updates_url']) ? (string) $main['updates_url'] : '/roadmap#item-' . $intoId;
+        $credited = [(int) ($main['author_id'] ?? 0) => true];
+        foreach ($moving as $m) {
+            RoadmapRewards::onMerged($m, $main);
+            // Merged into an idea that already shipped: its author is credited now, once
+            $authorId = (int) ($m['author_id'] ?? 0);
+            if ($status === 'completed' && $authorId > 0 && !isset($credited[$authorId])) {
+                $credited[$authorId] = true;
+                RoadmapRewards::creditShipped($authorId, (int) $m['id'], (string) $main['title'], $link);
+            }
+        }
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /**
+     * Admin: take a merged idea out of its group again. It gets back the status it had before the
+     * merge and its own votes. Rewards already paid stay paid.
+     */
+    public function unmerge()
+    {
+        if (!self::checkAdmin()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unauthorized'])->setStatusCode(403);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $idea = $this->db->table('roadmap_items')->where('id', $id)->get()->getRowArray();
+        if (!$idea || empty($idea['merged_into'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'This idea is not merged.'])->setStatusCode(400);
+        }
+
+        $this->splitOut($idea);
+        self::recount((int) $idea['merged_into']);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    private function splitOut(array $idea): void
+    {
+        $status = (string) ($idea['premerge_status'] ?? '');
+        $this->db->table('roadmap_items')->where('id', (int) $idea['id'])->update([
+            'merged_into'     => null,
+            'premerge_status' => null,
+            'merged_at'       => null,
+            'status'          => isset(self::STATUSES[$status]) ? $status : (string) $idea['status'],
+            'updated_at'      => date('Y-m-d H:i:s'),
+        ]);
+        self::recount((int) $idea['id']);
+    }
+
+    /** The idea a comment thread belongs to: a merged idea's thread is its main idea's */
+    private function threadRoot(int $itemId): ?array
+    {
+        $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
+        if ($item && !empty($item['merged_into'])) {
+            $item = $this->db->table('roadmap_items')->where('id', (int) $item['merged_into'])->get()->getRowArray();
+        }
+        return $item ?: null;
+    }
+
+    /** Signed-in, finished, non-demo player who may comment; null otherwise */
+    private function commenterId(): ?int
+    {
+        $userId = $this->playerId();
+        return $userId !== null && !\App\Controllers\Demo::isDemoUser() ? $userId : null;
+    }
+
+    private function commentJson(array $c, array $usernames, int $me, bool $admin): array
+    {
+        $mine = $me > 0 && (int) $c['user_id'] === $me;
+        return [
+            'id'      => (int) $c['id'],
+            'author'  => $usernames[(int) $c['user_id']] ?? 'Player',
+            'body'    => (string) $c['body'],
+            'created' => (string) $c['created_at'],
+            'edited'  => !empty($c['updated_at']),
+            'mine'    => $mine,
+            'canEdit' => $mine && strtotime((string) $c['created_at']) > time() - self::COMMENT_EDIT_MINUTES * 60,
+            'canDelete' => $mine || $admin,
+        ];
+    }
+
+    /** GET: the comment thread of an idea (and of the ideas merged into it), oldest first */
+    public function comments(int $itemId)
+    {
+        self::ensureSchema();
+        $item = $this->threadRoot($itemId);
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        $rows = $this->db->table('roadmap_comments')->whereIn('item_id', self::groupIds((int) $item['id']))
+            ->orderBy('created_at', 'ASC')->orderBy('id', 'ASC')->get()->getResultArray();
+        $userIds = array_values(array_unique(array_map(fn($c) => (int) $c['user_id'], $rows)));
+        $usernames = $userIds
+            ? array_column($this->db->table('users')->select('id, username')->whereIn('id', $userIds)->get()->getResultArray(), 'username', 'id')
+            : [];
+        $me = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : 0;
+        $admin = self::checkAdmin();
+
+        return $this->response->setJSON([
+            'success'  => true,
+            'comments' => array_map(fn($c) => $this->commentJson($c, $usernames, $me, $admin), $rows),
+        ]);
+    }
+
+    /** POST body: add a comment to an idea (a merged idea's comment goes to its main idea) */
+    public function addComment(int $itemId)
+    {
+        self::ensureSchema();
+        helper('notify');
+
+        $userId = $this->commenterId();
+        if ($userId === null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Sign in with a full account and finish setting up your resort to comment.'])->setStatusCode(401);
+        }
+        $item = $this->threadRoot($itemId);
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        $body = trim((string) $this->request->getPost('body'));
+        if ($body === '' || mb_strlen($body) > self::COMMENT_MAX) {
+            return $this->response->setJSON(['success' => false, 'message' => 'A comment needs 1 to ' . self::COMMENT_MAX . ' characters.'])->setStatusCode(400);
+        }
+        $today = $this->db->table('roadmap_comments')->where('user_id', $userId)
+            ->where('created_at >', date('Y-m-d H:i:s', time() - 86400))->countAllResults();
+        if ($today >= self::COMMENTS_PER_DAY) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can post ' . self::COMMENTS_PER_DAY . ' comments a day. Try again tomorrow.'])->setStatusCode(429);
+        }
+
+        $mainId = (int) $item['id'];
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('roadmap_comments')->insert(['item_id' => $mainId, 'user_id' => $userId, 'body' => $body, 'created_at' => $now]);
+        $commentId = (int) $this->db->insertID();
+
+        $this->notifyAuthors($item, $userId);
+
+        $username = (string) (auth()->user()->username ?? 'Player');
+        $row = ['id' => $commentId, 'user_id' => $userId, 'body' => $body, 'created_at' => $now, 'updated_at' => null];
+        return $this->response->setJSON([
+            'success'  => true,
+            'comment'  => $this->commentJson($row, [$userId => $username], $userId, self::checkAdmin()),
+            'count'    => $this->db->table('roadmap_comments')->whereIn('item_id', self::groupIds($mainId))->countAllResults(),
+        ]);
+    }
+
+    /**
+     * Tell the idea's author, and the authors of ideas merged into it, about a new comment. At most
+     * one notice per author per idea per hour, and never about their own comment.
+     */
+    private function notifyAuthors(array $item, int $commenterId): void
+    {
+        $mainId = (int) $item['id'];
+        $link = '/roadmap#item-' . $mainId;
+        $authors = [];
+        foreach (array_merge([$item], self::mergedIdeas($mainId)) as $idea) {
+            $authorId = (int) ($idea['author_id'] ?? 0);
+            if ($authorId > 0 && $authorId !== $commenterId) $authors[$authorId] = true;
+        }
+        foreach (array_keys($authors) as $authorId) {
+            $recent = $this->db->table('notifications')->where('user_id', $authorId)->where('type', 'roadmap_comment')
+                ->where('link', $link)->where('created_at >', date('Y-m-d H:i:s', time() - 3600))->countAllResults();
+            if ($recent > 0) continue;
+            notify($authorId, 'roadmap_comment', 'New comment on your idea',
+                'Players are discussing "' . $item['title'] . '".', 'fa-solid fa-comment', $link);
+        }
+    }
+
+    /** POST body: the author edits their comment, within COMMENT_EDIT_MINUTES of posting it */
+    public function editComment(int $commentId)
+    {
+        $userId = $this->commenterId();
+        $comment = $this->db->table('roadmap_comments')->where('id', $commentId)->get()->getRowArray();
+        if (!$comment || $userId === null || (int) $comment['user_id'] !== $userId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can only edit your own comments.'])->setStatusCode(403);
+        }
+        if (strtotime((string) $comment['created_at']) <= time() - self::COMMENT_EDIT_MINUTES * 60) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comments can be edited for ' . self::COMMENT_EDIT_MINUTES . ' minutes after posting.'])->setStatusCode(400);
+        }
+        $body = trim((string) $this->request->getPost('body'));
+        if ($body === '' || mb_strlen($body) > self::COMMENT_MAX) {
+            return $this->response->setJSON(['success' => false, 'message' => 'A comment needs 1 to ' . self::COMMENT_MAX . ' characters.'])->setStatusCode(400);
+        }
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('roadmap_comments')->where('id', $commentId)->update(['body' => $body, 'updated_at' => $now]);
+        $comment = array_merge($comment, ['body' => $body, 'updated_at' => $now]);
+        $username = (string) (auth()->user()->username ?? 'Player');
+        return $this->response->setJSON(['success' => true, 'comment' => $this->commentJson($comment, [$userId => $username], $userId, self::checkAdmin())]);
+    }
+
+    /** POST: the author or an admin deletes a comment */
+    public function deleteComment(int $commentId)
+    {
+        $comment = $this->db->table('roadmap_comments')->where('id', $commentId)->get()->getRowArray();
+        $me = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : 0;
+        if (!$comment || !($me > 0 && ((int) $comment['user_id'] === $me || self::checkAdmin()))) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can only delete your own comments.'])->setStatusCode(403);
+        }
+        $this->db->table('roadmap_comments')->where('id', $commentId)->delete();
         return $this->response->setJSON(['success' => true]);
     }
 
@@ -544,7 +880,11 @@ class Roadmap extends BaseController
             return redirect()->to('/roadmap')->with('error', 'Unauthorized.');
         }
 
+        // Ideas merged into this one come back as separate ideas instead of being deleted with it
+        foreach (self::mergedIdeas($itemId) as $m) $this->splitOut($m);
+
         $this->db->transStart();
+        if ($this->db->tableExists('roadmap_comments')) $this->db->table('roadmap_comments')->where('item_id', $itemId)->delete();
         $this->db->table('roadmap_votes')->where('item_id', $itemId)->delete();
         $this->db->table('roadmap_items')->where('id', $itemId)->delete();
         $this->db->transComplete();

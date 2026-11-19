@@ -14,6 +14,12 @@ class Grooming extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('grooming'); if ($locked) return $locked;
+        return view('grooming/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows; the mobile API sends the same data (Api\V1\App) */
+    public function pageData(): array
+    {
         $userId = auth()->id();
         $state = $this->state($userId);
         $db = db_connect();
@@ -22,15 +28,13 @@ class Grooming extends BaseController
         $weather = getCurrentWeather();
         $weatherRow = ['temp' => $weather['base_temp'] ?? $weather['temp'], 'snowfall' => $weather['snowfall'] ?? 0,
             'snow_base' => $weather['snow_base'] ?? 0, 'condition_name' => $weather['condition_name'] ?? ''];
-        $snowmakers = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray();
-        $covered = \App\Libraries\Snowmaking::coverage(array_filter($state['slopes'], fn($s) => $s['status'] === 'open'), $snowmakers, (int) $weatherRow['temp']);
-        $thinBase = (int) $weatherRow['snow_base'] < \App\Libraries\Weather::THIN_BASE;
 
         $slopes = [];
         foreach ($state['slopes'] as $s) {
-            $s['snow_covered'] = isset($covered[(int) $s['id']]);
-            $s['thin_base'] = $thinBase && !$s['snow_covered'];
-            $s['decay'] = Rules::decay($s, $weatherRow, $s['snow_covered']);
+            // Made snow (App\Libraries\Snowmaking) adds to the natural base
+            $s['snow_covered'] = (int) ($s['made_snow_cm'] ?? 0) > 0;
+            $s['thin_base'] = \App\Libraries\Snowmaking::base($s, (int) $weatherRow['snow_base']) < \App\Libraries\Weather::THIN_BASE;
+            $s['decay'] = Rules::decay($s, $weatherRow);
             $s['draw_pct'] = (int) round(Economy::conditionFactor((int) $s['condition_pct']) * 100);
             $s['groomed_today'] = (int) $s['groomed_day'] === $state['gameDay'];
             $s['extra_cost'] = Rules::extraRunCost($s);
@@ -178,7 +182,14 @@ class Grooming extends BaseController
             ],
         ];
 
-        return view('grooming/index', ['page' => $page]);
+        $fin = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        $cash = (int) ($fin['cash'] ?? 0);
+        $page['cash'] = [
+            'raw' => $cash,
+            'text' => currency($cash),
+        ];
+
+        return $page;
     }
 
     /** Paid daytime run on one slope */

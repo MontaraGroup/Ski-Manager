@@ -54,6 +54,7 @@ class Settings extends BaseController
                 'myComment' => (string) (\App\Libraries\SeasonVote::row((int) $userId)['comment'] ?? ''),
                 'results' => \App\Libraries\SeasonVote::isClosed() ? \App\Libraries\SeasonVote::results() : null,
             ],
+            'beta' => \App\Libraries\Beta::state((int) $userId),
         ];
 
         return $page;

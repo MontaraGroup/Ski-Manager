@@ -13,6 +13,7 @@
   --color-base-content: var(--bc);
   --color-primary: var(--p);
   --color-primary-content: var(--pc);
+  --color-primary-foreground: #ffffff;
   /* Fill behind primary-content text (buttons, active menu items). Darker than --p in the dark
      theme so white text passes 4.5:1, while --p stays light enough for blue text on dark panels */
   --color-primary-fill: var(--pf, var(--p));
@@ -39,7 +40,7 @@
   --b2: oklch(17% 0.015 260);
   --b3: oklch(25% 0.02 260);
   --bc: oklch(85% 0.03 230);
-  --p: oklch(62% 0.18 245);
+  --p: oklch(54% 0.19 250);
   --pf: oklch(52% 0.18 245);
   --pc: oklch(97% 0.01 245);
   --s: oklch(68% 0.17 290);
@@ -128,6 +129,18 @@ body {
 *:focus-visible {
     outline: 2px solid var(--color-primary) !important;
     outline-offset: 2px !important;
+}
+
+/* Ensure text on primary buttons meets WCAG AA 4.5:1 contrast */
+.text-primary-foreground {
+    color: #ffffff !important;
+}
+
+/* Phones: the cookie banner and the tutorial card both sit at the bottom; show the banner first */
+@media (max-width: 767px) {
+    body:has(#cookieConsent[style*="display: block"], #cookieConsent[style*="display:block"]) #tutorialWidgetContainer {
+        visibility: hidden;
+    }
 }
 
 /* Reduced motion */

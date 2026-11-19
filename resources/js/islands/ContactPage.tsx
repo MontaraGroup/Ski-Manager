@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { Select } from '@/components/Select';
 
 export type ContactPageProps = {
   user: {
@@ -87,19 +88,21 @@ export default function ContactPage({
                 <label htmlFor="subject" className="block text-xs font-medium text-foreground mb-1">
                   Topic
                 </label>
-                <select
+                <Select
                   name="subject"
                   id="subject"
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="general">General Question</option>
-                  <option value="bug">Bug Report</option>
-                  <option value="feature">Feature Suggestion</option>
-                  <option value="account">Account Issue</option>
-                  <option value="other">Other</option>
-                </select>
+                  onChange={(val) => setSubject(String(val))}
+                  aria-label="Topic"
+                  options={[
+                    { id: 'general', label: 'General Question' },
+                    { id: 'bug', label: 'Bug Report' },
+                    { id: 'feature', label: 'Feature Suggestion' },
+                    { id: 'account', label: 'Account Issue' },
+                    { id: 'other', label: 'Other' },
+                  ]}
+                  className="w-full"
+                />
               </div>
 
               <div>

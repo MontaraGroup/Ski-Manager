@@ -18,12 +18,12 @@ echo "=========================================================="
 
 # 1. Environment-specific settings
 if [ "${ENV}" = "staging" ]; then
-    HOST_PATH="/opt/1panel/www/sites/skiv2-staging/ci4"
+    HOST_PATH="/srv/ski-manager/sites/skiv2-staging/ci4"
     CONTAINER_PATH="/www/sites/skiv2-staging/ci4"
     BRANCH="staging"
     DOMAIN="https://staging.ski-manager.net"
 elif [ "${ENV}" = "production" ]; then
-    HOST_PATH="/opt/1panel/www/sites/skiv2/ci4"
+    HOST_PATH="/srv/ski-manager/sites/skiv2/ci4"
     CONTAINER_PATH="/www/sites/skiv2/ci4"
     BRANCH="main"
     DOMAIN="https://ski-manager.net"
@@ -39,14 +39,14 @@ fi
 
 echo "Working directory: $(pwd)"
 
-# 2. Locate 1Panel Docker Containers
-PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^PHP$|^1panel-.*php.*' | head -n 1 || true)
+# 2. Locate Docker Containers
+PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-php$|^PHP$|^1panel-.*php.*' | head -n 1 || true)
 if [ -z "${PHP_CONTAINER}" ]; then
-    PHP_CONTAINER=$(docker ps --format '{{.Names}}' | grep -iE 'php' | head -n 1 || echo "PHP")
+    PHP_CONTAINER="ski-php"
 fi
 
-MYSQL_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'mysql' | head -n 1 || echo "1Panel-mysql-Uibp")
-OPENRESTY_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'openresty|nginx' | head -n 1 || echo "1Panel-openresty-Xqgf")
+MYSQL_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-mysql$|mysql' | head -n 1 || echo "ski-mysql")
+OPENRESTY_CONTAINER=$(docker ps --format '{{.Names}}' | grep -E '^ski-proxy$|openresty|nginx' | head -n 1 || echo "ski-proxy")
 
 echo "Detected Containers:"
 echo "  - PHP:       ${PHP_CONTAINER}"
@@ -55,7 +55,7 @@ echo "  - OpenResty: ${OPENRESTY_CONTAINER}"
 
 # 3. Pre-deploy Database Backup (Production only)
 if [ "${ENV}" = "production" ]; then
-    BACKUP_DIR="/opt/1panel/backup/pre_deploy"
+    BACKUP_DIR="/root/db_backups/pre_deploy"
     mkdir -p "${BACKUP_DIR}" 2>/dev/null || BACKUP_DIR="/tmp"
     BACKUP_FILE="${BACKUP_DIR}/backup_pre_deploy_${TIMESTAMP}.sql.gz"
 
@@ -91,25 +91,13 @@ if [ -f "composer.json" ]; then
     fi
 fi
 
-# 6. Project NPM Dependencies & Asset Compilation
-if [ -f "package.json" ]; then
-    echo "Updating project npm dependencies in $(pwd)..."
-    if command -v npm &>/dev/null; then
-        echo "Running 'npm install' on host in $(pwd)..."
-        npm install --no-audit --no-fund || npm update || true
-        echo "Active HeroUI package: $(npm list --depth=0 2>/dev/null | grep heroui || true)"
-        if grep -q '"build":' package.json; then
-            echo "Rebuilding project assets ('npm run build')..."
-            npm run build || true
-        fi
-    elif docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}" && docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
-        echo "Running 'npm install' inside container ${PHP_CONTAINER}..."
-        docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm install --no-audit --no-fund || docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm update || true
-        if grep -q '"build":' package.json; then
-            echo "Building frontend assets inside ${PHP_CONTAINER}..."
-            docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm run build || true
-        fi
-    fi
+# 6. Built Assets
+# public/build and style.css are not in git: the deploy workflow builds them and installs them with
+# scripts/install-assets.sh before this script runs. Without the manifest every React page breaks.
+if [ ! -f "public/build/.vite/manifest.json" ] || [ ! -f "public/css/style.css" ]; then
+    echo "ERROR: public/build/.vite/manifest.json or public/css/style.css is missing." >&2
+    echo "       Upload them with scripts/install-assets.sh (or scripts/push-assets.sh from a checkout)." >&2
+    exit 1
 fi
 
 # 6. Run Database Migrations Inside PHP Container
@@ -134,7 +122,26 @@ fi
 # 8. Reload Bytecode Cache (PHP-FPM) and Reverse Proxy (OpenResty)
 echo "Reloading runtime workers..."
 if docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}"; then
-    docker kill -s USR2 "${PHP_CONTAINER}" 2>/dev/null || docker exec "${PHP_CONTAINER}" kill -USR2 1 2>/dev/null || true
+    # PID 1 in the container is supervisord, which treats USR2 as "reopen logs"; signal php-fpm itself.
+    # OPcache does not check file timestamps, so this graceful reload is what makes new code live.
+    # Without it, the new JS bundles go live against old PHP (e.g. SKI-MANAGER-1M), so a failed reload must fail the deploy.
+    if docker exec "${PHP_CONTAINER}" supervisorctl signal USR2 "php-fpm:*" >/dev/null 2>&1; then
+        echo "PHP-FPM reloaded via supervisorctl."
+    elif docker exec "${PHP_CONTAINER}" sh -c 'kill -USR2 "$(cat /var/run/php-fpm.pid 2>/dev/null || pgrep -o php-fpm)"' 2>/dev/null; then
+        echo "PHP-FPM reloaded via direct USR2 to the master process."
+    else
+        echo "ERROR: Could not reload PHP-FPM in ${PHP_CONTAINER}; new PHP code is NOT live (OPcache ignores file timestamps)." >&2
+        echo "       Restart the container (docker restart ${PHP_CONTAINER}) and re-run this deploy." >&2
+        exit 1
+    fi
+
+    # Confirm php-fpm came back up after the graceful reload before smoke-testing.
+    sleep 1
+    if docker exec "${PHP_CONTAINER}" sh -c 'command -v supervisorctl >/dev/null 2>&1' \
+        && ! docker exec "${PHP_CONTAINER}" supervisorctl status "php-fpm:*" 2>/dev/null | grep -q RUNNING; then
+        echo "ERROR: php-fpm is not RUNNING in ${PHP_CONTAINER} after reload." >&2
+        exit 1
+    fi
 fi
 
 if docker ps --format '{{.Names}}' | grep -q "${OPENRESTY_CONTAINER}"; then

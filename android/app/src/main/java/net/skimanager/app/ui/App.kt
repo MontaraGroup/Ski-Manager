@@ -1,0 +1,308 @@
+package net.skimanager.app.ui
+
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.LocalActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import net.skimanager.app.games.PlayGamesState
+import net.skimanager.app.ui.auth.AuthFlow
+import net.skimanager.app.ui.auth.ChooseStart
+import net.skimanager.app.ui.game.DashboardScreen
+import net.skimanager.app.ui.game.FinancesScreen
+import net.skimanager.app.ui.game.HireScreen
+import net.skimanager.app.ui.game.MapScreen
+import net.skimanager.app.ui.game.StaffScreen
+import net.skimanager.app.ui.game.TicketsScreen
+import net.skimanager.app.ui.game.BuildingsScreen
+import net.skimanager.app.ui.game.BankScreen
+import net.skimanager.app.ui.game.EquipmentScreen
+import net.skimanager.app.ui.game.GroomingScreen
+import net.skimanager.app.ui.game.SnowmakingScreen
+import net.skimanager.app.ui.game.LeaderboardScreen
+import net.skimanager.app.ui.game.NotificationsScreen
+import net.skimanager.app.ui.game.SettingsScreen
+import net.skimanager.app.ui.game.WeatherScreen
+import net.skimanager.app.ui.game.AchievementsScreen
+import net.skimanager.app.ui.game.ActivityScreen
+import net.skimanager.app.ui.game.AllianceDirectoryScreen
+import net.skimanager.app.ui.game.AllianceLeaderboardScreen
+import net.skimanager.app.ui.game.AllianceViewScreen
+import net.skimanager.app.ui.game.AlliancesScreen
+import net.skimanager.app.ui.game.BetaScreen
+import net.skimanager.app.ui.game.ComplianceScreen
+import net.skimanager.app.ui.game.DailyBonusScreen
+import net.skimanager.app.ui.game.EmergencyScreen
+import net.skimanager.app.ui.game.EnvironmentScreen
+import net.skimanager.app.ui.game.GenepisScreen
+import net.skimanager.app.ui.game.GovernmentScreen
+import net.skimanager.app.ui.game.InsuranceScreen
+import net.skimanager.app.ui.game.LocalOpen
+import net.skimanager.app.ui.game.MarketingScreen
+import net.skimanager.app.ui.game.MenuScreen
+import net.skimanager.app.ui.game.MoraleScreen
+import net.skimanager.app.ui.game.NightSkiingScreen
+import net.skimanager.app.ui.game.OffSeasonScreen
+import net.skimanager.app.ui.game.ParkingScreen
+import net.skimanager.app.ui.game.RealEstateScreen
+import net.skimanager.app.ui.game.ReportScreen
+import net.skimanager.app.ui.game.ResortAnalysisScreen
+import net.skimanager.app.ui.game.ResortScreen
+import net.skimanager.app.ui.game.RoadmapScreen
+import net.skimanager.app.ui.game.ScenicLiftsScreen
+import net.skimanager.app.ui.game.SkiLessonsScreen
+import net.skimanager.app.ui.game.SupportScreen
+import net.skimanager.app.ui.game.TerrainParksScreen
+import net.skimanager.app.ui.game.TournamentsScreen
+import net.skimanager.app.ui.game.UpdatesScreen
+import net.skimanager.app.ui.game.UtilityScreen
+import net.skimanager.app.ui.game.VipGuestsScreen
+import net.skimanager.app.ui.game.VoteScreen
+import net.skimanager.app.feedback.AppLog
+import net.skimanager.app.feedback.Diagnostics
+import net.skimanager.app.feedback.FeedbackScreen
+import net.skimanager.app.feedback.ShakeEffect
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import java.io.File
+
+private data class Tab(val route: String, val label: String, val icon: ImageVector)
+
+private val TABS = listOf(
+    Tab("dashboard", "Dashboard", Icons.Filled.Landscape),
+    Tab("map", "Map", Icons.Filled.Map),
+    Tab("staff", "Staff", Icons.Filled.Groups),
+    Tab("finances", "Finances", Icons.Filled.AccountBalance),
+    Tab("more", "More", Icons.Filled.Menu),
+)
+
+private val TITLES = mapOf(
+    "dashboard" to "Dashboard", "map" to "Trail map", "staff" to "Staff", "hire" to "Hire staff", "tickets" to "Lift tickets", "finances" to "Finances", "more" to "More", "buildings" to "Buildings", "bank" to "Bank", "equipment" to "Equipment", "grooming" to "Grooming", "snowmaking" to "Snowmaking", "weather" to "Weather",
+    "notifications" to "Notifications", "leaderboard" to "Leaderboard", "settings" to "Settings",
+    "buildings/{type}" to "Buildings", "resort" to "Resort", "night-skiing" to "Night skiing", "scenic-lifts" to "Scenic lifts",
+    "terrain-parks" to "Terrain parks", "parking" to "Parking", "resort-analysis" to "Resort analysis",
+    "resort-analysis/view/{id}" to "Analysis report", "energy" to "Energy", "water" to "Water", "real-estate" to "Real estate",
+    "off-season" to "Off-season", "marketing" to "Marketing", "ski-lessons" to "Ski school", "compliance" to "Compliance",
+    "alliances" to "Alliances", "alliances/directory" to "Find an alliance", "alliances/leaderboard" to "Alliance rankings",
+    "alliances/view/{id}" to "Alliance", "emergency" to "Emergency", "tournaments" to "Events", "vip-guests" to "VIP guests",
+    "achievements" to "Achievements", "daily-bonus" to "Daily bonus", "genepis" to "Génépis", "activity" to "Activity log",
+    "vote" to "Resort vote", "roadmap" to "Roadmap", "support" to "Support", "insurance" to "Insurance",
+    "government" to "Government", "environment" to "Environment", "morale" to "Staff morale", "updates" to "Updates",
+    "beta" to "Beta program", "feedback" to "Send feedback",
+)
+
+/** The save file the offline version of the app left behind */
+private const val OLD_SAVE = "ski_manager_resort_v4.json"
+
+@Composable
+fun App() {
+    val context = LocalContext.current
+    val app = remember { AppState(context.applicationContext) }
+    val oldSave = remember { File(context.filesDir, OLD_SAVE) }
+    var showUpdateNote by remember { mutableStateOf(oldSave.exists()) }
+
+    // Play Games signs in on its own at launch; once the game account is ready, mirror achievements and the score
+    val activity = LocalActivity.current
+    LaunchedEffect(app.signedIn, app.needsStart) {
+        if (activity != null && app.signedIn && !app.needsStart) {
+            PlayGamesState.refresh(activity)
+            PlayGamesState.sync(activity, app.api)
+        }
+    }
+
+    when {
+        !app.signedIn -> Screen { AuthFlow(app) }
+        app.needsStart -> Screen { ChooseStart(app) }
+        else -> GameShell(app)
+    }
+
+    if (showUpdateNote) {
+        AlertDialog(
+            onDismissRequest = {},
+            shape = MaterialTheme.shapes.extraLarge,
+            title = { Text("Welcome to Ski Manager", fontWeight = FontWeight.Bold) },
+            text = { Text("This version plays on your ski-manager.net account. Progress from the old offline game isn't carried over.") },
+            confirmButton = {
+                TextButton({
+                    oldSave.delete()
+                    showUpdateNote = false
+                }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Continue", fontWeight = FontWeight.Bold) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun Screen(content: @Composable () -> Unit) {
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+        androidx.compose.foundation.layout.Box(Modifier.padding(padding)) { content() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GameShell(app: AppState) {
+    val nav = rememberNavController()
+    val entry by nav.currentBackStackEntryAsState()
+    val route = entry?.destination?.route ?: "dashboard"
+    val isTab = TABS.any { it.route == route }
+    // The tab a screen belongs to: Hire is opened from Staff, every other screen from More
+    val ownerTab = when {
+        isTab -> route
+        route == "hire" -> "staff"
+        else -> "more"
+    }
+    val activity = LocalContext.current.findActivity()
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(route) { AppLog.screen(route) }
+    // Shake: capture the screen the player is on, then open feedback over it
+    ShakeEffect(enabled = app.shakeToFeedback && route != "feedback") {
+        scope.launch {
+            app.feedbackCapture = activity?.let { Diagnostics.capture(it, route, fromShake = true) }
+            nav.navigate("feedback") { launchSingleTop = true }
+        }
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = { Text(TITLES[route].orEmpty(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    if (!isTab) IconButton({ nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            )
+        },
+        bottomBar = {
+            ShortNavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                TABS.forEach { tab ->
+                    ShortNavigationBarItem(
+                        selected = ownerTab == tab.route,
+                        onClick = {
+                            if (ownerTab == tab.route) {
+                                // Tapping the current tab goes back to its first screen
+                                nav.popBackStack(tab.route, inclusive = false)
+                            } else {
+                                nav.navigate(tab.route) {
+                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = { Icon(tab.icon, null) },
+                        label = { Text(tab.label) },
+                    )
+                }
+            }
+        },
+    ) { padding ->
+        CompositionLocalProvider(LocalOpen provides { route -> nav.navigate(route) }) {
+        NavHost(nav, "dashboard", Modifier.padding(padding)) {
+            composable("dashboard") { DashboardScreen(app) }
+            composable("map") { MapScreen(app) }
+            composable("staff") { StaffScreen(app) { nav.navigate("hire") } }
+            composable("hire") { HireScreen(app) }
+            composable("tickets") { TicketsScreen(app) }
+            composable("finances") { FinancesScreen(app) }
+            composable("more") { MenuScreen(app) { nav.navigate(it) } }
+            composable("buildings") { BuildingsScreen(app) }
+            composable("buildings/{type}") { BuildingsScreen(app, it.arguments?.getString("type") ?: "hotel") }
+            composable("bank") { BankScreen(app) }
+            composable("equipment") { EquipmentScreen(app) }
+            composable("grooming") { GroomingScreen(app) }
+            composable("snowmaking") { SnowmakingScreen(app) }
+            composable("weather") { WeatherScreen(app) }
+            composable("notifications") { NotificationsScreen(app) }
+            composable("leaderboard") { LeaderboardScreen(app) }
+            composable("settings") { SettingsScreen(app) }
+            composable("resort") { ResortScreen(app) }
+            composable("night-skiing") { NightSkiingScreen(app) }
+            composable("scenic-lifts") { ScenicLiftsScreen(app) }
+            composable("terrain-parks") { TerrainParksScreen(app) }
+            composable("parking") { ParkingScreen(app) }
+            composable("energy") { UtilityScreen(app, "energy") }
+            composable("water") { UtilityScreen(app, "water") }
+            composable("resort-analysis") { ResortAnalysisScreen(app) }
+            composable("resort-analysis/view/{id}") { ReportScreen(app, it.arguments?.getString("id").orEmpty()) }
+            composable("real-estate") { RealEstateScreen(app) }
+            composable("off-season") { OffSeasonScreen(app) }
+            composable("marketing") { MarketingScreen(app) }
+            composable("ski-lessons") { SkiLessonsScreen(app) }
+            composable("compliance") { ComplianceScreen(app) }
+            composable("insurance") { InsuranceScreen(app) }
+            composable("government") { GovernmentScreen(app) }
+            composable("environment") { EnvironmentScreen(app) }
+            composable("morale") { MoraleScreen(app) }
+            composable("alliances") { AlliancesScreen(app) }
+            composable("alliances/directory") { AllianceDirectoryScreen(app) }
+            composable("alliances/leaderboard") { AllianceLeaderboardScreen(app) }
+            composable("alliances/view/{id}") { AllianceViewScreen(app, it.arguments?.getString("id").orEmpty()) }
+            composable("tournaments") { TournamentsScreen(app) }
+            composable("vote") { VoteScreen(app) }
+            composable("roadmap") { RoadmapScreen(app) }
+            composable("support") { SupportScreen(app) }
+            composable("updates") { UpdatesScreen(app) }
+            composable("beta") { BetaScreen(app) }
+            composable("emergency") { EmergencyScreen(app) }
+            composable("vip-guests") { VipGuestsScreen(app) }
+            composable("achievements") { AchievementsScreen(app) }
+            composable("daily-bonus") { DailyBonusScreen(app) }
+            composable("genepis") { GenepisScreen(app) }
+            composable("activity") { ActivityScreen(app) }
+            composable("feedback") {
+                FeedbackScreen(
+                    app,
+                    onOpenSupport = { nav.navigate("support") { popUpTo("feedback") { inclusive = true } } },
+                    onDone = { nav.popBackStack() },
+                )
+            }
+        }
+        }
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}

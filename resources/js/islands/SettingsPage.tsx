@@ -3,7 +3,10 @@ import { Button, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel, PostButton } from '@/components/Page';
 import { SeasonChoiceFields } from '@/components/SeasonChoiceFields';
+import { Select } from '@/components/Select';
 import { ApiError } from '@/lib/api';
+import { BetaMembership } from '@/components/BetaMembership';
+import type { BetaState } from '@/lib/beta';
 import { SEASON_OPTIONS, sendVote, type SeasonChoice, type SeasonVoteResults, type SeasonVoteState } from '@/lib/seasonVote';
 
 export type UserMeta = {
@@ -33,6 +36,7 @@ export type SettingsPageProps = {
   notifCount: number;
   activityCount: number;
   seasonVote?: SeasonVoteState & { closed: boolean; myComment: string; results: SeasonVoteResults | null };
+  beta?: BetaState;
 };
 
 export default function SettingsPage({
@@ -46,7 +50,9 @@ export default function SettingsPage({
   notifCount = 0,
   activityCount = 0,
   seasonVote,
+  beta,
 }: SettingsPageProps) {
+  const [betaState, setBetaState] = useState<BetaState | undefined>(beta);
   const [usernameVal, setUsernameVal] = useState(user?.username ?? '');
   const [emailVal, setEmailVal] = useState(user?.email ?? '');
   const [resortNameVal, setResortNameVal] = useState(resort?.name ?? '');
@@ -214,13 +220,15 @@ export default function SettingsPage({
               <form action="/account/send-code" method="post" className="inline-block">
                 <CsrfInput />
                 <input type="hidden" name="purpose" value="password" />
-                <button
+                <Button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors underline"
+                  variant="ghost"
+                  size="sm"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary underline min-h-11 sm:min-h-8"
                 >
                   <Icon name="fa-envelope" />
                   {codeFor === 'password' ? 'Resend verification code' : 'No password? Email me a code'}
-                </button>
+                </Button>
               </form>
             </div>
           </form>
@@ -264,14 +272,16 @@ export default function SettingsPage({
                   <CsrfInput />
                   <label className="text-xs font-semibold text-muted block">Measurement Units & Currency</label>
                   <div className="flex items-center gap-2">
-                    <select
+                    <Select
                       name="units"
+                      aria-label="Measurement Units & Currency"
                       defaultValue={units}
-                      className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground focus:outline-none"
-                    >
-                      <option value="metric">Metric (Meters, km/h, °C, EUR €)</option>
-                      <option value="imperial">Imperial (Feet, mph, °F, USD $)</option>
-                    </select>
+                      options={[
+                        { id: 'metric', label: 'Metric (Meters, km/h, °C, EUR €)' },
+                        { id: 'imperial', label: 'Imperial (Feet, mph, °F, USD $)' },
+                      ]}
+                      className="w-full"
+                    />
                     <Button type="submit" variant="secondary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                       Save
                     </Button>
@@ -283,15 +293,17 @@ export default function SettingsPage({
                   <CsrfInput />
                   <label className="text-xs font-semibold text-muted block">Simulation Difficulty</label>
                   <div className="flex items-center gap-2">
-                    <select
+                    <Select
                       name="difficulty"
+                      aria-label="Simulation Difficulty"
                       defaultValue={difficulty}
-                      className="w-full min-h-11 sm:min-h-9 rounded-md border border-edge bg-surface-2 px-3 py-1.5 text-base sm:text-xs text-foreground capitalize focus:outline-none"
-                    >
-                      <option value="easy">Easy (Higher income, relaxed costs)</option>
-                      <option value="standard">Standard (Balanced simulation)</option>
-                      <option value="hard">Hard (Strict expenses, challenging weather)</option>
-                    </select>
+                      options={[
+                        { id: 'easy', label: 'Easy (Higher income, relaxed costs)' },
+                        { id: 'standard', label: 'Standard (Balanced simulation)' },
+                        { id: 'hard', label: 'Hard (Strict expenses, challenging weather)' },
+                      ]}
+                      className="w-full capitalize"
+                    />
                     <Button type="submit" variant="secondary" size="sm" className="shrink-0 min-h-11 sm:min-h-8 text-xs font-semibold px-4">
                       Save
                     </Button>
@@ -411,6 +423,19 @@ export default function SettingsPage({
 
         {seasonVote && (seasonVote.open || (seasonVote.closed && seasonVote.results)) && <SeasonVoteSection vote={seasonVote} />}
 
+        {betaState && (
+          <Panel
+            title={
+              <span className="flex items-center gap-2">
+                <Icon name="fa-flask" className="text-primary" />
+                Beta program
+              </span>
+            }
+          >
+            <BetaMembership state={betaState} onChange={setBetaState} />
+          </Panel>
+        )}
+
         {/* Delete Account (Danger Zone) */}
         <Panel
           className="border-danger/30 bg-danger/5"
@@ -486,13 +511,15 @@ export default function SettingsPage({
               <form action="/account/send-code" method="post" className="inline-block">
                 <CsrfInput />
                 <input type="hidden" name="purpose" value="delete" />
-                <button
+                <Button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-danger transition-colors underline"
+                  variant="ghost"
+                  size="sm"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-danger underline min-h-11 sm:min-h-8"
                 >
                   <Icon name="fa-envelope" />
                   {codeFor === 'delete' ? 'Resend deletion code' : 'No password? Email me a code'}
-                </button>
+                </Button>
               </form>
             </div>
           </form>

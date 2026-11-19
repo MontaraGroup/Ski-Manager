@@ -21,6 +21,8 @@ class Dashboard extends BaseController
         'insurance_mini' => ['name' => 'Insurance', 'icon' => 'fa-solid fa-shield-halved', 'default' => false, 'size' => 'small'],
         'loans_mini' => ['name' => 'Loans', 'icon' => 'fa-solid fa-landmark', 'default' => false, 'size' => 'small'],
         'marketing_mini' => ['name' => 'Marketing', 'icon' => 'fa-solid fa-bullhorn', 'default' => false, 'size' => 'small'],
+        // 'announce': also switched on for existing players the first time they see it
+        'roadmap_mini' => ['name' => 'Roadmap', 'icon' => 'fa-solid fa-map-location-dot', 'default' => true, 'size' => 'medium', 'announce' => true],
     ];
 
     public function index()
@@ -54,7 +56,7 @@ class Dashboard extends BaseController
             if (!in_array($key, $existingKeys)) {
                 $maxOrder++;
                 $toInsert[] = [
-                    'user_id' => $userId, 'widget_key' => $key, 'visible' => 0, 'size' => $w['size'], 'sort_order' => $maxOrder,
+                    'user_id' => $userId, 'widget_key' => $key, 'visible' => empty($w['announce']) ? 0 : 1, 'size' => $w['size'], 'sort_order' => $maxOrder,
                 ];
             }
         }
@@ -96,6 +98,9 @@ class Dashboard extends BaseController
         $buildingsAll = $db->table('buildings')->where('user_id', $userId)->get()->getResultArray();
         $buildingCount = count($buildingsAll);
 
+        if (class_exists('\\App\\Libraries\\Achievements')) {
+            \App\Libraries\Achievements::sync($userId, false);
+        }
         $unclaimedAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 1)->where('claimed', 0)->countAllResults();
         $completedAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 1)->countAllResults();
         $inProgressAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 0)->orderBy('progress', 'DESC')->limit(5)->get()->getResultArray();
@@ -128,7 +133,7 @@ class Dashboard extends BaseController
         $genepisBal = (int) ($genepis['balance'] ?? 0);
         $resortOpen = (bool) ($finance['resort_open'] ?? 1);
 
-        $rawAlerts = $this->getAlerts($userId, $finance, $equipment, $staffAll);
+        $rawAlerts = $this->getAlerts($userId, $finance, $equipment, $staffAll, $totalLifts, $totalSlopes);
         $formattedAlerts = array_map(function ($a) {
             $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) ($a['icon'] ?? 'fa-circle-exclamation'));
             $tone = ($a['type'] ?? '') === 'error' ? 'danger' : 'warning';
@@ -258,6 +263,7 @@ class Dashboard extends BaseController
             'hero' => [
                 'resortMapKey'       => preg_replace('/[^A-Za-z0-9]/', '', (string) $resortMapKey) ?: 'ParkCity',
                 'resortMapName'      => (string) $resortMapName,
+                'resortMapWebpLow'   => \App\Controllers\ResortMap::webpSizes('/img/' . (preg_replace('/[^A-Za-z0-9]/', '', (string) $resortMapKey) ?: 'ParkCity') . '.jpg')['low'],
                 'resortOpen'         => $resortOpen,
                 'seasonNum'          => $seasonNum,
                 'gameDay'            => $gameDay,
@@ -385,7 +391,66 @@ class Dashboard extends BaseController
                 'marketing_mini' => [
                     'campaignsCount' => count($marketing),
                 ],
+                'roadmap_mini' => $this->roadmapTop((int) $userId),
             ],
+        ];
+
+        $hasSlope = $totalSlopes > 0;
+        $hasLift = $totalLifts > 0;
+        $hasTickets = $db->table('lift_tickets')->where('user_id', $userId)->countAllResults() > 0;
+        $hasBonus = !$bonusAvailable;
+
+        $checklistSteps = [
+            [
+                'id' => 'slope',
+                'title' => 'Open your first slope',
+                'description' => 'Construct a downhill trail so visiting skiers have a place to ski.',
+                'done' => $hasSlope,
+                'link' => '/map',
+                'cta' => 'Open Trail Map',
+                'icon' => 'fa-person-skiing',
+            ],
+            [
+                'id' => 'lift',
+                'title' => 'Build a connecting lift',
+                'description' => 'Carry skiers from base to summit. Without a lift, only a handful will hike up.',
+                'done' => $hasLift,
+                'link' => '/map',
+                'cta' => 'Build Lift',
+                'icon' => 'fa-cable-car',
+            ],
+            [
+                'id' => 'tickets',
+                'title' => 'Set your ticket prices',
+                'description' => 'Open your ticket office and set day pass prices to start earning revenue.',
+                'done' => $hasTickets,
+                'link' => '/tickets',
+                'cta' => 'Configure Prices',
+                'icon' => 'fa-ticket',
+            ],
+            [
+                'id' => 'bonus',
+                'title' => 'Claim your Day 1 Bonus',
+                'description' => 'Collect your daily grant and begin your login streak for extra funds.',
+                'done' => $hasBonus,
+                'link' => '/daily-bonus',
+                'cta' => 'Claim Bonus',
+                'icon' => 'fa-gift',
+            ],
+        ];
+
+        $completedSteps = count(array_filter($checklistSteps, fn($s) => $s['done']));
+        $totalChecklistSteps = count($checklistSteps);
+        $checklistComplete = $completedSteps === $totalChecklistSteps;
+        $showLaunchChecklist = ($totalSlopes < 2 || $totalLifts < 1) || (!$checklistComplete && $totalSlopes < 3);
+
+        $page['launchChecklist'] = [
+            'show' => $showLaunchChecklist,
+            'completed' => $completedSteps,
+            'total' => $totalChecklistSteps,
+            'isComplete' => $checklistComplete,
+            'progressPct' => (int) round(($completedSteps / $totalChecklistSteps) * 100),
+            'steps' => $checklistSteps,
         ];
 
         $estimate = Demo::estimate((int) $userId);
@@ -622,7 +687,7 @@ class Dashboard extends BaseController
         ];
     }
 
-    private function getAlerts(int $userId, ?array $finance = null, ?array $equipment = null, ?array $staff = null): array
+    private function getAlerts(int $userId, ?array $finance = null, ?array $equipment = null, ?array $staff = null, int $totalLifts = 0, int $totalSlopes = 0): array
     {
         $alerts = [];
         $db = db_connect();
@@ -648,9 +713,29 @@ class Dashboard extends BaseController
         }
 
         $noStaff = $staff !== null ? count($staff) === 0 : ($db->table('staff')->where('user_id', $userId)->where('status', 'active')->countAllResults() === 0);
-        if ($noStaff) {
+        // Only alert if the resort has at least one lift or slope to staff; brand new resorts shouldn't hire staff before building
+        if ($noStaff && ($totalLifts > 0 || $totalSlopes > 0)) {
             $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-users', 'msg' => 'No staff hired yet.', 'link' => '/staff/hire'];
         }
         return $alerts;
+    }
+
+    /** The three most-voted ideas still open, and whether this player has voted on each */
+    private function roadmapTop(int $userId): array
+    {
+        $db = db_connect();
+        if (!$db->tableExists('roadmap_items')) return ['items' => []];
+        $query = $db->table('roadmap_items')->select('id, title, status, upvotes')
+            ->whereIn('status', ['suggested', 'planned', 'in_progress', 'in_beta']);
+        // Ideas merged into another one are shown inside it, not on their own
+        if ($db->fieldExists('merged_into', 'roadmap_items')) $query->where('merged_into IS NULL');
+        $items = $query->orderBy('upvotes', 'DESC')->orderBy('id', 'DESC')->limit(3)->get()->getResultArray();
+        $ids = array_map('intval', array_column($items, 'id'));
+        $voted = $ids ? array_map('intval', array_column(
+            $db->table('roadmap_votes')->select('item_id')->where('user_id', $userId)->whereIn('item_id', $ids)->get()->getResultArray(), 'item_id')) : [];
+        return ['items' => array_map(fn($i) => [
+            'id' => (int) $i['id'], 'title' => (string) $i['title'], 'status' => (string) $i['status'],
+            'upvotes' => (int) $i['upvotes'], 'voted' => in_array((int) $i['id'], $voted, true),
+        ], $items)];
     }
 }

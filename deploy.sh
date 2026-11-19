@@ -1,28 +1,6 @@
 #!/usr/bin/env bash
-set -e
-
-APP_DIR="/opt/1panel/www/sites/skiv2/ci4"
-cd "$APP_DIR" || exit 1
-
-echo "📥 Pulling latest code..."
-git pull origin main
-
-echo "🗄️ Running migrations..."
-if docker ps --format '{{.Names}}' | grep -q '^PHP$'; then
-    docker exec PHP php /www/sites/skiv2/ci4/spark migrate
-else
-    php spark migrate
-fi
-
-echo "🧹 Clearing cache..."
-if docker ps --format '{{.Names}}' | grep -q '^PHP$'; then
-    docker exec PHP php /www/sites/skiv2/ci4/spark cache:clear
-else
-    php spark cache:clear
-fi
-
-echo "🔒 Recreating writable folders & permissions..."
-mkdir -p writable/cache writable/session writable/logs writable/uploads writable/debugbar
-chmod -R 777 writable/
-
-echo "✅ Deployment complete!"
+# Legacy entry point. It used to pull and migrate without reloading PHP-FPM, and with OPcache
+# timestamps off that left old PHP serving new JS bundles (SKI-MANAGER-1M). Delegate to the
+# maintained script, which reloads php-fpm and fails the deploy if it can't.
+set -euo pipefail
+exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/deploy.sh" "${1:-production}"

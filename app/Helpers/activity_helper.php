@@ -25,7 +25,9 @@ function log_activity(int $userId, string $category, string $message, string $ic
     ];
 
     // Safely add username only if the structural schema column exists
-    if ($db->fieldExists('username', 'activity_log')) {
+    static $hasUsername = null; // one schema check per request, not per log line
+    $hasUsername ??= $db->fieldExists('username', 'activity_log');
+    if ($hasUsername) {
         $insertData['username'] = $username;
     }
 

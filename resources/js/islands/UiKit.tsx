@@ -1,5 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Alert, Button, Chip, Label, Meter, Spinner, Surface, toast } from '@heroui/react';
+import { Checkbox } from '@/components/Checkbox';
+import { Switch } from '@/components/Switch';
+import { Slider } from '@/components/Slider';
+import { Select } from '@/components/Select';
 import { api, ApiError } from '@/lib/api';
 
 // cashText is formatted by the server's currency(), which follows the player's unit setting
@@ -65,6 +69,11 @@ const SIGNS = [
 ];
 
 export default function UiKit() {
+  const [switchVal, setSwitchVal] = useState(true);
+  const [checkVal, setCheckVal] = useState(false);
+  const [sliderVal, setSliderVal] = useState(45);
+  const [selectVal, setSelectVal] = useState('groomed');
+
   return (
     <div className="flex flex-col gap-8 text-foreground">
       <header>
@@ -93,6 +102,42 @@ export default function UiKit() {
           <Button size="sm">Small</Button>
           <Button size="md">Medium</Button>
           <Button size="lg">Large</Button>
+        </div>
+      </Section>
+
+      <Section title="Form controls" note="Accessible HeroUI switches, checkboxes, sliders, and selects.">
+        <div className="flex flex-col gap-4 sm:max-w-md">
+          <Switch isSelected={switchVal} onChange={setSwitchVal}>
+            Night skiing enabled
+          </Switch>
+          <Checkbox isSelected={checkVal} onChange={setCheckVal}>
+            Send safety patrol on severe weather
+          </Checkbox>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-sm font-medium">Daily ticket base price</Label>
+            <Slider
+              aria-label="Ticket price"
+              value={sliderVal}
+              onChange={(v) => setSliderVal(typeof v === 'number' ? v : v[0])}
+              minValue={10}
+              maxValue={120}
+              step={5}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-sm font-medium">Morning slope status</Label>
+            <Select
+              aria-label="Slope status"
+              value={selectVal}
+              onChange={(val) => setSelectVal(String(val))}
+              options={[
+                { id: 'groomed', label: 'Groomed and open' },
+                { id: 'powder', label: 'Fresh powder' },
+                { id: 'ice', label: 'Icy conditions' },
+                { id: 'closed', label: 'Closed for grooming' },
+              ]}
+            />
+          </div>
         </div>
       </Section>
 

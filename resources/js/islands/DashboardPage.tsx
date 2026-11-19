@@ -135,6 +135,14 @@ export const WIDGET_META: Record<string, WidgetMeta> = {
     description: 'Top priority achievements tracked with active progress meters.',
     defaultSize: 'medium',
   },
+  roadmap_mini: {
+    name: 'Roadmap',
+    category: 'activity',
+    categoryLabel: 'Community',
+    icon: 'fa-map-location-dot',
+    description: 'The most-voted ideas for the game. Vote without leaving the dashboard.',
+    defaultSize: 'medium',
+  },
   activity: {
     name: 'Live Activity Log',
     category: 'activity',
@@ -229,6 +237,8 @@ export const PRESETS: LayoutPreset[] = [
 export type DashboardHero = {
   resortMapKey: string;
   resortMapName: string;
+  /** ResortMap::webpSizes: this map has a _low.webp on the server */
+  resortMapWebpLow?: boolean;
   resortOpen: boolean;
   seasonNum: number;
   gameDay: number;
@@ -396,6 +406,85 @@ export type DashboardData = {
   marketing_mini: {
     campaignsCount: number;
   };
+  roadmap_mini?: {
+    items: RoadmapTopItem[];
+  };
+};
+
+export type RoadmapTopItem = { id: number; title: string; status: string; upvotes: number; voted: boolean };
+
+/** Top roadmap ideas with a vote button; same endpoint and reward as /roadmap */
+function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
+  const [items, setItems] = useState(initial);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+
+  const vote = async (id: number) => {
+    if (busy !== null) return;
+    setBusy(id);
+    try {
+      const { field, token } = csrf();
+      const fd = new FormData();
+      fd.append(field, token);
+      const res = await fetch(`/roadmap/vote/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, voted: Boolean(data.voted), upvotes: data.upvotes } : it)));
+        setNote(data.message ?? null);
+      } else {
+        setNote(data?.message ?? 'Your vote did not go through. Try again.');
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (items.length === 0) {
+    return <p className="text-muted">No open ideas yet. <a href="/roadmap" className="text-accent hover:underline">Suggest one</a>.</p>;
+  }
+  return (
+    <div className="space-y-2">
+      <ul className="space-y-1.5">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={it.voted ? 'primary' : 'outline'}
+              onPress={() => vote(it.id)}
+              isDisabled={busy !== null}
+              aria-pressed={it.voted}
+              aria-label={`${it.voted ? 'Remove your vote for' : 'Vote for'} ${it.title}, ${it.upvotes} votes`}
+              className="min-h-11 min-w-14 shrink-0 tabular-nums"
+            >
+              <Icon name="fa-chevron-up" className="text-[10px]" />
+              {it.upvotes}
+            </Button>
+            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 py-3.5 text-foreground hover:underline sm:py-0">{it.title}</a>
+          </li>
+        ))}
+      </ul>
+      {note && <p role="status" className="text-success">{note}</p>}
+    </div>
+  );
+}
+
+export type LaunchChecklistStep = {
+  id: string;
+  title: string;
+  description: string;
+  done: boolean;
+  link: string;
+  cta: string;
+  icon: string;
+};
+
+export type LaunchChecklist = {
+  show: boolean;
+  completed: number;
+  total: number;
+  isComplete: boolean;
+  progressPct: number;
+  steps: LaunchChecklistStep[];
 };
 
 export type DashboardPageProps = {
@@ -407,6 +496,7 @@ export type DashboardPageProps = {
   availableWidgets: DashboardAvailableWidget[];
   data: DashboardData;
   demoEstimate?: { skiers: string; income: string; costs: string } | null;
+  launchChecklist?: LaunchChecklist | null;
 };
 
 export default function DashboardPage({
@@ -418,6 +508,7 @@ export default function DashboardPage({
   availableWidgets,
   data,
   demoEstimate,
+  launchChecklist,
 }: DashboardPageProps) {
   const [widgets, setWidgets] = useState<DashboardWidgetItem[]>(initialWidgets);
   const [editMode, setEditMode] = useState(false);
@@ -701,12 +792,14 @@ export default function DashboardPage({
       )}
       {/* Mountain Hero Header */}
       <header
-        className="relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"
-        style={{
-          backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(15,23,42,0.85) 100%), url('/img/${hero.resortMapKey}_low.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 40%',
-        }}
+        className="map-hero-bg relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"
+        data-webp={hero.resortMapWebpLow ? '' : undefined}
+        style={
+          {
+            '--hero-jpg': `url('/img/${hero.resortMapKey}_low.jpg')`,
+            '--hero-webp': `url('/img/${hero.resortMapKey}_low.webp')`,
+          } as React.CSSProperties
+        }
       >
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1.5">
@@ -738,7 +831,7 @@ export default function DashboardPage({
             {hero.bonusAvailable && (
               <a
                 href="/daily-bonus"
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-warning/40 bg-warning px-3 text-xs font-bold text-black shadow hover:opacity-90"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-warning/40 bg-warning px-3 text-xs font-bold text-black shadow hover:opacity-90"
               >
                 <Icon name="fa-gift" />
                 Daily Bonus
@@ -746,14 +839,14 @@ export default function DashboardPage({
             )}
             <a
               href="/map"
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-white/20 bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-white/20 bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-90"
             >
               <Icon name="fa-map" />
               Trail Map
             </a>
             <a
               href="/resort"
-              className="inline-flex min-h-[40px] items-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+              className="inline-flex min-h-11 items-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20"
             >
               Resort Settings
             </a>
@@ -761,7 +854,7 @@ export default function DashboardPage({
               variant={editMode ? 'primary' : 'secondary'}
               size="sm"
               onPress={() => setEditMode(!editMode)}
-              className="min-h-[40px] font-bold"
+              className="min-h-11 font-bold"
             >
               <Icon name={editMode ? 'fa-check' : 'fa-sliders'} className="mr-1.5" />
               {editMode ? 'Done Customizing' : 'Customize'}
@@ -790,15 +883,17 @@ export default function DashboardPage({
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-semibold text-muted mr-1 hidden sm:inline">Presets:</span>
               {PRESETS.map((p) => (
-                <button
+                <Button
                   key={p.id}
                   type="button"
-                  onClick={() => handleApplyPreset(p)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:bg-accent/10"
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => handleApplyPreset(p)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium"
                 >
                   <Icon name={p.icon} className="text-accent text-[11px]" />
                   <span>{p.name}</span>
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -843,6 +938,117 @@ export default function DashboardPage({
         </div>
       )}
 
+      {/* Resort Launch Checklist */}
+      {launchChecklist?.show && (
+        <section
+          aria-labelledby="launch-checklist-title"
+          className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent text-xs">
+                  <Icon name="fa-flag-checkered" />
+                </span>
+                <h2 id="launch-checklist-title" className="text-base font-bold text-foreground">
+                  Resort Launch Checklist
+                </h2>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    launchChecklist.isComplete ? 'bg-success/15 text-success' : 'bg-accent/15 text-accent'
+                  }`}
+                >
+                  {launchChecklist.isComplete
+                    ? 'Ready for opening'
+                    : `${launchChecklist.completed} of ${launchChecklist.total} complete`}
+                </span>
+              </div>
+              <p className="text-xs text-muted">
+                {launchChecklist.isComplete
+                  ? 'All starter milestones complete. Your mountain operations are running and visitors arrive tonight at 00:05.'
+                  : 'Complete these essential milestones to open your slopes and welcome your first skiers tonight at 00:05.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-36 sm:w-44 space-y-1">
+                <div className="flex justify-between text-[11px] font-mono text-muted">
+                  <span>Launch readiness</span>
+                  <span className="font-semibold text-foreground">{launchChecklist.progressPct}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-secondary border border-border">
+                  <div
+                    className={`h-full transition-all duration-200 ${
+                      launchChecklist.isComplete ? 'bg-success' : 'bg-accent'
+                    }`}
+                    style={{ width: `${Math.max(5, launchChecklist.progressPct)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            {launchChecklist.steps.map((step, idx) => (
+              <div
+                key={step.id}
+                className={`flex flex-col justify-between rounded-xl border p-3.5 transition-colors ${
+                  step.done
+                    ? 'border-success/30 bg-success/5'
+                    : 'border-border bg-surface-secondary/40 hover:bg-surface-secondary'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm ${
+                        step.done ? 'bg-success/20 text-success' : 'bg-default text-muted'
+                      }`}
+                    >
+                      <Icon name={step.done ? 'fa-check' : step.icon} />
+                    </span>
+                    {step.done ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
+                        <Icon name="fa-circle-check" />
+                        Done
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-muted">Step {idx + 1}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {step.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-2">
+                  {step.done ? (
+                    <a
+                      href={step.link}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-surface px-3 text-xs font-medium text-muted hover:text-foreground transition-colors"
+                    >
+                      View on {step.id === 'bonus' ? 'Town Hall' : (step.id === 'tickets' ? 'Tickets' : 'Trail Map')}
+                    </a>
+                  ) : (
+                    <a
+                      href={step.link}
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-95 transition-opacity"
+                    >
+                      <span>{step.cta}</span>
+                      <Icon name="fa-arrow-right" className="text-[11px]" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Alerts */}
       {(alerts.length > 0 || unclaimedAchievements > 0) && (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -866,7 +1072,7 @@ export default function DashboardPage({
           {unclaimedAchievements > 0 && (
             <a
               href="/achievements"
-              className="flex items-center justify-between rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs font-medium text-warning hover:bg-surface-raised"
+              className="flex min-h-11 items-center justify-between rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs font-medium text-warning hover:bg-surface-raised"
             >
               <div className="flex items-center gap-2">
                 <Icon name="fa-award" />
@@ -1060,125 +1266,137 @@ export default function DashboardPage({
                     <div className="flex items-center gap-1.5">
                       {/* Move Up/Down buttons for accessible mobile reorder */}
                       <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface-raised p-0.5">
-                        <button
+                        <Button
                           type="button"
-                          onClick={() => handleMove(w.widget_key, 'up')}
-                          disabled={idx === 0}
+                          variant="ghost"
+                          size="sm"
+                          isIconOnly
+                          onPress={() => handleMove(w.widget_key, 'up')}
+                          isDisabled={idx === 0}
                           aria-label={`Move ${w.name} up`}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
                         >
                           <Icon name="fa-chevron-up" className="text-[10px]" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          onClick={() => handleMove(w.widget_key, 'down')}
-                          disabled={idx === visibleWidgets.length - 1}
+                          variant="ghost"
+                          size="sm"
+                          isIconOnly
+                          onPress={() => handleMove(w.widget_key, 'down')}
+                          isDisabled={idx === visibleWidgets.length - 1}
                           aria-label={`Move ${w.name} down`}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted hover:bg-surface hover:text-foreground disabled:opacity-20 transition-colors"
+                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
                         >
                           <Icon name="fa-chevron-down" className="text-[10px]" />
-                        </button>
+                        </Button>
                       </div>
 
                       {/* Size buttons */}
                       <div className="inline-flex items-center rounded-lg border border-border bg-surface-raised p-0.5 text-[10px]">
                         {(['small', 'medium', 'large'] as const).map((sz) => (
-                          <button
+                          <Button
                             key={sz}
                             type="button"
-                            onClick={() => handleResize(w.widget_key, sz)}
+                            size="sm"
+                            variant={w.size === sz ? 'primary' : 'ghost'}
+                            onPress={() => handleResize(w.widget_key, sz)}
                             aria-label={`Resize ${w.name} to ${sz}`}
-                            className={`rounded px-1.5 py-0.5 font-bold uppercase transition-all ${
-                              w.size === sz
-                                ? 'bg-accent text-accent-foreground shadow-xs'
-                                : 'text-muted hover:text-foreground'
-                            }`}
+                            className="rounded px-1.5 py-0.5 min-h-6 min-w-6 text-[10px] font-bold uppercase"
                           >
                             {sz[0]}
-                          </button>
+                          </Button>
                         ))}
                       </div>
 
                       {/* Hide button */}
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => handleToggle(w.widget_key, false)}
+                        variant="ghost"
+                        size="sm"
+                        isIconOnly
+                        onPress={() => handleToggle(w.widget_key, false)}
                         aria-label={`Hide ${w.name} widget`}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                        className="size-7 min-h-7 min-w-7 rounded-lg text-muted hover:text-danger"
                       >
                         <Icon name="fa-eye-slash" className="text-xs" />
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div>
                       {w.widget_key === 'stats' && (
-                        <a href="/finances" className="text-xs text-accent hover:underline">
+                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Ledger &rarr;
                         </a>
                       )}
                       {w.widget_key === 'overview' && (
-                        <a href="/map" className="text-xs text-accent hover:underline">
+                        <a href="/map" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Trail Map &rarr;
                         </a>
                       )}
                       {w.widget_key === 'weather_mini' && (
-                        <a href="/weather" className="text-xs text-accent hover:underline">
+                        <a href="/weather" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Forecast &rarr;
                         </a>
                       )}
                       {w.widget_key === 'achievements_mini' && (
-                        <a href="/achievements" className="text-xs text-accent hover:underline">
+                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           All &rarr;
                         </a>
                       )}
                       {w.widget_key === 'achievements' && (
-                        <a href="/achievements" className="text-xs text-accent hover:underline">
+                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           All &rarr;
                         </a>
                       )}
                       {w.widget_key === 'activity' && (
-                        <a href="/activity" className="text-xs text-accent hover:underline">
+                        <a href="/activity" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Full log &rarr;
                         </a>
                       )}
                       {w.widget_key === 'parking_mini' && (
-                        <a href="/parking" className="text-xs text-accent hover:underline">
+                        <a href="/parking" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'terrain_parks_mini' && (
-                        <a href="/terrain-parks" className="text-xs text-accent hover:underline">
+                        <a href="/terrain-parks" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'finances_mini' && (
-                        <a href="/finances" className="text-xs text-accent hover:underline">
+                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Details &rarr;
                         </a>
                       )}
                       {w.widget_key === 'staff_mini' && (
-                        <a href="/staff" className="text-xs text-accent hover:underline">
+                        <a href="/staff" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Manage &rarr;
                         </a>
                       )}
                       {w.widget_key === 'equipment_mini' && (
-                        <a href="/equipment" className="text-xs text-accent hover:underline">
+                        <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Fleet &rarr;
                         </a>
                       )}
                       {w.widget_key === 'insurance_mini' && (
-                        <a href="/insurance" className="text-xs text-accent hover:underline">
+                        <a href="/insurance" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Policies &rarr;
                         </a>
                       )}
                       {w.widget_key === 'loans_mini' && (
-                        <a href="/bank" className="text-xs text-accent hover:underline">
+                        <a href="/bank" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Bank &rarr;
                         </a>
                       )}
                       {w.widget_key === 'marketing_mini' && (
-                        <a href="/marketing" className="text-xs text-accent hover:underline">
+                        <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                           Campaigns &rarr;
+                        </a>
+                      )}
+                      {w.widget_key === 'roadmap_mini' && (
+                        <a href="/roadmap" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
+                          All ideas &rarr;
                         </a>
                       )}
                     </div>
@@ -1364,84 +1582,84 @@ export default function DashboardPage({
                   <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-6">
                     <a
                       href="/map"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-map" className="text-accent" />
                       <span>Trail Map</span>
                     </a>
                     <a
                       href="/resort"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-sliders" className="text-accent" />
                       <span>Resort</span>
                     </a>
                     <a
                       href="/finances"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-coins" className="text-accent" />
                       <span>Finances</span>
                     </a>
                     <a
                       href="/staff"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-users" className="text-accent" />
                       <span>Staff</span>
                     </a>
                     <a
                       href="/grooming"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-tractor" className="text-accent" />
                       <span>Grooming</span>
                     </a>
                     <a
                       href="/snowmaking"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-snowflake" className="text-accent" />
                       <span>Snowmaking</span>
                     </a>
                     <a
                       href="/buildings"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-hotel" className="text-accent" />
                       <span>Buildings</span>
                     </a>
                     <a
                       href="/parking"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-square-parking" className="text-accent" />
                       <span>Parking</span>
                     </a>
                     <a
                       href="/equipment"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-toolbox" className="text-accent" />
                       <span>Equipment</span>
                     </a>
                     <a
                       href="/marketing"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-bullhorn" className="text-accent" />
                       <span>Marketing</span>
                     </a>
                     <a
                       href="/alliances"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-handshake" className="text-accent" />
                       <span>Alliances</span>
                     </a>
                     <a
                       href="/vote"
-                      className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default"
+                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
                     >
                       <Icon name="fa-check-to-slot" className="text-accent" />
                       <span>Vote</span>
@@ -1465,7 +1683,7 @@ export default function DashboardPage({
                         </div>
                         <a
                           href="/achievements"
-                          className="inline-flex min-h-[36px] items-center rounded-lg bg-warning px-3 font-bold text-black hover:opacity-90"
+                          className="inline-flex min-h-11 items-center rounded-lg bg-warning px-3 font-bold text-black hover:opacity-90 sm:min-h-9"
                         >
                           Claim Rewards
                         </a>
@@ -1697,7 +1915,7 @@ export default function DashboardPage({
                         {data.equipment_mini.unitsCount}
                       </div>
                     </div>
-                    <a href="/equipment" className="text-xs text-accent hover:underline">
+                    <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                       View Fleet &rarr;
                     </a>
                   </div>
@@ -1740,6 +1958,8 @@ export default function DashboardPage({
                   </div>
                 )}
 
+                {w.widget_key === 'roadmap_mini' && <RoadmapMini initial={data.roadmap_mini?.items ?? []} />}
+
                 {/* Marketing Mini Widget */}
                 {w.widget_key === 'marketing_mini' && (
                   <div className="flex items-center justify-between">
@@ -1749,7 +1969,7 @@ export default function DashboardPage({
                         {data.marketing_mini.campaignsCount}
                       </div>
                     </div>
-                    <a href="/marketing" className="text-xs text-accent hover:underline">
+                    <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
                       Campaigns &rarr;
                     </a>
                   </div>
@@ -1819,14 +2039,17 @@ export default function DashboardPage({
                     Toggle widgets and configure your command dashboard.
                   </p>
                 </div>
-                <button
+                <Button
                   type="button"
-                  onClick={() => setLibraryOpen(false)}
+                  variant="ghost"
+                  size="sm"
+                  isIconOnly
+                  onPress={() => setLibraryOpen(false)}
                   aria-label="Close widget library"
-                  className="rounded-lg p-2 text-muted hover:bg-surface-raised hover:text-foreground transition-colors"
+                  className="rounded-lg p-2 text-muted hover:text-foreground"
                 >
                   <Icon name="fa-xmark" className="text-base" />
-                </button>
+                </Button>
               </div>
 
               {/* Search & Category Filter */}
@@ -1854,18 +2077,16 @@ export default function DashboardPage({
                       { id: 'activity', label: 'Activity' },
                     ] as const
                   ).map((cat) => (
-                    <button
+                    <Button
                       key={cat.id}
                       type="button"
-                      onClick={() => setLibraryCategory(cat.id)}
-                      className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
-                        libraryCategory === cat.id
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-muted hover:bg-surface-raised hover:text-foreground'
-                      }`}
+                      size="sm"
+                      variant={libraryCategory === cat.id ? 'primary' : 'ghost'}
+                      onPress={() => setLibraryCategory(cat.id)}
+                      className="rounded-lg px-2.5 py-1 text-xs font-semibold"
                     >
                       {cat.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

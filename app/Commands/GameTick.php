@@ -10,7 +10,7 @@ class GameTick extends BaseCommand
 {
     protected $group = 'Game';
     protected $name = 'game:tick';
-    protected $description = 'Process daily game tick — revenue, expenses, weather, morale, conditions, VIP guests';
+    protected $description = 'Process daily game tick: revenue, expenses, weather, morale, conditions, VIP guests';
 
     public function run(array $params)
     {
@@ -25,7 +25,7 @@ class GameTick extends BaseCommand
         }
 
         if (function_exists('isMaintenanceMode') && isMaintenanceMode()) {
-            CLI::write('Maintenance mode is active — Season 2 development underway. Game tick paused to safeguard player finances.', 'yellow');
+            CLI::write('Maintenance mode is active: Season 2 development underway. Game tick paused to safeguard player finances.', 'yellow');
             return;
         }
 
@@ -39,50 +39,73 @@ class GameTick extends BaseCommand
         $isWinter = $seasonDay <= getWinterDays();
         $seasonNum = function_exists('getSeasonNumber') ? (int) getSeasonNumber() : 1;
 
-        CLI::write("Game Tick — Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
+        CLI::write("Game Tick: Day {$gameDay} (Season day {$seasonDay}, " . ($isWinter ? 'Winter' : 'Summer') . ")", 'green');
         // Today's and tomorrow's weather (App\Libraries\Weather generates any missing day)
         \App\Libraries\Weather::ensure($gameDay + 1);
 
-        $users = $db->table('users')->get()->getResultArray();
+        // Pre-fetch shared daily weather once to avoid O(N) redundant queries
+        $todayWeather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray()
+            ?: ($db->table('weather')->where('game_day <=', $gameDay)->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray() ?: []);
 
-        foreach ($users as $user) {
-            $userId = (int) $user['id'];
-            CLI::write("Processing user {$userId}...", 'yellow');
-            try {
-                // CI4 keeps a failed transaction status until reset, so one player's error
-                // used to roll back every player processed after them
-                $db->resetTransStatus();
-                $db->transBegin();
+        // Pre-fetch difficulty configs once to eliminate redundant table queries inside loop
+        $allDiffConfigs = [];
+        $diffRows = $db->table('difficulty_config')->get()->getResultArray();
+        foreach ($diffRows as $dr) {
+            $allDiffConfigs[$dr['difficulty']][$dr['config_key']] = $dr['config_value'];
+        }
 
-                $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
-            if (!$finance) {
-                $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
-                $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+        // Process users in bounded batches to prevent memory exhaustion and execution timeouts
+        $totalUsers = $db->table('users')->countAllResults();
+        $batchSize = 100;
+        $offset = 0;
+
+        while ($offset < $totalUsers) {
+            $users = $db->table('users')->select('id')->orderBy('id', 'ASC')->limit($batchSize, $offset)->get()->getResultArray();
+            if (empty($users)) {
+                break;
             }
 
-            $cash = (int) $finance['cash'];
-            // Today's row is written by the previous tick; fall back to the latest one (e.g. right after a rollover)
-            $weather = $db->table('weather')->where('game_day', $gameDay)->get()->getRowArray()
-                ?: ($db->table('weather')->where('game_day <=', $gameDay)->orderBy('game_day', 'DESC')->limit(1)->get()->getRowArray() ?: []);
-            $resortOpen = (int) ($finance['resort_open'] ?? 1) === 1;
-            $dayIncome = 0;
-            $dayExpenses = 0;
+            foreach ($users as $user) {
+                $userId = (int) $user['id'];
+                CLI::write("Processing user {$userId}...", 'yellow');
+                try {
+                    // CI4 keeps a failed transaction status until reset, so one player's error
+                    // used to roll back every player processed after them
+                    $db->resetTransStatus();
+                    $db->transBegin();
 
-            // Load difficulty config
-            $diff = $finance['difficulty'] ?? 'standard';
-            $diffConfig = [];
-            $diffRows = $db->table('difficulty_config')->where('difficulty', $diff)->get()->getResultArray();
-            foreach ($diffRows as $dr) { $diffConfig[$dr['config_key']] = $dr['config_value']; }
-            $revMult = ((int) ($diffConfig['revenue_multiplier'] ?? 100)) / 100;
-            $costMult = ((int) ($diffConfig['cost_multiplier'] ?? 100)) / 100;
-            $decayMult = ((int) ($diffConfig['decay_multiplier'] ?? 100)) / 100;
-            $moraleDec = (int) ($diffConfig['morale_decay'] ?? 2);
-            $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
-            $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
-            $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
-            // Economy v2 (App\Libraries\Economy): demand-priced tickets, lift capacity and running costs, building occupancy
-            $v2 = featureEnabledFor('economy_v2', $userId);
-            $breakdown = [];
+                    $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+                    if (!$finance) {
+                        $db->table('player_finances')->insert(['user_id' => $userId, 'cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'difficulty' => 'standard', 'resort_map' => 'ParkCity']);
+                        $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+                    }
+
+                    $cash = (int) $finance['cash'];
+                    $weather = $todayWeather;
+                    $resortOpen = (int) ($finance['resort_open'] ?? 1) === 1;
+                    $dayIncome = 0;
+                    $dayExpenses = 0;
+
+                    // Detect player dormancy: away for >= 48 hours (at least 2 consecutive missed cycles)
+                    $lastActiveStr = $finance['last_active'] ?? null;
+                    $userRow = $db->table('users')->select('created_at')->where('id', $userId)->get()->getRowArray();
+                    $createdTs = !empty($userRow['created_at']) ? strtotime($userRow['created_at']) : time();
+                    $lastActiveTs = !empty($lastActiveStr) ? strtotime($lastActiveStr) : $createdTs;
+                    $isDormant = (time() - $lastActiveTs) >= 172800;
+
+                    // Load difficulty config from pre-fetched lookup map
+                    $diff = $finance['difficulty'] ?? 'standard';
+                    $diffConfig = $allDiffConfigs[$diff] ?? ($allDiffConfigs['standard'] ?? []);
+                    $revMult = ((int) ($diffConfig['revenue_multiplier'] ?? 100)) / 100;
+                    $costMult = ((int) ($diffConfig['cost_multiplier'] ?? 100)) / 100;
+                    $decayMult = ((int) ($diffConfig['decay_multiplier'] ?? 100)) / 100;
+                    $moraleDec = (int) ($diffConfig['morale_decay'] ?? 2);
+                    $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
+                    $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
+                    $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
+                    // Economy v2 (App\Libraries\Economy): demand-priced tickets, lift capacity and running costs, building occupancy
+                    $v2 = featureEnabledFor('economy_v2', $userId);
+                    $breakdown = [];
 
             // Active Génépis perks, loaded before any revenue so the revenue boost applies to all of it
             $activeBoostRows = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
@@ -117,6 +140,10 @@ class GameTick extends BaseCommand
             foreach ($allStaff as $s) {
                 $moraleChange = -$moraleDec;
                 if (!empty($s['assigned_to'])) $moraleChange += 1;
+                // Inactivity caretaker mode: freeze morale decay so staff don't quit while manager is away
+                if ($isDormant) {
+                    $moraleChange = max(0, $moraleChange);
+                }
                 $newMorale = max(0, min(100, (int) $s['morale'] + $moraleChange));
                 $db->table('staff')->where('id', $s['id'])->update(['morale' => $newMorale]);
                 if ($newMorale <= 10 && rand(1, 100) <= 20) {
@@ -142,7 +169,8 @@ class GameTick extends BaseCommand
                 if ($resortOpen && !$v2) $dayIncome += (int) round($revenue * $revMult); // closed resort: no guests, upkeep still due
                 $dayExpenses += (int) round($b['upkeep_per_day'] * $costMult);
                 $breakdown['building_upkeep'] += (int) round($b['upkeep_per_day'] * $costMult);
-                $newCondition = max(0, (int) $b['condition_pct'] - (int) round(rand(0, 2) * $decayMult));
+                $bDecay = $isDormant ? 0 : (int) round(rand(0, 2) * $decayMult);
+                $newCondition = max(0, (int) $b['condition_pct'] - $bDecay);
                 $db->table('buildings')->where('id', $b['id'])->update(['condition_pct' => $newCondition]);
                 if ($newCondition <= 0) {
                     $db->table('buildings')->where('id', $b['id'])->update(['status' => 'broken']);
@@ -164,12 +192,14 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
-            // EQUIPMENT (groomers + snowmakers) — fuel, decay, staff bonuses
+            // EQUIPMENT (groomers + snowmakers): fuel, decay, staff bonuses
             // ==============================
             $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
-            // Snow guns only run (and cost or wear) on days cold enough for their model
+            // Snow guns run (and cost, use energy and water, and wear) only the hours they make snow today;
+            // App\Libraries\Snowmaking also melts and adds each slope's made snow
             $baseTemp = (int) ($weather['temp'] ?? 0);
-            $equipment = array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'snowmaker' || \App\Libraries\Snowmaking::runs($e, $baseTemp)));
+            $snowDay = \App\Libraries\Snowmaking::runDay($userId, $weather, array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker'), $allStaff, !$isWinter);
+            $equipment = array_merge(array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'snowmaker')), $snowDay['guns']);
             // v2: groomers without an operator stay parked (no fuel, no wear); the night shift below uses the same fleet
             if ($v2) {
                 $crewedGroomers = array_flip(array_map(fn($m) => (int) $m['id'], \App\Libraries\Grooming::fleet(
@@ -180,10 +210,13 @@ class GameTick extends BaseCommand
             }
             $crewedGuns = array_flip(array_column(array_filter($allStaff, fn($s) => $s['role'] === 'snowmaker' && !empty($s['assigned_to'])), 'assigned_to'));
             foreach ($equipment as $e) {
-                $dayExpenses += (int) round($e['fuel_cost'] * $costMult);
+                // In standby mode, inactive resort does not burn idle fuel
+                if (!$isDormant) {
+                    $dayExpenses += (int) round($e['fuel_cost'] * $costMult);
+                }
 
                 // Assigned operators reduce decay
-                $baseDecay = (int) round(($e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3)) * $decayMult);
+                $baseDecay = $isDormant ? 0 : (int) round(($e['equipment_type'] === 'groomer' ? rand(2, 5) : rand(1, 3)) * $decayMult);
                 if ($e['equipment_type'] === 'groomer' && $countAssigned('groomer') > 0) {
                     $baseDecay = max(1, $baseDecay - 1);
                 }
@@ -195,10 +228,10 @@ class GameTick extends BaseCommand
                 if ($eqNewCond <= 0) {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => 0, 'status' => 'broken']);
                     log_activity($userId, 'equipment_broken', $e['name'] . ' has broken down!', 'fa-solid fa-triangle-exclamation');
-                    notify($userId, 'equipment', $e['name'] . ' broke down!', 'Repair it before it can operate again.', 'fa-solid fa-triangle-exclamation', '/equipment');
+                    notify($userId, 'equipment_breakdown', $e['name'] . ' broke down!', 'Repair it before it can operate again.', 'fa-solid fa-triangle-exclamation', '/equipment');
                 } elseif ($eqNewCond <= 20 && (int) $e['condition_pct'] > 20) {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => $eqNewCond]);
-                    notify($userId, 'equipment', $e['name'] . ' needs maintenance', 'Condition at ' . $eqNewCond . '%. Repair soon.', 'fa-solid fa-wrench', '/equipment');
+                    notify($userId, 'equipment_wear', $e['name'] . ' needs maintenance', 'Condition at ' . $eqNewCond . '%. Repair soon.', 'fa-solid fa-wrench', '/equipment');
                 } else {
                     $db->table('equipment')->where('id', $e['id'])->update(['condition_pct' => $eqNewCond]);
                 }
@@ -267,18 +300,18 @@ class GameTick extends BaseCommand
             // LIFT/SLOPE CONDITION DECAY (mechanics reduce lift decay)
             // ==============================
             $items = $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray();
-            // Snow guns protect the slopes they cover from a thin natural base (cold days only)
-            $snowCovered = $v2 ? \App\Libraries\Snowmaking::coverage(array_filter($items, fn($i) => $i['item_type'] === 'slope'), $activeSnowmakers, $baseTemp) : [];
             // A mechanic looks after the lift they're assigned to (assigned_to holds the lift's name)
             $mechanicLifts = array_flip(array_column($assignedByRole['mechanic'] ?? [], 'assigned_to'));
             foreach ($items as $item) {
-                $decay = rand(0, 2);
-                if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
-                    $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
-                }
-                // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
-                if ($v2 && $item['item_type'] === 'slope') {
-                    $decay = \App\Libraries\Grooming::decay($item, $weather, isset($snowCovered[(int) $item['id']]));
+                $decay = $isDormant ? 0 : rand(0, 2);
+                if (!$isDormant) {
+                    if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
+                        $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
+                    }
+                    // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
+                    if ($v2 && $item['item_type'] === 'slope') {
+                        $decay = \App\Libraries\Grooming::decay($item, $weather);
+                    }
                 }
                 $newCond = max(0, (int) $item['condition_pct'] - $decay);
                 $db->table('player_items')->where('id', $item['id'])->update(['condition_pct' => $newCond]);
@@ -337,7 +370,7 @@ class GameTick extends BaseCommand
                     // v2: only slopes the night shift actually groomed count as groomed
                     if (isset($groomedToday[(int) $sl['id']])) { $q = "groomed"; }
                     elseif (in_array($weather["condition_name"] ?? "", ["Freezing Rain", "Rain"], true)) { $q = "icy"; }
-                    elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = isset($snowCovered[(int) $sl['id']]) ? "packed" : "bare"; }
+                    elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = (int) ($sl['made_snow_cm'] ?? 0) > 0 ? "packed" : "bare"; }
                 }
                 elseif (($weather["snowfall"] ?? 0) >= 1) { $q = $activeGroomers > 0 ? "groomed" : "packed"; }
                 elseif (($weather["condition_name"] ?? "") === "Freezing Rain") { $q = "icy"; }
@@ -435,7 +468,11 @@ class GameTick extends BaseCommand
                 ->get()->getResultArray();
             foreach ($endedTournaments as $et) {
                 $db->table('tournaments')->where('id', $et['id'])->update(['status' => 'ended']);
-                log_activity($userId, 'Tournament', $et['name'] . ' has concluded successfully!', 'fa-solid fa-medal');
+                $repBoost = (int) ($et['reputation_boost'] ?? 0);
+                if ($repBoost > 0) {
+                    $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . $repBoost, false)->update();
+                }
+                log_activity($userId, 'Tournament', $et['name'] . ' has concluded: +' . $repBoost . ' Reputation.', 'fa-solid fa-medal');
             }
 
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;
@@ -700,7 +737,7 @@ class GameTick extends BaseCommand
                     $resNewCond = max(0, $res['condition_pct'] - $resDecay);
                     if ($resNewCond <= 0) {
                         $db->table($resTable)->where('id', $res['id'])->update(['condition_pct' => 0, 'status' => 'broken']);
-                        notify($userId, $resType, $res['name'] . ' broke down!', 'Repair it to restore ' . $resType . ' production.', 'fa-solid fa-triangle-exclamation', '/' . $resType);
+                        notify($userId, $resType . '_breakdown', $res['name'] . ' broke down!', 'Repair it to restore ' . $resType . ' production.', 'fa-solid fa-triangle-exclamation', '/' . $resType);
                     } else {
                         $db->table($resTable)->where('id', $res['id'])->update(['condition_pct' => $resNewCond]);
                     }
@@ -772,7 +809,7 @@ class GameTick extends BaseCommand
 
                 $dayIncome += $vipCash;
                 log_activity($userId, 'vip_arrival', $vip['name'] . ' ' . $vipFullName . ' has arrived! +' . number_format($vipCash) . '€', $vip['icon']);
-                notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/dashboard');
+                notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/vip-guests');
             }
 
             // Process departing VIPs with satisfaction check
@@ -837,6 +874,17 @@ class GameTick extends BaseCommand
             // ==============================
             // UPDATE FINANCES
             // ==============================
+            // Standby Protection: if player is dormant, don't let unattended expenses push cash into negative
+            if ($isDormant) {
+                if ($cash < 25000) {
+                    // If already below $25,000, expenses cannot exceed income so debt does not compound
+                    $dayExpenses = min($dayExpenses, $dayIncome);
+                } elseif (($cash + $dayIncome - $dayExpenses) < 25000) {
+                    // Protect cash floor of $25,000 during caretaker standby
+                    $dayExpenses = min($dayExpenses, max(0, $cash + $dayIncome - 25000));
+                }
+            }
+
             // Apply the day as a change to the current balance: the cash read at the start may be stale
             // if the player bought or sold something while the tick was running
             $newCash = $cash + $dayIncome - $dayExpenses;
@@ -879,9 +927,10 @@ class GameTick extends BaseCommand
             // ==============================
             // DAILY REPORT
             // ==============================
-            log_activity($userId, 'Daily Report', "Day {$gameDay}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
+            $dormantTag = $isDormant ? ' [Standby Protected]' : '';
+            log_activity($userId, 'Daily Report', "Day {$gameDay}{$dormantTag}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
 
-            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses} | Visitors: {$visitors} | Cash: {$newCash}", "white");
+            CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses}{$dormantTag} | Visitors: {$visitors} | Cash: {$newCash}", "white");
 
             // Achievements: progress and feature unlocks shouldn't wait for a visit to /achievements
             if (($user['status'] ?? '') !== 'demo') \App\Libraries\Achievements::sync($userId);
@@ -891,6 +940,7 @@ class GameTick extends BaseCommand
                     log_message("error", "GameTick user {$userId} transaction status failed and was rolled back.");
                 } else {
                     $db->transCommit();
+                    clearResortRatingCache($userId);
                 }
             } catch (\Throwable $e) {
                 $db->transRollback();
@@ -901,6 +951,8 @@ class GameTick extends BaseCommand
                     \Sentry\captureException($e);
                 }
             }
+        }
+            $offset += $batchSize;
         }
 
         // Storage Maintenance: Prune old activity logs & financial records to keep storage bounded
