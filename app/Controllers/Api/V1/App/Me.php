@@ -15,8 +15,13 @@ class Me extends BaseController
         $db = db_connect();
         $finance = $db->table('player_finances')->select('cash, profile_completed')->where('user_id', $user->id)->get()->getRowArray();
         $genepis = $db->table('genepis')->select('balance')->where('user_id', $user->id)->get()->getRowArray();
+        $isAdmin = (int) $user->id === 1 || $user->inGroup('admin', 'superadmin');
         return $this->ok([
-            'user' => ['id' => (int) $user->id, 'username' => (string) $user->username],
+            'user' => [
+                'id' => (int) $user->id,
+                'username' => (string) $user->username,
+                'isAdmin' => $isAdmin,
+            ],
             'profileComplete' => (bool) ($finance['profile_completed'] ?? false),
             'stats' => [
                 'cashText' => currency((int) ($finance['cash'] ?? 0)),

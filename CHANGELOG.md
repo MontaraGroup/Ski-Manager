@@ -1,3 +1,123 @@
+## Release 2026-11-19 16:33
+
+* Merge branch 'MontaraGroup:main' into main (c15c260a)
+* Merge pull request #123 from Montara-Group/feat/android-play-games (19ed4a14)
+* feat(android): Google Play Games sign-in, achievements and leaderboard (33a0a082)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (04f70d4a)
+* Merge branch 'MontaraGroup:main' into main (69693135)
+
+## Release 2026-11-19 13:38
+
+* Merge branch 'MontaraGroup:main' into main (69693135)
+* Merge pull request #122 from Montara-Group/feat/android-beta-invite (1512f700)
+* feat(beta): notify players about the Android test; /beta/android shows the code right away (c9b77c9b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3310db6d)
+* Merge pull request #121 from Montara-Group/main (bee40db0)
+
+## Release 2026-11-19 04:08
+
+* Merge branch 'MontaraGroup:main' into main (abbee588)
+* Merge pull request #120 from Montara-Group/chore/android-version-111 (4c1006b7)
+* chore(release): bump VERSION_CODE to 111 (2.0.1); Play already has 110 (98180761)
+* Merge pull request #119 from Montara-Group/feat/android-closed-testing-v2 (eeb32c0f)
+* Merge feat/android-closed-testing into current main (22478dbe)
+
+## Release 2026-11-19 02:14
+
+* Merge branch 'MontaraGroup:main' into main (5bcc3d71)
+* Merge pull request #118 from Montara-Group/feat/android-feedback (82e2b40a)
+* fix(android): encode feedback screenshots off the main thread (f016187d)
+* fix(feedback): delete a player's feedback screenshots with their account (e9382d6b)
+* fix(feedback): cap screenshots at 2 MB to match PHP's upload limit (cd37c92f)
+
+## Release 2026-11-18 13:47
+
+* Merge pull request #116 from Montara-Group/feat/android-native-pages (b99430f3)
+* fix(android): More tab returns to its list; debug builds can target a local server (984328ca)
+* Merge pull request #115 from Montara-Group/fix/alliance-manage-member-route (1272f15b)
+* fix(alliances): point member-management buttons at manage-member route (b38bfcd9)
+* feat(android): native screens for every website page (bf721cee)
+
+## Release 2026-11-18 03:41
+
+* Merge pull request #114 from Montara-Group/main (7a158a09)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (658c7e2a)
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+
+## Release 2026-11-18 03:34
+
+* Merge branch 'MontaraGroup:main' into main (200e6a5f)
+* Merge pull request #113 from Montara-Group/feat/android-play-readiness (4b5c4d9c)
+* Merge pull request #112 from Montara-Group/fix/translate-dom-crash (757a903d)
+* Merge pull request #111 from Montara-Group/fix/magic-link-signed-in (062dc200)
+* Merge pull request #110 from Montara-Group/fix/stale-chunk-reload (1f1a1eec)
+
+## Release 2026-11-17 04:47
+
+* feat(seo): add llms.txt, og-image, breadcrumbs and rich structured data schemas (6469b51b)
+* Merge pull request #109 from Montara-Group/fix/map-editor-build (1facf134)
+* chore: synchronize compiled React islands build with main (bd18fd6a)
+* build: rebuild islands for map studio changes (62f04162)
+* Merge pull request #108 from Montara-Group/feat/map-editor-drawing (9a39fffb)
+
+## Release 2026-11-16 13:49
+
+* Merge branch 'MontaraGroup:main' into main (4e726a1a)
+* Merge pull request #106 from Montara-Group/feat/ios-map-studio (bf55d668)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (1512f766)
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* fix(email): enable sendMultipart and set default mailType to html (017cc0d0)
+
+## Release 2026-11-16 13:45
+
+* Merge branch 'MontaraGroup:main' into main (c33a3482)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (bebe0287)
+* Merge pull request #105 from Montara-Group/main (af38645f)
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+
+## Release 2026-11-15 20:20
+
+* Merge branch 'MontaraGroup:main' into main (0e2099e9)
+* Merge pull request #104 from Montara-Group/feat/map-editor-drawing (1a2f8104)
+* fix(map-studio): finish a line on double-click by click timing, never post a line twice (592d0b6f)
+* feat(map-studio): faster lift and slope drawing (4557063d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (d51de4b8)
+
+## Release 2026-11-15 18:36
+
+* Merge branch 'MontaraGroup:main' into main (076a60ca)
+* Merge pull request #103 from Montara-Group/feat/snowmaking-revamp (f0847b16)
+* Merge remote-tracking branch 'upstream/main' into feat/snowmaking-revamp (f2662650)
+* Merge pull request #102 from Montara-Group/feat/resort-vote (8e7c9ce6)
+* Merge remote-tracking branch 'upstream/main' into feat/resort-vote (d466bc69)
+
+## Release 2026-11-14 23:51
+
+* Merge pull request #100 from Montara-Group/main (6ef2a15d)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (c194de6e)
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+
+## Release 2026-11-14 21:34
+
+* Merge branch 'MontaraGroup:main' into main (3ee53166)
+* Merge pull request #99 from Montara-Group/perf/updates-batch-items-query (e27e4afd)
+* Merge pull request #98 from Montara-Group/fix/buildings-occupancy-preview (674f4cd8)
+* Merge pull request #97 from Montara-Group/fix/parking-shuttle-balance (01e65135)
+* Merge pull request #96 from Montara-Group/fix/tournaments-reputation-and-night-race (948af292)
+
+## Release 2026-11-13 19:18
+
+* Merge pull request #95 from Montara-Group/feat/notifications-revamp (0337d4ef)
+* feat(notifications): categories, per-item read, paging and a better bell (aa08e09f)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (24596647)
+* Merge pull request #94 from Montara-Group/main (9ab8901b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (dd89ce57)
+
 ## Release 2026-11-13 04:18
 
 * Merge pull request #94 from Montara-Group/main (9ab8901b)

@@ -30,6 +30,12 @@ class ResortAnalysis extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('resort_analysis'); if ($locked) return $locked;
+        return view('resort_analysis/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $reports = $db->table('resort_reports')->where('user_id', $userId)->orderBy('id', 'DESC')->get()->getResultArray();
@@ -96,7 +102,7 @@ class ResortAnalysis extends BaseController
             'reports' => $formattedReports,
         ];
 
-        return view('resort_analysis/index', ['page' => $page]);
+        return $page;
     }
 
     /** This season's report for today's game day, if one was ordered */
@@ -138,8 +144,16 @@ class ResortAnalysis extends BaseController
 
     public function view(int $id)
     {
+        $page = $this->reportData($id);
+        if ($page === null) return redirect()->to('/resort-analysis')->with('error', 'Report not found.');
+        return view('resort_analysis/view', ['page' => $page]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function reportData(int $id): ?array
+    {
         $report = db_connect()->table('resort_reports')->where('id', $id)->where('user_id', auth()->id())->get()->getRowArray();
-        if (!$report) return redirect()->to('/resort-analysis')->with('error', 'Report not found.');
+        if (!$report) return null;
         $data = json_decode((string) $report['report_data'], true) ?: [];
 
         $overall = (int) ($data['overall_score'] ?? 0);
@@ -234,7 +248,7 @@ class ResortAnalysis extends BaseController
             'legacyScores' => $legacyScores,
         ];
 
-        return view('resort_analysis/view', ['page' => $page]);
+        return $page;
     }
 
     private function generateReport(int $userId): array
@@ -328,20 +342,20 @@ class ResortAnalysis extends BaseController
         $groomable = count(array_filter($slopes, [Grooming::class, 'groomable']));
         $brokenSlopes = count(array_filter($slopes, fn($s) => $s['status'] === 'broken'));
         $slopeCond = $avg($openSlopes, 'condition_pct');
-        $thinBase = (int) ($weather['snow_base'] ?? 99) < Weather::THIN_BASE;
-        $covered = count(Snowmaking::coverage($openSlopes, array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker'), (int) ($weather['base_temp'] ?? 0)));
+        $natural = (int) ($weather['snow_base'] ?? 99);
+        $thinSlopes = count(array_filter($openSlopes, fn($s) => Snowmaking::base($s, $natural) < Weather::THIN_BASE));
         $sections['slopes'] = [
             'score' => !$slopes ? 0 : (int) round(Economy::conditionFactor($slopeCond) * 100 * (count($openSlopes) / count($slopes))),
             'summary' => !$slopes ? 'No slopes yet.' : count($openSlopes) . ' of ' . count($slopes) . ' slopes open at ' . $slopeCond . '% average condition; skiers come less to worn slopes.',
             'metrics' => [['Open slopes', count($openSlopes) . ' / ' . count($slopes)], ['Average condition', $slopeCond . '%'],
-                ['Groomed each night', $fleet['capacity'] . ' slopes'], ['Covered by snow guns', $thinBase ? $covered . ' of ' . count($openSlopes) : 'not needed (deep base)']],
+                ['Groomed each night', $fleet['capacity'] . ' slopes'], ['Slopes on a thin base', $thinSlopes . ' of ' . count($openSlopes)]],
         ];
         if (!$slopes) $add('critical', 'Slopes & grooming', 'You have no slopes: they are what bring skiers. Build one on the trail map.', '/map');
         if ($brokenSlopes) $add('warning', 'Slopes & grooming', $brokenSlopes . ' slope' . ($brokenSlopes === 1 ? '' : 's') . ' wore down to 0% and closed. Grooming brings them back.', '/grooming');
         if ($fleet['idle_machines'] > 0) $add('warning', 'Slopes & grooming', $fleet['idle_machines'] . ' groomer' . ($fleet['idle_machines'] === 1 ? ' has' : 's have') . ' no operator and stay parked. Hire groomer operators.', '/staff/hire');
         elseif ($slopes && $fleet['capacity'] === 0) $add('warning', 'Slopes & grooming', 'Nothing grooms your slopes, so they only wear down. Buy a groomer and hire an operator.', '/equipment');
         elseif ($slopes && $fleet['capacity'] < min($groomable, (int) ceil(count($slopes) / 2))) $add('info', 'Slopes & grooming', 'Your groomers reach ' . $fleet['capacity'] . ' slopes a night but ' . $groomable . ' need it. Another groomer would keep them in better shape.', '/equipment');
-        if ($thinBase && $openSlopes && $covered < count($openSlopes) && !in_array('snowmaking', $hidden, true)) $add('info', 'Slopes & grooming', 'The natural snow base is thin: ' . (count($openSlopes) - $covered) . ' open slope' . (count($openSlopes) - $covered === 1 ? '' : 's') . ' without a snow gun wear faster.', '/snowmaking');
+        if ($thinSlopes && !in_array('snowmaking', $hidden, true)) $add('info', 'Slopes & grooming', $thinSlopes . ' open slope' . ($thinSlopes === 1 ? ' has' : 's have') . ' less than ' . snow(Weather::THIN_BASE) . ' of snow and wear' . ($thinSlopes === 1 ? 's' : '') . ' faster. Snow guns can build them up.', '/snowmaking');
 
         // --- Buildings (occupancy from the tick) ---
         $occupancy = is_array($tick['occupancy'] ?? null) ? $tick['occupancy'] : [];

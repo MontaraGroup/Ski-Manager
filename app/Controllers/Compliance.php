@@ -7,6 +7,12 @@ class Compliance extends BaseController
     public function index()
     {
         if (!auth()->loggedIn()) return redirect()->to('/login');
+        return view('compliance/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $tab = $this->request->getGet('tab') ?? 'government';
         if (!in_array($tab, ['government', 'insurance', 'environment'], true)) {
             $tab = 'government';
@@ -113,6 +119,6 @@ class Compliance extends BaseController
             ],
         ];
 
-        return view('compliance/index', ['page' => $page]);
+        return $page;
     }
 }

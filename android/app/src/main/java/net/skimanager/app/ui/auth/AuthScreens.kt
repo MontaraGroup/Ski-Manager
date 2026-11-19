@@ -116,7 +116,7 @@ private fun SignIn(app: AppState, email: String, onEmail: (String) -> Unit, onSi
                 val result = app.api.post("auth/login", mapOf("email" to email.trim(), "password" to password))
                 busy = false
                 when {
-                    result is ApiResult.Ok -> app.signIn(result.data!!.asJsonObject)
+                    result is ApiResult.Ok -> if (!app.signIn(result.dataObject())) error = SERVER_ERROR
                     result is ApiResult.Failed && result.code == "activation_required" -> onNeedsCode()
                     else -> error = messageOf(result)
                 }
@@ -225,7 +225,7 @@ private fun SignUp(app: AppState, onBack: () -> Unit, onCreated: (String, String
                 busy = false
                 when {
                     result is ApiResult.Ok -> {
-                        val data = result.data!!.asJsonObject
+                        val data = result.dataObject()
                         onCreated(data.str("email"), if (data.bool("mailSent")) null else result.message)
                     }
                     result is ApiResult.Failed && result.fields.isNotEmpty() -> fields = result.fields
@@ -255,7 +255,11 @@ private fun EmailCode(app: AppState, email: String, startNotice: String?, onBack
             scope.launch {
                 val result = app.api.post("auth/verify", mapOf("email" to email, "code" to code))
                 busy = false
-                if (result is ApiResult.Ok) app.signIn(result.data!!.asJsonObject) else message = messageOf(result)
+                if (result is ApiResult.Ok) {
+                    if (!app.signIn(result.dataObject())) message = SERVER_ERROR
+                } else {
+                    message = messageOf(result)
+                }
             }
         }, Modifier.fillMaxWidth(), enabled = !busy && code.length == 6)
         TextButton({
