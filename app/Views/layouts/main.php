@@ -187,10 +187,57 @@
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!="dataLayer"?"\x26l="+l:"";j.async=true;j.src="https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);})(window,document,"script","dataLayer","GTM-5GGPL25W");</script>
     <!-- End Google Tag Manager -->
-    <meta property="og:title" content="Ski Manager - Free Online Ski Resort Game">
+    <?php
+    $__rawTitle = trim((string) $this->renderSection('title'));
+    $__pageTitle = $__rawTitle !== '' ? $__rawTitle . ' - Ski Manager' : 'Ski Manager - Free Online Ski Resort Game';
+    $__uriPath = trim(uri_string(), '/');
+    $__canonicalUrl = 'https://ski-manager.net' . ($__uriPath !== '' ? '/' . $__uriPath : '/');
+
+    // Build breadcrumbs for SEO and navigation
+    $__breadcrumbs = [
+        ['name' => 'Home', 'url' => 'https://ski-manager.net/'],
+    ];
+    if ($__uriPath !== '') {
+        $__segments = explode('/', $__uriPath);
+        $__accumulatedPath = '';
+        foreach ($__segments as $__i => $__seg) {
+            $__accumulatedPath .= '/' . $__seg;
+            $__isLast = ($__i === count($__segments) - 1);
+            if ($__isLast && $__rawTitle !== '') {
+                $__crumbName = $__rawTitle;
+            } else {
+                $__friendlyNames = [
+                    'about' => 'About',
+                    'faq' => 'FAQ',
+                    'guides' => 'Guides',
+                    'contact' => 'Contact',
+                    'terms' => 'Terms of Service',
+                    'privacy' => 'Privacy Policy',
+                    'cookies' => 'Cookie Policy',
+                    'disclaimer' => 'Disclaimer',
+                    'sitemap' => 'Sitemap',
+                    'updates' => 'Updates',
+                    'roadmap' => 'Roadmap',
+                    'developers' => 'Developers',
+                    'leaderboard' => 'Leaderboard',
+                    'register' => 'Register',
+                    'login' => 'Log In',
+                    'legal' => 'Legal',
+                ];
+                $__crumbName = $__friendlyNames[$__seg] ?? ucfirst(str_replace('-', ' ', $__seg));
+            }
+            $__breadcrumbs[] = [
+                'name' => $__crumbName,
+                'url' => 'https://ski-manager.net' . $__accumulatedPath,
+            ];
+        }
+    }
+    ?>
+    <title><?= esc($__pageTitle) ?></title>
+    <meta property="og:title" content="<?= esc($__pageTitle) ?>">
     <meta property="og:description" content="Build, manage, and grow your dream ski resort. Free to play in your browser.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ski-manager.net/">
+    <meta property="og:url" content="<?= esc($__canonicalUrl) ?>">
     <meta property="og:site_name" content="Ski Manager">
     <meta property="og:image" content="https://ski-manager.net/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -199,10 +246,10 @@
     <meta name="twitter:image" content="https://ski-manager.net/og-image.png">
     <meta name="theme-color" content="#1a2940">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Ski Manager - Free Online Ski Resort Game">
+    <meta name="twitter:title" content="<?= esc($__pageTitle) ?>">
     <meta name="twitter:description" content="Build, manage, and grow your dream ski resort. Free to play.">
     <meta name="msvalidate.01" content="17A0AC384937E88A4F602D2B7DAE237F" />
-    <link rel="canonical" href="https://ski-manager.net<?= uri_string() ? "/" . uri_string() : "" ?>" />
+    <link rel="canonical" href="<?= esc($__canonicalUrl) ?>" />
     <meta name="description" content="Ski Manager - Free online ski resort management game. Build slopes, hire staff, manage finances, and compete with players worldwide.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
@@ -212,8 +259,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
-    <title><?= $this->renderSection('title') ?> - Ski Manager</title>
     <link rel="preload" href="/css/style.css?v=<?= @filemtime(FCPATH . "css/style.css") ?>" as="style">
+    <?php if (!auth()->loggedIn() && (uri_string() === '' || uri_string() === '/')) : ?>
+    <link rel="preload" as="image" href="/img/ParkCity_low.webp" type="image/webp" fetchpriority="high">
+    <?php endif ?>
     <?php if (auth()->loggedIn()) : ?>
     <?php $__mapPrefetch = preg_replace('/[^A-Za-z]/', '', (string) (db_connect()->table("player_finances")->select("resort_map")->where("user_id", auth()->id())->get()->getRow("resort_map") ?? "ParkCity")); ?>
     <?php // Warm the files the trail map will ask for: the WebP copies when the server has them
@@ -250,6 +299,39 @@
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Ski Manager",
+      "url": "https://ski-manager.net",
+      "logo": "https://ski-manager.net/apple-touch-icon.png",
+      "sameAs": [
+        "https://wiki.ski-manager.net",
+        "https://github.com/MontaraGroup/Ski-Manager",
+        "https://discord.gg/u3GzGt8K6a"
+      ]
+    }
+    </script>
+    <?php if (count($__breadcrumbs) > 1) : ?>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        <?php foreach ($__breadcrumbs as $__idx => $__crumb) : ?>
+        {
+          "@type": "ListItem",
+          "position": <?= $__idx + 1 ?>,
+          "name": <?= json_encode($__crumb['name'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>,
+          "item": <?= json_encode($__crumb['url'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>
+        }<?= $__idx < count($__breadcrumbs) - 1 ? ',' : '' ?>
+        <?php endforeach; ?>
+      ]
+    }
+    </script>
+    <?php endif; ?>
+    <?= $this->renderSection('extra_head') ?>
     <style>.scrollbar-none::-webkit-scrollbar{display:none}.scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}</style>
 <style>
 :root {
@@ -584,6 +666,35 @@ body { font-family: var(--sign); }
     <?php endif ?>
     <?php if ($__shellIslands) : ?></noscript><?php endif ?>
 
+    <?php
+    $__firstSeg = explode('/', $__uriPath)[0] ?? '';
+    $__showVisualBreadcrumbs = count($__breadcrumbs) > 1 && (
+        !auth()->loggedIn() ||
+        in_array($__firstSeg, ['about', 'faq', 'guides', 'contact', 'terms', 'privacy', 'cookies', 'disclaimer', 'sitemap', 'updates', 'roadmap', 'developers', 'legal'])
+    );
+    ?>
+    <?php if ($__showVisualBreadcrumbs) : ?>
+    <nav aria-label="Breadcrumb" class="w-full max-w-6xl mx-auto px-4 pt-3 pb-1 text-xs text-base-content/70">
+        <ol itemscope itemtype="https://schema.org/BreadcrumbList" class="flex flex-wrap items-center gap-1.5">
+            <?php foreach ($__breadcrumbs as $__idx => $__crumb) : ?>
+                <?php if ($__idx > 0) : ?>
+                    <li aria-hidden="true" class="text-base-content/40">/</li>
+                <?php endif; ?>
+                <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" class="inline-flex items-center">
+                    <?php if ($__idx === count($__breadcrumbs) - 1) : ?>
+                        <span itemprop="name" class="font-medium text-base-content" aria-current="page"><?= esc($__crumb['name']) ?></span>
+                    <?php else : ?>
+                        <a itemprop="item" href="<?= esc($__crumb['url']) ?>" class="hover:text-primary transition-colors">
+                            <span itemprop="name"><?= esc($__crumb['name']) ?></span>
+                        </a>
+                    <?php endif; ?>
+                    <meta itemprop="position" content="<?= $__idx + 1 ?>" />
+                </li>
+            <?php endforeach; ?>
+        </ol>
+    </nav>
+    <?php endif; ?>
+
         <?= $this->renderSection('content') ?>
     </main>
 
@@ -602,7 +713,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Game -->
                 <div>
-                    <h6 class="">Game</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Game</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/register">Play Now</a></li>
                         <li><a href="/leaderboard">Leaderboard</a></li>
@@ -614,7 +725,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Resources -->
                 <div>
-                    <h6 class="">Resources</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Resources</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/guides">Guides</a></li>
                         <li><a href="/faq">FAQ</a></li>
@@ -625,7 +736,7 @@ body { font-family: var(--sign); }
                 </div>
                 <!-- Legal -->
                 <div>
-                    <h6 class="">Legal</h6>
+                    <p class="font-semibold text-xs tracking-wider uppercase text-muted mb-3">Legal</p>
                     <ul class="space-y-2 text-sm">
                         <li><a href="/terms">Terms</a></li>
                         <li><a href="/privacy">Privacy</a></li>
@@ -757,7 +868,7 @@ document.querySelectorAll("[data-count]").forEach(function(el){
 </script>
 
 <!-- Cookie Consent Banner -->
-<div id="cookieConsent" class="fixed bottom-0 left-0 right-0 bg-base-200 border-t border-base-300 p-4 shadow-lg" style="z-index:99999;display:none;">
+<div id="cookieConsent" role="region" aria-label="Cookie consent" class="fixed bottom-0 left-0 right-0 bg-base-200 border-t border-base-300 p-4 shadow-lg" style="z-index:99999;display:none;">
     <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-sm text-base-content/80">We use cookies for analytics and advertising. You can choose which to accept.</p>
         <div class="flex gap-2 shrink-0">
