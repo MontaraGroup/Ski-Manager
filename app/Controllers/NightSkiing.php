@@ -17,6 +17,12 @@ class NightSkiing extends BaseController
     public function index()
     {
         $locked = checkFeatureUnlock('night_skiing'); if ($locked) return $locked;
+        return view('nightskiing/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $lights = $this->lightModel->where('user_id', $userId)->findAll();
 
@@ -89,7 +95,7 @@ class NightSkiing extends BaseController
             }, array_keys($lightTypes), $lightTypes)),
         ];
 
-        return view('nightskiing/index', ['page' => $page]);
+        return $page;
     }
 
     public function buy()

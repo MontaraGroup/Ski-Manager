@@ -8,6 +8,12 @@ class Tournaments extends BaseController
 {
     public function index(): string
     {
+        return view('tournaments/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $startDate = getSeasonStartDate();
@@ -124,7 +130,7 @@ class Tournaments extends BaseController
             'types' => $formattedTypes,
         ];
 
-        return view('tournaments/index', ['page' => $page]);
+        return $page;
     }
 
     public function host()
