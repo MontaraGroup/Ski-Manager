@@ -91,22 +91,21 @@ class RoadmapRewards
     /**
      * An admin marked an item completed: pay the author once and tell everyone who voted for it.
      * Both happen at most once per item, however often the status is changed back and forth.
+     * @param array[] $merged ideas merged into this one: each author is paid like the main author
+     *                        (once per author), and their voters are told too (once per player)
      */
-    public static function onShipped(array $item): void
+    public static function onShipped(array $item, array $merged = []): void
     {
         $db = db_connect();
         $itemId = (int) $item['id'];
         $link = !empty($item['updates_url']) ? (string) $item['updates_url'] : '/roadmap#item-' . $itemId;
-        $authorId = (int) ($item['author_id'] ?? 0);
 
-        if ($authorId > 0 && self::eligible($authorId)) {
-            $paid = self::pay($authorId, 'idea_shipped', 'item:' . $itemId, $itemId, self::IDEA_SHIPPED_GENEPIS, 'Your roadmap idea shipped');
-            if ($paid > 0) {
-                notify($authorId, 'roadmap', 'Your idea shipped',
-                    '"' . $item['title'] . '" is now in the game. You earned ' . $paid . ' Génépis.',
-                    'fa-solid fa-rocket', $link);
-            }
-            Achievements::sync($authorId);
+        $authors = [];
+        foreach (array_merge([$item], $merged) as $idea) {
+            $authorId = (int) ($idea['author_id'] ?? 0);
+            if ($authorId <= 0 || isset($authors[$authorId])) continue;
+            $authors[$authorId] = true;
+            self::creditShipped($authorId, (int) $idea['id'], (string) $item['title'], $link);
         }
 
         // Voters are told once per item: a user_id 0 row marks the item as announced
@@ -116,13 +115,45 @@ class RoadmapRewards
         ]);
         if ($db->affectedRows() === 0) return;
 
+        $groupIds = array_merge([$itemId], array_map(fn($m) => (int) $m['id'], $merged));
         $voters = $db->table('roadmap_votes')->select('user_id')->distinct()
-            ->where('item_id', $itemId)->where('user_id IS NOT NULL')->where('user_id !=', $authorId)
-            ->get()->getResultArray();
+            ->whereIn('item_id', $groupIds)->where('user_id IS NOT NULL');
+        if ($authors) $voters->whereNotIn('user_id', array_keys($authors));
+        $voters = $voters->get()->getResultArray();
         foreach ($voters as $v) {
             notify((int) $v['user_id'], 'roadmap', 'An idea you voted for shipped',
                 '"' . $item['title'] . '" is now in the game.', 'fa-solid fa-circle-check', $link);
         }
+    }
+
+    /**
+     * Pay an author for a shipped idea, once per idea they wrote ($ideaId), and tell them.
+     * $title and $link are the shipped (main) idea's, so a merged idea's author sees what shipped.
+     */
+    public static function creditShipped(int $authorId, int $ideaId, string $title, string $link): void
+    {
+        if ($authorId <= 0 || !self::eligible($authorId)) return;
+        $paid = self::pay($authorId, 'idea_shipped', 'item:' . $ideaId, $ideaId, self::IDEA_SHIPPED_GENEPIS, 'Your roadmap idea shipped');
+        if ($paid > 0) {
+            notify($authorId, 'roadmap', 'Your idea shipped',
+                '"' . $title . '" is now in the game. You earned ' . $paid . ' Génépis.',
+                'fa-solid fa-rocket', $link);
+        }
+        Achievements::sync($authorId);
+    }
+
+    /**
+     * An admin merged a player's idea into another one. Tells the author where their idea went and
+     * re-checks their achievements, since a merged idea takes on the main idea's status.
+     */
+    public static function onMerged(array $idea, array $main): void
+    {
+        $authorId = (int) ($idea['author_id'] ?? 0);
+        if ($authorId <= 0 || $authorId === (int) ($main['author_id'] ?? 0)) return;
+        notify($authorId, 'roadmap', 'Your idea was grouped with a similar one',
+            '"' . $idea['title'] . '" is now part of "' . $main['title'] . '". Its votes count toward it, and you get credit if it ships.',
+            'fa-solid fa-object-group', '/roadmap#item-' . (int) $main['id']);
+        if (self::eligible($authorId)) Achievements::sync($authorId);
     }
 
     /**

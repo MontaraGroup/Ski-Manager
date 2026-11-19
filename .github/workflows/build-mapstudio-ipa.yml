@@ -1,0 +1,48 @@
+name: Build Ski Manager Map Studio IPA
+
+on:
+  push:
+    paths:
+      - 'ios-admin/**'
+      - '.github/workflows/build-mapstudio-ipa.yml'
+    branches:
+      - main
+      - staging
+      - 'feat/**'
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    name: Compile & Package Map Studio iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Latest Xcode & iPhoneOS SDK
+        run: |
+          LATEST_XCODE=$(find /Applications -maxdepth 1 -name "Xcode*.app" | sort -V | tail -n 1)
+          if [ -n "$LATEST_XCODE" ]; then
+            echo "Selecting Xcode: $LATEST_XCODE"
+            sudo xcode-select -s "$LATEST_XCODE"
+          fi
+          xcodebuild -version
+          
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          SDK_VERSION=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "iPhoneOS SDK Path: $SDK_PATH"
+          echo "iPhoneOS SDK Version: $SDK_VERSION"
+
+      - name: Compile & Package IPA
+        run: |
+          cd ios-admin
+          chmod +x build-ipa.sh
+          ./build-ipa.sh
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MapStudio-iOS-IPA
+          path: ios-admin/build/MapStudio.ipa
+          retention-days: 14

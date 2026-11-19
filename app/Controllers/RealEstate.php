@@ -12,6 +12,12 @@ class RealEstate extends BaseController
 {
     public function index(): string
     {
+        return view('real_estate/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $s = $this->state($userId);
         $isWinter = isWinterDay();
@@ -159,7 +165,7 @@ class RealEstate extends BaseController
             'properties' => $formattedProps,
         ];
 
-        return view('real_estate/index', ['page' => $page]);
+        return $page;
     }
 
     public function develop()

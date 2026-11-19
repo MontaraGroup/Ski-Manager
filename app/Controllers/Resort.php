@@ -11,6 +11,12 @@ class Resort extends BaseController
 {
     public function index(): string
     {
+        return view('resort/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $finance = db_connect()->table('player_finances')->where('user_id', auth()->id())->get()->getRowArray();
         $resort = session()->get('resort') ?? [
@@ -54,11 +60,16 @@ class Resort extends BaseController
         foreach ($sectors as $secNum => $sec) {
             $formattedLifts = array_map(function($lift) use ($cash) {
                 $repairCost = self::liftRepairCost($lift);
+                $lift = ResortMap::withSwaps($lift);
                 return [
                     'id' => (int) $lift['id'],
                     'name' => $lift['name'],
                     'subtype' => $lift['subtype'] ?? 'chairlift',
-                    'subtypeName' => ucwords(str_replace('_', ' ', $lift['subtype'] ?? 'chairlift')),
+                    'subtypeName' => ResortMap::liftLabel((string) ($lift['subtype'] ?? 'chair_fixed'), (int) $lift['seats']),
+                    'seats' => (int) $lift['seats'],
+                    'capacity' => (int) ($lift['capacity'] ?? 0),
+                    'run_cost' => (int) $lift['run_cost'],
+                    'swaps' => $lift['swaps'],
                     'status' => $lift['status'],
                     'condition_pct' => (int) ($lift['condition_pct'] ?? 100),
                     'repair_cost' => $repairCost,
@@ -119,10 +130,11 @@ class Resort extends BaseController
             ],
             'cash' => $cash,
             'cashFormatted' => currency($cash),
+            'isImperial' => isImperial(),
             'sectors' => $formattedSectors,
         ];
 
-        return view('resort/index', ['page' => $page]);
+        return $page;
     }
 
     public function edit()
@@ -221,7 +233,6 @@ class Resort extends BaseController
         $db->table("player_finances")->where("user_id", $userId)->update(["resort_open" => $new]);
         $status = $new ? "opened" : "closed";
         log_activity($userId, "resort_toggle", "Resort " . $status);
-        notify($userId, "resort", "Resort " . $status, "Your resort is now " . $status . ". " . ($new ? "Visitors are arriving!" : "No visitors while closed, but upkeep still applies."), $new ? "fa-solid fa-door-open" : "fa-solid fa-door-closed", "/resort");
         return redirect()->to("/resort")->with("success", "Resort " . $status . "!");
     }
 
