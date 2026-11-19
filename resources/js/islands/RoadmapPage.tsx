@@ -18,6 +18,8 @@ export type RoadmapItem = {
   created_at: string;
   /** Ideas an admin merged into this one: shown inside this card, their votes count here */
   merged?: MergedIdea[];
+  /** Comments on this idea and the ideas merged into it */
+  comments?: number;
 };
 
 export type MergedIdea = {
@@ -46,10 +48,12 @@ export type RoadmapPageProps = {
     signedIn: boolean;
     canVote: boolean;
     canSuggest: boolean;
+    canComment?: boolean;
     earnsRewards: boolean;
     weeklyRewardDone: boolean;
     suggestionsLeft: number;
   };
+  comments?: CommentRules;
   rewards: { voteWeekly: number; ideaShipped: number; perWeek: number };
   releases: { url: string; label: string }[];
 };
@@ -82,7 +86,10 @@ const STATUS_OPTIONS = [
   { id: 'completed', label: 'Shipped' },
 ];
 
-export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, releases }: RoadmapPageProps) {
+type CommentRules = { maxLength: number; perDay: number; editMinutes: number };
+const DEFAULT_COMMENT_RULES: CommentRules = { maxLength: 500, perDay: 10, editMinutes: 15 };
+
+export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, releases, comments }: RoadmapPageProps) {
   const [cols, setCols] = useState(columns);
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState<'votes' | 'newest'>('votes');
@@ -269,6 +276,7 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                           releases={releases}
                           mergeTargets={mergeTargets}
                           betaUrl={col.link?.url ?? null}
+                          comments={{ canComment: Boolean(me.canComment), signedIn: me.signedIn, rules: comments ?? DEFAULT_COMMENT_RULES }}
                         />
                       </li>
                     ))}
@@ -285,7 +293,9 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
 
 type MergeTarget = { id: number; title: string; column: string };
 
-function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets, betaUrl }: {
+type CommentAccess = { canComment: boolean; signedIn: boolean; rules: CommentRules };
+
+function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets, betaUrl, comments }: {
   item: RoadmapItem;
   canVote: boolean;
   busy: boolean;
@@ -294,6 +304,7 @@ function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets
   releases: RoadmapPageProps['releases'];
   mergeTargets: MergeTarget[];
   betaUrl: string | null;
+  comments: CommentAccess;
 }) {
   const shipped = item.status === 'completed';
   return (
@@ -333,6 +344,7 @@ function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets
           )}
         </p>
         {item.merged && item.merged.length > 0 && <MergedList ideas={item.merged} isAdmin={isAdmin} />}
+        <CommentThread itemId={item.id} title={item.title} initialCount={item.comments ?? 0} access={comments} />
         {isAdmin && <AdminControls item={item} releases={releases} mergeTargets={mergeTargets} />}
       </div>
     </article>
@@ -382,6 +394,170 @@ function MergedList({ ideas, isAdmin }: { ideas: MergedIdea[]; isAdmin: boolean 
         ))}
       </ul>
       {error && <p role="alert" className="px-3 pb-2 text-xs text-danger">Not split out. Try again.</p>}
+    </details>
+  );
+}
+
+type RoadmapComment = {
+  id: number;
+  author: string;
+  body: string;
+  created: string;
+  edited: boolean;
+  mine: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+};
+
+/** "Nov 19" style date for a comment, from the server's "Y-m-d H:i:s" */
+function commentDate(created: string) {
+  const d = new Date(created.replace(' ', 'T'));
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/** Comments under an idea: loaded the first time the thread is opened */
+function CommentThread({ itemId, title, initialCount, access }: { itemId: number; title: string; initialCount: number; access: CommentAccess }) {
+  const [count, setCount] = useState(initialCount);
+  const [list, setList] = useState<RoadmapComment[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: number; body: string } | null>(null);
+  const { maxLength, editMinutes } = access.rules;
+
+  const load = async () => {
+    if (list !== null) return;
+    setLoadFailed(false);
+    const res = await fetch(`/roadmap/comments/${itemId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => null);
+    const data = res ? await res.json().catch(() => null) : null;
+    if (data?.success) setList(data.comments);
+    else setLoadFailed(true);
+  };
+
+  const send = async (url: string, fields: Record<string, string>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await postAdmin(url, fields);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        setError(data?.message ?? 'That did not go through. Try again.');
+        return null;
+      }
+      return data;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const post = async () => {
+    const body = draft.trim();
+    if (!body) return;
+    const data = await send(`/roadmap/comments/${itemId}`, { body });
+    if (!data) return;
+    setList((prev) => [...(prev ?? []), data.comment]);
+    setCount(data.count);
+    setDraft('');
+  };
+
+  const saveEdit = async () => {
+    if (!editing || !editing.body.trim()) return;
+    const data = await send(`/roadmap/comment/${editing.id}/edit`, { body: editing.body.trim() });
+    if (!data) return;
+    setList((prev) => (prev ?? []).map((c) => (c.id === editing.id ? data.comment : c)));
+    setEditing(null);
+  };
+
+  const remove = async (c: RoadmapComment) => {
+    if (!window.confirm('Delete this comment?')) return;
+    const data = await send(`/roadmap/comment/${c.id}/delete`, {});
+    if (!data) return;
+    setList((prev) => (prev ?? []).filter((x) => x.id !== c.id));
+    setCount((n) => Math.max(0, n - 1));
+  };
+
+  return (
+    <details className="group text-sm" onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) load(); }}>
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 font-medium text-muted hover:text-foreground">
+        <Icon name="fa-comment" />
+        {count === 0 ? 'Comment' : count === 1 ? '1 comment' : `${count} comments`}
+        <Icon name="fa-chevron-down" className="text-xs transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-3 border-t border-border pt-3">
+        {list === null && !loadFailed && <p className="text-xs text-muted">Loading comments</p>}
+        {loadFailed && (
+          <p className="text-xs text-danger">
+            Comments did not load.{' '}
+            <button type="button" className="min-h-11 font-medium underline" onClick={load}>Try again</button>
+          </p>
+        )}
+        {list !== null && list.length === 0 && <p className="text-xs text-muted">No comments yet.</p>}
+        {list !== null && list.length > 0 && (
+          <ul className="space-y-3">
+            {list.map((c) => (
+              <li key={c.id} className="space-y-1">
+                <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted">
+                  <span className="font-semibold text-foreground">{c.author}</span>
+                  <span>{commentDate(c.created)}</span>
+                  {c.edited && <span>edited</span>}
+                </p>
+                {editing?.id === c.id ? (
+                  <form onSubmit={(e) => { e.preventDefault(); saveEdit(); }} className="space-y-2">
+                    <textarea
+                      aria-label="Edit your comment"
+                      value={editing.body}
+                      maxLength={maxLength}
+                      rows={3}
+                      onChange={(e) => setEditing({ id: c.id, body: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-field px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-accent"
+                    />
+                    <div className="flex gap-2">
+                      <Button type="submit" size="sm" variant="secondary" isDisabled={busy || !editing.body.trim()} className="min-h-11">Save</Button>
+                      <Button size="sm" variant="ghost" onPress={() => setEditing(null)} className="min-h-11">Cancel</Button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="whitespace-pre-line break-words leading-relaxed">{c.body}</p>
+                )}
+                {editing?.id !== c.id && (c.canEdit || c.canDelete) && (
+                  <div className="flex gap-1">
+                    {c.canEdit && (
+                      <Button size="sm" variant="ghost" className="min-h-11" isDisabled={busy} onPress={() => setEditing({ id: c.id, body: c.body })}>Edit</Button>
+                    )}
+                    {c.canDelete && (
+                      <Button size="sm" variant="ghost" className="min-h-11 text-danger" isDisabled={busy} onPress={() => remove(c)}>Delete</Button>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {access.canComment ? (
+          <form onSubmit={(e) => { e.preventDefault(); post(); }} className="space-y-2">
+            <textarea
+              aria-label={`Comment on ${title}`}
+              value={draft}
+              maxLength={maxLength}
+              rows={2}
+              placeholder="What would make this work for your resort?"
+              onChange={(e) => setDraft(e.target.value)}
+              className="w-full rounded-lg border border-border bg-field px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-accent"
+            />
+            <div className="flex items-center gap-3">
+              <Button type="submit" size="sm" variant="primary" isDisabled={busy || !draft.trim()} className="min-h-11">Post comment</Button>
+              <span className="text-xs tabular-nums text-muted">{draft.length}/{maxLength}</span>
+            </div>
+            <p className="text-xs text-muted">You can edit a comment for {editMinutes} minutes after posting.</p>
+          </form>
+        ) : (
+          <p className="text-xs text-muted">
+            {access.signedIn ? 'Finish setting up your resort with a full account to comment.' : <><a href="/login" className="font-medium text-accent hover:underline">Sign in</a> to comment.</>}
+          </p>
+        )}
+        {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      </div>
     </details>
   );
 }
