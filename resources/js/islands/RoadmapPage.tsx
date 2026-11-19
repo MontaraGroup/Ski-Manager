@@ -8,7 +8,7 @@ export type RoadmapItem = {
   id: number;
   title: string;
   description: string;
-  status: 'suggested' | 'planned' | 'in_progress' | 'completed' | string;
+  status: 'suggested' | 'planned' | 'in_progress' | 'in_beta' | 'completed' | string;
   category: string;
   upvotes: number;
   author: string;
@@ -34,6 +34,8 @@ export type RoadmapColumn = {
   description: string;
   icon: string;
   items: RoadmapItem[];
+  /** "In beta" only: where players join the in-game beta program */
+  link?: { url: string; label: string };
 };
 
 export type RoadmapPageProps = {
@@ -66,6 +68,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   mobile: 'Mobile',
 };
 const STATUS_TONE: Record<string, string> = {
+  in_beta: 'text-accent',
   in_progress: 'text-accent',
   planned: 'text-foreground',
   suggested: 'text-warning',
@@ -75,6 +78,7 @@ const STATUS_OPTIONS = [
   { id: 'suggested', label: 'Idea' },
   { id: 'planned', label: 'Planned' },
   { id: 'in_progress', label: 'In progress' },
+  { id: 'in_beta', label: 'In beta' },
   { id: 'completed', label: 'Shipped' },
 ];
 
@@ -244,6 +248,12 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                   <span className="text-sm tabular-nums text-muted">{items.length}</span>
                   <p className="ml-auto hidden text-xs text-muted sm:block">{col.description}</p>
                 </div>
+                {col.link && items.length > 0 && (
+                  <a href={col.link.url} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-medium text-accent hover:underline">
+                    <Icon name="fa-flask" />
+                    {col.link.label}
+                  </a>
+                )}
                 {items.length === 0 ? (
                   <p className="py-3 text-sm text-muted">Nothing here{category !== 'all' ? ' in this category' : ''} yet.</p>
                 ) : (
@@ -258,6 +268,7 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                           isAdmin={isAdmin}
                           releases={releases}
                           mergeTargets={mergeTargets}
+                          betaUrl={col.link?.url ?? null}
                         />
                       </li>
                     ))}
@@ -274,7 +285,7 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
 
 type MergeTarget = { id: number; title: string; column: string };
 
-function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets }: {
+function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets, betaUrl }: {
   item: RoadmapItem;
   canVote: boolean;
   busy: boolean;
@@ -282,6 +293,7 @@ function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets
   isAdmin: boolean;
   releases: RoadmapPageProps['releases'];
   mergeTargets: MergeTarget[];
+  betaUrl: string | null;
 }) {
   const shipped = item.status === 'completed';
   return (
@@ -313,6 +325,9 @@ function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>{CATEGORY_LABEL[item.category] ?? item.category}</span>
           <span>Suggested by <span className="text-foreground">{item.author}</span></span>
+          {item.status === 'in_beta' && betaUrl && (
+            <a href={betaUrl} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">Try it in the beta</a>
+          )}
           {shipped && item.updatesUrl && (
             <a href={item.updatesUrl} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">Release notes</a>
           )}

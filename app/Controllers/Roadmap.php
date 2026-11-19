@@ -270,8 +270,12 @@ class Roadmap extends BaseController
         }
     }
 
+    /** Where players join the in-game beta program, linked from "In beta" items */
+    public const BETA_URL = '/beta';
+
     /** Statuses in page order, with how the page describes them */
     private const STATUSES = [
+        'in_beta'     => ['In beta', 'Playable now in the beta program, before it ships to everyone.', 'fa-flask'],
         'in_progress' => ['In progress', 'Being designed, built or tested now.', 'fa-code'],
         'planned'     => ['Planned', 'Accepted and queued for a coming update.', 'fa-compass'],
         'suggested'   => ['Ideas', 'Suggested by players. The most-voted ones get reviewed first.', 'fa-lightbulb'],
@@ -362,6 +366,8 @@ class Roadmap extends BaseController
         $columns = [];
         foreach (self::STATUSES as $key => [$title, $desc, $icon]) {
             $columns[$key] = ['status' => $key, 'title' => $title, 'description' => $desc, 'icon' => $icon, 'items' => []];
+            // Items in beta can be tried now: the column links to the in-game beta program
+            if ($key === 'in_beta') $columns[$key]['link'] = ['url' => self::BETA_URL, 'label' => 'Try it in the beta program'];
         }
         foreach ($items as $item) {
             $status = isset($columns[$item['status']]) ? $item['status'] : 'planned';
@@ -579,7 +585,7 @@ class Roadmap extends BaseController
 
         $previous = (string) $item['status'];
         $item = array_merge($item, $update);
-        if ($previous === 'suggested' && in_array($status, ['planned', 'in_progress', 'completed'], true)) {
+        if ($previous === 'suggested' && in_array($status, ['planned', 'in_progress', 'in_beta', 'completed'], true)) {
             RoadmapRewards::onAccepted($item);
             $told = [(int) ($item['author_id'] ?? 0) => true];
             foreach ($merged as $m) {
