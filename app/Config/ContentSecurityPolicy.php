@@ -191,6 +191,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://pagead2.googlesyndication.com',
         'https://*.doubleclick.net',
         'https://static.cloudflareinsights.com',
+        'https://fundingchoicesmessages.google.com',
+        'https://*.fundingchoicesmessages.google.com',
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://*.adtrafficquality.google',

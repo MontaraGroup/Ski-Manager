@@ -333,9 +333,9 @@ export default function HomePage({
           <div className="lg:col-span-6 space-y-2">
             <a
               href={isLoggedIn ? '/map' : '/register'}
-              className="block rounded-2xl overflow-hidden border border-border shadow-xl hover:border-primary/50 transition-all group"
+              className="block aspect-[600/340] w-full rounded-2xl overflow-hidden border border-border shadow-xl hover:border-primary/50 transition-all group bg-card"
             >
-              <picture>
+              <picture className="block w-full h-full">
               {parkCityHasWebp('low') && <source type="image/webp" srcSet="/img/ParkCity_low.webp" />}
               <img
                 src="/img/ParkCity_low.jpg"
@@ -344,7 +344,7 @@ export default function HomePage({
                 height={340}
                 loading="lazy"
                 decoding="async"
-                className="w-full object-cover group-hover:scale-102 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
               />
               </picture>
             </a>

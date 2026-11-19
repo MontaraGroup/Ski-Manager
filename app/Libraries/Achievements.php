@@ -151,7 +151,7 @@ class Achievements
         $vips = $count('vip_guests');
         $roadmapVotes = $db->tableExists('roadmap_vote_history') ? $count('roadmap_vote_history') : 0;
         $ideas = fn(array $statuses) => $db->table('roadmap_items')->where('author_id', $userId)->whereIn('status', $statuses)->countAllResults();
-        $ideasAccepted = $ideas(['planned', 'in_progress', 'completed']);
+        $ideasAccepted = $ideas(['planned', 'in_progress', 'in_beta', 'completed']);
         $ideasShipped = $ideas(['completed']);
 
         return [

@@ -1,0 +1,5 @@
+Contact: mailto:security@ski-manager.net
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://ski-manager.net/.well-known/security.txt
+Policy: https://ski-manager.net/terms
