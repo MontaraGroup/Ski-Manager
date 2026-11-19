@@ -50,7 +50,7 @@ The server also logs IP addresses for rate limits and security, and the website 
 
 ## Google Play Games
 
-Project ID `661843131336` is in `app/src/main/res/values/play_games.xml`. The app signs in through Play Games at launch and mirrors the game from `GET api/v1/app/play-games`.
+Project ID `479519104582` (Cloud project `ski-manager-496921`) is in `app/src/main/res/values/play_games.xml`. The app signs in through Play Games at launch and mirrors the game from `GET api/v1/app/play-games`.
 
 - **Credential:** the Android credential in Play Games Services must use the SHA-1 of Play's **app signing** key (Setup > App signing), or sign-in fails on store installs.
 - **Leaderboard:** create one named "Resort score". Its resource is `leaderboard_resort_score`.
