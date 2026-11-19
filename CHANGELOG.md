@@ -1,3 +1,19 @@
+## Release 2026-11-19 02:14
+
+* Merge branch 'MontaraGroup:main' into main (5bcc3d71)
+* Merge pull request #118 from Montara-Group/feat/android-feedback (82e2b40a)
+* fix(android): encode feedback screenshots off the main thread (f016187d)
+* fix(feedback): delete a player's feedback screenshots with their account (e9382d6b)
+* fix(feedback): cap screenshots at 2 MB to match PHP's upload limit (cd37c92f)
+
+## Release 2026-11-18 13:47
+
+* Merge pull request #116 from Montara-Group/feat/android-native-pages (b99430f3)
+* fix(android): More tab returns to its list; debug builds can target a local server (984328ca)
+* Merge pull request #115 from Montara-Group/fix/alliance-manage-member-route (1272f15b)
+* fix(alliances): point member-management buttons at manage-member route (b38bfcd9)
+* feat(android): native screens for every website page (bf721cee)
+
 ## Release 2026-11-18 03:41
 
 * Merge pull request #114 from Montara-Group/main (7a158a09)
