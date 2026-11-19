@@ -98,14 +98,14 @@ export default function SeasonVoteDialog({ state }: { state: SeasonVoteState }) 
               <SeasonChoiceFields compact locked={locked} order={state.order} choice={choice} onChoice={(c) => { setChoice(c); setError(undefined); }} comment={comment} onComment={setComment} error={error} />
             )}
             {!done && locked && (
-              <button
-                type="button"
-                onClick={() => body.current?.scrollTo({ top: body.current.scrollHeight, behavior: 'smooth' })}
-                className="sticky bottom-0 -mx-1 mt-2 flex min-h-11 w-[calc(100%+0.5rem)] items-center justify-center gap-2 rounded-lg border border-border bg-surface-secondary px-3 text-sm font-medium shadow-md"
+              <Button
+                variant="secondary"
+                onPress={() => body.current?.scrollTo({ top: body.current.scrollHeight, behavior: 'smooth' })}
+                className="sticky bottom-0 -mx-1 mt-2 min-h-11 w-[calc(100%+0.5rem)] border border-border bg-surface-secondary shadow-md"
               >
                 <Icon name="fa-arrow-down" className="text-accent-soft-foreground" />
                 Scroll down to read both options, then pick one
-              </button>
+              </Button>
             )}
           </Modal.Body>
           <Modal.Footer className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
