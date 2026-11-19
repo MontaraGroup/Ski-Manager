@@ -1,3 +1,11 @@
+## Release 2026-11-19 23:51
+
+* Merge branch 'MontaraGroup:main' into main (1f0efed8)
+* Merge pull request #131 from Montara-Group/feat/heroui-shared-components (6e70f799)
+* build: rebuild islands for HeroUI shared components (a55e5251)
+* feat(ui): shared page blocks use HeroUI components (b8f4fc00)
+* Merge pull request #130 from Montara-Group/feat/roadmap-comments (9a5a7159)
+
 ## Release 2026-11-19 18:14
 
 * Merge branch 'MontaraGroup:main' into main (61b8188c)
