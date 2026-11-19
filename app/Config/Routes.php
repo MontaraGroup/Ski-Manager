@@ -34,7 +34,6 @@ $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/admin/season-vote", "Admin::seasonVote");
 $routes->post("/admin/season-vote/settings", "Admin::saveSeasonVote");
 $routes->get("/admin/android-testing", "Admin::androidTesting");
-$routes->post("/admin/android-testing/codes", "Admin::androidTestingCodes");
 $routes->post("/admin/android-testing/link", "Admin::androidTestingLink");
 $routes->post("/admin/android-testing/notify", "Admin::androidTestingNotify");
 $routes->get("/admin/resort-vote", "Admin::resortVote");
@@ -172,7 +171,6 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->post('resort-vote/retract', 'ResortVote::retract');
     // Beta program (App\Libraries\Beta): join, leave, per-feature switch, feedback
     $routes->post('beta/join', 'Beta::join');
-    $routes->post('beta/android/claim', 'Beta::androidClaim');
     $routes->post('beta/leave', 'Beta::leave');
     $routes->post('beta/feature/(:segment)', 'Beta::feature/$1');
     $routes->post('beta/feedback/(:segment)', 'Beta::feedback/$1');
@@ -452,6 +450,7 @@ $routes->post('auth/activate-submit', 'AuthActivation::submit');
 // GET is the page (pageData), POST runs the web controller's action through AppPage::act.
 $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App', 'filter' => 'apptoken'], static function ($routes) {
     $routes->get('menu', 'Menu::show');
+    $routes->get('play-games', 'PlayGames::show');
     $routes->get('achievements', 'Achievements::show');
     $routes->post('achievements/claim/(:num)', 'Achievements::act/claim/$1');
     $routes->post('achievements/claim-all', 'Achievements::act/claimAll');

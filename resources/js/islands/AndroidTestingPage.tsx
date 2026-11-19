@@ -1,41 +1,74 @@
-import { useState } from 'react';
-import { Button, toast } from '@heroui/react';
+import type { ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
-import { Empty, Page, Panel } from '@/components/Page';
-import { api, ApiError } from '@/lib/api';
+import { Page, Panel } from '@/components/Page';
+
+export type TesterReward = { days: number; needed: number; genepis: number; cap: number; left: number; paid: boolean };
 
 export type AndroidTestingState = {
   eligible: boolean;
-  code: string | null;
-  claimedAt: string | null;
-  available: boolean;
+  groupUrl: string;
   joinUrl: string;
+  reward: TesterReward;
 };
 
-/** /beta/android: one Google Play access code per player for the Android app's closed test */
-export default function AndroidTestingPage(props: AndroidTestingState) {
-  const [state, setState] = useState<AndroidTestingState>(props);
-  const [busy, setBusy] = useState(false);
+const linkButton =
+  'mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 md:min-h-9';
 
-  async function claim() {
-    setBusy(true);
-    try {
-      setState(await api<AndroidTestingState>('beta/android/claim', { method: 'POST', body: {} }));
-    } catch (e) {
-      toast.danger(e instanceof ApiError && e.status !== 500 ? e.message : "That didn't work. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
+function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-default text-sm font-semibold tabular-nums" aria-hidden="true">
+        {n}
+      </span>
+      <div className="min-w-0 text-sm text-foreground">
+        <p className="font-semibold">{title}</p>
+        {children}
+      </div>
+    </li>
+  );
+}
 
-  function copy() {
-    if (!state.code) return;
-    navigator.clipboard.writeText(state.code).then(
-      () => toast.success('Code copied.'),
-      () => toast.danger("Couldn't copy. Select the code and copy it yourself."),
-    );
-  }
+function NotUpYet() {
+  return <p className="mt-1 text-muted">The link isn't up yet. Check back soon.</p>;
+}
 
+/** Progress toward the tester reward: days the Android app was used, out of the days needed */
+function RewardPanel({ reward }: { reward: TesterReward }) {
+  const pct = Math.min(100, Math.round((reward.days / reward.needed) * 100));
+  return (
+    <Panel title={`Tester reward: ${reward.genepis} Génépis`}>
+      {reward.paid ? (
+        <p className="text-sm text-foreground">You earned your {reward.genepis} Génépis. Thanks for testing.</p>
+      ) : (
+        <>
+          <p className="text-sm text-foreground">
+            The first {reward.cap} testers to open the app on {reward.needed} different days get {reward.genepis} Génépis.{' '}
+            {reward.left > 0 ? `${reward.left} of ${reward.cap} rewards left.` : 'All rewards are taken, but your testing still counts toward the launch.'}
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div
+              className="h-2 flex-1 overflow-hidden rounded-full bg-default"
+              role="progressbar"
+              aria-label="Days you used the Android app"
+              aria-valuemin={0}
+              aria-valuemax={reward.needed}
+              aria-valuenow={Math.min(reward.days, reward.needed)}
+            >
+              <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="text-sm tabular-nums text-muted">
+              {Math.min(reward.days, reward.needed)} / {reward.needed} days
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted">A day counts when you open the Android app signed in to your account.</p>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/** /beta/android: join the testers Google Group, then opt in to the closed test on Google Play */
+export default function AndroidTestingPage({ eligible, groupUrl, joinUrl, reward }: AndroidTestingState) {
   return (
     <Page
       title="Test the Android app"
@@ -44,66 +77,45 @@ export default function AndroidTestingPage(props: AndroidTestingState) {
       width="max-w-3xl"
       subtitle="Get Ski Manager on Google Play before it's public. Google needs 12 testers for 14 days in a row before the app can go public."
     >
-      {!state.eligible ? (
+      {!eligible ? (
         <Panel>
-          <p className="text-sm text-muted">Demo accounts can't join the test. Create a free account to get a tester code.</p>
-        </Panel>
-      ) : !state.code && !state.available ? (
-        <Empty icon="fa-mobile-screen" title="No tester codes left right now.">
-          More are on the way. Check back in a few days.
-        </Empty>
-      ) : !state.code ? (
-        <Panel>
-          <p className="mb-3 text-sm text-foreground">You need an Android phone and a Google account.</p>
-          <Button variant="primary" onPress={claim} isDisabled={busy} className="min-h-11 md:min-h-9">
-            Get my tester code
-          </Button>
+          <p className="text-sm text-muted">Demo accounts can't join the test. Create a free account to take part.</p>
         </Panel>
       ) : (
-        <>
-          <Panel title="Your access code">
-            <div className="flex flex-wrap items-center gap-3">
-              <code className="select-all break-all rounded-md bg-default px-3 py-2 font-mono text-lg font-semibold tracking-wide text-foreground">
-                {state.code}
-              </code>
-              <Button variant="secondary" onPress={copy} className="min-h-11 md:min-h-9">
-                <Icon name="fa-copy" /> Copy
-              </Button>
-            </div>
-            <p className="mt-2 text-sm text-muted">This code is yours. It stays here if you come back later.</p>
-            {state.joinUrl && (
-              <a
-                href={state.joinUrl}
-                target="_blank"
-                rel="noopener"
-                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 md:min-h-9"
-              >
-                <Icon name="fa-brands fa-google-play" /> Join the test on Google Play
-              </a>
-            )}
-          </Panel>
-
-          <Panel title="How to join">
-            <ol className="list-decimal space-y-2 pl-5 text-sm text-foreground">
-              <li>
-                On your Android phone, open the test link and sign in with your Google account.
-                {state.joinUrl ? (
-                  <>
-                    {' '}
-                    <a href={state.joinUrl} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center font-medium text-accent-soft-foreground underline sm:min-h-0">
-                      Open the test link
-                    </a>
-                  </>
-                ) : (
-                  <span className="text-muted"> The link isn't up yet. Your code will work once it is.</span>
-                )}
-              </li>
-              <li>Enter your tester code when Google Play asks for it.</li>
-              <li>Install Ski Manager from Google Play.</li>
-              <li>Keep the app installed and play for at least 14 days. Leaving the test early resets your 14 days.</li>
-            </ol>
-          </Panel>
-        </>
+        <div className="flex flex-col gap-6">
+        <RewardPanel reward={reward} />
+        <Panel title="How to join">
+          <p className="mb-4 text-sm text-muted">You need an Android phone. Use the same Google account in every step.</p>
+          <ol className="flex flex-col gap-5">
+            <Step n={1} title="Join the testers group">
+              <p className="mt-1 text-muted">Google only lets group members into the test.</p>
+              {groupUrl ? (
+                <a href={groupUrl} target="_blank" rel="noopener" className={linkButton}>
+                  <Icon name="fa-users" /> Join the Google Group
+                </a>
+              ) : (
+                <NotUpYet />
+              )}
+            </Step>
+            <Step n={2} title="Become a tester">
+              <p className="mt-1 text-muted">Open the test page and press "Become a tester".</p>
+              {joinUrl ? (
+                <a href={joinUrl} target="_blank" rel="noopener" className={linkButton}>
+                  <Icon name="fa-brands fa-google-play" /> Open the test on Google Play
+                </a>
+              ) : (
+                <NotUpYet />
+              )}
+            </Step>
+            <Step n={3} title="Install Ski Manager">
+              <p className="mt-1 text-muted">Use the download link on the test page, or search Ski Manager in the Play Store. Sign in with your ski-manager.net account.</p>
+            </Step>
+            <Step n={4} title="Keep it for 14 days">
+              <p className="mt-1 text-muted">Keep the app installed and open it on 14 different days. Leaving the test early resets Google's 14 days.</p>
+            </Step>
+          </ol>
+        </Panel>
+        </div>
       )}
     </Page>
   );

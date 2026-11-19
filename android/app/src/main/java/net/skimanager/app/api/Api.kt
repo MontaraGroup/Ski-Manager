@@ -75,6 +75,8 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
         val token = tokens()
         token?.let { builder.header("Authorization", "Bearer $it") }
         builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
+            // The server counts days of Android app use for the closed-test reward (AppToken filter)
+            .header("X-Client", "android/${BuildConfig.VERSION_CODE}")
         val request = builder.build()
         val started = System.currentTimeMillis()
         try {
