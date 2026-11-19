@@ -28,6 +28,7 @@ Based on what this version of the app does. Check them against the current code 
 | App activity | In-game actions (buildings, staff, prices): collected, required, for app functionality |
 | Identifiers, location, contacts, photos, financial info, health | Not collected by the app |
 | Crash logs, analytics | Not collected by the app; it has no analytics or crash SDK |
+| Google Play Games | Achievements and the resort score go to Play Games for players signed in to it. Play Games itself is Google's service; check its data disclosure guidance when filling in the form |
 | Encrypted in transit | Yes, HTTPS only |
 | Can users request deletion? | Yes, in the app under Settings > Delete account, and on the website under Settings |
 
@@ -46,3 +47,12 @@ The server also logs IP addresses for rate limits and security, and the website 
 - Phone screenshots: at least 2, from a real build
 - Short description (up to 80 characters) and full description (up to 4000)
 - Content rating questionnaire and target audience answers
+
+## Google Play Games
+
+Project ID `661843131336` is in `app/src/main/res/values/play_games.xml`. The app signs in through Play Games at launch and mirrors the game from `GET api/v1/app/play-games`.
+
+- **Credential:** the Android credential in Play Games Services must use the SHA-1 of Play's **app signing** key (Setup > App signing), or sign-in fails on store installs.
+- **Leaderboard:** create one named "Resort score". Its resource is `leaderboard_resort_score`.
+- **Achievements:** give each one the same name as on the site (for example "First Fortune"). Then use **Get resources** in Play Console and paste the `achievement_*` and `leaderboard_*` lines into `play_games.xml`. Achievements that aren't listed are skipped.
+- **Testers:** add tester accounts under Play Games Services > Testers until the achievements and leaderboard are published.

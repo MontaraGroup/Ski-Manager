@@ -260,6 +260,7 @@ fun SettingsScreen(app: AppState) {
                     scope.launch { app.api.post("settings/units", mapOf("units" to key)); reload() }
                 }
             }
+            PlayGamesPanel(app)
             Panel("Feedback") {
                 val open = LocalOpen.current
                 Row(
