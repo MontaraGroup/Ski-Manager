@@ -1,3 +1,11 @@
+## Release 2026-11-19 16:33
+
+* Merge branch 'MontaraGroup:main' into main (c15c260a)
+* Merge pull request #123 from Montara-Group/feat/android-play-games (19ed4a14)
+* feat(android): Google Play Games sign-in, achievements and leaderboard (33a0a082)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (04f70d4a)
+* Merge branch 'MontaraGroup:main' into main (69693135)
+
 ## Release 2026-11-19 13:38
 
 * Merge branch 'MontaraGroup:main' into main (69693135)
