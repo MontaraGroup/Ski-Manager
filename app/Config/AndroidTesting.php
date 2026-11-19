@@ -14,5 +14,5 @@ class AndroidTesting extends BaseConfig
     public string $joinUrl = '';
 
     /** The Google Group whose members are the testers, added to the closed track in Play Console, or '' */
-    public string $groupUrl = '';
+    public string $groupUrl = 'https://groups.google.com/g/ski-manager';
 }
