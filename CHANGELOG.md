@@ -1,3 +1,11 @@
+## Release 2026-11-19 13:38
+
+* Merge branch 'MontaraGroup:main' into main (69693135)
+* Merge pull request #122 from Montara-Group/feat/android-beta-invite (1512f700)
+* feat(beta): notify players about the Android test; /beta/android shows the code right away (c9b77c9b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3310db6d)
+* Merge pull request #121 from Montara-Group/main (bee40db0)
+
 ## Release 2026-11-19 04:08
 
 * Merge branch 'MontaraGroup:main' into main (abbee588)
