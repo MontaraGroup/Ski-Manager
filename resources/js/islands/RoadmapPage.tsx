@@ -8,7 +8,7 @@ export type RoadmapItem = {
   id: number;
   title: string;
   description: string;
-  status: 'suggested' | 'planned' | 'in_progress' | 'completed' | string;
+  status: 'suggested' | 'planned' | 'in_progress' | 'in_beta' | 'completed' | string;
   category: string;
   upvotes: number;
   author: string;
@@ -16,6 +16,16 @@ export type RoadmapItem = {
   voted: boolean;
   updatesUrl: string | null;
   created_at: string;
+  /** Ideas an admin merged into this one: shown inside this card, their votes count here */
+  merged?: MergedIdea[];
+};
+
+export type MergedIdea = {
+  id: number;
+  title: string;
+  description: string;
+  author: string;
+  mine: boolean;
 };
 
 export type RoadmapColumn = {
@@ -24,6 +34,8 @@ export type RoadmapColumn = {
   description: string;
   icon: string;
   items: RoadmapItem[];
+  /** "In beta" only: where players join the in-game beta program */
+  link?: { url: string; label: string };
 };
 
 export type RoadmapPageProps = {
@@ -56,6 +68,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   mobile: 'Mobile',
 };
 const STATUS_TONE: Record<string, string> = {
+  in_beta: 'text-accent',
   in_progress: 'text-accent',
   planned: 'text-foreground',
   suggested: 'text-warning',
@@ -65,6 +78,7 @@ const STATUS_OPTIONS = [
   { id: 'suggested', label: 'Idea' },
   { id: 'planned', label: 'Planned' },
   { id: 'in_progress', label: 'In progress' },
+  { id: 'in_beta', label: 'In beta' },
   { id: 'completed', label: 'Shipped' },
 ];
 
@@ -76,11 +90,18 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
   const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [weeklyDone, setWeeklyDone] = useState(me.weeklyRewardDone);
 
-  // Arriving from a notification or the dashboard (#item-12): bring that card into view
+  // Arriving from a notification or the dashboard (#item-12): bring that card into view.
+  // A merged idea sits in its main card's collapsed list, so open that list first.
   useEffect(() => {
     const el = window.location.hash ? document.getElementById(window.location.hash.slice(1)) : null;
+    el?.closest('details')?.setAttribute('open', '');
     el?.scrollIntoView({ block: 'center' });
   }, []);
+
+  const mergeTargets = useMemo(
+    () => cols.flatMap((c) => c.items.map((it) => ({ id: it.id, title: it.title, column: c.title }))),
+    [cols],
+  );
 
   const myVotes = useMemo(() => cols.reduce((n, c) => n + c.items.filter((i) => i.voted).length, 0), [cols]);
 
@@ -227,6 +248,12 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                   <span className="text-sm tabular-nums text-muted">{items.length}</span>
                   <p className="ml-auto hidden text-xs text-muted sm:block">{col.description}</p>
                 </div>
+                {col.link && items.length > 0 && (
+                  <a href={col.link.url} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-medium text-accent hover:underline">
+                    <Icon name="fa-flask" />
+                    {col.link.label}
+                  </a>
+                )}
                 {items.length === 0 ? (
                   <p className="py-3 text-sm text-muted">Nothing here{category !== 'all' ? ' in this category' : ''} yet.</p>
                 ) : (
@@ -240,6 +267,8 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                           onVote={() => vote(it.id)}
                           isAdmin={isAdmin}
                           releases={releases}
+                          mergeTargets={mergeTargets}
+                          betaUrl={col.link?.url ?? null}
                         />
                       </li>
                     ))}
@@ -254,13 +283,17 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
   );
 }
 
-function ItemCard({ item, canVote, busy, onVote, isAdmin, releases }: {
+type MergeTarget = { id: number; title: string; column: string };
+
+function ItemCard({ item, canVote, busy, onVote, isAdmin, releases, mergeTargets, betaUrl }: {
   item: RoadmapItem;
   canVote: boolean;
   busy: boolean;
   onVote: () => void;
   isAdmin: boolean;
   releases: RoadmapPageProps['releases'];
+  mergeTargets: MergeTarget[];
+  betaUrl: string | null;
 }) {
   const shipped = item.status === 'completed';
   return (
@@ -292,14 +325,73 @@ function ItemCard({ item, canVote, busy, onVote, isAdmin, releases }: {
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>{CATEGORY_LABEL[item.category] ?? item.category}</span>
           <span>Suggested by <span className="text-foreground">{item.author}</span></span>
+          {item.status === 'in_beta' && betaUrl && (
+            <a href={betaUrl} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">Try it in the beta</a>
+          )}
           {shipped && item.updatesUrl && (
             <a href={item.updatesUrl} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">Release notes</a>
           )}
         </p>
-        {isAdmin && <AdminControls item={item} releases={releases} />}
+        {item.merged && item.merged.length > 0 && <MergedList ideas={item.merged} isAdmin={isAdmin} />}
+        {isAdmin && <AdminControls item={item} releases={releases} mergeTargets={mergeTargets} />}
       </div>
     </article>
   );
+}
+
+function MergedList({ ideas, isAdmin }: { ideas: MergedIdea[]; isAdmin: boolean }) {
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [error, setError] = useState(false);
+
+  const splitOut = async (idea: MergedIdea) => {
+    if (!window.confirm(`Split "${idea.title}" out into its own idea again? It gets back its own votes.`)) return;
+    setBusyId(idea.id);
+    setError(false);
+    const res = await postAdmin('/roadmap/admin/unmerge', { id: String(idea.id) });
+    if (res.ok) window.location.reload();
+    else {
+      setError(true);
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <details className="group rounded-lg border border-border bg-default/40 text-sm">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 font-medium">
+        <Icon name="fa-object-group" className="text-muted" />
+        {ideas.length === 1 ? '1 similar idea grouped here' : `${ideas.length} similar ideas grouped here`}
+        <Icon name="fa-chevron-down" className="ml-auto text-xs text-muted transition-transform group-open:rotate-180" />
+      </summary>
+      <ul className="divide-y divide-border border-t border-border">
+        {ideas.map((m) => (
+          <li key={m.id} id={`item-${m.id}`} className="scroll-mt-24 space-y-1 px-3 py-2 target:bg-accent/10">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-medium">{m.title}</span>
+              {m.mine && <Chip size="sm" color="accent" variant="soft">Your idea</Chip>}
+            </div>
+            {m.description && <p className="text-xs leading-relaxed text-muted">{m.description}</p>}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span>Suggested by <span className="text-foreground">{m.author}</span></span>
+              {isAdmin && (
+                <Button size="sm" variant="ghost" className="ml-auto min-h-11" isDisabled={busyId !== null} onPress={() => splitOut(m)}>
+                  Split out
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && <p role="alert" className="px-3 pb-2 text-xs text-danger">Not split out. Try again.</p>}
+    </details>
+  );
+}
+
+async function postAdmin(url: string, fields: Record<string, string>) {
+  const { field, token } = csrf();
+  const fd = new FormData();
+  fd.append(field, token);
+  Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
+  return fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
 }
 
 function SuggestForm({ left, perWeek }: { left: number; perWeek: number }) {
@@ -348,10 +440,34 @@ function SuggestForm({ left, perWeek }: { left: number; perWeek: number }) {
   );
 }
 
-function AdminControls({ item, releases }: { item: RoadmapItem; releases: RoadmapPageProps['releases'] }) {
+function AdminControls({ item, releases, mergeTargets }: {
+  item: RoadmapItem;
+  releases: RoadmapPageProps['releases'];
+  mergeTargets: MergeTarget[];
+}) {
   const [status, setStatus] = useState(item.status);
   const [release, setRelease] = useState(item.updatesUrl ?? '');
   const [state, setState] = useState<'idle' | 'saving' | 'error'>('idle');
+  const [into, setInto] = useState('');
+  const [mergeError, setMergeError] = useState<string | null>(null);
+  const targets = mergeTargets.filter((t) => t.id !== item.id);
+
+  const merge = async () => {
+    const target = targets.find((t) => String(t.id) === into);
+    if (!target) return;
+    const n = item.merged?.length ?? 0;
+    const grouped = n === 0 ? '' : n === 1 ? ' The idea grouped under it moves too.' : ` The ${n} ideas grouped under it move too.`;
+    if (!window.confirm(`Merge "${item.title}" into "${target.title}"? Its votes count toward "${target.title}", once per player.${grouped}`)) return;
+    setMergeError(null);
+    const res = await postAdmin('/roadmap/admin/merge', { id: String(item.id), into: into });
+    if (res.ok) {
+      window.location.hash = `item-${target.id}`;
+      window.location.reload();
+      return;
+    }
+    const data = await res.json().catch(() => null);
+    setMergeError(data?.message ?? 'Not merged. Try again.');
+  };
 
   const save = async () => {
     setState('saving');
@@ -389,11 +505,28 @@ function AdminControls({ item, releases }: { item: RoadmapItem; releases: Roadma
       action={`/roadmap/delete/${item.id}`}
       method="post"
       className="ml-auto"
-      onSubmit={(e) => { if (!window.confirm('Delete this idea and all its votes?')) e.preventDefault(); }}
+      onSubmit={(e) => {
+        const note = item.merged?.length ? ' Ideas grouped under it become separate ideas again.' : '';
+        if (!window.confirm(`Delete this idea and all its votes?${note}`)) e.preventDefault();
+      }}
     >
       <CsrfInput />
       <Button type="submit" size="sm" variant="ghost" className="min-h-11 text-danger">Delete</Button>
     </form>
+    {targets.length > 0 && (
+      <form onSubmit={(e) => { e.preventDefault(); merge(); }} className="flex w-full flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <Select
+            aria-label={`Merge ${item.title} into another idea`}
+            value={into}
+            onChange={(v) => setInto(String(v))}
+            options={[{ id: '', label: 'Merge into another idea' }, ...targets.map((t) => ({ id: t.id, label: `${t.title} (${t.column})` }))]}
+          />
+        </div>
+        <Button type="submit" size="sm" variant="secondary" isDisabled={!into} className="min-h-11">Merge</Button>
+        {mergeError && <span role="alert" className="w-full text-xs text-danger">{mergeError}</span>}
+      </form>
+    )}
     </div>
   );
 }
