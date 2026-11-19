@@ -11,6 +11,12 @@ class TerrainParks extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('terrain_parks'); if ($locked) return $locked;
+        return view('terrain_parks/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $parkModel = new TerrainParkModel();
         $staffModel = new StaffModel();
@@ -125,7 +131,7 @@ class TerrainParks extends BaseController
             ],
         ];
 
-        return view('terrain_parks/index', ['page' => $page]);
+        return $page;
     }
 
     public function build()

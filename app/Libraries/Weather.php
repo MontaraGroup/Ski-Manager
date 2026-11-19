@@ -106,11 +106,19 @@ class Weather
     /** Snow base after a day: fresh snow adds, warmth and rain melt, deep snow settles */
     public static function nextBase(int $prevBase, array $w, bool $summer): int
     {
-        $melt = $w['temp'] > 0 ? 2 * $w['temp'] * ($w['condition'] === 'Sunny' ? 1.5 : 1) : 0;
-        if (in_array($w['condition'], ['Rain', 'Freezing Rain'], true)) $melt += 6;
-        if ($summer) $melt = max($melt, 8);
         $settle = $prevBase > 60 ? 1 : 0;
-        return max(0, (int) round($prevBase + $w['snowfall'] - $melt - $settle));
+        return max(0, (int) round($prevBase + $w['snowfall'] - self::melt($w, $summer) - $settle));
+    }
+
+    /** cm of snow a day's warmth and rain melt (natural base and made snow alike) */
+    public static function melt(array $w, bool $summer): float
+    {
+        $temp = (int) ($w['temp'] ?? 0);
+        $condition = (string) ($w['condition'] ?? $w['condition_name'] ?? '');
+        $melt = $temp > 0 ? 2 * $temp * ($condition === 'Sunny' ? 1.5 : 1) : 0;
+        if (in_array($condition, ['Rain', 'Freezing Rain'], true)) $melt += 6;
+        if ($summer) $melt = max($melt, 8);
+        return $melt;
     }
 
     /** Make sure every day of the current season up to $upTo has a weather row */
@@ -142,7 +150,7 @@ class Weather
         $out = [];
         for ($i = 1; $i <= 5; $i++) {
             $w = self::day($season, $fromDay + $i, $winterDays);
-            $out[] = ['day' => $i, 'temp' => $w['temp'], 'condition' => $w['condition'], 'snowfall' => $w['snowfall'], 'wind' => $w['wind']];
+            $out[] = ['day' => $i, 'temp' => $w['temp'], 'condition' => $w['condition'], 'snowfall' => $w['snowfall'], 'wind' => $w['wind'], 'humidity' => $w['humidity']];
         }
         return $out;
     }

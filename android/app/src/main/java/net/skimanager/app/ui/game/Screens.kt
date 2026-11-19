@@ -1,35 +1,21 @@
 package net.skimanager.app.ui.game
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.AcUnit
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.ConfirmationNumber
-import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Snowboarding
-import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,8 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -62,12 +46,10 @@ import net.skimanager.app.ui.common.Figure
 import net.skimanager.app.ui.common.Loaded
 import net.skimanager.app.ui.common.OFFLINE_TEXT
 import net.skimanager.app.ui.common.Panel
-import net.skimanager.app.ui.common.PrimaryButton
 import net.skimanager.app.ui.common.Row2
 import net.skimanager.app.ui.common.ScreenColumn
 import net.skimanager.app.ui.common.SecondaryButton
 import net.skimanager.app.ui.common.StatusBadge
-import net.skimanager.app.ui.common.openWebsite
 import net.skimanager.app.ui.theme.LocalSkiColors
 
 @Composable
@@ -259,14 +241,9 @@ fun LeaderboardScreen(app: AppState) {
     }
 }
 
-private val WEBSITE_PAGES = listOf(
-    "Alliances" to "/alliances", "Tournaments" to "/tournaments", "Génépis" to "/genepis", "Support" to "/support",
-)
-
 @Composable
 fun SettingsScreen(app: AppState) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     var deleting by remember { mutableStateOf(false) }
     Loaded("settings", { app.api.get("settings") }) { data, reload ->
         val user = data.obj("user")
@@ -283,21 +260,21 @@ fun SettingsScreen(app: AppState) {
                     scope.launch { app.api.post("settings/units", mapOf("units" to key)); reload() }
                 }
             }
-            Panel("More on the website") {
-                WEBSITE_PAGES.forEach { (label, path) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .clickable { openWebsite(context, path) }
-                            .padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(label, color = LocalSkiColors.current.link, fontWeight = FontWeight.SemiBold)
-                        Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = LocalSkiColors.current.link, modifier = Modifier.size(18.dp))
+            PlayGamesPanel(app)
+            Panel("Feedback") {
+                val open = LocalOpen.current
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .toggleable(app.shakeToFeedback, role = Role.Switch, onValueChange = { app.changeShakeToFeedback(it) }),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text("Shake to send feedback", fontWeight = FontWeight.SemiBold)
+                        Text("Shake your phone on any screen to report a problem with a screenshot.", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
                     }
+                    Switch(app.shakeToFeedback, onCheckedChange = null)
                 }
+                SecondaryButton("Send feedback", { open("feedback") }, Modifier.fillMaxWidth())
             }
             SecondaryButton("Sign out", {
                 scope.launch {
@@ -361,59 +338,3 @@ private fun DeleteAccountDialog(app: AppState, onClose: () -> Unit) {
         dismissButton = { TextButton(onClose, Modifier.heightIn(min = 48.dp)) { Text("Cancel") } },
     )
 }
-
-private data class MoreItem(val route: String, val label: String, val icon: ImageVector, val subtitle: String)
-
-private val MORE_ITEMS = listOf(
-    MoreItem("buildings", "Buildings", Icons.Default.Storefront, "Hotels, restaurants, rentals and patrol"),
-    MoreItem("bank", "Bank & Loans", Icons.Default.AccountBalance, "Borrow capital and manage debt"),
-    MoreItem("equipment", "Equipment", Icons.Default.Build, "Snowcats, snow guns and maintenance"),
-    MoreItem("grooming", "Grooming", Icons.Default.Snowboarding, "Piste preparation and overnight runs"),
-    MoreItem("snowmaking", "Snowmaking", Icons.Default.AcUnit, "Cannon coverage and cold forecasts"),
-    MoreItem("tickets", "Lift tickets", Icons.Default.ConfirmationNumber, "Pricing and visitor demand"),
-    MoreItem("weather", "Weather", Icons.Default.Cloud, "Temperatures, snow base and forecasts"),
-    MoreItem("notifications", "Notifications", Icons.Default.Notifications, "In-game alerts and messages"),
-    MoreItem("leaderboard", "Leaderboard", Icons.Default.Leaderboard, "Global resort rankings"),
-    MoreItem("settings", "Settings", Icons.Default.Settings, "Account, units and preferences"),
-)
-
-@Composable
-fun MoreScreen(onOpen: (String) -> Unit) {
-    ScreenColumn {
-        MORE_ITEMS.forEach { item ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpen(item.route) },
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                        modifier = Modifier.size(44.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(item.icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
-                        }
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(item.label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        Text(item.subtitle, color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, null, tint = LocalSkiColors.current.muted, modifier = Modifier.size(16.dp))
-                }
-            }
-        }
-    }
-}
-

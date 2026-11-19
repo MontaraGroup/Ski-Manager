@@ -1,5 +1,365 @@
 [
   {
+    "id": 113,
+    "version": "v1.4.94",
+    "title": "Release v1.4.94 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 19, 2026",
+    "releasedAtFormatted": "November 19, 2026",
+    "isLatest": true,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "version": "v1.4.93",
+    "title": "Release v1.4.93 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 19, 2026",
+    "releasedAtFormatted": "November 19, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 111,
+    "version": "v1.4.92",
+    "title": "Release v1.4.92 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 19, 2026",
+    "releasedAtFormatted": "November 19, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "version": "v1.4.91",
+    "title": "Release v1.4.91 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 19, 2026",
+    "releasedAtFormatted": "November 19, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "version": "v1.4.90",
+    "title": "Release v1.4.90 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 18, 2026",
+    "releasedAtFormatted": "November 18, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "version": "v1.4.89",
+    "title": "Release v1.4.89 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 18, 2026",
+    "releasedAtFormatted": "November 18, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "version": "v1.4.88",
+    "title": "Release v1.4.88 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 18, 2026",
+    "releasedAtFormatted": "November 18, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "version": "v1.4.87",
+    "title": "Release v1.4.87 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 17, 2026",
+    "releasedAtFormatted": "November 17, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "version": "v1.4.86",
+    "title": "Release v1.4.86 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 16, 2026",
+    "releasedAtFormatted": "November 16, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "version": "v1.4.85",
+    "title": "Release v1.4.85 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 16, 2026",
+    "releasedAtFormatted": "November 16, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "version": "v1.4.84",
+    "title": "Release v1.4.84 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 15, 2026",
+    "releasedAtFormatted": "November 15, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "version": "v1.4.83",
+    "title": "Release v1.4.83 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 15, 2026",
+    "releasedAtFormatted": "November 15, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "version": "v1.4.82",
+    "title": "Release v1.4.82 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 14, 2026",
+    "releasedAtFormatted": "November 14, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "version": "v1.4.81",
+    "title": "Release v1.4.81 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 14, 2026",
+    "releasedAtFormatted": "November 14, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "version": "v1.4.80",
+    "title": "Release v1.4.80 Update",
+    "description": "Automated production release containing recent system enhancements and bug fixes.",
+    "release_type": "patch",
+    "released_at": "November 13, 2026",
+    "releasedAtFormatted": "November 13, 2026",
+    "isLatest": false,
+    "categories": [
+      {
+        "type": "improved",
+        "label": "Improvements",
+        "icon": "arrow-up-long",
+        "badge": "info",
+        "items": [
+          {
+            "title": "Routine maintenance and system updates",
+            "description": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": 98,
     "version": "v1.4.79",
     "title": "Release v1.4.79 Update",
@@ -7,7 +367,7 @@
     "release_type": "patch",
     "released_at": "November 13, 2026",
     "releasedAtFormatted": "November 13, 2026",
-    "isLatest": true,
+    "isLatest": false,
     "categories": [
       {
         "type": "improved",
