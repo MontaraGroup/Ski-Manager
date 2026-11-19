@@ -33,6 +33,9 @@ $routes->post("/admin/seasons/activate/(:num)", "Admin::activateSeason/$1");
 $routes->get("/admin/economy", "Admin::economy");
 $routes->get("/admin/season-vote", "Admin::seasonVote");
 $routes->post("/admin/season-vote/settings", "Admin::saveSeasonVote");
+$routes->get("/admin/android-testing", "Admin::androidTesting");
+$routes->post("/admin/android-testing/codes", "Admin::androidTestingCodes");
+$routes->post("/admin/android-testing/link", "Admin::androidTestingLink");
 $routes->get("/admin/resort-vote", "Admin::resortVote");
 $routes->post("/admin/resort-vote/(:num)/open", "Admin::resortVoteOpen/$1");
 $routes->post("/admin/resort-vote/(:num)/winner", "Admin::resortVoteWinner/$1");
@@ -133,6 +136,7 @@ $routes->get('/retail', 'Buildings::show/retail');
 $routes->get('/scenic-lifts', 'ScenicLifts::index');
 $routes->get('/settings', 'Settings::index');
 $routes->get('/beta', 'BetaProgram::index');
+$routes->get('/beta/android', 'AndroidTesting::index');
 $routes->get('/ski-lessons', 'SkiLessons::index');
 $routes->get('/ski-patrol', 'Buildings::show/ski_patrol');
 $routes->get('/snowmaking', 'Snowmaking::index');
@@ -167,6 +171,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->post('resort-vote/retract', 'ResortVote::retract');
     // Beta program (App\Libraries\Beta): join, leave, per-feature switch, feedback
     $routes->post('beta/join', 'Beta::join');
+    $routes->post('beta/android/claim', 'Beta::androidClaim');
     $routes->post('beta/leave', 'Beta::leave');
     $routes->post('beta/feature/(:segment)', 'Beta::feature/$1');
     $routes->post('beta/feedback/(:segment)', 'Beta::feedback/$1');

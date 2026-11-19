@@ -66,6 +66,16 @@ class Beta extends ApiController
         return $this->ok(Program::state($userId), 'Thanks for your feedback.');
     }
 
+    /** POST /api/v1/beta/android/claim: this player's access code for the Android closed test */
+    public function androidClaim(): ResponseInterface
+    {
+        $userId = (int) auth()->id();
+        if (!Program::eligible($userId)) return $this->fail("Demo accounts can't join the Android test.", 403);
+        $code = \App\Libraries\AndroidTesting::claim($userId);
+        if ($code === null) return $this->fail('All tester codes are taken. Check back soon.', 409);
+        return $this->ok(\App\Libraries\AndroidTesting::state($userId), 'Your tester code is ready.');
+    }
+
     private function blocked(int $userId): ?ResponseInterface
     {
         if (!Program::eligible($userId)) return $this->fail("Demo accounts can't join the beta program.", 403);
