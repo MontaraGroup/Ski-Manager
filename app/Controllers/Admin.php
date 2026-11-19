@@ -1417,7 +1417,7 @@ class Admin extends BaseController
     public function androidTesting(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $page = ['groupUrl' => \App\Libraries\AndroidTesting::groupUrl(), 'joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats()];
+        $page = ['groupUrl' => \App\Libraries\AndroidTesting::groupUrl(), 'joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats(), 'rewards' => \App\Libraries\AndroidTesting::rewardStats()];
         return view('admin/android_testing', ['page' => $page]);
     }
 

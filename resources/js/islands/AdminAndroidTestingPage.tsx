@@ -5,12 +5,19 @@ export type AdminAndroidTestingPageProps = {
   groupUrl: string;
   joinUrl: string;
   invite: { eligible: number; notified: number; notifiedAt: string | null };
+  rewards: {
+    cap: number;
+    needed: number;
+    genepis: number;
+    paid: { userId: number; username: string; paidAt: string }[];
+    testers: { userId: number; username: string; days: number; firstDay: string; lastDay: string }[];
+  };
 };
 
 const inputClass = 'min-h-11 w-full rounded-md border border-border bg-background px-2 text-sm';
 
 /** /admin/android-testing: the closed test's Google Group and opt-in link, and the invite to players */
-export default function AdminAndroidTestingPage({ groupUrl, joinUrl, invite }: AdminAndroidTestingPageProps) {
+export default function AdminAndroidTestingPage({ groupUrl, joinUrl, invite, rewards }: AdminAndroidTestingPageProps) {
   const toNotify = Math.max(0, invite.eligible - invite.notified);
   const linksMissing = !groupUrl || !joinUrl;
   return (
@@ -58,6 +65,36 @@ export default function AdminAndroidTestingPage({ groupUrl, joinUrl, invite }: A
               {toNotify === 0 ? 'Everyone has it' : `Notify ${toNotify} ${toNotify === 1 ? 'player' : 'players'}`}
             </PostButton>
           </div>
+        </Panel>
+
+        <Panel title={`Tester rewards (${rewards.paid.length} of ${rewards.cap} paid)`}>
+          <p className="text-sm text-muted">
+            Paid automatically: {rewards.genepis} Génépis to each of the first {rewards.cap} players who use the Android app on {rewards.needed} different days.
+          </p>
+          {rewards.paid.length > 0 && (
+            <ul className="mt-3 flex flex-col divide-y divide-border">
+              {rewards.paid.map((p) => (
+                <li key={p.userId} className="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+                  <a href={`/admin/user/${p.userId}`} className="font-medium text-accent-soft-foreground underline">{p.username}</a>
+                  <span className="ml-auto tabular-nums text-muted">paid {p.paidAt}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3 className="mt-4 text-sm font-semibold">Testing now</h3>
+          {rewards.testers.length === 0 ? (
+            <p className="mt-1 text-sm text-muted">Nobody has used the Android app yet.</p>
+          ) : (
+            <ul className="mt-1 flex flex-col divide-y divide-border">
+              {rewards.testers.map((t) => (
+                <li key={t.userId} className="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+                  <a href={`/admin/user/${t.userId}`} className="font-medium text-accent-soft-foreground underline">{t.username}</a>
+                  <span className="tabular-nums">{t.days} / {rewards.needed} days</span>
+                  <span className="ml-auto tabular-nums text-muted">{t.firstDay} to {t.lastDay}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
       </div>
     </Page>
