@@ -1,3 +1,11 @@
+## Release 2026-11-19 02:14
+
+* Merge branch 'MontaraGroup:main' into main (5bcc3d71)
+* Merge pull request #118 from Montara-Group/feat/android-feedback (82e2b40a)
+* fix(android): encode feedback screenshots off the main thread (f016187d)
+* fix(feedback): delete a player's feedback screenshots with their account (e9382d6b)
+* fix(feedback): cap screenshots at 2 MB to match PHP's upload limit (cd37c92f)
+
 ## Release 2026-11-18 13:47
 
 * Merge pull request #116 from Montara-Group/feat/android-native-pages (b99430f3)
