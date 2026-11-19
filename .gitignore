@@ -129,5 +129,7 @@ public/img/thumbs/
 public/img/*.jpg
 public/img/*.webp
 node_modules/
+# Built by CI on every deploy (npm run build); committing them made every JS/CSS branch conflict
 public/css/style.css
+/public/build/
 .scannerwork/

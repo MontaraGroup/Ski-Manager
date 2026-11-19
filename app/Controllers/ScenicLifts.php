@@ -17,6 +17,12 @@ class ScenicLifts extends BaseController
 
     public function index(): string
     {
+        return view('scenic/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $itemModel = new PlayerItemModel();
         $db = db_connect();
@@ -138,7 +144,7 @@ class ScenicLifts extends BaseController
             ],
         ];
 
-        return view('scenic/index', ['page' => $page]);
+        return $page;
     }
 
     public function designate()

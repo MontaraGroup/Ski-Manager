@@ -91,25 +91,13 @@ if [ -f "composer.json" ]; then
     fi
 fi
 
-# 6. Project NPM Dependencies & Asset Compilation
-if [ -f "package.json" ]; then
-    echo "Updating project npm dependencies in $(pwd)..."
-    if command -v npm &>/dev/null; then
-        echo "Running 'npm install' on host in $(pwd)..."
-        npm install --no-audit --no-fund || npm update || true
-        echo "Active HeroUI package: $(npm list --depth=0 2>/dev/null | grep heroui || true)"
-        if grep -q '"build":' package.json; then
-            echo "Rebuilding project assets ('npm run build')..."
-            npm run build || true
-        fi
-    elif docker ps --format '{{.Names}}' | grep -q "${PHP_CONTAINER}" && docker exec "${PHP_CONTAINER}" which npm &>/dev/null; then
-        echo "Running 'npm install' inside container ${PHP_CONTAINER}..."
-        docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm install --no-audit --no-fund || docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm update || true
-        if grep -q '"build":' package.json; then
-            echo "Building frontend assets inside ${PHP_CONTAINER}..."
-            docker exec -w "${CONTAINER_PATH}" "${PHP_CONTAINER}" npm run build || true
-        fi
-    fi
+# 6. Built Assets
+# public/build and style.css are not in git: the deploy workflow builds them and installs them with
+# scripts/install-assets.sh before this script runs. Without the manifest every React page breaks.
+if [ ! -f "public/build/.vite/manifest.json" ] || [ ! -f "public/css/style.css" ]; then
+    echo "ERROR: public/build/.vite/manifest.json or public/css/style.css is missing." >&2
+    echo "       Upload them with scripts/install-assets.sh (or scripts/push-assets.sh from a checkout)." >&2
+    exit 1
 fi
 
 # 6. Run Database Migrations Inside PHP Container

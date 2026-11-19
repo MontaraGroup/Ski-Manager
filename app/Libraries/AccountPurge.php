@@ -26,6 +26,10 @@ class AccountPurge
     public static function purge(int $userId): void
     {
         $db = db_connect();
+        // Files the rows below point to: feedback screenshots
+        $shots = $db->tableExists('app_feedback')
+            ? array_filter(array_column($db->table('app_feedback')->select('screenshot')->where('user_id', $userId)->get()->getResultArray(), 'screenshot'))
+            : [];
         $db->transStart();
         foreach (self::tables() as $table) {
             $db->table($table)->where('user_id', $userId)->delete();
@@ -35,5 +39,9 @@ class AccountPurge
         $db->table('users')->where('id', $userId)->delete();
         $db->transComplete();
         if (!$db->transStatus()) throw new \RuntimeException('Could not delete account #' . $userId);
+        foreach ($shots as $name) {
+            $path = AppFeedback::screenshotPath($name);
+            if ($path && is_file($path)) unlink($path);
+        }
     }
 }

@@ -89,6 +89,12 @@ class VipGuests extends BaseController
 
     public function index(): string
     {
+        return view('vip_guests/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -181,6 +187,6 @@ class VipGuests extends BaseController
             'typesCatalog' => $typesCatalog,
         ];
 
-        return view('vip_guests/index', ['page' => $page]);
+        return $page;
     }
 }

@@ -14,7 +14,8 @@ class Email extends BaseConfig
     public string $SMTPUser = 'contact@ski-manager.net';
     public string $SMTPPass = '';
     public string $SMTPCrypto = 'ssl';
-    public string $mailType = 'text';
+    public string $mailType = 'html';
+    public bool $sendMultipart = true;
     public bool $SMTPAuth = true;
 
     public function __construct()
