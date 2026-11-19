@@ -46,6 +46,12 @@ class DailyBonus extends BaseController
 
     public function index(): string
     {
+        return view('dailybonus/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $row = $this->row($userId);
         $cycle = $this->cycle();
@@ -105,7 +111,7 @@ class DailyBonus extends BaseController
             'weeklyGenepis' => self::WEEKLY_GENEPIS,
         ];
 
-        return view('dailybonus/index', ['page' => $page]);
+        return $page;
     }
 
     public function claim()

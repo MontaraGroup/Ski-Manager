@@ -195,9 +195,11 @@ class GameTick extends BaseCommand
             // EQUIPMENT (groomers + snowmakers): fuel, decay, staff bonuses
             // ==============================
             $equipment = $db->table('equipment')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
-            // Snow guns only run (and cost or wear) on days cold enough for their model
+            // Snow guns run (and cost, use energy and water, and wear) only the hours they make snow today;
+            // App\Libraries\Snowmaking also melts and adds each slope's made snow
             $baseTemp = (int) ($weather['temp'] ?? 0);
-            $equipment = array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'snowmaker' || \App\Libraries\Snowmaking::runs($e, $baseTemp)));
+            $snowDay = \App\Libraries\Snowmaking::runDay($userId, $weather, array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker'), $allStaff, !$isWinter);
+            $equipment = array_merge(array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'snowmaker')), $snowDay['guns']);
             // v2: groomers without an operator stay parked (no fuel, no wear); the night shift below uses the same fleet
             if ($v2) {
                 $crewedGroomers = array_flip(array_map(fn($m) => (int) $m['id'], \App\Libraries\Grooming::fleet(
@@ -298,8 +300,6 @@ class GameTick extends BaseCommand
             // LIFT/SLOPE CONDITION DECAY (mechanics reduce lift decay)
             // ==============================
             $items = $db->table('player_items')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray();
-            // Snow guns protect the slopes they cover from a thin natural base (cold days only)
-            $snowCovered = $v2 ? \App\Libraries\Snowmaking::coverage(array_filter($items, fn($i) => $i['item_type'] === 'slope'), $activeSnowmakers, $baseTemp) : [];
             // A mechanic looks after the lift they're assigned to (assigned_to holds the lift's name)
             $mechanicLifts = array_flip(array_column($assignedByRole['mechanic'] ?? [], 'assigned_to'));
             foreach ($items as $item) {
@@ -310,7 +310,7 @@ class GameTick extends BaseCommand
                     }
                     // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
                     if ($v2 && $item['item_type'] === 'slope') {
-                        $decay = \App\Libraries\Grooming::decay($item, $weather, isset($snowCovered[(int) $item['id']]));
+                        $decay = \App\Libraries\Grooming::decay($item, $weather);
                     }
                 }
                 $newCond = max(0, (int) $item['condition_pct'] - $decay);
@@ -370,7 +370,7 @@ class GameTick extends BaseCommand
                     // v2: only slopes the night shift actually groomed count as groomed
                     if (isset($groomedToday[(int) $sl['id']])) { $q = "groomed"; }
                     elseif (in_array($weather["condition_name"] ?? "", ["Freezing Rain", "Rain"], true)) { $q = "icy"; }
-                    elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = isset($snowCovered[(int) $sl['id']]) ? "packed" : "bare"; }
+                    elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = (int) ($sl['made_snow_cm'] ?? 0) > 0 ? "packed" : "bare"; }
                 }
                 elseif (($weather["snowfall"] ?? 0) >= 1) { $q = $activeGroomers > 0 ? "groomed" : "packed"; }
                 elseif (($weather["condition_name"] ?? "") === "Freezing Rain") { $q = "icy"; }

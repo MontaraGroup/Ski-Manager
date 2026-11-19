@@ -27,6 +27,12 @@ class Marketing extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('marketing'); if ($locked) return $locked;
+        return view('marketing/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $campaigns = $this->model->where('user_id', $userId)->where('status !=', 'expired')->findAll();
         $activeCampaigns = array_filter($campaigns, fn($c) => $c['status'] === 'active');
@@ -78,7 +84,7 @@ class Marketing extends BaseController
             'campaignTypes' => $formattedTypes,
         ];
 
-        return view('marketing/index', ['page' => $page]);
+        return $page;
     }
 
     public function launch()

@@ -40,7 +40,7 @@ Status on 2026-11-05: 100% of all player-facing and guest-facing views have been
    - `Page` (title row with a back link), `Panel`, `Figure`, `Empty` (empty state with the reason and the next action).
    - `PostButton`: a normal form post with the CSRF field. Give it `confirm={{ title, body, confirmLabel }}` for destructive actions.
 5. **Actions:** keep them as ordinary form posts to the existing routes. The controller redirects back with `->with('success' | 'error', ...)`, and the shell shows the message as a toast. Only add `/api/v1` endpoints when a page needs to update without a reload.
-6. **Build:** run `npm run build:islands` (`tsc` + `vite build`) and commit `public/build`. CI fails the deploy if the committed build is stale, and the build is reproducible.
+6. **Build:** run `npm run build:islands` (`tsc` + `vite build`) to check locally. Don't commit `public/build` or `public/css/style.css`: the deploy workflows build them and upload them to the server (`scripts/install-assets.sh`). To test a branch on staging by hand, run `scripts/push-assets.sh staging`.
 
 ## Rules and gotchas (learned the hard way)
 

@@ -140,9 +140,9 @@ Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/anti
 ## 6. Standard Deployment Workflow
 
 1. **Edit files locally** in `/Users/324080/.gemini/antigravity/scratch/ski-manager-repo`.
-2. **If editing CSS (`public/css/input.css`)**, rebuild the stylesheet before deploying:
+2. **Built assets are not in git.** `public/build` and `public/css/style.css` are built by the deploy workflows and uploaded to the server. Never commit them. When you copy a branch to staging by hand and it changes JS or CSS, build and upload the assets yourself:
    ```bash
-   npm run build
+   scripts/push-assets.sh staging
    ```
 3. **Deploy to Production & Staging via `scp` or `git`**:
    ```bash

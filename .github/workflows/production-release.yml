@@ -36,24 +36,6 @@ jobs:
           done < <(find app -type f -name "*.php")
           if [ "$ERRORS" -gt 0 ]; then exit 1; fi
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      # The server serves the committed public/build (no Node on the VPS), so a stale build
-      # must stop the deploy rather than ship old islands
-      - name: Build React islands and check the committed build is current
-        run: |
-          npm ci
-          npm run build:islands
-          if ! git diff --quiet -- public/build; then
-            echo "public/build is out of date: run npm run build:islands and commit the result"
-            git status --short -- public/build
-            exit 1
-          fi
-
   release-and-deploy:
     name: Release & Production Deployment
     needs: validate
@@ -87,6 +69,33 @@ jobs:
           git commit -m "chore(changelog): update CHANGELOG.md and updates view [skip ci]" || echo "No changes"
           git push origin main || echo "Changelog push skipped"
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # public/build and style.css are not in git: build them here and upload them, so the
+      # 1-CPU server never builds and every deploy ships the bundle that matches its code
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+          test -f public/build/.vite/manifest.json
+          tar -czf "$RUNNER_TEMP/assets.tgz" public/build public/css/style.css
+
+      - name: Upload assets to the server
+        env:
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          SSH_HOST: ${{ secrets.PROD_HOST }}
+          SSH_USER: ${{ secrets.PROD_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$RUNNER_TEMP/assets.tgz" "$SSH_USER@$SSH_HOST:/tmp/ski-assets-${{ github.sha }}.tgz"
+          rm -f ~/.ssh/deploy_key
+
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -98,6 +107,7 @@ jobs:
             cd ${{ secrets.PROD_PATH }}
             git fetch origin main
             git reset --hard origin/main
+            bash scripts/install-assets.sh /tmp/ski-assets-${{ github.sha }}.tgz "$(pwd)"
             chmod +x scripts/deploy.sh
             ./scripts/deploy.sh production
 
