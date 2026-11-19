@@ -450,6 +450,7 @@ $routes->post('auth/activate-submit', 'AuthActivation::submit');
 // GET is the page (pageData), POST runs the web controller's action through AppPage::act.
 $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App', 'filter' => 'apptoken'], static function ($routes) {
     $routes->get('menu', 'Menu::show');
+    $routes->get('play-games', 'PlayGames::show');
     $routes->get('achievements', 'Achievements::show');
     $routes->post('achievements/claim/(:num)', 'Achievements::act/claim/$1');
     $routes->post('achievements/claim-all', 'Achievements::act/claimAll');
