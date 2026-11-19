@@ -7,10 +7,12 @@ export type AdminAndroidTestingPageProps = {
   left: number;
   joinUrl: string;
   claims: { userId: number; username: string; code: string; claimedAt: string }[];
+  invite: { eligible: number; notified: number; notifiedAt: string | null };
 };
 
 /** /admin/android-testing: load Play Console access codes and see who claimed one */
-export default function AdminAndroidTestingPage({ total, claimed, left, joinUrl, claims }: AdminAndroidTestingPageProps) {
+export default function AdminAndroidTestingPage({ total, claimed, left, joinUrl, claims, invite }: AdminAndroidTestingPageProps) {
+  const toNotify = Math.max(0, invite.eligible - invite.notified);
   return (
     <Page title="Android testing" icon="fa-brands fa-android" back="/admin" subtitle="Players claim one Google Play access code each at /beta/android.">
       <div className="flex flex-col gap-6">
@@ -50,6 +52,38 @@ export default function AdminAndroidTestingPage({ total, claimed, left, joinUrl,
               <Button type="submit" variant="secondary" className="min-h-11 md:min-h-9">Save link</Button>
             </div>
           </form>
+        </Panel>
+
+        <Panel title="Tell players">
+          <p className="text-sm text-foreground">
+            Sends one notification to every active, non-demo account: <q>Ski Manager for Android: your access code</q>. It opens
+            /beta/android, which gives the player their code on the first visit. Accounts that already have it are skipped.
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            {invite.notified > 0
+              ? `${invite.notified} of ${invite.eligible} eligible accounts have it${invite.notifiedAt ? `, last sent ${invite.notifiedAt}` : ''}.`
+              : `${invite.eligible} eligible accounts. Not sent yet.`}
+          </p>
+          {!joinUrl && <p className="mt-2 text-sm text-warning">Save the test link first: without it, players see a code but no way to join.</p>}
+          {left < toNotify && (
+            <p className="mt-2 text-sm text-warning">
+              {left} codes left for {toNotify} accounts to notify. Players who open it after the codes run out see "No tester codes left".
+            </p>
+          )}
+          <div className="mt-3">
+            <PostButton
+              action="/admin/android-testing/notify"
+              variant="primary"
+              disabled={toNotify === 0}
+              confirm={{
+                title: `Notify ${toNotify} ${toNotify === 1 ? 'player' : 'players'}?`,
+                body: 'Every eligible account that hasn\'t had this notification gets it now. It can\'t be taken back.',
+                confirmLabel: 'Send notification',
+              }}
+            >
+              {toNotify === 0 ? 'Everyone has it' : `Notify ${toNotify} ${toNotify === 1 ? 'player' : 'players'}`}
+            </PostButton>
+          </div>
         </Panel>
 
         <Panel

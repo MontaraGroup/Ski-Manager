@@ -61,7 +61,7 @@ export default function AndroidTestingPage(props: AndroidTestingState) {
         </Panel>
       ) : (
         <>
-          <Panel title="Your tester code">
+          <Panel title="Your access code">
             <div className="flex flex-wrap items-center gap-3">
               <code className="select-all break-all rounded-md bg-default px-3 py-2 font-mono text-lg font-semibold tracking-wide text-foreground">
                 {state.code}
@@ -71,6 +71,16 @@ export default function AndroidTestingPage(props: AndroidTestingState) {
               </Button>
             </div>
             <p className="mt-2 text-sm text-muted">This code is yours. It stays here if you come back later.</p>
+            {state.joinUrl && (
+              <a
+                href={state.joinUrl}
+                target="_blank"
+                rel="noopener"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 md:min-h-9"
+              >
+                <Icon name="fa-brands fa-google-play" /> Join the test on Google Play
+              </a>
+            )}
           </Panel>
 
           <Panel title="How to join">
