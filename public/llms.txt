@@ -1,0 +1,37 @@
+# Ski Manager
+
+> Ski Manager is a free-to-play, browser-based online multiplayer ski resort tycoon game. Players construct ski slopes, install lift systems, hire mountain staff, balance daily operating finances, navigate dynamic alpine weather, and compete on global leaderboards.
+
+Ski Manager combines deep economic simulation with authentic mountain topography. Players select a mountain location, engineer trail networks (Green, Blue, Red, Black, Double Black), build and maintain aerial lifts (chairlifts, gondolas, surface tows), manage guest services (lodging, dining, rental shops, ski patrol, first aid), and adapt to seasonal alpine weather. The game executes continuous simulation ticks, real-time weather progression, and competitive player tournaments.
+
+## Core Systems & Guides
+
+- [Getting Started Guide](https://ski-manager.net/guides/getting-started): Initial setup, starting capital, choosing mountain maps, laying first slopes, and hiring core staff.
+- [Ticket Pricing & Skier Demand](https://ski-manager.net/guides/ticket-pricing): Price elasticity, skier volume formulas, marketing campaigns, and peak season demand.
+- [Ski Lifts & Mechanical Upkeep](https://ski-manager.net/guides/lifts): Surface tows, 2-seater chairs, high-speed detachable quads, gondolas, power consumption, and mechanical wear.
+- [Grooming & Snow Conditions](https://ski-manager.net/guides/grooming): Snowcat fleet management, night shift grooming schedules, moguls, and slope safety ratings.
+- [Snowpack & Weather Systems](https://ski-manager.net/guides/snow-and-weather): Real-time weather, snowfall, freeze-thaw cycles, snow cannon infrastructure, and water reservoirs.
+- [Staff Roles & Payroll](https://ski-manager.net/guides/staff): Mountain roles (ski patrol, mechanics, instructors, groomer operators, snowmakers, chefs), morale, and wages.
+- [Resort Finances & Banking](https://ski-manager.net/guides/money): Revenue balance, bank loans, interest amortization, operating costs, and capital investments.
+
+## Wiki & Game Mechanics
+
+- [Ski Manager Wiki](https://wiki.ski-manager.net): Official encyclopedia covering formulas, detailed statistics, building specifications, and mechanics.
+- [Buildings & Infrastructure](https://wiki.ski-manager.net/buildings): Hotels, restaurants, rental shops, clinics, avalanche control, and utility structures.
+- [Achievements System](https://wiki.ski-manager.net/achievements): Milestone achievements, prestige badges, and bonus unlocks.
+- [Frequently Asked Questions (FAQ)](https://ski-manager.net/faq): Comprehensive answers to common gameplay, technical, and account questions.
+- [Development Roadmap](https://ski-manager.net/roadmap): Planned features, expansions, and milestones for upcoming seasons.
+- [Recent Updates & Changelogs](https://ski-manager.net/updates): Version history, patch notes, and engine balance adjustments.
+
+## Information & Legal
+
+- [About Ski Manager](https://ski-manager.net/about): Project background, design philosophy, open-source tech stack, and credits.
+- [Contact & Support](https://ski-manager.net/contact): Player support channels, bug reporting, and community Discord.
+- [Terms of Service](https://ski-manager.net/terms): Platform rules, player code of conduct, and account terms.
+- [Privacy Policy](https://ski-manager.net/privacy): Data protection practices, player privacy, and compliance.
+- [Cookie Policy](https://ski-manager.net/cookies): Cookie usage policy and consent details.
+
+## Optional & Deep Dive
+
+- [Developer Portal & API](https://ski-manager.net/developers): Technical overview, API schemas, and architecture documentation.
+- [Full LLM Context (llms-full.txt)](https://ski-manager.net/llms-full.txt): Complete text documentation and in-depth guide bundle for AI agents and LLMs.

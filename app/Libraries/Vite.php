@@ -28,7 +28,7 @@ class Vite
         }
 
         $chunk = $manifest[$entry];
-        $tags = [];
+        $tags = [self::translateGuard()];
         foreach (self::cssFor($manifest, $entry) as $css) {
             $tags[] = '<link rel="stylesheet" href="/build/' . self::attr($css) . '">';
         }
@@ -37,10 +37,27 @@ class Vite
                 $tags[] = '<link rel="modulepreload" href="/build/' . self::attr($manifest[$import]['file']) . '">';
             }
         }
+        $tags[] = self::staleChunkReload();
         // data-cfasync="false": Cloudflare Rocket Loader must leave module scripts alone (they are
         // deferred already, and its reordering broke the Sentry init once)
         $tags[] = '<script type="module" data-cfasync="false" src="/build/' . self::attr($chunk['file']) . '"></script>';
         return implode("\n    ", $tags);
+    }
+
+    /**
+     * A deploy empties public/build, so a page opened before it asks for chunk hashes that are gone
+     * ("Failed to fetch dynamically imported module"). Vite fires vite:preloadError on window when a
+     * lazy import fails; reload once to pick up the new manifest. The timestamp stops a reload loop
+     * when the chunk is missing for another reason; then the error reaches the island boundary as before.
+     */
+    private static function staleChunkReload(): string
+    {
+        return '<script data-cfasync="false">'
+            . 'window.addEventListener("vite:preloadError",function(e){'
+            . 'try{var k="vite-chunk-reload",t=+sessionStorage.getItem(k)||0;'
+            . 'if(Date.now()-t<60000)return;sessionStorage.setItem(k,String(Date.now()));}catch(_){return;}'
+            . 'e.preventDefault();location.reload();});'
+            . '</script>';
     }
 
     private static function devTags(string $dev, string $entry): string
@@ -66,6 +83,21 @@ class Vite
             $css = array_merge($css, self::cssFor($manifest, $import, $seen));
         }
         return array_values(array_unique($css));
+    }
+
+    /**
+     * Browser page translation (Chrome, Edge) swaps React's text nodes for <font> wrappers, so React's
+     * next removeChild / insertBefore on the original node throws NotFoundError and the island dies.
+     * Skip those calls when the node has already been moved, as in facebook/react#11538. Runs before
+     * the islands load; calls on nodes that are still in place are untouched.
+     */
+    private static function translateGuard(): string
+    {
+        return '<script data-cfasync="false">(function(){if(typeof Node!=="function"||!Node.prototype)return;'
+            . 'var rc=Node.prototype.removeChild,ib=Node.prototype.insertBefore;'
+            . 'Node.prototype.removeChild=function(c){if(c&&c.parentNode!==this)return c;return rc.apply(this,arguments);};'
+            . 'Node.prototype.insertBefore=function(n,r){if(r&&r.parentNode!==this)return n;return ib.apply(this,arguments);};'
+            . '})();</script>';
     }
 
     private static function manifest(): array

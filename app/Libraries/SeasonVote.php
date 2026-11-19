@@ -14,7 +14,7 @@ class SeasonVote
     public const COMMENT_MAX = 500;
 
     /** SQL rule for accounts that count: active, not demo, not deleted (users table aliased as u) */
-    private const ELIGIBLE_SQL = "u.active = 1 AND (u.status IS NULL OR u.status <> 'demo') AND u.deleted_at IS NULL";
+    public const ELIGIBLE_SQL = "u.active = 1 AND (u.status IS NULL OR u.status <> 'demo') AND u.deleted_at IS NULL";
 
     public static function closesAt(): ?string
     {

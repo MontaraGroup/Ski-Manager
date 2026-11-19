@@ -9,6 +9,7 @@ import { MapPanel } from './resort-map/MapPanel';
 import { MapKey } from './resort-map/MapKey';
 import { BuildFooter, BuildView } from './resort-map/BuildView';
 import { BuiltRunView } from './resort-map/BuiltRunView';
+import type { LiftSwapOption } from './resort-map/LiftSwapDialog';
 import { BrowseView, type BuildNotice, type SortOrder, type Suggestion } from './resort-map/BrowseView';
 import { TrailSign, buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
 
@@ -323,6 +324,11 @@ export default function ResortMapPage(props: ResortMapProps) {
     });
   }
 
+  function handleSwap(option: LiftSwapOption, done: (ok: boolean) => void) {
+    if (!selectedSeg) return done(false);
+    engineRef.current?.swapLift(selectedSeg, option.lift_type, option.seats, done);
+  }
+
   function handleResortChange(eOrVal: React.ChangeEvent<HTMLSelectElement> | string | number) {
     const val = typeof eOrVal === 'object' && eOrVal !== null && 'target' in eOrVal ? eOrVal.target.value : String(eOrVal);
     const form = document.createElement('form');
@@ -629,6 +635,16 @@ export default function ResortMapPage(props: ResortMapProps) {
 
                     <Button
                       size="sm"
+                      variant="outline"
+                      onPress={() => engineRef.current?.redo()}
+                      className="h-7 text-xs text-foreground"
+                      aria-label="Redo point (Shift+Z)"
+                    >
+                      <Icon name="fa-rotate-right" /> Redo
+                    </Button>
+
+                    <Button
+                      size="sm"
                       variant="secondary"
                       onPress={() => engineRef.current?.saveEditor(false)}
                       className="h-7 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500"
@@ -662,8 +678,20 @@ export default function ResortMapPage(props: ResortMapProps) {
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-1 text-xs text-muted">
                     <span>
-                      <b>Click map</b> to add • <b>Drag dots</b> to move • <b>Click/drag + midpoints</b> to bend •{' '}
-                      <b>Right-click</b> point to delete
+                      {editorState.mode === 'draw' && editorState.type === 'lift' ? (
+                        <>
+                          <b>Click</b> the bottom station, then the top: the lift saves itself • <b>Shift-click</b> the top to add bends
+                        </>
+                      ) : editorState.mode === 'draw' ? (
+                        <>
+                          <b>Click</b> from the top down • <b>Double-click</b> or <b>Enter</b> to finish • <b>Alt</b> to skip snapping
+                        </>
+                      ) : (
+                        <>
+                          <b>Click map</b> to add • <b>Drag dots</b> to move • <b>Click/drag + midpoints</b> to bend •{' '}
+                          <b>Right-click</b> point to delete
+                        </>
+                      )}
                     </span>
                     {editorState.snapStatus && (
                       <span className="font-mono text-link">Snapped: {editorState.snapStatus}</span>
@@ -702,6 +730,8 @@ export default function ResortMapPage(props: ResortMapProps) {
                 economyV2={props.economyV2}
                 onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
                 onDemolish={handleDemolish}
+                cash={userCash}
+                onSwap={handleSwap}
               />
             </MapPanel>
           ) : selectedSeg && !selectedIsBuilt ? (
@@ -1049,6 +1079,8 @@ export default function ResortMapPage(props: ResortMapProps) {
                                 setSegments(updated);
                                 engineRef.current?.setFilter(mapFilter);
                                 triggerToast(`Deleted "${seg.name || 'Segment'}"`, 'success');
+                              } else {
+                                triggerToast(res?.error || 'Failed to delete segment', 'error');
                               }
                             });
                           }}

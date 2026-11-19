@@ -15,6 +15,12 @@ class Updates extends BaseController
 
     public function index(): string
     {
+        return view('updates/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $formattedUpdates = [];
 
         try {
@@ -103,6 +109,6 @@ class Updates extends BaseController
             'updates' => $formattedUpdates,
         ];
 
-        return view('updates/index', ['page' => $page]);
+        return $page;
     }
 }

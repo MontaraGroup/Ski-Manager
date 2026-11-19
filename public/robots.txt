@@ -11,6 +11,10 @@ Allow: /
 # General Crawlers & Search Engines
 User-agent: *
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /cdn-cgi/
+Disallow: /_user/
 Disallow: /dashboard
 Disallow: /resort
 Disallow: /map
@@ -33,6 +37,10 @@ User-agent: OAI-SearchBot
 User-agent: Claude-SearchBot
 User-agent: PerplexityBot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /cdn-cgi/
+Disallow: /_user/
 Disallow: /dashboard
 Disallow: /resort
 Disallow: /map
@@ -56,6 +64,10 @@ User-agent: Claude-User
 User-agent: Claude-Web
 User-agent: Perplexity-User
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /cdn-cgi/
+Disallow: /_user/
 Disallow: /dashboard
 Disallow: /resort
 Disallow: /map
@@ -88,6 +100,10 @@ User-agent: FacebookBot
 User-agent: Diffbot
 User-agent: Omgilibot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /cdn-cgi/
+Disallow: /_user/
 Disallow: /dashboard
 Disallow: /resort
 Disallow: /map
@@ -105,6 +121,8 @@ Disallow: /daily-bonus
 Disallow: /genepis
 Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
-# Sitemaps
+# Sitemaps & LLMs documentation
 Sitemap: https://ski-manager.net/sitemap.xml
 Sitemap: https://ski-manager.net/sitemap_index.xml
+# LLMs.txt: https://ski-manager.net/llms.txt
+# LLMs-full.txt: https://ski-manager.net/llms-full.txt
