@@ -9,7 +9,13 @@ class BetaProgram extends BaseController
 {
     public function index()
     {
+        return view('beta/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = (int) auth()->id();
-        return view('beta/index', ['page' => Beta::state($userId) + ['commentMax' => Beta::COMMENT_MAX]]);
+        return Beta::state($userId) + ['commentMax' => Beta::COMMENT_MAX];
     }
 }

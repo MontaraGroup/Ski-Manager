@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Play Games IDs are looked up by name (games/PlayGames.kt), so resource shrinking must keep them -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/achievement_*,@string/leaderboard_*,@string/game_services_project_id" />
