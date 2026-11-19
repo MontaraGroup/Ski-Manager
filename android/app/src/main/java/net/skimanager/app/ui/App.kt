@@ -23,7 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import net.skimanager.app.games.PlayGamesState
 import net.skimanager.app.ui.auth.AuthFlow
 import net.skimanager.app.ui.auth.ChooseStart
 import net.skimanager.app.ui.game.DashboardScreen
@@ -135,6 +138,15 @@ fun App() {
     val app = remember { AppState(context.applicationContext) }
     val oldSave = remember { File(context.filesDir, OLD_SAVE) }
     var showUpdateNote by remember { mutableStateOf(oldSave.exists()) }
+
+    // Play Games signs in on its own at launch; once the game account is ready, mirror achievements and the score
+    val activity = LocalActivity.current
+    LaunchedEffect(app.signedIn, app.needsStart) {
+        if (activity != null && app.signedIn && !app.needsStart) {
+            PlayGamesState.refresh(activity)
+            PlayGamesState.sync(activity, app.api)
+        }
+    }
 
     when {
         !app.signedIn -> Screen { AuthFlow(app) }

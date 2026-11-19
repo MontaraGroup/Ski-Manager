@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Google Play Games IDs. The project ID is from Play Console > Play Games Services > Configuration.
+    Add each achievement and the leaderboard as Play Console names them in "Get resources":
+    achievement_<name in snake case> and leaderboard_<name>. The app unlocks an achievement when the
+    site achievement with the same name (or key) is completed, and submits the resort score to
+    leaderboard_resort_score. Ones not listed here are skipped.
+-->
+<resources>
+    <string name="game_services_project_id" translatable="false">661843131336</string>
+</resources>
