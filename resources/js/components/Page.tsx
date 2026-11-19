@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertDialog, Button } from '@heroui/react';
+import { AlertDialog, Button, Card, buttonVariants, chipVariants, cn } from '@heroui/react';
 import { Icon } from './Icon';
 
 /** Page frame for the React game pages: width, title row with a way back, optional actions */
@@ -22,7 +22,7 @@ export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '
     <div className={`${width} mx-auto flex flex-col gap-4 p-4 text-foreground lg:p-8`}>
       <header className="flex flex-wrap items-start gap-3">
         {back && (
-          <a href={back} aria-label="Back to the dashboard" className="flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-default">
+          <a href={back} aria-label={back === '/dashboard' ? 'Back to the dashboard' : 'Back'} className={buttonVariants({ variant: 'ghost', isIconOnly: true, className: 'size-11 shrink-0 rounded-full' })}>
             <Icon name="fa-chevron-left" />
           </a>
         )}
@@ -34,7 +34,7 @@ export function Page({ title, icon, iconTone = 'text-accent', subtitle, back = '
               <a
                 href="/beta"
                 aria-label="Beta feature, see beta features"
-                className="inline-flex min-h-8 items-center rounded-full bg-warning/15 px-2.5 text-sm font-semibold text-warning hover:underline"
+                className={chipVariants({ color: 'warning', variant: 'soft', className: 'min-h-8 px-2.5 text-sm font-semibold hover:underline' }).base()}
               >
                 Beta
               </a>
@@ -61,16 +61,17 @@ export function Panel({
   children: ReactNode;
   className?: string;
 }) {
+  // Block layout, not Card's flex column, so existing panel contents keep their own spacing
   return (
-    <section className={`rounded-xl border border-border bg-surface p-4 ${className}`}>
+    <Card render={(props) => <section {...props} />} className={cn('block border border-border', className)}>
       {(title || actions) && (
-        <div className="mb-3 flex items-center justify-between gap-2">
-          {title ? <h2 className="font-semibold">{title}</h2> : <div />}
+        <Card.Header className="mb-3 flex-row items-center justify-between gap-2">
+          {title ? <Card.Title render={(props) => <h2 {...props} />} className="text-base font-semibold">{title}</Card.Title> : <div />}
           {actions}
-        </div>
+        </Card.Header>
       )}
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -87,11 +88,11 @@ export function Figure({
   note?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <div className="text-sm text-muted">{label}</div>
+    <Card className="gap-0 border border-border">
+      <Card.Description render={(props) => <div {...props} />}>{label}</Card.Description>
       <div className={`text-2xl font-semibold tabular-nums ${tone}`}>{value}</div>
-      {note && <div className="text-sm text-muted">{note}</div>}
-    </div>
+      {note && <Card.Description render={(props) => <div {...props} />}>{note}</Card.Description>}
+    </Card>
   );
 }
 
