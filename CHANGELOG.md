@@ -1,3 +1,11 @@
+## Release 2026-11-19 18:14
+
+* Merge branch 'MontaraGroup:main' into main (61b8188c)
+* Merge pull request #125 from Montara-Group/feat/android-play-games-479 (e19581d4)
+* Merge pull request #124 from Montara-Group/feat/android-beta-google-group (d6ffa5f3)
+* chore(android): Play Games project 479519104582 (Cloud project ski-manager-496921) (91930b8b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (b87057c8)
+
 ## Release 2026-11-19 16:33
 
 * Merge branch 'MontaraGroup:main' into main (c15c260a)
