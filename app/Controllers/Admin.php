@@ -1413,11 +1413,11 @@ class Admin extends BaseController
     }
 
     /** GET /admin/resort-vote: this month's tally, past months, winner picks */
-    /** GET /admin/android-testing: access codes for the Android closed test (App\Libraries\AndroidTesting) */
+    /** GET /admin/android-testing: the Android closed test's links and the invite (App\Libraries\AndroidTesting) */
     public function androidTesting(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $page = \App\Libraries\AndroidTesting::stats() + ['joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats()];
+        $page = ['groupUrl' => \App\Libraries\AndroidTesting::groupUrl(), 'joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats()];
         return view('admin/android_testing', ['page' => $page]);
     }
 
@@ -1432,46 +1432,24 @@ class Admin extends BaseController
             : 'Sent the notification to ' . number_format($n) . ($n === 1 ? ' player.' : ' players.'));
     }
 
-    /** POST /admin/android-testing/codes: codes (pasted text or CSV), or remove_unclaimed=1 */
-    public function androidTestingCodes(): \CodeIgniter\HTTP\RedirectResponse
-    {
-        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $back = redirect()->to('/admin/android-testing');
-        if ($this->request->getPost('remove_unclaimed') === '1') {
-            $n = \App\Libraries\AndroidTesting::removeUnclaimed();
-            $this->auditLog('android_codes_remove', null, $n . ' unclaimed');
-            return $back->with('success', "Removed {$n} unclaimed " . ($n === 1 ? 'code.' : 'codes.'));
-        }
-        $raw = (string) $this->request->getPost('codes');
-        $file = $this->request->getFile('codes_file');
-        if ($file && $file->isValid() && $file->getSize() <= 5 * 1024 * 1024) {
-            $raw .= "\n" . file_get_contents($file->getTempName());
-        }
-        $codes = \App\Libraries\AndroidTesting::parse($raw);
-        if (!$codes) return $back->with('error', 'No codes found. Paste the codes from Play Console, or upload its CSV.');
-        $added = \App\Libraries\AndroidTesting::add($codes);
-        $this->auditLog('android_codes_add', null, $added . ' added');
-        $skipped = count($codes) - $added;
-        return $back->with('success', "Added {$added} " . ($added === 1 ? 'code' : 'codes') . ($skipped ? " ({$skipped} were already here)" : '') . '.');
-    }
-
-    /** POST /admin/android-testing/link: join_url, the closed test's link from Play Console */
+    /** POST /admin/android-testing/link: group_url (the testers Google Group) and join_url (the opt-in link) */
     public function androidTestingLink(): \CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
         $back = redirect()->to('/admin/android-testing');
-        $url = trim((string) $this->request->getPost('join_url'));
-        if ($url === '') {
-            setting()->forget('AndroidTesting.joinUrl');
-            $this->auditLog('android_test_link', null, 'removed');
-            return $back->with('success', 'Test link removed.');
+        $links = ['group_url' => 'AndroidTesting.groupUrl', 'join_url' => 'AndroidTesting.joinUrl'];
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !str_starts_with($url, 'https://'))) {
+                return $back->with('error', 'Use full https:// links, copied from Google Groups and Play Console.');
+            }
         }
-        if (!filter_var($url, FILTER_VALIDATE_URL) || !str_starts_with($url, 'https://')) {
-            return $back->with('error', 'Use the full https:// link from Play Console.');
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            $url === '' ? setting()->forget($key) : setting($key, $url);
         }
-        setting('AndroidTesting.joinUrl', $url);
-        $this->auditLog('android_test_link', null, $url);
-        return $back->with('success', 'Test link saved.');
+        $this->auditLog('android_test_link', null, trim((string) $this->request->getPost('group_url')) . ' | ' . trim((string) $this->request->getPost('join_url')));
+        return $back->with('success', 'Links saved.');
     }
 
     public function resortVote(): string|\CodeIgniter\HTTP\RedirectResponse
