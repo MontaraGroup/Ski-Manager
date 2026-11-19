@@ -79,7 +79,7 @@ class Shell
         ['Insurance', '/insurance', 'fa-shield-halved'], ['Government', '/government', 'fa-building-columns'], ['Environment', '/environment', 'fa-leaf'],
         ['Emergency', '/emergency', 'fa-truck-medical'], ['Ski Lessons', '/ski-lessons', 'fa-chalkboard-user'], ['Achievements', '/achievements', 'fa-trophy'],
         ['Leaderboard', '/leaderboard', 'fa-ranking-star'], ['Tournaments', '/tournaments', 'fa-medal'], ['Daily Bonus', '/daily-bonus', 'fa-gift'],
-        ['Genepis', '/genepis', 'fa-seedling'], ['VIP Guests', '/vip-guests', 'fa-star'], ['Resort Analysis', '/resort-analysis', 'fa-clipboard-check'],
+        ['Genepis', '/genepis', 'fa-seedling'], ['Android beta', '/beta/android', 'fa-mobile-screen'], ['VIP Guests', '/vip-guests', 'fa-star'], ['Resort Analysis', '/resort-analysis', 'fa-clipboard-check'],
         ['Off-Season', '/off-season', 'fa-sun'], ['Morale', '/morale', 'fa-face-smile'], ['Activity Log', '/activity', 'fa-clock-rotate-left'],
         ['Notifications', '/notifications', 'fa-bell'], ['Settings', '/settings', 'fa-gear'], ['Account', '/account', 'fa-user-gear'], ['About', '/about', 'fa-circle-info'],
         ['FAQ', '/faq', 'fa-circle-question'], ['Updates', '/updates', 'fa-newspaper'], ['Roadmap', '/roadmap', 'fa-map-location-dot'], ['Contact', '/contact', 'fa-envelope'],

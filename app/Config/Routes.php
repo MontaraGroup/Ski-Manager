@@ -36,6 +36,7 @@ $routes->post("/admin/season-vote/settings", "Admin::saveSeasonVote");
 $routes->get("/admin/android-testing", "Admin::androidTesting");
 $routes->post("/admin/android-testing/codes", "Admin::androidTestingCodes");
 $routes->post("/admin/android-testing/link", "Admin::androidTestingLink");
+$routes->post("/admin/android-testing/notify", "Admin::androidTestingNotify");
 $routes->get("/admin/resort-vote", "Admin::resortVote");
 $routes->post("/admin/resort-vote/(:num)/open", "Admin::resortVoteOpen/$1");
 $routes->post("/admin/resort-vote/(:num)/winner", "Admin::resortVoteWinner/$1");

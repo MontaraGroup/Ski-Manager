@@ -1417,8 +1417,19 @@ class Admin extends BaseController
     public function androidTesting(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $page = \App\Libraries\AndroidTesting::stats() + ['joinUrl' => \App\Libraries\AndroidTesting::joinUrl()];
+        $page = \App\Libraries\AndroidTesting::stats() + ['joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats()];
         return view('admin/android_testing', ['page' => $page]);
+    }
+
+    /** POST /admin/android-testing/notify: the invite notification for every eligible account that hasn't had it */
+    public function androidTestingNotify(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $n = \App\Libraries\AndroidTesting::notifyAll();
+        $this->auditLog('android_invite', null, $n . ' notified');
+        return redirect()->to('/admin/android-testing')->with('success', $n === 0
+            ? 'Everyone eligible already has the notification.'
+            : 'Sent the notification to ' . number_format($n) . ($n === 1 ? ' player.' : ' players.'));
     }
 
     /** POST /admin/android-testing/codes: codes (pasted text or CSV), or remove_unclaimed=1 */
