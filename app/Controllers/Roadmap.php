@@ -273,6 +273,10 @@ class Roadmap extends BaseController
     /** Where players join the in-game beta program, linked from "In beta" items */
     public const BETA_URL = '/beta';
 
+    public const COMMENT_MAX = 500;
+    public const COMMENTS_PER_DAY = 10;
+    public const COMMENT_EDIT_MINUTES = 15;
+
     /** Statuses in page order, with how the page describes them */
     private const STATUSES = [
         'in_beta'     => ['In beta', 'Playable now in the beta program, before it ships to everyone.', 'fa-flask'],
@@ -363,6 +367,14 @@ class Roadmap extends BaseController
             : [];
         $me = $loggedIn ? (int) auth()->id() : 0;
 
+        // Comment counts per idea; a main idea's count includes the ideas merged into it
+        $commentCounts = [];
+        if ($this->db->tableExists('roadmap_comments')) {
+            foreach ($this->db->table('roadmap_comments')->select('item_id, COUNT(*) AS n')->groupBy('item_id')->get()->getResultArray() as $row) {
+                $commentCounts[(int) $row['item_id']] = (int) $row['n'];
+            }
+        }
+
         $columns = [];
         foreach (self::STATUSES as $key => [$title, $desc, $icon]) {
             $columns[$key] = ['status' => $key, 'title' => $title, 'description' => $desc, 'icon' => $icon, 'items' => []];
@@ -376,6 +388,7 @@ class Roadmap extends BaseController
             $merged = [];
             $mine = $loggedIn && (int) ($item['author_id'] ?? 0) === $me;
             $hasVoted = isset($voted[$id]);
+            $comments = $commentCounts[$id] ?? 0;
             foreach ($group as $m) {
                 $mMine = $loggedIn && (int) ($m['author_id'] ?? 0) === $me;
                 $merged[] = [
@@ -387,6 +400,7 @@ class Roadmap extends BaseController
                 ];
                 $mine = $mine || $mMine;
                 $hasVoted = $hasVoted || isset($voted[(int) $m['id']]);
+                $comments += $commentCounts[(int) $m['id']] ?? 0;
             }
             $columns[$status]['items'][] = [
                 'id'          => $id,
@@ -403,6 +417,7 @@ class Roadmap extends BaseController
                 'updatesUrl'  => !empty($item['updates_url']) ? (string) $item['updates_url'] : null,
                 'created_at'  => (string) ($item['created_at'] ?? ''),
                 'merged'      => $merged,
+                'comments'    => $comments,
             ];
         }
 
@@ -430,9 +445,16 @@ class Roadmap extends BaseController
                 'signedIn'         => $loggedIn,
                 'canVote'          => $userId !== null,
                 'canSuggest'       => $userId !== null && !\App\Controllers\Demo::isDemoUser(),
+                'canComment'       => $userId !== null && !\App\Controllers\Demo::isDemoUser(),
+                'isAdmin'          => self::checkAdmin(),
                 'earnsRewards'     => $eligible,
                 'weeklyRewardDone' => $eligible && RoadmapRewards::weeklyRewardTaken($userId),
                 'suggestionsLeft'  => $userId !== null ? RoadmapRewards::suggestionsLeft($userId) : 0,
+            ],
+            'comments' => [
+                'maxLength'   => self::COMMENT_MAX,
+                'perDay'      => self::COMMENTS_PER_DAY,
+                'editMinutes' => self::COMMENT_EDIT_MINUTES,
             ],
             'rewards' => [
                 'voteWeekly'   => RoadmapRewards::VOTE_WEEKLY_GENEPIS,
@@ -698,6 +720,157 @@ class Roadmap extends BaseController
         self::recount((int) $idea['id']);
     }
 
+    /** The idea a comment thread belongs to: a merged idea's thread is its main idea's */
+    private function threadRoot(int $itemId): ?array
+    {
+        $item = $this->db->table('roadmap_items')->where('id', $itemId)->get()->getRowArray();
+        if ($item && !empty($item['merged_into'])) {
+            $item = $this->db->table('roadmap_items')->where('id', (int) $item['merged_into'])->get()->getRowArray();
+        }
+        return $item ?: null;
+    }
+
+    /** Signed-in, finished, non-demo player who may comment; null otherwise */
+    private function commenterId(): ?int
+    {
+        $userId = $this->playerId();
+        return $userId !== null && !\App\Controllers\Demo::isDemoUser() ? $userId : null;
+    }
+
+    private function commentJson(array $c, array $usernames, int $me, bool $admin): array
+    {
+        $mine = $me > 0 && (int) $c['user_id'] === $me;
+        return [
+            'id'      => (int) $c['id'],
+            'author'  => $usernames[(int) $c['user_id']] ?? 'Player',
+            'body'    => (string) $c['body'],
+            'created' => (string) $c['created_at'],
+            'edited'  => !empty($c['updated_at']),
+            'mine'    => $mine,
+            'canEdit' => $mine && strtotime((string) $c['created_at']) > time() - self::COMMENT_EDIT_MINUTES * 60,
+            'canDelete' => $mine || $admin,
+        ];
+    }
+
+    /** GET: the comment thread of an idea (and of the ideas merged into it), oldest first */
+    public function comments(int $itemId)
+    {
+        self::ensureSchema();
+        $item = $this->threadRoot($itemId);
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        $rows = $this->db->table('roadmap_comments')->whereIn('item_id', self::groupIds((int) $item['id']))
+            ->orderBy('created_at', 'ASC')->orderBy('id', 'ASC')->get()->getResultArray();
+        $userIds = array_values(array_unique(array_map(fn($c) => (int) $c['user_id'], $rows)));
+        $usernames = $userIds
+            ? array_column($this->db->table('users')->select('id, username')->whereIn('id', $userIds)->get()->getResultArray(), 'username', 'id')
+            : [];
+        $me = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : 0;
+        $admin = self::checkAdmin();
+
+        return $this->response->setJSON([
+            'success'  => true,
+            'comments' => array_map(fn($c) => $this->commentJson($c, $usernames, $me, $admin), $rows),
+        ]);
+    }
+
+    /** POST body: add a comment to an idea (a merged idea's comment goes to its main idea) */
+    public function addComment(int $itemId)
+    {
+        self::ensureSchema();
+        helper('notify');
+
+        $userId = $this->commenterId();
+        if ($userId === null) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Sign in with a full account and finish setting up your resort to comment.'])->setStatusCode(401);
+        }
+        $item = $this->threadRoot($itemId);
+        if (!$item) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Item not found'])->setStatusCode(404);
+        }
+        $body = trim((string) $this->request->getPost('body'));
+        if ($body === '' || mb_strlen($body) > self::COMMENT_MAX) {
+            return $this->response->setJSON(['success' => false, 'message' => 'A comment needs 1 to ' . self::COMMENT_MAX . ' characters.'])->setStatusCode(400);
+        }
+        $today = $this->db->table('roadmap_comments')->where('user_id', $userId)
+            ->where('created_at >', date('Y-m-d H:i:s', time() - 86400))->countAllResults();
+        if ($today >= self::COMMENTS_PER_DAY) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can post ' . self::COMMENTS_PER_DAY . ' comments a day. Try again tomorrow.'])->setStatusCode(429);
+        }
+
+        $mainId = (int) $item['id'];
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('roadmap_comments')->insert(['item_id' => $mainId, 'user_id' => $userId, 'body' => $body, 'created_at' => $now]);
+        $commentId = (int) $this->db->insertID();
+
+        $this->notifyAuthors($item, $userId);
+
+        $username = (string) (auth()->user()->username ?? 'Player');
+        $row = ['id' => $commentId, 'user_id' => $userId, 'body' => $body, 'created_at' => $now, 'updated_at' => null];
+        return $this->response->setJSON([
+            'success'  => true,
+            'comment'  => $this->commentJson($row, [$userId => $username], $userId, self::checkAdmin()),
+            'count'    => $this->db->table('roadmap_comments')->whereIn('item_id', self::groupIds($mainId))->countAllResults(),
+        ]);
+    }
+
+    /**
+     * Tell the idea's author, and the authors of ideas merged into it, about a new comment. At most
+     * one notice per author per idea per hour, and never about their own comment.
+     */
+    private function notifyAuthors(array $item, int $commenterId): void
+    {
+        $mainId = (int) $item['id'];
+        $link = '/roadmap#item-' . $mainId;
+        $authors = [];
+        foreach (array_merge([$item], self::mergedIdeas($mainId)) as $idea) {
+            $authorId = (int) ($idea['author_id'] ?? 0);
+            if ($authorId > 0 && $authorId !== $commenterId) $authors[$authorId] = true;
+        }
+        foreach (array_keys($authors) as $authorId) {
+            $recent = $this->db->table('notifications')->where('user_id', $authorId)->where('type', 'roadmap_comment')
+                ->where('link', $link)->where('created_at >', date('Y-m-d H:i:s', time() - 3600))->countAllResults();
+            if ($recent > 0) continue;
+            notify($authorId, 'roadmap_comment', 'New comment on your idea',
+                'Players are discussing "' . $item['title'] . '".', 'fa-solid fa-comment', $link);
+        }
+    }
+
+    /** POST body: the author edits their comment, within COMMENT_EDIT_MINUTES of posting it */
+    public function editComment(int $commentId)
+    {
+        $userId = $this->commenterId();
+        $comment = $this->db->table('roadmap_comments')->where('id', $commentId)->get()->getRowArray();
+        if (!$comment || $userId === null || (int) $comment['user_id'] !== $userId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can only edit your own comments.'])->setStatusCode(403);
+        }
+        if (strtotime((string) $comment['created_at']) <= time() - self::COMMENT_EDIT_MINUTES * 60) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comments can be edited for ' . self::COMMENT_EDIT_MINUTES . ' minutes after posting.'])->setStatusCode(400);
+        }
+        $body = trim((string) $this->request->getPost('body'));
+        if ($body === '' || mb_strlen($body) > self::COMMENT_MAX) {
+            return $this->response->setJSON(['success' => false, 'message' => 'A comment needs 1 to ' . self::COMMENT_MAX . ' characters.'])->setStatusCode(400);
+        }
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('roadmap_comments')->where('id', $commentId)->update(['body' => $body, 'updated_at' => $now]);
+        $comment = array_merge($comment, ['body' => $body, 'updated_at' => $now]);
+        $username = (string) (auth()->user()->username ?? 'Player');
+        return $this->response->setJSON(['success' => true, 'comment' => $this->commentJson($comment, [$userId => $username], $userId, self::checkAdmin())]);
+    }
+
+    /** POST: the author or an admin deletes a comment */
+    public function deleteComment(int $commentId)
+    {
+        $comment = $this->db->table('roadmap_comments')->where('id', $commentId)->get()->getRowArray();
+        $me = function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : 0;
+        if (!$comment || !($me > 0 && ((int) $comment['user_id'] === $me || self::checkAdmin()))) {
+            return $this->response->setJSON(['success' => false, 'message' => 'You can only delete your own comments.'])->setStatusCode(403);
+        }
+        $this->db->table('roadmap_comments')->where('id', $commentId)->delete();
+        return $this->response->setJSON(['success' => true]);
+    }
+
     public function deleteItem(int $itemId)
     {
         if (!self::checkAdmin()) {
@@ -711,6 +884,7 @@ class Roadmap extends BaseController
         foreach (self::mergedIdeas($itemId) as $m) $this->splitOut($m);
 
         $this->db->transStart();
+        if ($this->db->tableExists('roadmap_comments')) $this->db->table('roadmap_comments')->where('item_id', $itemId)->delete();
         $this->db->table('roadmap_votes')->where('item_id', $itemId)->delete();
         $this->db->table('roadmap_items')->where('id', $itemId)->delete();
         $this->db->transComplete();
