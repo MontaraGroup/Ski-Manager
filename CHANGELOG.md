@@ -1,3 +1,27 @@
+## Release 2026-11-19 16:33
+
+* Merge branch 'MontaraGroup:main' into main (c15c260a)
+* Merge pull request #123 from Montara-Group/feat/android-play-games (19ed4a14)
+* feat(android): Google Play Games sign-in, achievements and leaderboard (33a0a082)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (04f70d4a)
+* Merge branch 'MontaraGroup:main' into main (69693135)
+
+## Release 2026-11-19 13:38
+
+* Merge branch 'MontaraGroup:main' into main (69693135)
+* Merge pull request #122 from Montara-Group/feat/android-beta-invite (1512f700)
+* feat(beta): notify players about the Android test; /beta/android shows the code right away (c9b77c9b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (3310db6d)
+* Merge pull request #121 from Montara-Group/main (bee40db0)
+
+## Release 2026-11-19 04:08
+
+* Merge branch 'MontaraGroup:main' into main (abbee588)
+* Merge pull request #120 from Montara-Group/chore/android-version-111 (4c1006b7)
+* chore(release): bump VERSION_CODE to 111 (2.0.1); Play already has 110 (98180761)
+* Merge pull request #119 from Montara-Group/feat/android-closed-testing-v2 (eeb32c0f)
+* Merge feat/android-closed-testing into current main (22478dbe)
+
 ## Release 2026-11-19 02:14
 
 * Merge branch 'MontaraGroup:main' into main (5bcc3d71)
