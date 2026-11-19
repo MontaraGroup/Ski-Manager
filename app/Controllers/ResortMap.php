@@ -2,11 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Ledger;
+use App\Libraries\LiftSwap;
 use App\Models\MapSegmentModel;
 
 class ResortMap extends BaseController
 {
-    private const RESORT_MAPS = [
+    protected const RESORT_MAPS = [
         'ParkCity'       => ['name' => 'Park City',       'location' => 'Utah, USA',       'image' => '/img/ParkCity.jpg',       'admin_image' => '/img/ParkCity-Big.jpg', 'width' => 600, 'height' => 340],
         'DeerValley'     => ['name' => 'Deer Valley',     'location' => 'Utah, USA',       'image' => '/img/DeerValley.jpg',     'width' => 600, 'height' => 340],
         'AspenSnowmass'  => ['name' => 'Aspen Snowmass',  'location' => 'Colorado, USA',   'image' => '/img/AspenSnowmass.jpg',  'width' => 600, 'height' => 340],
@@ -17,8 +19,58 @@ class ResortMap extends BaseController
     ];
 
     public static function getResortMapNames(): array { return array_map(fn($m) => $m["name"], self::RESORT_MAPS); }
-    private function getSelectedMap(): string
+
+    public static function mapImageUrls(string $mapKey, bool $isAdmin = true): array
     {
+        $config = self::RESORT_MAPS[$mapKey] ?? self::RESORT_MAPS['ParkCity'];
+        $image = ($isAdmin && !empty($config['admin_image'])) ? $config['admin_image'] : $config['image'];
+        $webp = self::webpSizes((string)$image);
+        $basePath = preg_replace('/\.jpe?g$/i', '', $image);
+        return [
+            'key'         => $mapKey,
+            'name'        => $config['name'],
+            'location'    => $config['location'],
+            'width'       => $config['width'] ?? 600,
+            'height'      => $config['height'] ?? 340,
+            'image'       => $image,
+            'admin_image' => $config['admin_image'] ?? null,
+            'webp'        => $webp,
+            'urls'        => [
+                'low'          => $basePath . ($webp['low'] ? '_low.webp' : '_low.jpg'),
+                'med'          => $basePath . ($webp['med'] ? '_med.webp' : '_med.jpg'),
+                'full'         => $webp['full'] ? ($basePath . '.webp') : $image,
+                'fallbackLow'  => $basePath . '_low.jpg',
+                'fallbackMed'  => $basePath . '_med.jpg',
+                'fallbackFull' => $image,
+            ],
+        ];
+    }
+
+    public static function getAllResortMaps(bool $isAdmin = true): array
+    {
+        $result = [];
+        foreach (self::RESORT_MAPS as $key => $cfg) {
+            $result[$key] = self::mapImageUrls($key, $isAdmin);
+        }
+        return $result;
+    }
+
+    protected function getSelectedMap(?string $requestedMap = null): string
+    {
+        $candidate = $requestedMap;
+        if (!$candidate && $this->request) {
+            $candidate = $this->request->getGet('map') ?? $this->request->getGet('resort_map');
+            if (!$candidate) {
+                $json = $this->request->getJSON(true);
+                if (is_array($json)) {
+                    $candidate = $json['map'] ?? $json['resort_map'] ?? null;
+                }
+            }
+        }
+        if ($candidate && isset(self::RESORT_MAPS[$candidate])) {
+            return $candidate;
+        }
+
         $userId = auth()->id();
         if ($userId) {
             $fin = db_connect()->table('player_finances')
@@ -31,7 +83,7 @@ class ResortMap extends BaseController
         return 'ParkCity';
     }
 
-    private function isAdmin(): bool
+    protected function isAdmin(): bool
     {
         if (!function_exists('auth') || !auth()->loggedIn()) {
             return false;
@@ -45,7 +97,8 @@ class ResortMap extends BaseController
         $userId = auth()->id();
         if (!$userId) return redirect()->to('/login');
 
-        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map');
+        $json = $this->request->getJSON(true);
+        $map = $this->request->getPost('map') ?? $this->request->getPost('resort_map') ?? ($json['map'] ?? $json['resort_map'] ?? null);
 
         // Check either key or name
         $foundKey = null;
@@ -60,8 +113,12 @@ class ResortMap extends BaseController
             }
         }
 
+        $isJsonOrAjax = $this->request->isAJAX() ||
+            str_contains((string) $this->request->getHeaderLine('Accept'), 'application/json') ||
+            str_starts_with(trim($this->request->getUri()->getPath(), '/'), 'api/');
+
         if (!$foundKey) {
-            if ($this->request->isAJAX()) {
+            if ($isJsonOrAjax) {
                 return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Invalid map selected.', 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
             }
             return redirect()->to('/map')->with('error', 'Invalid map selected.');
@@ -73,7 +130,7 @@ class ResortMap extends BaseController
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        if ($this->request->isAJAX()) {
+        if ($isJsonOrAjax) {
             return $this->response->setJSON(['success' => true, 'map' => $foundKey, 'mapName' => self::RESORT_MAPS[$foundKey]['name'], 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
         }
 
@@ -95,8 +152,12 @@ class ResortMap extends BaseController
         $resortMap  = $this->getSelectedMap();
         $mapConfig  = self::RESORT_MAPS[$resortMap] ?? self::RESORT_MAPS['ParkCity'];
         $isAdmin    = $this->isAdmin();
-        if ($isAdmin && !empty($mapConfig['admin_image'])) {
-            $mapConfig['image'] = $mapConfig['admin_image'];
+        // Admins trace runs over <Map>-Big.jpg (the same view with lifts and runs drawn in) when it is on the server
+        if ($isAdmin) {
+            $adminImage = $mapConfig['admin_image'] ?? preg_replace('/\.jpe?g$/i', '-Big.jpg', $mapConfig['image']);
+            if (is_file(FCPATH . ltrim($adminImage, '/'))) {
+                $mapConfig['image'] = $adminImage;
+            }
         }
         $userId     = auth()->id();
         $db         = db_connect();
@@ -128,13 +189,13 @@ class ResortMap extends BaseController
         $userCash        = 0;
         if ($userId) {
             $built = $db->table('player_items')
-                ->select('id, segment_id, item_type, subtype, name, length_meters, capacity, difficulty, sector, status, snow_quality')
+                ->select('id, segment_id, item_type, subtype, name, length_meters, capacity, seats, difficulty, sector, status, snow_quality')
                 ->where('user_id', $userId)
                 ->where('segment_id IS NOT NULL')
                 ->get()->getResultArray();
             $builtSegmentIds = array_column($built, 'segment_id');
             foreach ($built as $b) {
-                $builtItems[(int) $b['segment_id']] = $b + ['salvage' => self::salvageValue($b)];
+                $builtItems[(int) $b['segment_id']] = self::withSwaps($b + ['salvage' => self::salvageValue($b)]);
             }
             $finRow   = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
             $userCash = (int) ($finRow['cash'] ?? 0);
@@ -469,6 +530,7 @@ class ResortMap extends BaseController
         $db->table('player_items')->insert($itemData);
         $itemData['id']      = (int) $db->insertID();
         $itemData['salvage'] = self::salvageValue($itemData);
+        $itemData = self::withSwaps($itemData);
 
         $db->table('financial_transactions')->insert([
             'user_id'     => $userId,
@@ -574,6 +636,113 @@ class ResortMap extends BaseController
         ]);
     }
 
+    /** A built lift with the systems it can be swapped to (LiftSwap), for the map and the app */
+    public static function withSwaps(array $item): array
+    {
+        if (($item['item_type'] ?? '') === 'lift') {
+            $item['seats']    = LiftSwap::currentSeats($item);
+            $item['run_cost'] = (int) round(\App\Libraries\Economy::liftRunningCost((string) $item['subtype'], (int) ($item['length_meters'] ?? 0)));
+            $item['swaps']    = LiftSwap::options($item);
+        }
+        return $item;
+    }
+
+    /**
+     * Replace a built lift with another system on the same line (POST JSON {lift_type, seats}). Costs what
+     * demolish + rebuild would, less LiftSwap::DISCOUNT; a swap to a cheaper lift pays back the difference.
+     * The lift keeps its name, line and anything assigned to it, and comes back at 100% condition.
+     */
+    public function swapLift($id = null)
+    {
+        $userId = auth()->id();
+        $fail = fn(int $code, string $msg) => $this->response->setStatusCode($code)->setJSON(['error' => $msg, 'csrf_token' => csrf_token(), 'csrf_hash' => csrf_hash()]);
+        if (!$userId) {
+            return $fail(401, 'Login required');
+        }
+
+        $data  = $this->request->getJSON(true) ?? [];
+        $type  = (string) ($data['lift_type'] ?? '');
+        $seats = (int) ($data['seats'] ?? 0);
+        if (!LiftSwap::isValid($type, $seats)) {
+            return $fail(400, 'Pick a lift system and seat count from the list.');
+        }
+
+        $db = db_connect();
+        $db->transStart();
+        $item = $db->query("SELECT * FROM player_items WHERE id = ? AND user_id = ? AND item_type = 'lift' FOR UPDATE", [(int) $id, $userId])->getRowArray();
+        if (!$item) {
+            $db->transRollback();
+            return $fail(404, 'That lift was not found.');
+        }
+        if ($item['subtype'] === $type && LiftSwap::currentSeats($item) === $seats) {
+            $db->transRollback();
+            return $fail(400, $item['name'] . ' already is that lift.');
+        }
+        if (!in_array($item['status'], ['open', 'closed', 'broken'], true)) {
+            $db->transRollback();
+            return $fail(400, $item['name'] . ' isn\'t ready yet.');
+        }
+
+        $price   = LiftSwap::quote($item, $type, $seats)['price'];
+        $oldName = self::liftLabel($item['subtype'], LiftSwap::currentSeats($item));
+        $newName = self::liftLabel($type, $seats);
+        $what    = 'Replaced ' . $item['name'] . ': ' . $oldName . ' to ' . $newName;
+        if ($price > 0 && !Ledger::charge($userId, $price, 'Construction', $what)) {
+            $db->transRollback();
+            $cash = (int) ($db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRow('cash') ?? 0);
+            return $fail(400, 'Not enough cash: this costs ' . currency($price) . ' and you have ' . currency($cash) . '.');
+        }
+        if ($price < 0) {
+            Ledger::credit($userId, -$price, 'Construction', $what);
+        }
+        $update = [
+            'subtype'       => $type,
+            'seats'         => $seats,
+            'capacity'      => \App\Libraries\Economy::liftCapacityPerHour($type, $seats),
+            'condition_pct' => 100,
+            'status'        => $item['status'] === 'closed' ? 'closed' : 'open',
+            'updated_at'    => date('Y-m-d H:i:s'),
+        ];
+        $db->table('player_items')->where('id', $item['id'])->update($update);
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            return $fail(500, 'Could not replace ' . $item['name'] . '. Nothing was changed.');
+        }
+
+        $money = $price > 0 ? ' for ' . currency($price) : ($price < 0 ? ', ' . currency(-$price) . ' back' : '');
+        log_activity($userId, 'Construction', $what . $money, 'fa-solid fa-arrows-rotate');
+
+        $item = self::withSwaps(array_merge($item, $update));
+        $item['salvage'] = self::salvageValue($item);
+        $fin = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
+        return $this->response->setJSON([
+            'success'    => true,
+            'message'    => $item['name'] . ' is now a ' . $newName . ($price > 0 ? '. Paid ' . currency($price) . '.' : ($price < 0 ? '. ' . currency(-$price) . ' paid back.' : '.')),
+            'price'      => $price,
+            'item'       => array_intersect_key($item, array_flip(['id', 'segment_id', 'item_type', 'subtype', 'name', 'length_meters', 'capacity', 'seats', 'difficulty', 'sector', 'status', 'snow_quality', 'salvage', 'run_cost', 'swaps'])),
+            'new_cash'   => (int) ($fin['cash'] ?? 0),
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
+    }
+
+    /** "Fixed-grip chairlift, 4 seats" */
+    public static function liftLabel(string $type, int $seats): string
+    {
+        $name = self::LIFT_NAMES[$type] ?? ucwords(str_replace('_', ' ', $type));
+        return $name . ', ' . $seats . ($seats === 1 ? ' seat' : ' seats');
+    }
+
+    /** Same names the map panel uses (resort-map/shared.tsx LIFT_TYPES) */
+    public const LIFT_NAMES = [
+        'button'       => 'Surface lift',
+        'chair_fixed'  => 'Fixed-grip chairlift',
+        'chair_detach' => 'Detachable chairlift',
+        'gondola'      => 'Gondola',
+        'cable_car'    => 'Cable car',
+    ];
+
     /** 25% of what the item cost to build */
     public static function salvageValue(array $item): int
     {
@@ -590,10 +759,7 @@ class ResortMap extends BaseController
         if (($item['item_type'] ?? '') !== 'lift') {
             return self::calcCost('slope', null, 0, $meters);
         }
-        $seats = (int) ($item['seats'] ?? 0) ?: match ($item['subtype'] ?? '') {
-            'button' => 1, 'chair_detach' => 4, 'gondola' => 6, 'cable_car' => 20, default => 2,
-        };
-        return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', $seats, $meters);
+        return self::calcCost('lift', $item['subtype'] ?? 'chair_fixed', LiftSwap::currentSeats($item), $meters);
     }
 
     /** Build price per metre for each lift type; the map page gets these too, so its prices match the charge */
@@ -817,7 +983,7 @@ class ResortMap extends BaseController
         ]);
     }
 
-    private function pip(array $pt, array $poly): bool
+    protected function pip(array $pt, array $poly): bool
     {
         $x = (float) ($pt[1] ?? $pt['lng'] ?? 0);
         $y = (float) ($pt[0] ?? $pt['lat'] ?? 0);

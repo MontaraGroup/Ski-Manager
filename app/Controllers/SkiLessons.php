@@ -18,6 +18,12 @@ class SkiLessons extends BaseController
 
     public function index(): string
     {
+        return view('lessons/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -88,6 +94,6 @@ class SkiLessons extends BaseController
             }, $instructors),
         ];
 
-        return view('lessons/index', ['page' => $page]);
+        return $page;
     }
 }

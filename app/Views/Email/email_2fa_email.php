@@ -27,6 +27,9 @@
     <p><?= lang('Auth.emailIpAddress') ?> <?= esc($ipAddress) ?></p>
     <p><?= lang('Auth.emailDevice') ?> <?= esc($userAgent) ?></p>
     <p><?= lang('Auth.emailDate') ?> <?= esc($date) ?></p>
+    <div style="border-top: 1px solid #e5e7eb; margin-top: 24px; padding-top: 12px; font-size: 11px; color: #9ca3af;">
+        You received this email because a two-factor authentication code was requested for your <a href="https://ski-manager.net" style="color: #6b7280; text-decoration: underline;">Ski Manager</a> account. If you did not attempt to sign in, please secure your account immediately.
+    </div>
 </body>
 
 </html>

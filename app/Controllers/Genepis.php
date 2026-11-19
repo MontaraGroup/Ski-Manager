@@ -44,6 +44,12 @@ class Genepis extends BaseController
 
     public function index(): string
     {
+        return view('genepis/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         helper(['time']);
@@ -101,7 +107,7 @@ class Genepis extends BaseController
             }, $logRaw),
         ];
 
-        return view('genepis/index', ['page' => $page]);
+        return $page;
     }
 
     public function buy()

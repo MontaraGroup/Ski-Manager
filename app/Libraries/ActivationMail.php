@@ -18,16 +18,30 @@ class ActivationMail
 
         helper('email');
         $request = service('request');
+        $ip = $request->getIPAddress();
+        $ua = (string) $request->getUserAgent();
+        $date = date('Y-m-d H:i:s');
+
         $email = emailer(['mailType' => 'html'])->setFrom(setting('Email.fromEmail'), setting('Email.fromName') ?? '');
         $email->setTo($user->email);
         $email->setSubject(lang('Auth.emailActivateSubject'));
         $email->setMessage(view(setting('Auth.views')['action_email_activate_email'], [
             'code' => $code,
             'user' => $user,
-            'ipAddress' => $request->getIPAddress(),
-            'userAgent' => (string) $request->getUserAgent(),
-            'date' => date('Y-m-d H:i:s'),
+            'ipAddress' => $ip,
+            'userAgent' => $ua,
+            'date' => $date,
         ], ['debug' => false]));
+
+        // Plain text fallback so spam filters (Gmail/Outlook) do not penalize HTML-only MIME
+        $altMessage = lang('Auth.emailActivateMailBody') . "\n\n"
+            . "Activation Code: " . $code . "\n\n"
+            . lang('Auth.emailInfo') . "\n"
+            . lang('Auth.username') . ": " . esc($user->username) . "\n"
+            . lang('Auth.emailIpAddress') . " " . esc($ip) . "\n"
+            . lang('Auth.emailDevice') . " " . esc($ua) . "\n"
+            . lang('Auth.emailDate') . " " . esc($date) . "\n";
+        $email->setAltMessage($altMessage);
 
         $sent = $email->send(false);
         $email->clear();

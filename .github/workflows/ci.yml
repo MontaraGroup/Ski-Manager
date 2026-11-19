@@ -91,5 +91,9 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      # The bundle budget check reads public/build, which is no longer committed
+      - name: Build Assets
+        run: npm run build
+
       - name: Run React Islands & Antislop Quality Gate
         run: npm test

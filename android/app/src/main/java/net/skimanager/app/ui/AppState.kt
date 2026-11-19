@@ -9,8 +9,10 @@ import net.skimanager.app.api.Api
 import net.skimanager.app.api.TokenStore
 import net.skimanager.app.api.bool
 import net.skimanager.app.api.str
+import net.skimanager.app.feedback.Capture
+import net.skimanager.app.feedback.FeedbackPrefs
 
-class AppState(context: Context) {
+class AppState(private val context: Context) {
     private val store = TokenStore(context)
     private val token0 = store.read()
 
@@ -22,17 +24,31 @@ class AppState(context: Context) {
 
     private var token: String? = token0
 
+    /** The screen captured by a shake, read once by the feedback screen */
+    var feedbackCapture: Capture? = null
+
+    /** Shaking the phone opens feedback. Settings can switch it off */
+    var shakeToFeedback by mutableStateOf(FeedbackPrefs.shake(context))
+        private set
+
+    fun changeShakeToFeedback(on: Boolean) {
+        FeedbackPrefs.setShake(context, on)
+        shakeToFeedback = on
+    }
+
     val api = Api(tokens = { token }, onSignedOut = {
         if (signedIn) forget("Your session has ended. Sign in again.")
     })
 
-    /** data: { token, user, profileComplete } from sign-in or the email code */
-    fun signIn(data: JsonObject) {
-        token = data.str("token")
-        store.write(data.str("token"))
+    /** data: { token, user, profileComplete } from sign-in or the email code. False if the answer had no token */
+    fun signIn(data: JsonObject): Boolean {
+        val newToken = data.str("token").ifBlank { return false }
+        token = newToken
+        store.write(newToken)
         needsStart = !data.bool("profileComplete")
         signedOutNote = null
         signedIn = true
+        return true
     }
 
     fun forget(note: String? = null) {
