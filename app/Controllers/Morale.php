@@ -8,6 +8,12 @@ class Morale extends BaseController
 {
     public function index(): string
     {
+        return view('morale/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $staffModel = new StaffModel();
         $staff = $staffModel->where('user_id', $userId)->where('status !=', 'fired')->findAll();
@@ -69,7 +75,7 @@ class Morale extends BaseController
             }, $staff),
         ];
 
-        return view('morale/index', ['page' => $page]);
+        return $page;
     }
 
     public function boost()

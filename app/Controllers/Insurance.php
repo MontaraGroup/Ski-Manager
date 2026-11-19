@@ -16,6 +16,12 @@ class Insurance extends BaseController
     public function index(): string
     {
         if (isPageHidden('insurance')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        return view('insurance/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $insuranceTypes = $this->getInsuranceTypes();
@@ -68,7 +74,7 @@ class Insurance extends BaseController
             'policies' => $formattedPolicies,
         ];
 
-        return view('insurance/index', ['page' => $page]);
+        return $page;
     }
 
     public function toggle(int $id)

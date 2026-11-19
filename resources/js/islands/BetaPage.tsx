@@ -89,6 +89,15 @@ export default function BetaPage(props: BetaState) {
         </ul>
       )}
 
+      {state.eligible && (
+        <Panel title="Android app">
+          <p className="mb-3 text-sm text-muted">Test the Ski Manager app on Google Play before it's public.</p>
+          <a href="/beta/android" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent-soft-foreground underline md:min-h-9">
+            <Icon name="fa-brands fa-android" /> Join the Android test
+          </a>
+        </Panel>
+      )}
+
       {state.member && (
         <Panel title="Beta program">
           <BetaMembership state={state} onChange={setState} showLink={false} />

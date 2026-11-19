@@ -15,6 +15,12 @@ class Updates extends BaseController
 
     public function index(): string
     {
+        return view('updates/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $formattedUpdates = [];
 
         try {
@@ -37,11 +43,20 @@ class Updates extends BaseController
                 }
             }
 
-            foreach ($updates as $idx => $update) {
-                $items = $this->db->table('update_items')
-                    ->where('update_id', $update['id'])
+            $itemsByUpdate = [];
+            $updateIds = array_values(array_filter(array_map(fn($u) => (int) ($u['id'] ?? 0), $updates)));
+            if ($updateIds) {
+                $allItems = $this->db->table('update_items')
+                    ->whereIn('update_id', $updateIds)
                     ->orderBy("FIELD(type, 'new', 'improved', 'fixed', 'removed'), sort_order", '', false)
                     ->get()->getResultArray();
+                foreach ($allItems as $it) {
+                    $itemsByUpdate[(int) $it['update_id']][] = $it;
+                }
+            }
+
+            foreach ($updates as $idx => $update) {
+                $items = $itemsByUpdate[(int) $update['id']] ?? [];
 
                 $categories = [];
                 foreach (['new', 'improved', 'fixed', 'removed'] as $t) {
@@ -94,6 +109,6 @@ class Updates extends BaseController
             'updates' => $formattedUpdates,
         ];
 
-        return view('updates/index', ['page' => $page]);
+        return $page;
     }
 }

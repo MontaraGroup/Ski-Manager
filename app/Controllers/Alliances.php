@@ -25,19 +25,27 @@ class Alliances extends BaseController
         if (!$userId) {
             return redirect()->to('/login')->with('error', 'Please log in to access Resort Alliances.');
         }
+        $page = $this->dashboardData();
+        return $page === null ? $this->directory() : view('alliances/index', ['page' => $page]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function dashboardData(): ?array
+    {
+        $userId = auth()->id();
 
         $db = db_connect();
         $membership = $this->memberModel->where('user_id', $userId)->first();
 
         if (!$membership) {
-            return $this->directory();
+            return null;
         }
 
         $alliance = $this->allianceModel->find($membership['alliance_id']);
         if (!$alliance) {
             // Broken membership link cleanup
             $this->memberModel->where('user_id', $userId)->delete();
-            return $this->directory();
+            return null;
         }
 
         // Fetch all members with their live resort statistics
@@ -245,10 +253,16 @@ class Alliances extends BaseController
             ],
         ];
 
-        return view('alliances/index', ['page' => $page]);
+        return $page;
     }
 
     public function directory()
+    {
+        return view('alliances/directory', ['page' => $this->directoryData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function directoryData(): array
     {
         $userId = auth()->id();
         $db = db_connect();
@@ -327,7 +341,7 @@ class Alliances extends BaseController
             'foundingFeeText' => currency(50000),
         ];
 
-        return view('alliances/directory', ['page' => $page]);
+        return $page;
     }
 
     public function create(): ResponseInterface
@@ -897,6 +911,12 @@ class Alliances extends BaseController
 
     public function leaderboard()
     {
+        return view('alliances/leaderboard', ['page' => $this->leaderboardData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function leaderboardData(): array
+    {
         $db = db_connect();
 
         $alliances = $db->query("
@@ -971,14 +991,24 @@ class Alliances extends BaseController
             'myAllianceId' => $myAllianceId,
         ];
 
-        return view('alliances/leaderboard', ['page' => $page]);
+        return $page;
     }
 
     public function view(int $id)
     {
+        $page = $this->viewData($id);
+        if ($page === null) {
+            return redirect()->to('/alliances')->with('error', 'Alliance not found.');
+        }
+        return view('alliances/view', ['page' => $page]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function viewData(int $id): ?array
+    {
         $alliance = $this->allianceModel->find($id);
         if (!$alliance) {
-            return redirect()->to('/alliances')->with('error', 'Alliance not found.');
+            return null;
         }
 
         $db = db_connect();
@@ -1057,6 +1087,6 @@ class Alliances extends BaseController
             'canJoin' => $canJoin,
         ];
 
-        return view('alliances/view', ['page' => $page]);
+        return $page;
     }
 }

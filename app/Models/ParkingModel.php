@@ -41,12 +41,12 @@ class ParkingModel extends Model
         'shuttle_stop' => [
             'label' => 'Shuttle Stop',
             'icon' => 'fa-bus',
-            'cost' => 35000,
-            'upkeep' => 800,
+            'cost' => 25000,
+            'upkeep' => 300,
             'build_days' => 2,
             'capacity' => 200,
-            'default_fee' => 5.00,
-            'condition_decay' => 0.4,
+            'default_fee' => 8.00,
+            'condition_decay' => 0.25,
         ],
         'village_gondola' => [
             'label' => 'Village Gondola',

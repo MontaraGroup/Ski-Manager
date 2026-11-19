@@ -488,7 +488,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin() || $id === 1) return redirect()->to('/admin');
         $db = db_connect();
-        $tables = ['staff', 'buildings', 'snow_cannons', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
+        $tables = ['staff', 'buildings', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
         foreach ($tables as $t) { try { $db->table($t)->where('user_id', $id)->delete(); } catch (\Exception $e) {} }
         $db->table('player_finances')->where('user_id', $id)->update(['cash' => 500000, 'total_income' => 0, 'total_expenses' => 0, 'reputation' => 0]);
         $db->table('genepis')->where('user_id', $id)->update(['balance' => 0]);
@@ -514,7 +514,7 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin() || $id === 1) return redirect()->to('/admin');
         $db = db_connect();
-        $tables = ['staff', 'buildings', 'snow_cannons', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'player_finances', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
+        $tables = ['staff', 'buildings', 'night_skiing', 'equipment', 'marketing_campaigns', 'loans', 'regulations', 'insurance', 'achievements', 'daily_bonus', 'player_finances', 'financial_transactions', 'activity_log', 'lift_tickets', 'ticket_sales', 'player_items', 'genepis', 'genepis_log', 'environmental', 'dashboard_widgets', 'parking', 'terrain_parks', 'tutorial_progress', 'scenic_lifts'];
         foreach ($tables as $t) { try { $db->table($t)->where('user_id', $id)->delete(); } catch (\Exception $e) {} }
         $db->table('auth_identities')->where('user_id', $id)->delete();
         $db->table('auth_logins')->where('user_id', $id)->delete();
@@ -1410,6 +1410,117 @@ class Admin extends BaseController
         setting('SeasonVote.closesAt', date('Y-m-d H:i:s', $ts));
         $this->auditLog('season_vote_close_date', null, date('Y-m-d H:i', $ts));
         return redirect()->to('/admin/season-vote')->with('success', 'Votes close on ' . date('j F Y, H:i', $ts) . '.');
+    }
+
+    /** GET /admin/resort-vote: this month's tally, past months, winner picks */
+    /** GET /admin/android-testing: the Android closed test's links and the invite (App\Libraries\AndroidTesting) */
+    public function androidTesting(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $page = ['groupUrl' => \App\Libraries\AndroidTesting::groupUrl(), 'joinUrl' => \App\Libraries\AndroidTesting::joinUrl(), 'invite' => \App\Libraries\AndroidTesting::inviteStats(), 'rewards' => \App\Libraries\AndroidTesting::rewardStats()];
+        return view('admin/android_testing', ['page' => $page]);
+    }
+
+    /** POST /admin/android-testing/notify: the invite notification for every eligible account that hasn't had it */
+    public function androidTestingNotify(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $n = \App\Libraries\AndroidTesting::notifyAll();
+        $this->auditLog('android_invite', null, $n . ' notified');
+        return redirect()->to('/admin/android-testing')->with('success', $n === 0
+            ? 'Everyone eligible already has the notification.'
+            : 'Sent the notification to ' . number_format($n) . ($n === 1 ? ' player.' : ' players.'));
+    }
+
+    /** POST /admin/android-testing/link: group_url (the testers Google Group) and join_url (the opt-in link) */
+    public function androidTestingLink(): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $back = redirect()->to('/admin/android-testing');
+        $links = ['group_url' => 'AndroidTesting.groupUrl', 'join_url' => 'AndroidTesting.joinUrl'];
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !str_starts_with($url, 'https://'))) {
+                return $back->with('error', 'Use full https:// links, copied from Google Groups and Play Console.');
+            }
+        }
+        foreach ($links as $field => $key) {
+            $url = trim((string) $this->request->getPost($field));
+            $url === '' ? setting()->forget($key) : setting($key, $url);
+        }
+        $this->auditLog('android_test_link', null, trim((string) $this->request->getPost('group_url')) . ' | ' . trim((string) $this->request->getPost('join_url')));
+        return $back->with('success', 'Links saved.');
+    }
+
+    public function resortVote(): string|\CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $rv = \App\Libraries\ResortVote::class;
+        $current = $rv::rollover();
+        $db = db_connect();
+        $rounds = $db->table('resort_vote_rounds')->orderBy('month', 'DESC')->limit(24)->get()->getResultArray();
+        $flag = $db->table('feature_flags')->select('id')->where('flag_key', $rv::FLAG)->get()->getRowArray();
+
+        // The old Season 4 vote (resort_votes), read only, so its result isn't lost when the flag goes on
+        $season4 = [];
+        if ($db->tableExists('resort_votes')) {
+            $names = array_map(fn($o) => $o['name'], (new \App\Controllers\Vote())->getResortOptions());
+            foreach ($db->query('SELECT resort_key, COUNT(*) AS n FROM resort_votes GROUP BY resort_key ORDER BY n DESC')->getResultArray() as $r) {
+                $key = \App\Controllers\Vote::resolveResortKey($r['resort_key']) ?? $r['resort_key'];
+                $season4[] = ['name' => $names[$key] ?? $key, 'votes' => (int) $r['n']];
+            }
+        }
+
+        $page = [
+            'flagLevel' => featureLevel($rv::FLAG),
+            'flagId' => $flag ? (int) $flag['id'] : null,
+            'currentId' => (int) $current['id'],
+            'rounds' => array_map(fn($r) => $rv::summary($r) + [
+                'status' => $r['status'],
+                'tally' => $rv::tally((int) $r['id'], 50),
+                'isCurrent' => $r['month'] === $rv::currentMonth(),
+            ], $rounds),
+            'inGame' => array_map([$rv, 'area'], $db->table('vote_ski_areas')->where('in_game', 1)->orderBy('name')->get()->getResultArray()),
+            'season4' => $season4,
+            'attribution' => $rv::ATTRIBUTION,
+        ];
+        return view('admin/resort_vote', ['page' => $page]);
+    }
+
+    /** POST /admin/resort-vote/{id}/open with open=1|0: reopen or close the current month */
+    public function resortVoteOpen(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $open = $this->request->getPost('open') === '1';
+        if (!\App\Libraries\ResortVote::setOpen($id, $open)) {
+            return redirect()->to('/admin/resort-vote')->with('error', 'Only the current month can be closed or reopened.');
+        }
+        $this->auditLog('resort_vote_' . ($open ? 'reopen' : 'close'), null, 'round ' . $id);
+        return redirect()->to('/admin/resort-vote')->with('success', $open ? 'Voting reopened.' : 'Voting closed for this month.');
+    }
+
+    /** POST /admin/resort-vote/{id}/winner: area_id, note, roadmap, notify */
+    public function resortVoteWinner(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $areaId = (int) $this->request->getPost('area_id');
+        $note = trim((string) $this->request->getPost('note'));
+        $note = $note === '' ? null : mb_substr($note, 0, \App\Libraries\ResortVote::NOTE_MAX);
+        $error = \App\Libraries\ResortVote::pickWinner($id, $areaId, $note,
+            $this->request->getPost('roadmap') === '1', $this->request->getPost('notify') === '1');
+        if ($error) return redirect()->to('/admin/resort-vote')->with('error', $error);
+        $this->auditLog('resort_vote_winner', null, 'round ' . $id . ', area ' . $areaId);
+        return redirect()->to('/admin/resort-vote')->with('success', 'Winner saved.');
+    }
+
+    /** POST /admin/resort-vote/area/{id}/in-game with in_game=1|0 */
+    public function resortVoteInGame(int $id): \CodeIgniter\HTTP\RedirectResponse
+    {
+        if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
+        $inGame = $this->request->getPost('in_game') === '1';
+        \App\Libraries\ResortVote::setInGame($id, $inGame);
+        $this->auditLog('resort_vote_in_game', null, 'area ' . $id . ' ' . ($inGame ? 'on' : 'off'));
+        return redirect()->to('/admin/resort-vote')->with('success', $inGame ? 'Marked as playable. It is off the ballot.' : 'Back on the ballot.');
     }
 
     /** GET /admin/search?q= : players by username, email or ID (JSON, at most 10) */

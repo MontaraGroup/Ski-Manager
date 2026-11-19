@@ -30,6 +30,12 @@ class OffSeason extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('off_season'); if ($locked) return $locked;
+        return view('off_season/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
@@ -158,7 +164,7 @@ class OffSeason extends BaseController
             'catalogActivities' => $formattedCatalog,
         ];
 
-        return view('off_season/index', ['page' => $page]);
+        return $page;
     }
 
     public function runMaintenance()
@@ -202,7 +208,6 @@ class OffSeason extends BaseController
         $db->transComplete();
 
         log_activity($userId, 'maintenance', $taskConfig['name'] . ": {$count} items serviced for " . currency($totalCost));
-        notify($userId, 'maintenance', $taskConfig['name'] . ' complete', "{$count} items restored to perfect condition.", $taskConfig['icon'], '/off-season');
 
         return redirect()->to('/off-season')->with('success', $taskConfig['name'] . ' complete! ' . $count . ' items serviced for ' . currency($totalCost) . '.');
     }
@@ -239,7 +244,6 @@ class OffSeason extends BaseController
         $db->transComplete();
 
         log_activity($userId, 'Off-Season', 'Built ' . $cfg['name'] . ' for ' . currency($cfg['cost']), 'fa-solid fa-sun');
-        notify($userId, 'building', $cfg['name'] . ' built!', 'Your new summer activity is ready for guests.', $cfg['icon'] ?? 'fa-solid fa-sun', '/off-season');
 
         return redirect()->to('/off-season')->with('success', $cfg['name'] . ' built for ' . currency($cfg['cost']) . '!');
     }
