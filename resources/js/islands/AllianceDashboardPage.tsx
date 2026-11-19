@@ -411,7 +411,8 @@ export default function AllianceDashboardPage({
                         <div className="flex items-center justify-end gap-1">
                           {user.isFounder && (
                             <PostButton
-                              action={`/alliances/transfer-founder/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'transfer_founder' }}
                               size="sm"
                               variant="ghost"
                               confirm={{
@@ -425,7 +426,8 @@ export default function AllianceDashboardPage({
                           )}
                           {m.role === 'officer' ? (
                             <PostButton
-                              action={`/alliances/demote/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'demote' }}
                               size="sm"
                               variant="ghost"
                             >
@@ -433,7 +435,8 @@ export default function AllianceDashboardPage({
                             </PostButton>
                           ) : (
                             <PostButton
-                              action={`/alliances/promote/${m.membership_id}`}
+                              action="/alliances/manage-member"
+                              data={{ target_user_id: m.user_id, action: 'promote' }}
                               size="sm"
                               variant="ghost"
                             >
@@ -441,7 +444,8 @@ export default function AllianceDashboardPage({
                             </PostButton>
                           )}
                           <PostButton
-                            action={`/alliances/kick/${m.membership_id}`}
+                            action="/alliances/manage-member"
+                            data={{ target_user_id: m.user_id, action: 'kick' }}
                             size="sm"
                             variant="ghost"
                             className="text-danger"

@@ -42,12 +42,14 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField "String", "BASE_URL", '"https://staging.ski-manager.net"'
+            // -PdebugBaseUrl=http://10.0.2.2:8899 points an emulator at a server on this computer
+            buildConfigField "String", "BASE_URL", "\"${findProperty('debugBaseUrl') ?: 'https://staging.ski-manager.net'}\""
         }
         release {
             // -PreleaseBaseUrl lets a test build run the shrunk code against staging
             buildConfigField "String", "BASE_URL", "\"${findProperty('releaseBaseUrl') ?: 'https://ski-manager.net'}\""
-            signingConfig signingConfigs.release
+            // Without a keystore (a local check build) the release is left unsigned instead of failing
+            if (signingValue("SKI_KEYSTORE_PATH")) signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -89,6 +91,9 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.13.2'
+
+    // Google Play Games: sign-in, achievements and the leaderboard (games/PlayGames.kt)
+    implementation 'com.google.android.gms:play-services-games-v2:22.1.0'
 
     testImplementation 'junit:junit:4.13.2'
 

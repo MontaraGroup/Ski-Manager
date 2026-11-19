@@ -4,12 +4,18 @@ class ActivityLog extends BaseController
 {
     public function index(): string
     {
+        return view('activity/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $logs = $db->table('activity_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(50)->get()->getResultArray();
-        return view('activity/index', ['page' => ['logs' => array_map(fn($l) => [
+        return ['logs' => array_map(fn($l) => [
             'id' => (int) $l['id'], 'message' => (string) $l['message'], 'day' => (int) $l['game_day'], 'category' => (string) $l['category'],
             'icon' => preg_match('/^[a-z0-9 -]+$/i', (string) $l['icon']) ? (string) $l['icon'] : 'fa-solid fa-circle',
-        ], $logs)]]);
+        ], $logs)];
     }
 }

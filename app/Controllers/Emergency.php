@@ -4,6 +4,12 @@ class Emergency extends BaseController
 {
     public function index(): string
     {
+        return view('emergency/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -64,6 +70,6 @@ class Emergency extends BaseController
             'incidents' => $formattedIncidents,
         ];
 
-        return view('emergency/index', ['page' => $page]);
+        return $page;
     }
 }

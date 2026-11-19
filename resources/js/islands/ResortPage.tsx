@@ -1,6 +1,9 @@
-import { Button } from '@heroui/react';
+import { useState } from 'react';
+import { Button, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page, Panel } from '@/components/Page';
+import { LiftSwapDialog, liftLabel, type LiftSwapOption } from './resort-map/LiftSwapDialog';
+import { formatCurrency } from './resort-map/shared';
 
 export type ResortMeta = {
   name: string;
@@ -22,6 +25,10 @@ export type LiftItem = {
   repair_cost_formatted: string;
   canAffordRepair: boolean;
   length_meters: number;
+  seats: number;
+  capacity: number;
+  run_cost: number;
+  swaps: LiftSwapOption[];
 };
 
 export type SlopeItem = {
@@ -65,6 +72,7 @@ export type ResortPageProps = {
   };
   cash: number;
   cashFormatted: string;
+  isImperial?: boolean;
   sectors: SectorData[];
 };
 
@@ -95,9 +103,56 @@ export default function ResortPage({
     windSpeed: 10,
     windSpeedFormatted: '10 km/h',
   },
+  cash: initialCash = 0,
   cashFormatted = '€0',
+  isImperial = false,
   sectors = [],
 }: ResortPageProps) {
+  const [cash, setCash] = useState(initialCash);
+  // Lifts replaced on this page, shown with their new numbers until the next load
+  const [replaced, setReplaced] = useState<Record<number, Partial<LiftItem>>>({});
+  const [swapId, setSwapId] = useState<number | null>(null);
+  const allLifts = sectors.flatMap((s) => s.lifts).map((l) => ({ ...l, ...replaced[l.id] }));
+  const swapLift = allLifts.find((l) => l.id === swapId);
+
+  async function replaceLift(option: LiftSwapOption, done: (ok: boolean) => void) {
+    if (!swapLift) return done(false);
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
+    try {
+      const res = await fetch(`/map/upgrade/${swapLift.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          [meta?.dataset.header || 'X-CSRF-TOKEN']: meta?.content || '',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ lift_type: option.lift_type, seats: option.seats }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.error || `Request failed (${res.status}). Try again.`);
+      const it = json.item;
+      setReplaced((r) => ({
+        ...r,
+        [swapLift.id]: {
+          subtype: it.subtype,
+          subtypeName: liftLabel(it.subtype, Number(it.seats)),
+          seats: Number(it.seats),
+          capacity: Number(it.capacity),
+          run_cost: Number(it.run_cost),
+          swaps: it.swaps ?? [],
+          status: it.status,
+          condition_pct: 100,
+        },
+      }));
+      if (typeof json.new_cash === 'number') setCash(json.new_cash);
+      toast.success(json.message || `${swapLift.name} replaced.`);
+      done(true);
+    } catch (e) {
+      toast.danger((e as Error).message);
+      done(false);
+    }
+  }
   const getDifficultyBadge = (diff: string) => {
     switch (diff) {
       case 'green':
@@ -255,7 +310,7 @@ export default function ResortPage({
               <Icon name="fa-sack-dollar" className="text-success text-base" />
             </div>
             <div>
-              <div className="text-sm font-bold text-success tabular-nums">{cashFormatted}</div>
+              <div className="text-sm font-bold text-success tabular-nums">{cash === initialCash ? cashFormatted : formatCurrency(cash, isImperial)}</div>
               <div className="text-xs text-muted">Treasury Cash</div>
             </div>
           </div>
@@ -375,7 +430,7 @@ export default function ResortPage({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/40">
-                        {sec.lifts.map((lift) => (
+                        {sec.lifts.map((l) => ({ ...l, ...replaced[l.id] })).map((lift) => (
                           <tr key={lift.id} className="hover:bg-base-200/40 transition-colors">
                             <td className="py-2.5 px-3 font-semibold text-foreground">
                               {lift.name}
@@ -414,7 +469,7 @@ export default function ResortPage({
                               <div className="flex items-center justify-end gap-1.5">
                                 {lift.condition_pct < 100 && (
                                   <form
-                                    action={`/resort/repair-lift/${lift.id}`}
+                                    action={`/resort/repair/${lift.id}`}
                                     method="post"
                                     onSubmit={(e) => {
                                       if (
@@ -438,6 +493,17 @@ export default function ResortPage({
                                       Repair ({lift.repair_cost_formatted})
                                     </Button>
                                   </form>
+                                )}
+
+                                {lift.swaps?.length > 0 && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onPress={() => setSwapId(lift.id)}
+                                    className="min-h-11 sm:min-h-7 text-xs font-semibold px-3"
+                                  >
+                                    Upgrade
+                                  </Button>
                                 )}
 
                                 <form action={`/resort/toggle/${lift.id}`} method="post" className="inline">
@@ -465,6 +531,16 @@ export default function ResortPage({
           </Panel>
         ))}
       </div>
+      {swapLift && (
+        <LiftSwapDialog
+          lift={swapLift}
+          isOpen={swapId !== null}
+          onOpenChange={(open) => !open && setSwapId(null)}
+          cash={cash}
+          isImperial={isImperial}
+          onConfirm={replaceLift}
+        />
+      )}
     </Page>
   );
 }

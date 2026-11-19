@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -243,7 +245,7 @@ fun MapScreen(app: AppState) {
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Column(
-                    Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(titleOf(selected, built), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -269,7 +271,58 @@ fun MapScreen(app: AppState) {
                         SecondaryButton("Cancel", { selectedId = null }, Modifier.fillMaxWidth())
                     } else {
                         var confirm by remember { mutableStateOf(false) }
-                        if (confirm) {
+                        var swapping by remember { mutableStateOf(false) }
+                        var pick by remember { mutableStateOf<JsonObject?>(null) }
+                        val swaps = built.objects("swaps")
+                        val chosen = pick
+                        if (chosen != null) {
+                            Text("Replace with ${chosen.str("label")}?", fontWeight = FontWeight.Bold)
+                            Text("Now: ${built.str("label")}, ${built.str("capacityText")}, runs ${built.str("runCostText")}", color = colors.muted)
+                            Text("After: ${chosen.str("label")}, ${chosen.str("capacityText")}, runs ${chosen.str("runCostText")}")
+                            Text(if (chosen.int("price") < 0) "You get ${chosen.str("priceText")}" else "Cost: ${chosen.str("priceText")}", fontWeight = FontWeight.Bold)
+                            Text("Demolish and rebuild: ${chosen.str("rebuildText")}", color = colors.muted)
+                            Text("It opens right away at 100% condition and keeps its name.", color = colors.muted)
+                            PrimaryButton("Replace lift", {
+                                busy = true
+                                scope.launch {
+                                    val body = JsonObject().apply {
+                                        addProperty("lift_type", chosen.str("lift_type"))
+                                        addProperty("seats", chosen.int("seats"))
+                                    }
+                                    val result = app.api.postJson("map/upgrade/${built.int("id")}", body)
+                                    busy = false
+                                    selectedId = null
+                                    note = outcome(result, "Lift replaced.")
+                                    reload()
+                                }
+                            }, Modifier.fillMaxWidth(), enabled = !busy)
+                            SecondaryButton("Back", { pick = null }, Modifier.fillMaxWidth())
+                        } else if (swapping) {
+                            Text("Replace with", fontWeight = FontWeight.Bold)
+                            Text("Now: ${built.str("label")}, ${built.str("capacityText")}", color = colors.muted)
+                            swaps.forEach { option ->
+                                Surface(
+                                    onClick = { pick = option },
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                    shape = MaterialTheme.shapes.medium,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                ) {
+                                    Row(
+                                        Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(option.str("label"), fontWeight = FontWeight.Medium)
+                                            Text(option.str("capacityText"), color = colors.muted, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        Text(option.str("priceText"), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                            SecondaryButton("Cancel", { swapping = false }, Modifier.fillMaxWidth())
+                        } else if (confirm) {
                             Text("Demolish ${titleOf(selected, built)}?", fontWeight = FontWeight.Bold, color = colors.danger)
                             Text("This removes the trail from your resort and cannot be undone.")
                             PrimaryButton("Confirm demolish", {
@@ -284,6 +337,9 @@ fun MapScreen(app: AppState) {
                             }, Modifier.fillMaxWidth(), enabled = !busy)
                             SecondaryButton("Keep it", { confirm = false }, Modifier.fillMaxWidth())
                         } else {
+                            if (swaps.isNotEmpty()) {
+                                PrimaryButton("Upgrade or replace lift", { swapping = true }, Modifier.fillMaxWidth())
+                            }
                             OutlinedPrimaryButton("Demolish trail", { confirm = true }, Modifier.fillMaxWidth())
                         }
                     }

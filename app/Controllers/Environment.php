@@ -9,6 +9,12 @@ class Environment extends BaseController
 {
     public function index(): string
     {
+        return view('environment/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
 
@@ -77,7 +83,7 @@ class Environment extends BaseController
             'upgrades' => $formattedUpgrades,
         ];
 
-        return view('environment/index', ['page' => $page]);
+        return $page;
     }
 
     public function buyUpgrade()

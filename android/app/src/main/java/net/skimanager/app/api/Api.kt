@@ -7,9 +7,11 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.skimanager.app.BuildConfig
+import net.skimanager.app.feedback.AppLog
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -18,7 +20,10 @@ import java.util.concurrent.TimeUnit
 
 /** What the server answered. It decides every rule and formats every number; the app only shows it */
 sealed interface ApiResult {
-    data class Ok(val data: JsonElement?, val message: String?) : ApiResult
+    data class Ok(val data: JsonElement?, val message: String?) : ApiResult {
+        /** data as an object, or an empty one when the server sent something else */
+        fun dataObject(): JsonObject = data?.takeIf { it.isJsonObject }?.asJsonObject ?: JsonObject()
+    }
 
     /** code: the server's errors.code, such as "maintenance". fields: field name to message, for forms */
     data class Failed(val status: Int, val message: String, val code: String?, val fields: Map<String, String>) : ApiResult
@@ -46,6 +51,15 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
     suspend fun postJson(path: String, json: JsonObject): ApiResult =
         send(Request.Builder().url(base + path).post(json.toString().toRequestBody("application/json".toMediaType())))
 
+    /** A form with one optional file, such as a feedback report with its screenshot */
+    suspend fun postMultipart(path: String, form: Map<String, String>, file: Pair<String, ByteArray>?, fileField: String = "file"): ApiResult {
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM).apply {
+            form.forEach { (k, v) -> addFormDataPart(k, v) }
+            file?.let { (name, bytes) -> addFormDataPart(fileField, name, bytes.toRequestBody("image/jpeg".toMediaType())) }
+        }.build()
+        return send(Request.Builder().url(base + path).post(body))
+    }
+
     /** A file from the site, such as the map image. Null if it can't be fetched */
     suspend fun bytes(path: String): ByteArray? = withContext(Dispatchers.IO) {
         try {
@@ -58,15 +72,26 @@ class Api(private val tokens: () -> String?, private val onSignedOut: () -> Unit
     }
 
     private suspend fun send(builder: Request.Builder): ApiResult = withContext(Dispatchers.IO) {
-        tokens()?.let { builder.header("Authorization", "Bearer $it") }
+        val token = tokens()
+        token?.let { builder.header("Authorization", "Bearer $it") }
         builder.header("Accept", "application/json").header("X-Requested-With", "XMLHttpRequest")
+            // The server counts days of Android app use for the closed-test reward (AppToken filter)
+            .header("X-Client", "android/${BuildConfig.VERSION_CODE}")
+        val request = builder.build()
+        val started = System.currentTimeMillis()
         try {
-            client.newCall(builder.build()).execute().use { response ->
-                val result = parseBody(response.code, response.body?.string())
-                if (result is ApiResult.Failed && result.code == "unauthenticated") withContext(Dispatchers.Main) { onSignedOut() }
+            client.newCall(request).execute().use { response ->
+                val text = response.body?.string()
+                AppLog.call(request.method, request.url.encodedPath, response.code, System.currentTimeMillis() - started, text?.length?.toLong() ?: 0)
+                val result = parseBody(response.code, text)
+                if (result is ApiResult.Failed) AppLog.log("failed ${response.code} ${result.code ?: ""}: ${result.message}")
+                // A 401 on a signed-in request means the token expired or was revoked, whatever the body says
+                val expired = result is ApiResult.Failed && (result.code == "unauthenticated" || (token != null && response.code == 401))
+                if (expired) withContext(Dispatchers.Main) { onSignedOut() }
                 result
             }
         } catch (e: IOException) {
+            AppLog.call(request.method, request.url.encodedPath, 0, System.currentTimeMillis() - started, 0)
             ApiResult.Offline
         }
     }

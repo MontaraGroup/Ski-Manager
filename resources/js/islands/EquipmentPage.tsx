@@ -11,7 +11,7 @@ export type EquipmentItem = {
   capacity: number;
   condition_pct: number;
   status: string;
-  state: 'running' | 'no_operator' | 'idle' | 'off' | 'broken';
+  state: 'running' | 'no_operator' | 'idle' | 'standby' | 'off' | 'broken';
   stateLabel: string;
   stateTone: 'success' | 'warning' | 'danger' | 'neutral';
   crew: string | null;
