@@ -30,6 +30,12 @@ class OffSeason extends BaseController
     public function index(): string
     {
         $locked = checkFeatureUnlock('off_season'); if ($locked) return $locked;
+        return view('off_season/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $gameDay = max(1, (int) ((strtotime(date('Y-m-d')) - strtotime(getSeasonStartDate())) / 86400) + 1);
@@ -157,7 +163,7 @@ class OffSeason extends BaseController
             'catalogActivities' => $formattedCatalog,
         ];
 
-        return view('off_season/index', ['page' => $page]);
+        return $page;
     }
 
     public function runMaintenance()

@@ -47,16 +47,32 @@ class AppToken implements FilterInterface
             return $this->deny(403, 'feature_off', 'This feature is currently unavailable.');
         }
 
-        if (!in_array($path, self::WITHOUT_PROFILE, true)) {
+        if (!$isAdmin && !in_array($path, self::WITHOUT_PROFILE, true)) {
             $finance = $db->table('player_finances')->select('profile_completed')->where('user_id', $user->id)->get()->getRowArray();
             if ($finance && !$finance['profile_completed']) {
                 return $this->deny(403, 'profile_incomplete', 'Choose your start first.');
+            }
+        }
+
+        // Android closed-test reward: count the days this player used the Android app. Never blocks the request.
+        if (self::isAndroid($request)) {
+            try {
+                \App\Libraries\AndroidTesting::recordAppDay((int) $user->id);
+            } catch (\Throwable $e) {
+                log_message('error', 'Android app day not recorded: ' . $e->getMessage());
             }
         }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+    }
+
+    /** The Android app sends X-Client: android/<version>; builds before that only show OkHttp's default User-Agent */
+    private static function isAndroid(RequestInterface $request): bool
+    {
+        return str_starts_with(strtolower($request->getHeaderLine('X-Client')), 'android')
+            || str_starts_with($request->getHeaderLine('User-Agent'), 'okhttp/');
     }
 
     private function deny(int $status, string $code, string $message): ResponseInterface

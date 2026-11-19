@@ -16,6 +16,12 @@ class Government extends BaseController
     public function index(): string
     {
         if (isPageHidden('government')) throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        return view('government/index', ['page' => $this->pageData()]);
+    }
+
+    /** What the page shows: the web view and the app API (Api\V1\App) both use it */
+    protected function pageData(): array
+    {
         $userId = auth()->id();
         $db = db_connect();
         $regConfig = $this->getRegulationTypes();
@@ -121,7 +127,7 @@ class Government extends BaseController
             'inspections' => $formattedInspections,
         ];
 
-        return view('government/index', ['page' => $page]);
+        return $page;
     }
 
     public function toggle(int $id)

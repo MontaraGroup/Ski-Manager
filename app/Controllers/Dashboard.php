@@ -725,9 +725,11 @@ class Dashboard extends BaseController
     {
         $db = db_connect();
         if (!$db->tableExists('roadmap_items')) return ['items' => []];
-        $items = $db->table('roadmap_items')->select('id, title, status, upvotes')
-            ->whereIn('status', ['suggested', 'planned', 'in_progress'])
-            ->orderBy('upvotes', 'DESC')->orderBy('id', 'DESC')->limit(3)->get()->getResultArray();
+        $query = $db->table('roadmap_items')->select('id, title, status, upvotes')
+            ->whereIn('status', ['suggested', 'planned', 'in_progress', 'in_beta']);
+        // Ideas merged into another one are shown inside it, not on their own
+        if ($db->fieldExists('merged_into', 'roadmap_items')) $query->where('merged_into IS NULL');
+        $items = $query->orderBy('upvotes', 'DESC')->orderBy('id', 'DESC')->limit(3)->get()->getResultArray();
         $ids = array_map('intval', array_column($items, 'id'));
         $voted = $ids ? array_map('intval', array_column(
             $db->table('roadmap_votes')->select('item_id')->where('user_id', $userId)->whereIn('item_id', $ids)->get()->getResultArray(), 'item_id')) : [];

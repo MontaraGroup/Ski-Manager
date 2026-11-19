@@ -3,6 +3,7 @@ import { AlertDialog, Button, Chip, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import type { BuiltItem, EconomyV2Config, MapSegment } from './types';
 import { LIFT_TYPES, SLOPE_TYPES, TrailSign, formatCurrency, runKind } from './shared';
+import { LiftSwapDialog, type LiftSwapOption } from './LiftSwapDialog';
 
 const STATUS: Record<string, { label: string; color: 'success' | 'default' | 'danger' | 'accent' }> = {
   open: { label: 'Open', color: 'success' },
@@ -11,7 +12,7 @@ const STATUS: Record<string, { label: string; color: 'success' | 'default' | 'da
   building: { label: 'Being built', color: 'accent' },
 };
 
-/** A run the player owns: what it is, what it costs to run, and demolishing it */
+/** A run the player owns: what it is, what it costs to run, replacing a lift, and demolishing it */
 export function BuiltRunView({
   seg,
   item,
@@ -21,6 +22,8 @@ export function BuiltRunView({
   economyV2,
   onZoom,
   onDemolish,
+  cash,
+  onSwap,
 }: {
   seg: MapSegment;
   item: BuiltItem;
@@ -30,8 +33,11 @@ export function BuiltRunView({
   economyV2: EconomyV2Config | null;
   onZoom: () => void;
   onDemolish: (done: (ok: boolean) => void) => void;
+  cash: number;
+  onSwap: (option: LiftSwapOption, done: (ok: boolean) => void) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [swapping, setSwapping] = useState(false);
   const [working, setWorking] = useState(false);
   const status = STATUS[item.status || 'open'] ?? { label: item.status || 'Open', color: 'default' as const };
   const len = Number(item.length_meters ?? seg.length_meters) || 0;
@@ -126,6 +132,12 @@ export function BuiltRunView({
         </a>
       </div>
 
+      {isLift && item.id && item.swaps?.length ? (
+        <Button variant="secondary" onPress={() => setSwapping(true)} className="min-h-11 w-full gap-2 md:min-h-9">
+          <Icon name="fa-arrows-rotate" /> Upgrade or replace lift
+        </Button>
+      ) : null}
+
       {item.id ? (
         <Button
           variant="danger-soft"
@@ -135,6 +147,17 @@ export function BuiltRunView({
           <Icon name="fa-trash-can" /> Demolish · refund {formatCurrency(salvage, isImperial)}
         </Button>
       ) : null}
+
+      {isLift && (
+        <LiftSwapDialog
+          lift={{ ...item, name }}
+          isOpen={swapping}
+          onOpenChange={setSwapping}
+          cash={cash}
+          isImperial={isImperial}
+          onConfirm={onSwap}
+        />
+      )}
 
       <AlertDialog.Backdrop isOpen={confirming} onOpenChange={(open) => !working && setConfirming(open)}>
         <AlertDialog.Container>
