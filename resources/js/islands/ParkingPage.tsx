@@ -34,7 +34,6 @@ export type ParkingConfigItem = {
   capacityText: string;
   cost: number;
   costText: string;
-  originalCostText: string;
   upkeepText: string;
   build_days: number;
   canAfford: boolean;
@@ -103,7 +102,7 @@ export default function ParkingPage({ stats, facilities, catalog }: ParkingPageP
 
         {facilities.length === 0 ? (
           <Empty icon="fa-square-parking" title="No parking facilities yet">
-            Without parking, visitor traffic is limited. Build your first lot or garage below!
+            Without parking, visitor traffic is limited. Build your first lot or garage below.
           </Empty>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -148,7 +147,6 @@ export default function ParkingPage({ stats, facilities, catalog }: ParkingPageP
               <div className="pt-2 border-t border-border mt-auto space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-muted line-through">{cfg.originalCostText}</div>
                     <div className="text-base font-bold text-accent">{cfg.costText}</div>
                   </div>
                   <PostButton
