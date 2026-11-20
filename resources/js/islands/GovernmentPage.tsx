@@ -39,8 +39,7 @@ export type GovernmentPageProps = {
     totalRiskText: string;
     totalPossibleCostText: string;
     inspectionChance: number;
-    reputationPenalty: number;
-    visitorPenalty: number;
+    perRegInspectionChance: number;
   };
   tiers: RegulationTier[];
   inspections: InspectionItem[];
@@ -54,7 +53,7 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
       title="Government & Regulations"
       icon="fa-building-columns"
       iconTone="text-primary"
-      subtitle="Stay compliant to avoid inspections, fines, and reputation damage"
+      subtitle="Stay compliant to avoid inspections and fines"
       width="max-w-5xl"
       actions={
         !isFullyCompliant ? (
@@ -106,14 +105,14 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
                 ? 'Good standing with minor regulatory gaps.'
                 : stats.complianceScore >= 50
                 ? 'Moderate risk: several regulations not met. Inspections likely.'
-                : 'High risk: severe violations. Expect heavy fines and visitor loss.'}
+                : 'High risk: multiple violations expose the resort to daily inspection fines.'}
             </p>
           </div>
         </div>
       </Panel>
 
-      {/* 5 Stats figures */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* 4 Stats figures */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Figure
           label="Compliant"
           value={`${stats.compliantCount} / ${stats.totalCount}`}
@@ -135,7 +134,7 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
               ? 'text-warning'
               : 'text-success'
           }
-          note="Daily probability"
+          note="Chance of >=1 fine/day"
         />
         <Figure
           label="Max fine"
@@ -143,19 +142,13 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
           tone="text-danger"
           note="Total exposure"
         />
-        <Figure
-          label="Visitor penalty"
-          value={`-${stats.visitorPenalty}%`}
-          tone="text-danger"
-          note="Turnout impact"
-        />
       </div>
 
       {/* Status banner */}
       {isFullyCompliant ? (
         <div className="flex items-center gap-2.5 rounded-lg border border-success/30 bg-success/10 p-3 text-xs text-success font-medium">
           <Icon name="fa-circle-check" className="text-sm shrink-0" />
-          <span>Fully compliant. All regulatory bonuses are active with zero inspection risk.</span>
+          <span>Fully compliant. Zero inspection risk.</span>
         </div>
       ) : stats.inspectionChance > 20 ? (
         <div className="flex items-start gap-2.5 rounded-lg border border-danger/30 bg-danger/10 p-3 text-xs text-danger">
@@ -163,7 +156,7 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
           <div>
             <div className="font-semibold">High risk of government inspection</div>
             <div className="text-muted mt-0.5">
-              {stats.inspectionChance}% daily chance. Potential fines up to {stats.totalRiskText}. -{stats.reputationPenalty} reputation/day and -{stats.visitorPenalty}% visitor penalty.
+              {stats.inspectionChance}% daily chance of at least one fine ({stats.perRegInspectionChance}% per violation). Potential fines up to {stats.totalRiskText}.
             </div>
           </div>
         </div>
@@ -173,7 +166,7 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
           <div>
             <div className="font-semibold">Non-compliance detected</div>
             <div className="text-muted mt-0.5">
-              {stats.inspectionChance}% inspection risk. -{stats.reputationPenalty} reputation/day and -{stats.visitorPenalty}% visitors.
+              {stats.inspectionChance}% daily chance of at least one fine ({stats.perRegInspectionChance}% per violation), up to {stats.totalRiskText} total exposure.
             </div>
           </div>
         </div>
@@ -258,7 +251,7 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
                           reg.compliant
                             ? {
                                 title: `Opt out of ${reg.name}?`,
-                                body: 'Opting out will expose your resort to inspection fines and reputation penalties.',
+                                body: 'Opting out exposes this regulation to daily inspection checks and fines.',
                                 confirmLabel: 'Opt out',
                               }
                             : undefined
@@ -322,29 +315,21 @@ export default function GovernmentPage({ stats, tiers, inspections }: Government
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <Icon name="fa-gavel" className="text-warning" />
-              <span>Each violation adds <strong>5%</strong> daily inspection chance.</span>
+              <span>Each violation rolls a <strong>{stats.perRegInspectionChance}%</strong> daily inspection check.</span>
             </div>
             <div className="flex items-center gap-2">
-              <Icon name="fa-star" className="text-danger" />
-              <span>Each violation costs <strong>15</strong> reputation per day.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Icon name="fa-users" className="text-danger" />
-              <span>Each violation reduces visitor turnout by <strong>3%</strong>.</span>
+              <Icon name="fa-coins" className="text-warning" />
+              <span>Each failed inspection check charges that regulation's fine.</span>
             </div>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <Icon name="fa-coins" className="text-warning" />
-              <span>If inspected, you pay fines for <strong>each</strong> non-compliant item.</span>
-            </div>
-            <div className="flex items-center gap-2">
               <Icon name="fa-circle-check" className="text-success" />
-              <span>Full compliance yields <strong>0%</strong> risk and unlocks all tier perks.</span>
+              <span>Full compliance keeps daily inspection risk at <strong>0%</strong>.</span>
             </div>
             <div className="flex items-center gap-2">
-              <Icon name="fa-seedling" className="text-success" />
-              <span>Environmental compliance earns daily <strong>Génépis</strong>.</span>
+              <Icon name="fa-clipboard-list" className="text-accent" />
+              <span>Inspection fines appear in your daily expenses and inspection history.</span>
             </div>
           </div>
         </div>
