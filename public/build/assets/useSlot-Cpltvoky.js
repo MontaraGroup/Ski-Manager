@@ -1,1 +1,0 @@
-import{V as e,ot as t}from"./compose-D6kK_d5z.js";import{a as n,n as r}from"./jsx-runtime-Wy9s6hX0.js";var i=n(r(),1);function a(e=!0){let[n,r]=(0,i.useState)(e),a=(0,i.useRef)(!1),o=(0,i.useCallback)(e=>{a.current=!0,r(!!e)},[]);return t(()=>{a.current||r(!1)},[]),[o,n]}function o(t=!0){let n=e(),[r,i]=a(t);return{id:i?n:void 0,ref:r}}export{o as t};

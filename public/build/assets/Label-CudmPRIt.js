@@ -1,1 +1,0 @@
-import{d as e,k as t,o as n}from"./compose-D6kK_d5z.js";import{a as r,n as i}from"./jsx-runtime-Wy9s6hX0.js";var a=r(i(),1),o=(0,a.createContext)({}),s=t(function(t,r){[t,r]=n(t,r,o);let{elementType:i=`label`,...s}=t,c=e[i];return a.createElement(c,{className:`react-aria-Label`,...s,ref:r})});export{s as n,o as t};
