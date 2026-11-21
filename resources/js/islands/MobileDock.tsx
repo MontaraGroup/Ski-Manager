@@ -1,8 +1,8 @@
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/MenuButton';
-import { isActive, type NavSection } from '@/lib/shell';
+import { isActive, type NavItem, type NavSection, type ShellProps } from '@/lib/shell';
 
-type Props = { path: string; nav: NavSection[]; isAdmin: boolean; bonusDue: boolean };
+type Props = { path: string; nav: NavSection[]; account: NavItem[]; search: ShellProps['search']; isAdmin: boolean; bonusDue: boolean };
 
 const TABS = [
   { href: '/dashboard', label: 'Dashboard', icon: 'fa-gauge-high' },
@@ -12,7 +12,7 @@ const TABS = [
 ];
 
 /** Bottom tab bar on phones; "More" opens every page as a sheet */
-export default function MobileDock({ path, nav, isAdmin, bonusDue }: Props) {
+export default function MobileDock({ path, nav, account, search, isAdmin, bonusDue }: Props) {
   const hasNew = nav.some((s) => s.items.some((i) => i.isNew));
   const tab = 'flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs';
   return (
@@ -32,6 +32,9 @@ export default function MobileDock({ path, nav, isAdmin, bonusDue }: Props) {
             className={`${tab} h-auto w-full rounded-none text-muted`}
             placement="bottom"
             nav={nav}
+            account={account ?? []}
+            publicNav={[]}
+            search={search ?? []}
             path={path}
             isAdmin={isAdmin}
           >

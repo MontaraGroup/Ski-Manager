@@ -458,28 +458,47 @@ body { font-family: var(--sign); }
 <!-- End Google Tag Manager (noscript) -->
 
     <!-- Navbar -->
-    <?php $__currentPath = '/' . trim(uri_string(), '/'); ?>
-    <!-- Navbar -->
     <?php
         $__currentPath = '/' . trim(uri_string(), '/');
         $__isAdmin = \App\Libraries\Shell::isAdmin();
         $__bonusDue = \App\Libraries\Shell::bonusDue();
-        $__nav = \App\Libraries\Shell::NAV;
-        // The React AppShell island (HeroUI 3.2.7) renders for all players (guests and signed-in)
+        // The React AppShell island renders for everyone (guests and signed-in); the markup below is its no-JS fallback
         $__shellIslands = true;
         $__flash = \App\Libraries\Shell::takeFlash();
         $__shell = \App\Libraries\Shell::props($__currentPath, $__flash);
+        $__isActive = fn(string $url) => $__currentPath === $url || ($url !== '/' && str_starts_with($__currentPath, $url . '/'));
 
-        $__navItem = function (array $it) use ($__isAdmin, $__bonusDue) {
-            $r = \App\Libraries\Shell::resolveItem($it, $__isAdmin, $__bonusDue);
-            if ($r === null) return '';
-            $cls = ($r['locked'] || $r['flagOff']) ? 'text-muted' : 'text-foreground';
-            $badge = $r['bonusDue'] ? ' <span class="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>' : '';
+        // One menu link in the no-JS fallback, from an item Shell::props() already resolved (locks, switches, badges)
+        $__navItem = function (array $r) use ($__isActive) {
+            $cls = ($r['locked'] ?? false) || ($r['flagOff'] ?? false) ? 'text-muted' : 'text-foreground';
+            $active = $__isActive($r['url']);
+            $badge = !empty($r['bonusDue']) ? ' <span class="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>' : '';
             if (!empty($r['beta'])) $badge .= ' <span class="rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>';
-            $target = $r['external'] ? ' target="_blank" rel="noopener noreferrer"' : '';
-            $title = $r['flagOff'] ? ' title="Switched off for players (feature flag)"' : '';
-            return '<a href="' . esc($r['href'], 'attr') . '"' . $target . $title . ' class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors ' . $cls . '">'
-                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw text-accent"></i><span>' . esc($r['label']) . '</span>' . $badge . '</a>';
+            if (!empty($r['isNew'])) $badge .= ' <span class="rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">New</span>';
+            if (!empty($r['locked'])) $badge .= ' <i class="fa-solid fa-lock text-xs text-muted" aria-hidden="true"></i><span class="sr-only"> (locked)</span>';
+            $ext = !empty($r['external']);
+            $target = $ext ? ' target="_blank" rel="noopener noreferrer"' : '';
+            if ($ext) $badge .= '<span class="sr-only"> (opens in a new tab)</span>';
+            return '<a href="' . esc($r['href'], 'attr') . '"' . $target . ($active ? ' aria-current="page"' : '')
+                . ' class="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default ' . $cls . ($active ? ' font-semibold' : '') . '">'
+                . '<i class="fa-solid ' . esc($r['icon'], 'attr') . ' fa-fw text-accent" aria-hidden="true"></i><span>' . esc($r['label']) . '</span>' . $badge . '</a>';
+        };
+        // The whole menu for the fallback's small-screen panels (navbar button and dock "More")
+        $__menuPanel = function () use ($__shell, $__navItem, $__isAdmin) {
+            $html = '';
+            if ($__shell['nav']) {
+                $html .= $__navItem(['href' => '/dashboard', 'url' => '/dashboard', 'label' => 'Dashboard', 'icon' => 'fa-gauge-high']);
+                foreach ($__shell['nav'] as $sec) {
+                    $html .= '<p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted">' . esc($sec['name']) . '</p>';
+                    foreach ($sec['items'] as $it) $html .= $__navItem($it);
+                }
+                $html .= '<p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted">Account</p>';
+                foreach ($__shell['account'] as $it) $html .= $__navItem($it);
+                if ($__isAdmin) $html .= $__navItem(['href' => '/admin', 'url' => '/admin', 'label' => 'Admin panel', 'icon' => 'fa-user-shield']);
+            } else {
+                foreach ($__shell['publicNav'] as $it) $html .= $__navItem($it);
+            }
+            return $html;
         };
     ?>
     <?php if (session()->get('is_demo') && !featureEnabled('demo_v2')) : ?>
@@ -521,17 +540,10 @@ body { font-family: var(--sign); }
     <?php endif ?>
     <?php ob_start() ?>
     <header class="site-nav border-b border-border bg-background" style="z-index:9999; position:sticky; top:0"><nav aria-label="Main navigation" class="mx-auto flex min-h-14 max-w-7xl items-center gap-1 px-2 sm:px-4">
-        <div class="lg:hidden">
+        <div class="<?= $__shell['nav'] ? 'hidden md:block lg:hidden' : 'lg:hidden' ?>">
             <details class="relative">
-                <summary class="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-default cursor-pointer list-none" aria-label="Open menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></summary>
-                <div class="absolute left-0 mt-2 w-64 rounded-xl border border-border bg-popover p-2 shadow-2xl z-50 max-h-[80vh] overflow-y-auto">
-                    <a href="/dashboard" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-default transition-colors"><i class="fa-solid fa-gauge-high fa-fw mr-1 text-accent"></i>Dashboard</a>
-                    <?php foreach ($__nav as $__secName => $__sec) : ?>
-                        <div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1"><?= esc($__secName) ?></div>
-                        <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
-                    <?php endforeach ?>
-                    <?php if ($__isAdmin) : ?><div class="text-xs font-semibold uppercase tracking-wider text-muted px-3 pt-2 pb-1">Admin</div><a href="/admin" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-danger hover:bg-default transition-colors"><i class="fa-solid fa-shield-halved fa-fw mr-1"></i>Admin Panel</a><?php endif ?>
-                </div>
+                <summary class="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-lg hover:bg-default" aria-label="Open the menu"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i></summary>
+                <div class="absolute left-0 z-50 mt-2 max-h-[80vh] w-64 overflow-y-auto rounded-xl border border-border bg-popover p-2 shadow-2xl"><?= $__menuPanel() ?></div>
             </details>
         </div>
         <a href="/" class="brand flex min-h-11 items-center gap-2 rounded-lg px-2 font-semibold" aria-label="Ski Manager home">
@@ -539,31 +551,44 @@ body { font-family: var(--sign); }
             <span class="brand-name hidden text-lg tracking-tight sm:inline">Ski Manager</span>
         </a>
         <div class="hidden items-center gap-1 lg:flex">
-            <a href="/" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Home</a>
-            <a href="/dashboard" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default transition-colors <?= $__currentPath === '/dashboard' ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">Dashboard</a>
-            <?php foreach ($__nav as $__secName => $__sec) : ?>
-            <details class="relative">
-                <summary class="flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium hover:bg-default cursor-pointer list-none select-none transition-colors">
-                    <span><?= esc($__secName) ?></span>
-                    <i class="fa-solid fa-chevron-down text-xs text-muted"></i>
-                </summary>
-                <div class="absolute left-0 mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-2xl z-50">
-                    <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
-                </div>
-            </details>
-            <?php endforeach ?>
-            <?php if ($__isAdmin) : ?><a href="/admin" class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium text-danger hover:bg-default transition-colors">Admin</a><?php endif ?>
+            <?php if ($__shell['nav']) : ?>
+                <a href="/dashboard"<?= $__isActive('/dashboard') ? ' aria-current="page"' : '' ?> class="flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-default <?= $__isActive('/dashboard') ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Dashboard</a>
+                <?php foreach ($__shell['nav'] as $__sec) : $__secActive = (bool) array_filter($__sec['items'], fn($it) => $__isActive($it['url'])); ?>
+                <details class="relative">
+                    <summary class="flex min-h-9 cursor-pointer list-none select-none items-center gap-1.5 rounded-lg px-3 text-sm font-medium hover:bg-default <?= $__secActive ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>">
+                        <i class="fa-solid <?= esc($__sec['icon'], 'attr') ?>" aria-hidden="true"></i>
+                        <span><?= esc($__sec['name']) ?></span><?= $__secActive ? '<span class="sr-only"> (current section)</span>' : '' ?>
+                        <i class="fa-solid fa-chevron-down text-xs text-muted" aria-hidden="true"></i>
+                    </summary>
+                    <div class="absolute left-0 z-50 mt-2 w-60 rounded-xl border border-border bg-popover p-1.5 shadow-2xl">
+                        <?php foreach ($__sec['items'] as $__it) : echo $__navItem($__it); endforeach ?>
+                    </div>
+                </details>
+                <?php endforeach ?>
+            <?php else : ?>
+                <?php foreach ($__shell['publicNav'] as $__it) : ?>
+                <a href="<?= esc($__it['href'], 'attr') ?>"<?= $__isActive($__it['url']) ? ' aria-current="page"' : '' ?> class="flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default <?= $__isActive($__it['url']) ? 'bg-default font-semibold text-accent-soft-foreground' : '' ?>"><?= esc($__it['label']) ?></a>
+                <?php endforeach ?>
+            <?php endif ?>
         </div>
         <div class="ml-auto flex items-center gap-1">
             <?php if (auth()->loggedIn()) : ?>
-                <a href="/settings" class="flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-medium hover:bg-default transition-colors">
-                    <i class="fa-solid fa-user-circle"></i>
-                    <span><?= esc(auth()->user()->username ?? 'Account') ?></span>
-                </a>
+                <details class="relative">
+                    <summary class="flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg px-2.5 text-sm font-medium hover:bg-default sm:min-h-9">
+                        <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                        <span class="hidden max-w-32 truncate sm:inline"><?= esc(auth()->user()->username ?? 'Account') ?></span>
+                        <span class="sr-only sm:hidden">Account menu</span>
+                    </summary>
+                    <div class="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-2xl">
+                        <?php foreach ($__shell['account'] as $__it) : echo $__navItem($__it); endforeach ?>
+                        <?php if ($__isAdmin) : echo $__navItem(['href' => '/admin', 'url' => '/admin', 'label' => 'Admin panel', 'icon' => 'fa-user-shield']); endif ?>
+                        <?= $__navItem(['href' => '/logout', 'url' => '/logout', 'label' => 'Log out', 'icon' => 'fa-right-from-bracket']) ?>
+                    </div>
+                </details>
             <?php else : ?>
-                <div class="flex items-center gap-1.5 ml-1">
-                    <a href="/login" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg px-3 text-xs sm:text-sm font-medium hover:bg-default transition-colors">Log in</a>
-                    <a href="/register" class="flex min-h-11 sm:min-h-9 items-center justify-center rounded-lg bg-primary px-3 text-xs sm:text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">Play free</a>
+                <div class="ml-1 flex items-center gap-1.5">
+                    <a href="/login" class="flex min-h-11 items-center justify-center rounded-lg px-3 text-xs font-medium hover:bg-default sm:min-h-9 sm:text-sm">Log in</a>
+                    <a href="/register" class="flex min-h-11 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 sm:min-h-9 sm:text-sm">Play free</a>
                 </div>
             <?php endif ?>
         </div>
@@ -572,7 +597,7 @@ body { font-family: var(--sign); }
     <div style="z-index:9999; position:sticky; top:0"><?= island('AppShell', $__shell, $__fallbackHeader) ?></div>
 
     <!-- Content -->
-    <main class="flex-1 pb-20 md:pb-6" id="main-content" role="main">
+    <main class="flex-1 <?= auth()->loggedIn() ? 'pb-20 md:pb-6' : 'pb-6' ?>" id="main-content" role="main">
     <?php if (session("admin_original_id")) : ?>
     <div class="bg-warning text-warning-content text-center py-2 text-sm font-semibold sticky top-0 z-50">
         <i class="fa-solid fa-user-secret mr-1"></i> Impersonating <?= esc(auth()->user()->username ?? "user") ?>. <a href="/admin/stop-impersonate" class="underline font-bold">Return to Admin</a>
@@ -592,7 +617,6 @@ body { font-family: var(--sign); }
                 $__genepis = $__db->table("genepis")->where("user_id", auth()->id())->get()->getRowArray();
                 $__gbal = $__genepis ? (int)$__genepis["balance"] : 0;
                 $__gameDay = $__weather['game_day'];
-                $__rep = $__fin ? (int)($__fin["reputation"] ?? 0) : 0;
                 $__rating = resortRating(auth()->id());
             ?>
             <a href="/finances" title="Cash balance: open Finances" class="stat-pill text-success border-success/20 ">
@@ -815,30 +839,6 @@ document.getElementById("confirmYes").addEventListener("click",function(){
     closeConfirm();
 });
 </script>
-<script>
-const searchPages=<?= json_encode(array_map(fn($p) => ["n" => $p[0], "u" => $p[1], "i" => $p[2]], \App\Libraries\Shell::SEARCH), JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;
-const si=document.getElementById("globalSearch"),sr=document.getElementById("searchResults");
-if(si){
-    si.addEventListener("input",function(){
-        const q=this.value.toLowerCase().trim();
-        const emptyEl=document.getElementById("searchEmpty");
-        if(!q){
-            sr.innerHTML="";
-            if(emptyEl) emptyEl.classList.remove("hidden");
-            return;
-        }
-        if(emptyEl) emptyEl.classList.add("hidden");
-        const m=searchPages.filter(p=>p.n.toLowerCase().includes(q));
-        sr.innerHTML=m.length?m.map(p=>"<a href=\""+p.u+"\" class=\"flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 text-sm\"><i class=\"fa-solid "+p.i+" w-5 text-center text-base-content/50\"></i>"+p.n+"</a>").join(""):`<p class="text-xs text-base-content/70 text-center py-2">No results</p>`;
-    });
-    si.addEventListener("keydown",function(e){
-        if(e.key==="Enter"){
-            const first=sr.querySelector("a");
-            if(first)window.location=first.href;
-        }
-    });
-}
-</script>
 <button id="backToTop" type="button" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:1.5rem;left:1.5rem;z-index:9990;width:2.75rem;height:2.75rem;border-radius:50%;border:none;cursor:pointer;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);" class="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
 <script>window.addEventListener("scroll",function(){document.getElementById("backToTop").style.display=window.scrollY>300?"flex":"none";});</script>
 <script>
@@ -943,83 +943,28 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
 
 <?php if (auth()->loggedIn()) : ?>
 <?php ob_start() ?>
-<!-- Mobile Bottom Navigation Dock -->
-<nav class="mobile-bottom-dock md:hidden" aria-label="Mobile Navigation">
-    <div class="grid grid-cols-5 items-center text-center px-1 py-1">
-        <a href="/dashboard" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/dashboard' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
-            <i class="fa-solid fa-gauge-high text-lg"></i>
-            <span class="text-[10px] mt-0.5">Dashboard</span>
-        </a>
-        <a href="/resort" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/resort' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
-            <i class="fa-solid fa-mountain-sun text-lg"></i>
-            <span class="text-[10px] mt-0.5">Resort</span>
-        </a>
-        <a href="/map" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/map' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
-            <i class="fa-solid fa-map text-lg"></i>
-            <span class="text-[10px] mt-0.5">Map</span>
-        </a>
-        <a href="/finances" class="flex flex-col items-center justify-center py-1 transition-colors <?= $__currentPath === '/finances' ? 'text-primary font-bold' : 'text-base-content/70 ' ?>">
-            <i class="fa-solid fa-coins text-lg"></i>
-            <span class="text-[10px] mt-0.5">Finances</span>
-        </a>
-        <button type="button" onclick="document.getElementById('mobileMenuDrawer').showModal()" class="flex flex-col items-center justify-center py-1 text-base-content/70  transition-colors" aria-label="More operations">
-            <div class="relative">
-                <i class="fa-solid fa-bars text-lg"></i>
-                <?php if ($__bonusDue) : ?>
-                    <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-warning"></span>
-                <?php endif ?>
-            </div>
-            <span class="text-[10px] mt-0.5">More</span>
-        </button>
-    </div>
+<!-- Phone navigation (no-JS fallback of the MobileDock island) -->
+<nav class="mobile-bottom-dock md:hidden" aria-label="Phone navigation">
+    <ul class="grid grid-cols-5">
+        <?php foreach ([['/dashboard', 'Dashboard', 'fa-gauge-high'], ['/resort', 'Resort', 'fa-mountain-sun'], ['/map', 'Map', 'fa-map'], ['/finances', 'Finances', 'fa-coins']] as [$__u, $__l, $__i]) : ?>
+        <li>
+            <a href="<?= $__u ?>"<?= $__isActive($__u) ? ' aria-current="page"' : '' ?> class="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs <?= $__isActive($__u) ? 'font-semibold text-accent-soft-foreground' : 'text-muted' ?>">
+                <i class="fa-solid <?= $__i ?> text-lg" aria-hidden="true"></i><?= $__l ?>
+            </a>
+        </li>
+        <?php endforeach ?>
+        <li>
+            <details class="relative">
+                <summary class="flex min-h-14 cursor-pointer list-none flex-col items-center justify-center gap-0.5 text-xs text-muted">
+                    <span class="relative"><i class="fa-solid fa-bars text-lg" aria-hidden="true"></i><?php if ($__bonusDue) : ?><span class="absolute -right-1.5 -top-1 size-2 rounded-full bg-warning" aria-hidden="true"></span><?php endif ?></span>
+                    More<?= $__bonusDue ? '<span class="sr-only">, daily bonus ready</span>' : '' ?>
+                </summary>
+                <div class="fixed inset-x-2 bottom-16 z-50 max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-popover p-2 shadow-2xl"><?= $__menuPanel() ?></div>
+            </details>
+        </li>
+    </ul>
 </nav>
-
-<!-- Mobile More Operations Sheet -->
-<dialog id="mobileMenuDrawer" class="hidden" closedby="any" aria-label="Resort Menu">
-    <div class="max-h-[85vh] p-4 bg-background rounded-t-2xl md:rounded-2xl border border-border">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-border">
-            <div class="flex items-center gap-2 font-bold text-base">
-                <i class="fa-solid fa-mountain-sun text-primary"></i> Resort Menu
-            </div>
-            <form method="dialog"><button class="flex size-8 items-center justify-center rounded-lg hover:bg-default" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button></form>
-        </div>
-        <div class="space-y-4 overflow-y-auto max-h-[65vh] pr-1">
-            <?php foreach ($__nav as $__secName => $__sec) : ?>
-            <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
-                    <i class="fa-solid <?= esc($__sec['icon']) ?> text-[11px]"></i> <?= esc($__secName) ?>
-                </p>
-                <div class="grid grid-cols-2 gap-2">
-                    <?php foreach ($__sec['items'] as $__it) : ?>
-                        <?php
-                            $locked = false;
-                            $href = $__it['url'];
-                            if (!empty($__it['feature'])) {
-                                $unlocked = $__isAdmin || isFeatureUnlocked($__it['feature']);
-                                if (!$unlocked) { $locked = true; $href = '/achievements'; }
-                            }
-                            $isAct = $__currentPath === $__it['url'];
-                            $bDue = !empty($__it['badge']) && $__it['badge'] === 'bonus' && $__bonusDue;
-                        ?>
-                        <a href="<?= esc($href) ?>" class="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-primary/40 hover:bg-default text-xs transition-all <?= $isAct ? 'bg-primary/10 border-primary text-primary font-semibold' : ($locked ? 'opacity-40' : '') ?>">
-                            <i class="fa-solid <?= esc($__it['icon']) ?> w-4 text-center text-primary/80"></i>
-                            <span class="truncate"><?= esc($__it['label']) ?></span>
-                            <?php if ($bDue) : ?><span class="inline-flex items-center rounded bg-amber-400 px-1 text-[10px] font-bold text-neutral-900 ml-auto">!</span><?php endif ?>
-                        </a>
-                    <?php endforeach ?>
-                </div>
-            </div>
-            <?php endforeach ?>
-            <?php if ($__isAdmin) : ?>
-            <div class="pt-2 border-t border-border">
-                <a href="/admin" class="inline-flex min-h-11 sm:min-h-9 items-center justify-center gap-2 rounded-xl border border-danger/40 text-danger hover:bg-danger/10 w-full text-xs font-semibold"><i class="fa-solid fa-shield-halved"></i> Admin Control Panel</a>
-            </div>
-            <?php endif ?>
-        </div>
-    </div>
-    <form method="dialog"><button>close</button></form>
-</dialog>
-<?= island('MobileDock', ['path' => $__currentPath, 'nav' => $__shell['nav'], 'isAdmin' => $__isAdmin, 'bonusDue' => $__bonusDue], ob_get_clean()) ?>
+<?= island('MobileDock', ['path' => $__currentPath, 'nav' => $__shell['nav'], 'account' => $__shell['account'], 'search' => $__shell['search'], 'isAdmin' => $__isAdmin, 'bonusDue' => $__bonusDue], ob_get_clean()) ?>
 <?php endif ?>
 
 <!-- Tutorial card (collapsible) -->

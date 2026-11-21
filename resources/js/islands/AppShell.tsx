@@ -3,7 +3,7 @@ import { Button, Dropdown, Popover, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { MenuButton } from '@/components/MenuButton';
 import { markAllRead, markRead, timeAgo, useNotifications } from '@/lib/notifications';
-import { applyTheme, currentTheme, isActive, type Flash, type ShellProps, type Theme } from '@/lib/shell';
+import { applyTheme, currentSection, currentTheme, isActive, itemStates, itemText, type Flash, type NavItem, type ShellProps, type Theme } from '@/lib/shell';
 
 /** The in-game and public navbar: menus, search, theme, notifications, account or auth actions */
 export default function AppShell(props: ShellProps) {
@@ -20,13 +20,17 @@ export default function AppShell(props: ShellProps) {
     )}
     <header className="border-b border-border bg-background site-nav">
       <nav aria-label="Main navigation" className="mx-auto flex min-h-14 max-w-7xl items-center gap-1 px-2 sm:px-4">
-        <div className="lg:hidden">
+        {/* Players on phones use the dock's "More" (MobileDock), so this button is for tablets; visitors have no dock */}
+        <div className={isLoggedIn ? 'hidden md:block lg:hidden' : 'lg:hidden'}>
           <MenuButton
             isIconOnly
             className="size-11 sm:size-9"
-            label="Open the resort menu"
+            label={isLoggedIn ? 'Open the resort menu' : 'Open the menu'}
             placement="left"
             nav={props.nav}
+            account={props.account}
+            publicNav={isLoggedIn ? [] : props.publicNav}
+            search={isLoggedIn ? props.search : []}
             path={props.path}
             isAdmin={props.user?.isAdmin ?? false}
           >
@@ -34,14 +38,14 @@ export default function AppShell(props: ShellProps) {
           </MenuButton>
         </div>
         <Brand />
-        <DesktopMenus {...props} />
+        {isLoggedIn ? <DesktopMenus {...props} /> : <PublicLinks {...props} />}
         <div className="ml-auto flex items-center gap-1">
           {isLoggedIn && <Search pages={props.search} />}
           <ThemeToggle />
           {isLoggedIn ? (
             <>
               {props.notifications && <Notifications initial={props.notifications} />}
-              <AccountMenu username={props.user!.username} />
+              <AccountMenu username={props.user!.username} items={props.account} isAdmin={props.user!.isAdmin} path={props.path} />
             </>
           ) : (
             <div className="flex items-center gap-1.5 ml-1">
@@ -99,51 +103,83 @@ function Brand() {
   );
 }
 
-function DesktopMenus({ nav, path, user }: ShellProps) {
-  const link = (href: string, label: string, extra = '') => (
-    <a
-      href={href}
-      aria-current={isActive(path, href) ? 'page' : undefined}
-      className={`flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default ${isActive(path, href) ? 'bg-default font-semibold text-accent-soft-foreground' : ''} ${extra}`}
-    >
-      {label}
-    </a>
-  );
+/** Visitors: the public pages (the game menu needs an account) */
+function PublicLinks({ publicNav, path }: ShellProps) {
   return (
     <div className="hidden items-center gap-1 lg:flex">
-      {link('/', 'Home')}
-      {link('/dashboard', 'Dashboard')}
-      {nav.map((section) => (
-        <Dropdown key={section.name}>
-          <Button variant="ghost" size="sm" className={section.items.some((i) => isActive(path, i.url)) ? 'bg-default font-semibold text-accent-soft-foreground' : ''}>
-            {section.name}
-            <Icon name="fa-chevron-down" className="text-xs text-muted" />
-          </Button>
-          <Dropdown.Popover placement="bottom start">
-            <Dropdown.Menu aria-label={section.name}>
-              {section.items.map((item) => (
-                <Dropdown.Item
-                  key={item.url}
-                  id={item.url}
-                  href={item.href}
-                  textValue={item.label}
-                  {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  className={item.locked || item.flagOff ? 'text-muted' : ''}
-                >
-                  <Icon name={item.icon} className="text-accent" />
-                  <span className="flex-1">{item.label}</span>
-                  {item.beta && <span className="rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>}
-                  {item.locked && <Icon name="fa-lock" className="text-muted" />}
-                  {item.bonusDue && <span className="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>}
-                  {item.isNew && <span className="rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">New</span>}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown.Popover>
-        </Dropdown>
+      {publicNav.map((l) => (
+        <a
+          key={l.url}
+          href={l.href}
+          aria-current={isActive(path, l.url) ? 'page' : undefined}
+          className={`flex min-h-9 items-center rounded-lg px-3 text-sm font-medium hover:bg-default ${isActive(path, l.url) ? 'bg-default font-semibold text-accent-soft-foreground' : ''}`}
+        >
+          {l.label}
+        </a>
       ))}
-      {user?.isAdmin && link('/admin', 'Admin', 'text-danger')}
     </div>
+  );
+}
+
+/** Players: Dashboard and the four game sections, each a menu of its pages */
+function DesktopMenus({ nav, path }: ShellProps) {
+  const current = currentSection(nav, path);
+  const onDashboard = isActive(path, '/dashboard');
+  return (
+    <div className="hidden items-center gap-1 lg:flex">
+      <a
+        href="/dashboard"
+        aria-current={onDashboard ? 'page' : undefined}
+        className={`flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-default ${onDashboard ? 'bg-default font-semibold text-accent-soft-foreground' : ''}`}
+      >
+        <Icon name="fa-gauge-high" className={onDashboard ? '' : 'text-muted'} />
+        Dashboard
+      </a>
+      {nav.map((section) => {
+        const isCurrent = section.name === current;
+        return (
+          <Dropdown key={section.name}>
+            <Button variant="ghost" size="sm" className={isCurrent ? 'bg-default font-semibold text-accent-soft-foreground' : ''}>
+              <Icon name={section.icon} className={isCurrent ? '' : 'text-muted'} />
+              {section.name}
+              {isCurrent && <span className="sr-only"> (current section)</span>}
+              <Icon name="fa-chevron-down" className="text-xs text-muted" />
+            </Button>
+            <Dropdown.Popover placement="bottom start">
+              <Dropdown.Menu aria-label={section.name}>
+                {section.items.map((item) => (
+                  <Dropdown.Item
+                    key={item.url}
+                    id={item.url}
+                    href={item.href}
+                    textValue={itemText(item)}
+                    className={`${item.locked || item.flagOff ? 'text-muted' : ''} ${isActive(path, item.url) ? 'font-semibold text-accent-soft-foreground' : ''}`}
+                  >
+                    <Icon name={item.icon} className="text-accent" />
+                    <span className="flex-1">{item.label}</span>
+                    <ItemMarks item={item} />
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Beta, lock, Due and New marks after a menu item's label (the text is in itemText) */
+function ItemMarks({ item }: { item: NavItem }) {
+  return (
+    <>
+      {itemStates(item) && <span className="sr-only">, {itemStates(item)}</span>}
+      {item.beta && <span aria-hidden="true" className="rounded-full bg-warning/15 px-2 text-xs font-semibold text-warning">Beta</span>}
+      {item.locked && <Icon name="fa-lock" className="text-muted" />}
+      {item.bonusDue && <span aria-hidden="true" className="rounded-full bg-warning px-1.5 text-xs font-semibold text-warning-foreground">Due</span>}
+      {item.isNew && <span aria-hidden="true" className="rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">New</span>}
+      {item.external && <Icon name="fa-arrow-up-right-from-square" className="text-xs text-muted" />}
+    </>
   );
 }
 
@@ -264,18 +300,36 @@ function Notifications({ initial }: { initial: NonNullable<ShellProps['notificat
   );
 }
 
-function AccountMenu({ username }: { username: string }) {
+/** The username menu: account pages, Admin for admins, and Log out */
+function AccountMenu({ username, items, isAdmin, path }: { username: string; items: NavItem[]; isAdmin: boolean; path: string }) {
   return (
     <Dropdown>
-      <Button variant="ghost" size="sm" aria-label={`Account menu for ${username}`}>
+      <Button variant="ghost" size="sm" aria-label={`Account menu for ${username}`} className="min-h-11 sm:min-h-9">
         <Icon name="fa-circle-user" />
         <span className="hidden max-w-32 truncate sm:inline">{username}</span>
       </Button>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu aria-label="Account">
-          <Dropdown.Item id="dashboard" href="/dashboard" textValue="Dashboard"><Icon name="fa-gauge-high" />Dashboard</Dropdown.Item>
-          <Dropdown.Item id="settings" href="/settings" textValue="Settings"><Icon name="fa-gear" />Settings</Dropdown.Item>
-          <Dropdown.Item id="logout" href="/logout" textValue="Log out" className="text-danger"><Icon name="fa-right-from-bracket" />Log out</Dropdown.Item>
+          {[
+            ...items.map((item) => (
+              <Dropdown.Item
+                key={item.url}
+                id={item.url}
+                href={item.href}
+                textValue={itemText(item)}
+                {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                className={isActive(path, item.url) ? 'font-semibold text-accent-soft-foreground' : ''}
+              >
+                <Icon name={item.icon} />
+                <span className="flex-1">{item.label}</span>
+                <ItemMarks item={item} />
+              </Dropdown.Item>
+            )),
+            ...(isAdmin
+              ? [<Dropdown.Item key="admin" id="admin" href="/admin" textValue="Admin panel" className="text-danger"><Icon name="fa-user-shield" />Admin panel</Dropdown.Item>]
+              : []),
+            <Dropdown.Item key="logout" id="logout" href="/logout" textValue="Log out" className="text-danger"><Icon name="fa-right-from-bracket" />Log out</Dropdown.Item>,
+          ]}
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>

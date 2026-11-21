@@ -16,6 +16,8 @@ export type NavItem = {
   beta: boolean;
 };
 export type NavSection = { name: string; icon: string; items: NavItem[] };
+/** A public page in the visitors' navbar */
+export type PublicLink = { href: string; url: string; label: string; icon: string };
 
 export type Stats = {
   cash: string;
@@ -60,7 +62,12 @@ export type DemoBarState = {
 export type ShellProps = {
   path: string;
   user: { username: string; isAdmin: boolean } | null;
+  /** The game menu; empty for visitors */
   nav: NavSection[];
+  /** The account menu's pages (Settings, Activity Log, Support, Wiki); empty for visitors */
+  account: NavItem[];
+  /** The visitors' navbar */
+  publicNav: PublicLink[];
   bonusDue: boolean;
   search: { name: string; url: string; icon: string }[];
   stats?: Stats | null;
@@ -88,4 +95,27 @@ export function applyTheme(theme: Theme) {
 
 export function isActive(path: string, url: string): boolean {
   return path === url || (url !== '/' && path.startsWith(url + '/'));
+}
+
+/** The menu section holding the current page, if any: its button and drawer group are marked current */
+export function currentSection(nav: NavSection[], path: string): string | null {
+  return nav.find((s) => s.items.some((it) => isActive(path, it.url)))?.name ?? null;
+}
+
+/** A menu item's states in words (locked, beta, new…), for screen readers; the marks that show them are hidden */
+export function itemStates(item: NavItem): string {
+  return [
+    item.locked && 'locked, unlock it through achievements',
+    item.flagOff && 'switched off for players',
+    item.beta && 'beta',
+    item.bonusDue && 'bonus ready',
+    item.isNew && 'new',
+    item.external && 'opens in a new tab',
+  ].filter(Boolean).join(', ');
+}
+
+/** What a screen reader reads for a menu item: its label, then its states */
+export function itemText(item: NavItem): string {
+  const states = itemStates(item);
+  return states ? `${item.label}, ${states}` : item.label;
 }

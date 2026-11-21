@@ -74,7 +74,10 @@ def main() -> int:
             elif basename.startswith("Dialog-") and basename.endswith(".js"):
                 if raw_size > BUDGETS["dialog_js"]:
                     violations.append(f"Dialog bundle '{basename}' exceeds {BUDGETS['dialog_js']//1024} KB budget: {raw_size/1024:.2f} KB")
-            elif basename.startswith("compose-") and basename.endswith(".js"):
+            # Shared chunks (manifest keys starting with "_", not an island or entry) are named by Rollup after
+            # whichever module comes first, so "compose-" one build can be "Group-" the next: judge them all by
+            # the shared-chunk budget rather than by name
+            elif (basename.startswith("compose-") or (key.startswith("_") and not entry.get("isDynamicEntry") and not entry.get("isEntry") and not basename.startswith("leaflet-"))) and basename.endswith(".js"):
                 if raw_size > BUDGETS["compose_js"]:
                     violations.append(f"Compose bundle '{basename}' exceeds {BUDGETS['compose_js']//1024} KB budget: {raw_size/1024:.2f} KB")
             elif basename.startswith("leaflet-") and basename.endswith(".js"):
