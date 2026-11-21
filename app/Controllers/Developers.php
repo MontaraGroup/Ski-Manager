@@ -76,11 +76,6 @@ Send plain HTTPS requests. Responses are JSON and cross-origin requests are allo
 
 Full description: {$base}/openapi.json (OpenAPI 3.1). Human docs: {$base}/developers. API catalog: {$base}/.well-known/api-catalog.
 
-## What not to rely on
-
-- `POST /api/auth` is a demo endpoint for the mobile apps. It returns a random token without checking anything, and no endpoint accepts that token. It is not a way to authenticate.
-- `POST /api/sync` echoes back what you send and saves nothing.
-
 ## Acting for a person
 
 Player-specific data (a resort's finances, lifts and buildings) is only returned to a person's own signed-in browser session. Agents must not create accounts, and must not sign in with someone's email and password on their behalf. If a person wants to share their resort data, they should sign in themselves.
@@ -106,8 +101,6 @@ MD;
             'endpoints' => [
                 ['method' => 'GET', 'path' => '/api/resort-data', 'desc' => 'Trail map segments and sectors, the current season and weather. With a ski-manager.net session cookie it also returns your finances, lifts, slopes and buildings; without one, finances are a demo baseline and the player lists are empty.'],
                 ['method' => 'GET', 'path' => '/api/leaderboard', 'desc' => 'The top 50 resorts, ranked by cash plus lifetime income.'],
-                ['method' => 'POST', 'path' => '/api/auth', 'desc' => 'Demo sign-in used by the mobile apps. Returns a random token. It does not check credentials, and no other endpoint needs the token.'],
-                ['method' => 'POST', 'path' => '/api/sync', 'desc' => 'Acknowledges a sync from the mobile apps and echoes back the cash you send. Nothing is saved.'],
                 ['method' => 'GET', 'path' => '/health', 'desc' => 'Database and storage checks. Returns 200 when healthy and 503 when something is down.'],
             ],
             'catalogUrl' => $base . '/.well-known/api-catalog',
@@ -182,37 +175,6 @@ MD;
                         'reputation'   => ['type' => 'integer'],
                         'rankPosition' => ['type' => 'integer'],
                     ], ['id', 'username', 'cash', 'rankPosition'])])],
-                ]],
-                '/api/auth' => ['post' => [
-                    'operationId' => 'mobileDemoAuth',
-                    'summary'     => 'Demo sign-in for the mobile apps',
-                    'description' => 'Returns a random token for the mobile demo. It does not check credentials, '
-                        . 'and no other endpoint requires the token.',
-                    'requestBody' => ['required' => false, 'content' => ['application/json' => ['schema' => $obj([
-                        'username' => ['type' => 'string'],
-                    ])]]],
-                    'responses'   => ['200' => $json($obj([
-                        'status'   => ['type' => 'string', 'example' => 'authenticated'],
-                        'token'    => ['type' => 'string'],
-                        'username' => ['type' => 'string'],
-                        'server'   => ['type' => 'string', 'format' => 'uri'],
-                    ]))],
-                ]],
-                '/api/sync' => ['post' => [
-                    'operationId' => 'mobileSync',
-                    'summary'     => 'Mobile sync acknowledgement',
-                    'description' => 'Acknowledges a sync from the mobile apps and echoes back the cash value sent. Nothing is saved.',
-                    'requestBody' => ['required' => false, 'content' => ['application/json' => ['schema' => $obj([
-                        'cash'     => ['type' => 'integer'],
-                        'game_day' => ['type' => 'integer'],
-                    ])]]],
-                    'responses'   => ['200' => $json($obj([
-                        'status'          => ['type' => 'string', 'example' => 'success'],
-                        'synced_at'       => ['type' => 'string'],
-                        'server_time'     => ['type' => 'integer'],
-                        'server_game_day' => ['type' => 'integer'],
-                        'confirmed_cash'  => ['type' => 'integer'],
-                    ]))],
                 ]],
                 '/health' => ['get' => [
                     'operationId' => 'getHealth',

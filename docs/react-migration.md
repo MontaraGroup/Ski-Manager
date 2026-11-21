@@ -94,7 +94,6 @@ Status on 2026-11-05: 100% of all player-facing and guest-facing views have been
 
 ## Open issues found along the way (not fixed)
 
-- **Mobile API:** `/api/auth` and `/api/sync` (used by the mobile apps) authenticate nobody. `auth` returns a random token for any username and never stores it; `sync` echoes the cash the client sends.
 - **Review findings never fixed:** they are still in the live code:
   - Sentry Session Replay records unmasked text, and the production DSN is hardcoded in `layouts/main.php` and the `env` template.
   - `composer.lock` needs PHP 8.4.1 while `composer.json` allows 8.2.
