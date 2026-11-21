@@ -80,8 +80,9 @@ class NotificationFeed
         static $labels = null;
         if ($labels === null) {
             $labels = [];
-            foreach (Shell::SEARCH as [$name, $url]) $labels[$url] = $name;
+            foreach (Shell::SEARCH_EXTRA as [$name, $url]) $labels[$url] = $name;
             foreach (Shell::NAV as $section) foreach ($section['items'] as $item) $labels[$item['url']] = $item['label'];
+            foreach (Shell::ACCOUNT as $item) $labels[$item['url']] = $item['label'];
         }
         $path = strtok($link, '?#');
         return $labels[$path] ?? null;

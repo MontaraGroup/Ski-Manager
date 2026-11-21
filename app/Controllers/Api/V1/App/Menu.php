@@ -29,7 +29,8 @@ class Menu extends BaseController
         $isAdmin = Shell::isAdmin();
         $bonusDue = Shell::bonusDue();
         $sections = [];
-        foreach (Shell::NAV + [self::EXTRA['title'] => self::EXTRA] as $title => $section) {
+        // The website keeps Settings, Support, Activity and the Wiki in its account menu (Shell::ACCOUNT)
+        foreach (Shell::NAV + ['Account' => ['items' => Shell::ACCOUNT], self::EXTRA['title'] => self::EXTRA] as $title => $section) {
             $items = [];
             foreach ($section['items'] as $it) {
                 $item = Shell::resolveItem($it, $isAdmin, $bonusDue);
