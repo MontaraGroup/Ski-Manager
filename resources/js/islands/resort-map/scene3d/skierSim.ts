@@ -8,6 +8,7 @@ import type {
   PlacedFacility,
 } from '../types';
 import type { Heightfield } from './heightfield';
+import { buildLiftProfile, sampleLiftCable, type LiftProfile } from './geometry';
 import { clamp, samplePolylineAt, smoothTrailPolyline } from './math';
 
 interface SkierAgent {
@@ -23,12 +24,16 @@ interface SkierAgent {
 }
 
 interface CarrierAgent {
-  pts: [number, number][];
+  profile: LiftProfile;
   progress: number;
   speed: number;
-  yOffset: number;
   scale: number;
+  seats: number;
   color: [number, number, number];
+  mode: 'loop' | 'jigback';
+  sideSign: number;
+  riderCount: number;
+  riderColors: [number, number, number][];
 }
 
 interface SnowcatAgent {
@@ -67,10 +72,13 @@ function deterministicRand(seed: number): () => number {
 export class SkierSimulation {
   private skiers: SkierAgent[] = [];
   private chairs: CarrierAgent[] = [];
+  private bubbleChairs: CarrierAgent[] = [];
   private cabins: CarrierAgent[] = [];
+  private trams: CarrierAgent[] = [];
   private surfaces: CarrierAgent[] = [];
   private snowcats: SnowcatAgent[] = [];
   private flakes: Particle[] = [];
+  private riderMax = 0;
 
   skierPos = new Float32Array(0);
   skierYawScale = new Float32Array(0);
@@ -82,15 +90,30 @@ export class SkierSimulation {
   chairColor = new Float32Array(0);
   chairCount = 0;
 
+  bubbleChairPos = new Float32Array(0);
+  bubbleChairYawScale = new Float32Array(0);
+  bubbleChairColor = new Float32Array(0);
+  bubbleChairCount = 0;
+
   cabinPos = new Float32Array(0);
   cabinYawScale = new Float32Array(0);
   cabinColor = new Float32Array(0);
   cabinCount = 0;
 
+  tramPos = new Float32Array(0);
+  tramYawScale = new Float32Array(0);
+  tramColor = new Float32Array(0);
+  tramCount = 0;
+
   surfacePos = new Float32Array(0);
   surfaceYawScale = new Float32Array(0);
   surfaceColor = new Float32Array(0);
   surfaceCount = 0;
+
+  riderPos = new Float32Array(0);
+  riderYawScale = new Float32Array(0);
+  riderColor = new Float32Array(0);
+  riderCount = 0;
 
   snowcatPos = new Float32Array(0);
   snowcatYawScale = new Float32Array(0);
@@ -134,10 +157,13 @@ export class SkierSimulation {
   ) {
     this.skiers = [];
     this.chairs = [];
+    this.bubbleChairs = [];
     this.cabins = [];
+    this.trams = [];
     this.surfaces = [];
     this.snowcats = [];
     this.flakes = [];
+    this.riderMax = 0;
 
     const rand = deterministicRand(1337 + builtIds.length * 31);
     const isBuilt = (id: string | number) => builtIds.some((b) => sameId(b, id));
@@ -163,53 +189,111 @@ export class SkierSimulation {
       }
     }
 
-    // Lift carriers split accurately by lift subtype
+    const pickRiderColors = (cnt: number): [number, number, number][] => {
+      const cols: [number, number, number][] = [];
+      for (let r = 0; r < cnt; r++) {
+        cols.push(JACKET_COLORS[Math.floor(rand() * JACKET_COLORS.length)]);
+      }
+      return cols;
+    };
+
+    // Lift carriers locked to shared catenary cables and split accurately by lift subtype
     for (const { seg, item, pts } of openLifts) {
       const sub = item.subtype || 'chair_fixed';
       const seats = Number(item.seats || 2);
+      const profile = buildLiftProfile(this.hf, pts, sub);
+      const hasRiders = showSkiers && resortOpen;
+
       if (sub === 'button') {
-        const n = 6;
+        const n = clamp(Math.round(profile.totalLen / 11) * 2, 4, 14);
+        const scale = seats >= 2 ? 1.05 : 0.90;
         for (let k = 0; k < n; k++) {
           this.surfaces.push({
-            pts,
+            profile,
             progress: k / n,
             speed: 0.048,
-            yOffset: 0.34,
-            scale: 0.95,
+            scale,
+            seats,
             color: [0.95, 0.64, 0.14],
+            mode: 'loop',
+            sideSign: 1,
+            riderCount: 0,
+            riderColors: [],
           });
         }
-      } else if (sub === 'gondola' || sub === 'cable_car') {
-        const isTram = sub === 'cable_car';
-        const n = isTram ? 2 : 5;
-        const scale = isTram ? 1.38 : 0.98;
-        const cableH = isTram ? 2.15 : 1.65;
+      } else if (sub === 'cable_car') {
+        const scale = seats >= 30 ? 1.14 : 1.0;
+        for (const [k, sideSign] of [
+          [0, 1],
+          [0.5, -1],
+        ] as [number, number][]) {
+          this.trams.push({
+            profile,
+            progress: k,
+            speed: 0.055,
+            scale,
+            seats,
+            color: [0.82, 0.18, 0.20],
+            mode: 'jigback',
+            sideSign,
+            riderCount: 0,
+            riderColors: [],
+          });
+        }
+      } else if (sub === 'gondola') {
+        const n = clamp(Math.round(profile.totalLen / 14) * 2, 4, 14);
+        const scale = seats >= 10 ? 1.10 : seats >= 8 ? 1.02 : 0.94;
         for (let k = 0; k < n; k++) {
           this.cabins.push({
-            pts,
+            profile,
             progress: k / n,
-            speed: 0.08,
-            yOffset: cableH - 0.45 * scale,
+            speed: 0.084,
             scale,
-            color: [0.84, 0.24, 0.22],
+            seats,
+            color: [0.84, 0.22, 0.20],
+            mode: 'loop',
+            sideSign: 1,
+            riderCount: 0,
+            riderColors: [],
           });
         }
+      } else if (sub === 'chair_detach') {
+        const n = clamp(Math.round(profile.totalLen / 12) * 2, 4, 16);
+        const scale = seats >= 8 ? 1.12 : seats >= 6 ? 1.02 : 0.92;
+        const rc = hasRiders ? (seats >= 6 ? 3 : seats >= 4 ? 2 : 1) : 0;
+        for (let k = 0; k < n; k++) {
+          this.bubbleChairs.push({
+            profile,
+            progress: k / n,
+            speed: 0.082,
+            scale,
+            seats,
+            color: [0.16, 0.34, 0.58],
+            mode: 'loop',
+            sideSign: 1,
+            riderCount: rc,
+            riderColors: rc > 0 ? pickRiderColors(rc) : [],
+          });
+          this.riderMax += rc;
+        }
       } else {
-        // chair_fixed or chair_detach: open bench chairs hung directly below the cable
-        const isDetach = sub === 'chair_detach';
-        const cableH = isDetach ? 1.55 : 1.45;
-        const scale = seats >= 6 ? 1.12 : seats >= 4 ? 1.0 : 0.88;
-        const col: [number, number, number] = isDetach ? [0.16, 0.34, 0.58] : [0.24, 0.30, 0.40];
-        const n = 6;
+        const n = clamp(Math.round(profile.totalLen / 11) * 2, 4, 16);
+        const scale = seats >= 4 ? 1.02 : seats === 3 ? 0.92 : 0.82;
+        const rc = hasRiders ? (seats >= 4 ? 2 : 1) : 0;
         for (let k = 0; k < n; k++) {
           this.chairs.push({
-            pts,
+            profile,
             progress: k / n,
-            speed: isDetach ? 0.08 : 0.052,
-            yOffset: cableH - 0.42 * scale,
+            speed: 0.052,
             scale,
-            color: col,
+            seats,
+            color: [0.24, 0.30, 0.40],
+            mode: 'loop',
+            sideSign: 1,
+            riderCount: rc,
+            riderColors: rc > 0 ? pickRiderColors(rc) : [],
           });
+          this.riderMax += rc;
         }
       }
 
@@ -331,15 +415,30 @@ export class SkierSimulation {
     this.chairYawScale = new Float32Array(this.chairCount * 2);
     this.chairColor = new Float32Array(this.chairCount * 4);
 
+    this.bubbleChairCount = this.bubbleChairs.length;
+    this.bubbleChairPos = new Float32Array(this.bubbleChairCount * 3);
+    this.bubbleChairYawScale = new Float32Array(this.bubbleChairCount * 2);
+    this.bubbleChairColor = new Float32Array(this.bubbleChairCount * 4);
+
     this.cabinCount = this.cabins.length;
     this.cabinPos = new Float32Array(this.cabinCount * 3);
     this.cabinYawScale = new Float32Array(this.cabinCount * 2);
     this.cabinColor = new Float32Array(this.cabinCount * 4);
 
+    this.tramCount = this.trams.length;
+    this.tramPos = new Float32Array(this.tramCount * 3);
+    this.tramYawScale = new Float32Array(this.tramCount * 2);
+    this.tramColor = new Float32Array(this.tramCount * 4);
+
     this.surfaceCount = this.surfaces.length;
     this.surfacePos = new Float32Array(this.surfaceCount * 3);
     this.surfaceYawScale = new Float32Array(this.surfaceCount * 2);
     this.surfaceColor = new Float32Array(this.surfaceCount * 4);
+
+    this.riderPos = new Float32Array(this.riderMax * 3);
+    this.riderYawScale = new Float32Array(this.riderMax * 2);
+    this.riderColor = new Float32Array(this.riderMax * 4);
+    this.riderCount = 0;
 
     this.snowcatCount = this.snowcats.length;
     this.snowcatPos = new Float32Array(this.snowcatCount * 3);
@@ -359,19 +458,97 @@ export class SkierSimulation {
     pos: Float32Array,
     yawScale: Float32Array,
     color: Float32Array,
-    stepDt: number
-  ) {
+    stepDt: number,
+    riderWriteStart: number
+  ): number {
+    let rWrite = riderWriteStart;
+    const turnFrac = 0.04;
+    const dwell = 0.08;
+
     for (let i = 0; i < pool.length; i++) {
       const c = pool[i];
       c.progress = (c.progress + c.speed * stepDt) % 1;
-      const goingUp = c.progress < 0.5;
-      const t = goingUp ? c.progress * 2 : 1 - (c.progress - 0.5) * 2;
-      const sample = samplePolylineAt(c.pts, t);
-      const side = goingUp ? 0.24 : -0.24;
-      const mx = sample.mapX - sample.ty * side;
-      const my = sample.mapY + sample.tx * side;
-      const [wx, wy, wz] = this.hf.toWorld(mx, my, c.yOffset);
-      const yaw = goingUp ? Math.atan2(sample.tx, -sample.ty) : Math.atan2(-sample.tx, sample.ty);
+      const pr = c.profile;
+
+      let wx = 0;
+      let wy = 0;
+      let wz = 0;
+      let yaw = 0;
+      let goingUp = false;
+
+      if (c.mode === 'jigback') {
+        let t = 0;
+        if (c.progress < dwell) {
+          t = 0;
+        } else if (c.progress < 0.5) {
+          const p = (c.progress - dwell) / (0.5 - dwell);
+          t = 0.5 - 0.5 * Math.cos(p * Math.PI);
+        } else if (c.progress < 0.5 + dwell) {
+          t = 1;
+        } else {
+          const p = (c.progress - (0.5 + dwell)) / (0.5 - dwell);
+          t = 0.5 + 0.5 * Math.cos(p * Math.PI);
+        }
+        const smp = sampleLiftCable(pr, t, c.sideSign);
+        wx = smp.wx;
+        wy = smp.wy;
+        wz = smp.wz;
+        yaw = Math.atan2(smp.tx, -smp.ty);
+      } else if (c.progress < 0.5 - turnFrac) {
+        goingUp = true;
+        const t = c.progress / (0.5 - turnFrac);
+        const smp = sampleLiftCable(pr, t, 1);
+        wx = smp.wx;
+        wy = smp.wy;
+        wz = smp.wz;
+        yaw = Math.atan2(smp.tx, -smp.ty);
+      } else if (c.progress < 0.5) {
+        const theta = ((c.progress - (0.5 - turnFrac)) / turnFrac) * Math.PI;
+        const top = pr.nodes[pr.spans];
+        const prev = pr.nodes[pr.spans - 1];
+        const dx = top.mapX - prev.mapX;
+        const dy = top.mapY - prev.mapY;
+        const dLen = Math.hypot(dx, dy) || 1;
+        const tx = dx / dLen;
+        const ty = dy / dLen;
+        const cosT = Math.cos(theta);
+        const sinT = Math.sin(theta);
+        const rx = -ty * pr.cableOff;
+        const rz = -tx * pr.cableOff;
+        const fx = tx * pr.cableOff;
+        const fz = -ty * pr.cableOff;
+        wx = top.mapX + rx * cosT + fx * sinT;
+        wy = top.topY;
+        wz = pr.height - top.mapY + rz * cosT + fz * sinT;
+        yaw = Math.atan2(fx * cosT - rx * sinT, fz * cosT - rz * sinT);
+      } else if (c.progress < 1.0 - turnFrac) {
+        const t = 1 - (c.progress - 0.5) / (0.5 - turnFrac);
+        const smp = sampleLiftCable(pr, t, -1);
+        wx = smp.wx;
+        wy = smp.wy;
+        wz = smp.wz;
+        yaw = Math.atan2(-smp.tx, smp.ty);
+      } else {
+        const theta = ((c.progress - (1.0 - turnFrac)) / turnFrac) * Math.PI;
+        const base = pr.nodes[0];
+        const next = pr.nodes[1];
+        const dx = next.mapX - base.mapX;
+        const dy = next.mapY - base.mapY;
+        const dLen = Math.hypot(dx, dy) || 1;
+        const tx = dx / dLen;
+        const ty = dy / dLen;
+        const cosT = Math.cos(theta);
+        const sinT = Math.sin(theta);
+        const rx = -ty * pr.cableOff;
+        const rz = -tx * pr.cableOff;
+        const fx = tx * pr.cableOff;
+        const fz = -ty * pr.cableOff;
+        wx = base.mapX - rx * cosT - fx * sinT;
+        wy = base.topY;
+        wz = pr.height - base.mapY - rz * cosT - fz * sinT;
+        yaw = Math.atan2(rx * sinT - fx * cosT, rz * sinT - fz * cosT);
+      }
+
       pos[i * 3] = wx;
       pos[i * 3 + 1] = wy;
       pos[i * 3 + 2] = wz;
@@ -381,7 +558,32 @@ export class SkierSimulation {
       color[i * 4 + 1] = c.color[1];
       color[i * 4 + 2] = c.color[2];
       color[i * 4 + 3] = 1;
+
+      if (goingUp && c.riderCount > 0) {
+        const latX = Math.cos(yaw);
+        const latZ = -Math.sin(yaw);
+        const fwdX = Math.sin(yaw) * 0.02 * c.scale;
+        const fwdZ = Math.cos(yaw) * 0.02 * c.scale;
+        const rScale = 0.70 * c.scale;
+        const rY = wy - 0.43 * c.scale;
+        for (let r = 0; r < c.riderCount; r++) {
+          if (rWrite >= this.riderMax) break;
+          const off = c.riderCount === 1 ? 0 : c.riderCount === 2 ? (r === 0 ? -0.11 : 0.11) * c.scale : (r - 1) * 0.16 * c.scale;
+          const rc = c.riderColors[r];
+          this.riderPos[rWrite * 3] = wx + latX * off + fwdX;
+          this.riderPos[rWrite * 3 + 1] = rY;
+          this.riderPos[rWrite * 3 + 2] = wz + latZ * off + fwdZ;
+          this.riderYawScale[rWrite * 2] = yaw;
+          this.riderYawScale[rWrite * 2 + 1] = rScale;
+          this.riderColor[rWrite * 4] = rc[0];
+          this.riderColor[rWrite * 4 + 1] = rc[1];
+          this.riderColor[rWrite * 4 + 2] = rc[2];
+          this.riderColor[rWrite * 4 + 3] = 1;
+          rWrite++;
+        }
+      }
     }
+    return rWrite;
   }
 
   step(dt: number) {
@@ -429,9 +631,12 @@ export class SkierSimulation {
       this.skierColor[i * 4 + 3] = 1;
     }
 
-    this.stepCarrierPool(this.chairs, this.chairPos, this.chairYawScale, this.chairColor, stepDt);
-    this.stepCarrierPool(this.cabins, this.cabinPos, this.cabinYawScale, this.cabinColor, stepDt);
-    this.stepCarrierPool(this.surfaces, this.surfacePos, this.surfaceYawScale, this.surfaceColor, stepDt);
+    let rCount = this.stepCarrierPool(this.chairs, this.chairPos, this.chairYawScale, this.chairColor, stepDt, 0);
+    rCount = this.stepCarrierPool(this.bubbleChairs, this.bubbleChairPos, this.bubbleChairYawScale, this.bubbleChairColor, stepDt, rCount);
+    this.stepCarrierPool(this.cabins, this.cabinPos, this.cabinYawScale, this.cabinColor, stepDt, rCount);
+    this.stepCarrierPool(this.trams, this.tramPos, this.tramYawScale, this.tramColor, stepDt, rCount);
+    this.stepCarrierPool(this.surfaces, this.surfacePos, this.surfaceYawScale, this.surfaceColor, stepDt, rCount);
+    this.riderCount = rCount;
 
     for (let i = 0; i < this.snowcatCount; i++) {
       const g = this.snowcats[i];

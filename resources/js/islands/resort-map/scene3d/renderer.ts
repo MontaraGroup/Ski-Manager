@@ -408,8 +408,11 @@ export function createMap3DRenderer(
   const unitMeshes = buildUnitMeshes();
   const skierGpu = makeInstancedGPU(unitMeshes.skier);
   const chairGpu = makeInstancedGPU(unitMeshes.chair);
+  const bubbleChairGpu = makeInstancedGPU(unitMeshes.bubbleChair);
   const cabinGpu = makeInstancedGPU(unitMeshes.cabin);
+  const tramGpu = makeInstancedGPU(unitMeshes.tram);
   const surfaceGpu = makeInstancedGPU(unitMeshes.surface);
+  const riderGpu = makeInstancedGPU(unitMeshes.rider);
   const snowcatGpu = makeInstancedGPU(unitMeshes.snowcat);
   const flakeGpu = makeInstancedGPU(unitMeshes.flake);
 
@@ -439,8 +442,11 @@ export function createMap3DRenderer(
     };
     syncOne(skierGpu, sim.skierPos, sim.skierYawScale, sim.skierColor, sim.skierCount);
     syncOne(chairGpu, sim.chairPos, sim.chairYawScale, sim.chairColor, sim.chairCount);
+    syncOne(bubbleChairGpu, sim.bubbleChairPos, sim.bubbleChairYawScale, sim.bubbleChairColor, sim.bubbleChairCount);
     syncOne(cabinGpu, sim.cabinPos, sim.cabinYawScale, sim.cabinColor, sim.cabinCount);
+    syncOne(tramGpu, sim.tramPos, sim.tramYawScale, sim.tramColor, sim.tramCount);
     syncOne(surfaceGpu, sim.surfacePos, sim.surfaceYawScale, sim.surfaceColor, sim.surfaceCount);
+    syncOne(riderGpu, sim.riderPos, sim.riderYawScale, sim.riderColor, sim.riderCount);
     syncOne(snowcatGpu, sim.snowcatPos, sim.snowcatYawScale, sim.snowcatColor, sim.snowcatCount);
     syncOne(flakeGpu, sim.flakePos, sim.flakeYawScale, sim.flakeColor, sim.flakeCount);
   }
@@ -858,8 +864,11 @@ export function createMap3DRenderer(
       gl!.drawElementsInstanced(gl!.TRIANGLES, g.indexCount, gl!.UNSIGNED_SHORT, 0, g.count);
     };
     drawInst(chairGpu);
+    drawInst(bubbleChairGpu);
     drawInst(cabinGpu);
+    drawInst(tramGpu);
     drawInst(surfaceGpu);
+    drawInst(riderGpu);
     drawInst(skierGpu);
     drawInst(snowcatGpu);
     drawInst(flakeGpu);

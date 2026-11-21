@@ -131,6 +131,24 @@ class MeshBuilder {
     this.quad(a3x, a3y, a3z, b3x, b3y, b3z, b0x, b0y, b0z, a0x, a0y, a0z, col);
   }
 
+  /** Upright cylindrical or tapered conical column with outward CCW face winding */
+  cylinder(cx: number, by: number, cz: number, rBot: number, rTop: number, h: number, segs: number, col: RGBA) {
+    const ty = by + h;
+    for (let k = 0; k < segs; k++) {
+      const a0 = (k / segs) * Math.PI * 2;
+      const a1 = ((k + 1) / segs) * Math.PI * 2;
+      const c0 = Math.cos(a0), s0 = Math.sin(a0);
+      const c1 = Math.cos(a1), s1 = Math.sin(a1);
+      const b0x = cx + rBot * c0, b0z = cz - rBot * s0;
+      const b1x = cx + rBot * c1, b1z = cz - rBot * s1;
+      const t0x = cx + rTop * c0, t0z = cz - rTop * s0;
+      const t1x = cx + rTop * c1, t1z = cz - rTop * s1;
+      this.quad(b0x, by, b0z, b1x, by, b1z, t1x, ty, t1z, t0x, ty, t0z, col);
+      if (rTop > 1e-4) this.tri(cx, ty, cz, t0x, ty, t0z, t1x, ty, t1z, col);
+      if (rBot > 1e-4) this.tri(cx, by, cz, b1x, by, b1z, b0x, by, b0z, col);
+    }
+  }
+
   build(): StaticMeshData {
     return {
       vertices: new Float32Array(this.v),
@@ -626,6 +644,350 @@ export function buildRibbonMesh(
   return rb.build();
 }
 
+export interface LiftNode {
+  mapX: number;
+  mapY: number;
+  groundY: number;
+  topY: number;
+  tx: number;
+  ty: number;
+}
+
+export interface LiftProfile {
+  nodes: LiftNode[];
+  sags: number[];
+  spans: number;
+  cableOff: number;
+  cableH: number;
+  totalLen: number;
+  height: number;
+}
+
+const LIFT_SPECS: Record<
+  string,
+  { cableH: number; cableOff: number; spanLen: number; minS: number; maxS: number; sagK: number; minClear: number }
+> = {
+  button: { cableH: 0.95, cableOff: 0.20, spanLen: 14, minS: 2, maxS: 7, sagK: 0.012, minClear: 0.55 },
+  chair_fixed: { cableH: 1.55, cableOff: 0.28, spanLen: 16, minS: 2, maxS: 7, sagK: 0.018, minClear: 0.95 },
+  chair_detach: { cableH: 1.68, cableOff: 0.34, spanLen: 19, minS: 2, maxS: 6, sagK: 0.020, minClear: 1.05 },
+  gondola: { cableH: 1.85, cableOff: 0.36, spanLen: 22, minS: 2, maxS: 6, sagK: 0.022, minClear: 1.15 },
+  cable_car: { cableH: 2.45, cableOff: 0.44, spanLen: 34, minS: 1, maxS: 4, sagK: 0.030, minClear: 1.45 },
+};
+
+export function buildLiftProfile(hf: Heightfield, pts: [number, number][], sub: string): LiftProfile {
+  const spec = LIFT_SPECS[sub] || LIFT_SPECS.chair_fixed;
+  let totalLen = 0;
+  for (let k = 1; k < pts.length; k++) {
+    totalLen += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+  }
+  const spans = clamp(Math.round(totalLen / spec.spanLen), spec.minS, spec.maxS);
+  const nodes: LiftNode[] = [];
+  for (let s = 0; s <= spans; s++) {
+    const smp = samplePolylineAt(pts, s / spans);
+    const groundY = hf.sampleHeight(smp.mapX, smp.mapY);
+    nodes.push({
+      mapX: smp.mapX,
+      mapY: smp.mapY,
+      groundY,
+      topY: groundY + spec.cableH,
+      tx: smp.tx,
+      ty: smp.ty,
+    });
+  }
+
+  for (let pass = 0; pass < 2; pass++) {
+    for (let s = 0; s < spans; s++) {
+      const a = nodes[s];
+      const b = nodes[s + 1];
+      const hMid = hf.sampleHeight((a.mapX + b.mapX) * 0.5, (a.mapY + b.mapY) * 0.5);
+      const needed = hMid + spec.minClear + 0.12;
+      const avgTop = (a.topY + b.topY) * 0.5;
+      if (needed > avgTop) {
+        const deficit = needed - avgTop;
+        if (s > 0 && s + 1 < spans) {
+          a.topY = Math.min(a.groundY + spec.cableH + 2.0, a.topY + deficit * 0.65);
+          b.topY = Math.min(b.groundY + spec.cableH + 2.0, b.topY + deficit * 0.65);
+        } else if (s + 1 < spans) {
+          b.topY = Math.min(b.groundY + spec.cableH + 2.0, b.topY + deficit * 1.15);
+        } else if (s > 0) {
+          a.topY = Math.min(a.groundY + spec.cableH + 2.0, a.topY + deficit * 1.15);
+        } else {
+          a.topY = Math.min(a.groundY + spec.cableH + 1.5, a.topY + deficit * 0.65);
+          b.topY = Math.min(b.groundY + spec.cableH + 1.5, b.topY + deficit * 0.65);
+        }
+      }
+    }
+  }
+
+  const sags: number[] = new Array(spans);
+  for (let s = 0; s < spans; s++) {
+    const a = nodes[s];
+    const b = nodes[s + 1];
+    const spanDist = Math.hypot(b.mapX - a.mapX, b.mapY - a.mapY);
+    const rawSag = Math.min(0.85, spanDist * spec.sagK);
+    const hMid = hf.sampleHeight((a.mapX + b.mapX) * 0.5, (a.mapY + b.mapY) * 0.5);
+    const maxSafe = Math.max(0.03, (a.topY + b.topY) * 0.5 - (hMid + spec.minClear));
+    sags[s] = Math.min(rawSag, maxSafe);
+  }
+
+  return { nodes, sags, spans, cableOff: spec.cableOff, cableH: spec.cableH, totalLen, height: hf.height };
+}
+
+export function sampleLiftCable(
+  profile: LiftProfile,
+  t: number,
+  sideSign: number
+): { wx: number; wy: number; wz: number; tx: number; ty: number } {
+  const ct = clamp(t, 0, 1);
+  const scaled = ct * profile.spans;
+  const si = Math.min(profile.spans - 1, Math.floor(scaled));
+  const u = scaled - si;
+  const a = profile.nodes[si];
+  const b = profile.nodes[si + 1];
+  const mx = lerp(a.mapX, b.mapX, u);
+  const my = lerp(a.mapY, b.mapY, u);
+  const wy = lerp(a.topY, b.topY, u) - 4 * u * (1 - u) * profile.sags[si];
+  const dx = b.mapX - a.mapX;
+  const dy = b.mapY - a.mapY;
+  const dLen = Math.hypot(dx, dy) || 1;
+  const tx = dx / dLen;
+  const ty = dy / dLen;
+  const offX = -ty * profile.cableOff * sideSign;
+  const offZ = -tx * profile.cableOff * sideSign;
+  return { wx: mx + offX, wy, wz: profile.height - my + offZ, tx, ty };
+}
+
+function addBullwheel(mb: MeshBuilder, cx: number, cy: number, cz: number, radius: number, rimCol: RGBA, steelCol: RGBA) {
+  mb.cylinder(cx, cy - 0.04, cz, radius, radius, 0.08, 10, rimCol);
+  mb.cylinder(cx, cy - 0.07, cz, radius * 0.28, radius * 0.28, 0.14, 8, steelCol);
+  const s = radius * 0.92;
+  mb.beam(cx - s, cy, cz, cx + s, cy, cz, 0.028, steelCol);
+  mb.beam(cx, cy, cz - s, cx, cy, cz + s, 0.028, steelCol);
+}
+
+function addLiftStation(
+  mb: MeshBuilder,
+  node: LiftNode,
+  dirSign: number,
+  isBase: boolean,
+  sub: string,
+  profile: LiftProfile,
+  cols: {
+    concreteCol: RGBA;
+    steelCol: RGBA;
+    darkSteel: RGBA;
+    shellCol: RGBA;
+    roofCol: RGBA;
+    trimCol: RGBA;
+    glassCol: RGBA;
+    kioskCol: RGBA;
+  }
+) {
+  const nx = node.mapX;
+  const groundY = node.groundY;
+  const nz = profile.height - node.mapY;
+  const localTop = node.topY - groundY;
+  const yaw = Math.atan2(node.tx, -node.ty);
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+
+  const worldOf = (lx: number, lz: number): [number, number] => {
+    const wz = lz * dirSign;
+    return [nx + lx * c + wz * s, nz - lx * s + wz * c];
+  };
+  const obox = (lx: number, byRel: number, lz: number, sx: number, sy: number, sz: number, col: RGBA) => {
+    const [gx, gz] = worldOf(lx, lz);
+    mb.orientedBox(gx, groundY + byRel, gz, sx, sy, sz, yaw, col);
+  };
+  const boxes = (specs: [number, number, number, number, number, number, RGBA][]) => {
+    for (const [lx, byRel, lz, sx, sy, sz, col] of specs) obox(lx, byRel, lz, sx, sy, sz, col);
+  };
+  const cyl = (lx: number, byRel: number, lz: number, rBot: number, rTop: number, h: number, segs: number, col: RGBA) => {
+    const [gx, gz] = worldOf(lx, lz);
+    mb.cylinder(gx, groundY + byRel, gz, rBot, rTop, h, segs, col);
+  };
+
+  const { concreteCol, steelCol, darkSteel, shellCol, roofCol, trimCol, glassCol, kioskCol } = cols;
+
+  if (sub === 'button') {
+    cyl(0, -0.22, 0, 0.34, 0.30, 0.28, 8, concreteCol);
+    cyl(0, 0.04, 0, 0.085, 0.075, localTop + 0.06, 8, steelCol);
+    obox(0, localTop - 0.06, 0, 0.58, 0.08, 0.16, darkSteel);
+    addBullwheel(mb, nx, node.topY + 0.05, nz, 0.36, trimCol, steelCol);
+    if (isBase) {
+      boxes([
+        [-0.78, -0.18, -0.14, 0.44, 0.62, 0.48, kioskCol],
+        [-0.78, 0.14, -0.14, 0.46, 0.18, 0.24, glassCol],
+        [-0.78, 0.44, -0.14, 0.50, 0.10, 0.54, roofCol],
+        [-0.78, 0.54, -0.14, 0.52, 0.06, 0.56, trimCol],
+      ]);
+    }
+    return;
+  }
+
+  if (sub === 'chair_fixed') {
+    cyl(-0.32, -0.20, 0, 0.095, 0.075, localTop + 0.20, 8, darkSteel);
+    cyl(0.32, -0.20, 0, 0.095, 0.075, localTop + 0.20, 8, darkSteel);
+    addBullwheel(mb, nx, node.topY, nz, 0.44, trimCol, steelCol);
+    boxes([
+      [0, -0.18, isBase ? 0.35 : 0.25, isBase ? 0.92 : 0.86, 0.20, isBase ? 0.72 : 0.60, concreteCol],
+      [0, localTop - 0.04, 0, 0.96, 0.10, 0.22, steelCol],
+      [0, localTop + 0.06, -0.12, 0.42, 0.20, 0.32, shellCol],
+    ]);
+    if (isBase) {
+      boxes([
+        [-0.88, -0.20, -0.10, 0.54, 0.66, 0.56, kioskCol],
+        [-0.88, 0.14, -0.10, 0.56, 0.20, 0.30, glassCol],
+        [-0.88, 0.46, -0.10, 0.64, 0.11, 0.66, roofCol],
+        [-0.88, 0.57, -0.10, 0.66, 0.06, 0.68, trimCol],
+      ]);
+    } else {
+      boxes([
+        [-0.74, -0.18, -0.08, 0.40, 0.56, 0.42, shellCol],
+        [-0.74, 0.38, -0.08, 0.44, 0.08, 0.46, trimCol],
+      ]);
+    }
+    return;
+  }
+
+  if (sub === 'chair_detach') {
+    cyl(0, -0.26, 0, 0.44, 0.40, 0.30, 8, concreteCol);
+    addBullwheel(mb, nx, node.topY - 0.04, nz, 0.40, trimCol, steelCol);
+    boxes([
+      [-0.16, -0.24, 0, 0.12, localTop + 0.22, 0.22, darkSteel],
+      [0.16, -0.24, 0, 0.12, localTop + 0.22, 0.22, darkSteel],
+      [0, localTop + 0.06, -0.08, 1.12, 0.24, 1.54, shellCol],
+      [0, localTop + 0.11, -0.08, 1.15, 0.11, 1.10, glassCol],
+      [0, localTop + 0.24, -0.08, 1.16, 0.07, 1.58, trimCol],
+      [0, localTop + 0.31, -0.12, 0.86, 0.12, 1.24, roofCol],
+    ]);
+    if (isBase) {
+      boxes([
+        [-0.88, -0.20, -0.20, 0.48, 0.68, 0.56, shellCol],
+        [-0.88, 0.14, -0.20, 0.50, 0.22, 0.44, glassCol],
+        [-0.88, 0.48, -0.20, 0.56, 0.08, 0.64, roofCol],
+      ]);
+    }
+    return;
+  }
+
+  if (sub === 'gondola') {
+    addBullwheel(mb, nx, node.topY, nz, 0.40, trimCol, steelCol);
+    boxes([
+      [0, -0.28, -0.16, 1.32, 0.34, 1.66, concreteCol],
+      [-0.52, 0.04, -0.22, 0.18, localTop - 0.02, 1.46, shellCol],
+      [0.52, 0.04, -0.22, 0.18, localTop - 0.02, 1.46, shellCol],
+      [0, 0.04, -0.78, 0.90, localTop - 0.02, 0.34, shellCol],
+      [-0.54, 0.42, -0.24, 0.19, 0.46, 0.98, glassCol],
+      [0.54, 0.42, -0.24, 0.19, 0.46, 0.98, glassCol],
+      [0, localTop + 0.02, -0.06, 1.26, 0.18, 1.70, shellCol],
+      [0, localTop + 0.20, -0.06, 1.30, 0.08, 1.74, trimCol],
+      [0, localTop + 0.28, -0.12, 0.90, 0.14, 1.32, roofCol],
+    ]);
+    return;
+  }
+
+  // Cable Car: bold open-deck alpine tramway dock
+  boxes([
+    [0, -0.34, -0.22, 1.54, 0.44, 1.94, concreteCol],
+    [-0.62, 0.08, -0.28, 0.24, localTop + 0.02, 1.66, shellCol],
+    [0.62, 0.08, -0.28, 0.24, localTop + 0.02, 1.66, shellCol],
+    [0, 0.08, -0.92, 1.04, localTop + 0.02, 0.42, shellCol],
+    [-0.64, 0.66, -0.30, 0.25, 0.62, 1.12, glassCol],
+    [0.64, 0.66, -0.30, 0.25, 0.62, 1.12, glassCol],
+    [0, localTop + 0.10, -0.16, 1.50, 0.24, 1.92, shellCol],
+    [0, localTop + 0.34, -0.16, 1.56, 0.10, 1.98, trimCol],
+    [0, localTop + 0.44, -0.34, 0.96, 0.28, 1.24, roofCol],
+  ]);
+}
+
+function addLiftTower(
+  mb: MeshBuilder,
+  hf: Heightfield,
+  profile: LiftProfile,
+  s: number,
+  sub: string,
+  concreteCol: RGBA,
+  steelCol: RGBA,
+  darkSteel: RGBA
+) {
+  const node = profile.nodes[s];
+  const prev = profile.nodes[s - 1];
+  const next = profile.nodes[s + 1];
+  const gx = node.mapX;
+  const gz = hf.height - node.mapY;
+  const gY = node.groundY;
+  const tY = node.topY;
+
+  const spanDx = next.mapX - prev.mapX;
+  const spanDy = next.mapY - prev.mapY;
+  const hDist = Math.hypot(spanDx, spanDy) || 1;
+  const tx = spanDx / hDist;
+  const ty = spanDy / hDist;
+  const slopePerUnit = (next.topY - prev.topY) / hDist;
+  const rx = -ty;
+  const rz = -tx;
+  const offX = rx * profile.cableOff;
+  const offZ = rz * profile.cableOff;
+
+  if (sub === 'cable_car') {
+    const legX = Math.max(0.55, profile.cableOff * 1.45);
+    const legZ = 0.42;
+    const topX = profile.cableOff * 0.72;
+    const topZ = 0.10;
+    const legTopY = tY - 0.10;
+    const midY = lerp(gY, legTopY, 0.52);
+
+    const corners: [number, number][] = [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ];
+    for (const [sx, sz] of corners) {
+      const bx = gx + rx * legX * sx + tx * legZ * sz;
+      const bz = gz + rz * legX * sx - ty * legZ * sz;
+      const ux = gx + rx * topX * sx + tx * topZ * sz;
+      const uz = gz + rz * topX * sx - ty * topZ * sz;
+      mb.cylinder(bx, gY - 0.26, bz, 0.14, 0.11, 0.28, 6, concreteCol);
+      mb.beam(bx, gY, bz, ux, legTopY, uz, 0.048, steelCol);
+    }
+    const midXSpan = lerp(legX, topX, 0.52);
+    mb.beam(gx - rx * midXSpan, midY, gz - rz * midXSpan, gx + rx * midXSpan, midY, gz + rz * midXSpan, 0.036, steelCol);
+    mb.beam(gx - offX * 1.18, tY, gz - offZ * 1.18, gx + offX * 1.18, tY, gz + offZ * 1.18, 0.065, darkSteel);
+    for (const side of [-1, 1]) {
+      const sx = gx + offX * side;
+      const sz = gz + offZ * side;
+      mb.beam(
+        sx - tx * 0.26, tY - slopePerUnit * 0.26, sz + ty * 0.26,
+        sx + tx * 0.26, tY + slopePerUnit * 0.26, sz - ty * 0.26,
+        0.056,
+        darkSteel
+      );
+    }
+    return;
+  }
+
+  mb.cylinder(gx, gY - 0.28, gz, 0.19, 0.14, 0.36, 8, concreteCol);
+  const rBot = sub === 'button' ? 0.095 : 0.135;
+  mb.cylinder(gx, gY + 0.06, gz, rBot, rBot * 0.68, Math.max(0.25, tY - gY - 0.10), 8, steelCol);
+  mb.beam(gx - offX * 1.18, tY - 0.04, gz - offZ * 1.18, gx + offX * 1.18, tY - 0.04, gz + offZ * 1.18, 0.042, steelCol);
+  mb.beam(gx, tY - 0.40, gz, gx + offX * 0.88, tY - 0.05, gz + offZ * 0.88, 0.030, steelCol);
+  mb.beam(gx, tY - 0.40, gz, gx - offX * 0.88, tY - 0.05, gz - offZ * 0.88, 0.030, steelCol);
+
+  const halfBat = sub === 'button' ? 0.11 : sub === 'chair_fixed' ? 0.17 : 0.22;
+  for (const side of [-1, 1]) {
+    const sx = gx + offX * side;
+    const sz = gz + offZ * side;
+    mb.beam(
+      sx - tx * halfBat, tY - slopePerUnit * halfBat, sz + ty * halfBat,
+      sx + tx * halfBat, tY + slopePerUnit * halfBat, sz - ty * halfBat,
+      0.045,
+      darkSteel
+    );
+  }
+}
+
 export function buildOverlayStaticMesh(
   hf: Heightfield,
   segments: MapSegment[],
@@ -719,103 +1081,45 @@ export function buildOverlayStaticMesh(
     } else {
       // Lifts always oriented ascending low->high
       const pts = rawPts[0][0] <= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
-      if (!built && !selected) continue;
+      if (!built) continue;
 
       const sub = item?.subtype || 'chair_fixed';
-      const cableHeight =
-        sub === 'button' ? 0.85 : sub === 'chair_fixed' ? 1.45 : sub === 'chair_detach' ? 1.55 : sub === 'cable_car' ? 2.15 : 1.65;
-      const baseSample = samplePolylineAt(pts, 0);
-      const topSample = samplePolylineAt(pts, 1);
-      const baseYaw = Math.atan2(baseSample.tx, -baseSample.ty);
-      const topYaw = Math.atan2(topSample.tx, -topSample.ty);
+      const profile = buildLiftProfile(hf, pts, sub);
 
-      const [bx, by, bz] = hf.toWorld(baseSample.mapX, baseSample.mapY, 0);
-      const [tx, ty, tz] = hf.toWorld(topSample.mapX, topSample.mapY, 0);
-      const steelCol: RGBA = [0.68, 0.74, 0.82, 0.08];
-      const darkSteel: RGBA = [0.34, 0.40, 0.48, 0.06];
-      const shellCol: RGBA = closed ? [0.22, 0.26, 0.32, 0.04] : [0.24, 0.29, 0.38, 0.10];
-      const trimCol: RGBA = selected ? [0.22, 0.78, 0.98, 0.55] : [rgb[0], rgb[1], rgb[2], 0.22];
-      const glassCol: RGBA = closed ? [0.22, 0.28, 0.36, 0.04] : [0.58, 0.80, 0.95, isNight ? 0.45 : 0.15];
+      const concreteCol: RGBA = [0.64, 0.68, 0.74, 0.04];
+      const steelCol: RGBA = [0.66, 0.72, 0.80, 0.08];
+      const darkSteel: RGBA = [0.26, 0.32, 0.40, 0.06];
+      const shellCol: RGBA = closed ? [0.22, 0.25, 0.30, 0.04] : [0.24, 0.29, 0.38, 0.10];
+      const roofCol: RGBA = closed ? [0.18, 0.21, 0.26, 0.04] : [0.20, 0.25, 0.34, 0.08];
+      const trimCol: RGBA = selected
+        ? [0.22, 0.78, 0.98, 0.55]
+        : closed
+          ? [0.52, 0.24, 0.24, 0.08]
+          : [rgb[0], rgb[1], rgb[2], 0.24];
+      const glassCol: RGBA = closed ? [0.18, 0.22, 0.28, 0.0] : [0.56, 0.80, 0.96, isNight ? 0.48 : 0.16];
+      const kioskCol: RGBA = [0.42, 0.34, 0.26, 0.06];
+      const stationCols = { concreteCol, steelCol, darkSteel, shellCol, roofCol, trimCol, glassCol, kioskCol };
 
-      const hutX = -baseSample.ty * 0.92;
-      const hutZ = -baseSample.tx * 0.92;
+      addLiftStation(mb, profile.nodes[0], 1, true, sub, profile, stationCols);
+      addLiftStation(mb, profile.nodes[profile.spans], -1, false, sub, profile, stationCols);
 
-      if (sub === 'button') {
-        mb.orientedBox(bx, by - 0.25, bz, 0.16, 0.88, 0.16, baseYaw, steelCol);
-        mb.orientedBox(bx, by + 0.63, bz, 0.56, 0.14, 0.56, baseYaw, trimCol);
-        mb.orientedBox(bx + hutX, by - 0.25, bz + hutZ, 0.42, 0.62, 0.42, baseYaw, shellCol);
-        mb.orientedBox(tx, ty - 0.25, tz, 0.16, 0.88, 0.16, topYaw, steelCol);
-        mb.orientedBox(tx, ty + 0.63, tz, 0.52, 0.14, 0.52, topYaw, trimCol);
-      } else if (sub === 'chair_fixed') {
-        // Open steel bullwheel portal frame (air open beneath) + tiny offset liftie hut
-        mb.orientedBox(bx, by - 0.28, bz, 0.22, cableHeight + 0.20, 0.22, baseYaw, darkSteel);
-        mb.orientedBox(bx, by + cableHeight - 0.08, bz, 0.88, 0.14, 0.88, baseYaw, steelCol);
-        mb.orientedBox(bx, by + cableHeight + 0.06, bz, 0.78, 0.09, 0.78, baseYaw, trimCol);
-        mb.orientedBox(bx + hutX, by - 0.25, bz + hutZ, 0.50, 0.68, 0.50, baseYaw, shellCol);
-        mb.orientedBox(bx + hutX, by + 0.43, bz + hutZ, 0.56, 0.10, 0.56, baseYaw, trimCol);
-
-        mb.orientedBox(tx, ty - 0.28, tz, 0.20, cableHeight + 0.20, 0.20, topYaw, darkSteel);
-        mb.orientedBox(tx, ty + cableHeight - 0.08, tz, 0.82, 0.14, 0.82, topYaw, steelCol);
-        mb.orientedBox(tx, ty + cableHeight + 0.06, tz, 0.72, 0.09, 0.72, topYaw, trimCol);
-      } else if (sub === 'chair_detach') {
-        // Detachable chairlift: open cantilevered bullwheel canopy hood on central steel piers + side booth
-        mb.orientedBox(bx, by - 0.28, bz, 0.24, cableHeight + 0.16, 0.42, baseYaw, darkSteel);
-        mb.orientedBox(bx, by + cableHeight - 0.12, bz, 1.12, 0.18, 1.40, baseYaw, shellCol);
-        mb.orientedBox(bx, by + cableHeight + 0.06, bz, 1.18, 0.10, 1.46, baseYaw, trimCol);
-        mb.orientedBox(bx + hutX * 1.1, by - 0.25, bz + hutZ * 1.1, 0.52, 0.72, 0.52, baseYaw, shellCol);
-
-        mb.orientedBox(tx, ty - 0.28, tz, 0.22, cableHeight + 0.16, 0.38, topYaw, darkSteel);
-        mb.orientedBox(tx, ty + cableHeight - 0.12, tz, 1.04, 0.18, 1.28, topYaw, shellCol);
-        mb.orientedBox(tx, ty + cableHeight + 0.06, tz, 1.10, 0.10, 1.34, topYaw, trimCol);
-      } else {
-        // Gondola or Cable Car: enclosed architectural terminal with glass window band
-        const stScale = sub === 'cable_car' ? 1.25 : 1.0;
-        const stH = cableHeight - 0.18;
-        mb.orientedBox(bx, by - 0.32, bz, 1.25 * stScale, stH + 0.32, 1.50 * stScale, baseYaw, shellCol);
-        mb.orientedBox(bx, by + 0.28, bz, 1.29 * stScale, 0.34, 0.96 * stScale, baseYaw, glassCol);
-        mb.orientedBox(bx, by + stH, bz, 1.34 * stScale, 0.14, 1.58 * stScale, baseYaw, trimCol);
-
-        mb.orientedBox(tx, ty - 0.32, tz, 1.14 * stScale, stH + 0.28, 1.36 * stScale, topYaw, shellCol);
-        mb.orientedBox(tx, ty + 0.26, tz, 1.18 * stScale, 0.32, 0.86 * stScale, topYaw, glassCol);
-        mb.orientedBox(tx, ty + stH - 0.04, tz, 1.22 * stScale, 0.14, 1.44 * stScale, topYaw, trimCol);
+      for (let s = 1; s < profile.spans; s++) {
+        addLiftTower(mb, hf, profile, s, sub, concreteCol, steelCol, darkSteel);
       }
 
-      // Slender metallic haul cables & minimalist T-pylons
-      const totalMapLen = pts.reduce((acc, p, idx) => (idx === 0 ? 0 : acc + Math.hypot(p[0] - pts[idx - 1][0], p[1] - pts[idx - 1][1])), 0);
-      const spans = Math.max(2, Math.min(6, Math.round(totalMapLen / 18)));
-      const cableCol: RGBA = selected ? [0.24, 0.78, 0.98, 0.5] : [0.46, 0.52, 0.60, 0.10];
-      const cableOff = 0.24;
-      const mastW = sub === 'button' ? 0.10 : 0.14;
-
-      let prevSample = samplePolylineAt(pts, 0);
-      let prevW = hf.toWorld(prevSample.mapX, prevSample.mapY, cableHeight);
-
-      for (let s = 1; s <= spans; s++) {
-        const curSample = samplePolylineAt(pts, s / spans);
-        const curW = hf.toWorld(curSample.mapX, curSample.mapY, cableHeight);
-        const offX = -curSample.ty * cableOff;
-        const offZ = -curSample.tx * cableOff;
-        const pOffX = -prevSample.ty * cableOff;
-        const pOffZ = -prevSample.tx * cableOff;
-
-        mb.beam(prevW[0] + pOffX, prevW[1], prevW[2] + pOffZ, curW[0] + offX, curW[1], curW[2] + offZ, 0.042, cableCol);
-        mb.beam(prevW[0] - pOffX, prevW[1], prevW[2] - pOffZ, curW[0] - offX, curW[1], curW[2] - offZ, 0.042, cableCol);
-
-        if (s < spans) {
-          const groundY = hf.sampleHeight(curSample.mapX, curSample.mapY);
-          const pYaw = Math.atan2(curSample.tx, -curSample.ty);
-          mb.box(curW[0], groundY - 0.30, curW[2], mastW, cableHeight + 0.30, mastW, steelCol);
-          mb.beam(
-            curW[0] - offX * 1.35, curW[1], curW[2] - offZ * 1.35,
-            curW[0] + offX * 1.35, curW[1], curW[2] + offZ * 1.35,
-            0.038,
-            steelCol
-          );
-          mb.orientedBox(curW[0] + offX, curW[1] - 0.02, curW[2] + offZ, 0.10, 0.12, 0.24, pYaw, steelCol);
-          mb.orientedBox(curW[0] - offX, curW[1] - 0.02, curW[2] - offZ, 0.10, 0.12, 0.24, pYaw, steelCol);
+      const cableCol: RGBA = selected ? [0.24, 0.78, 0.98, 0.50] : [0.46, 0.52, 0.60, 0.10];
+      const cableR = sub === 'button' ? 0.030 : sub === 'cable_car' ? 0.048 : sub === 'gondola' ? 0.038 : 0.034;
+      const steps = profile.spans * 5;
+      for (const side of [-1, 1]) {
+        let pC = sampleLiftCable(profile, 0, side);
+        for (let step = 1; step <= steps; step++) {
+          const nC = sampleLiftCable(profile, step / steps, side);
+          mb.beam(pC.wx, pC.wy, pC.wz, nC.wx, nC.wy, nC.wz, cableR, cableCol);
+          if (sub === 'cable_car') {
+            mb.beam(pC.wx, pC.wy - 0.14, pC.wz, nC.wx, nC.wy - 0.14, nC.wz, 0.022, cableCol);
+          }
+          pC = nC;
         }
-        prevSample = curSample;
-        prevW = curW;
       }
     }
   }
@@ -938,63 +1242,95 @@ function buildUnitBox(
   quad(x1, y0, z1, x1, y0, z0, x1, y1, z0, x1, y1, z1);
   quad(x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0);
   quad(x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0);
+  quad(x0, y0, z0, x1, y0, z0, x1, y0, z1, x0, y0, z1);
 }
 
-/** Crisp miniature instanced actor templates scaled to fit 0.92-wide trails and distinct lift types */
+type UnitBoxSpec = [number, number, number, number, number, number, [number, number, number]];
+
+function makeUnit(specs: UnitBoxSpec[]): UnitMeshData {
+  const verts: number[] = [];
+  const idx: number[] = [];
+  for (const s of specs) buildUnitBox(verts, idx, s[0], s[1], s[2], s[3], s[4], s[5], s[6]);
+  return { vertices: new Float32Array(verts), indices: new Uint16Array(idx) };
+}
+
+/** Instanced actor & carrier templates with y = 0 at exact cable grip point for lift vehicles */
 export function buildUnitMeshes(): {
   skier: UnitMeshData;
   chair: UnitMeshData;
+  bubbleChair: UnitMeshData;
   cabin: UnitMeshData;
+  tram: UnitMeshData;
   surface: UnitMeshData;
+  rider: UnitMeshData;
   snowcat: UnitMeshData;
   flake: UnitMeshData;
 } {
-  // Skier (~0.62 world tall at scale 1.0): twin skis + jacket torso + helmet
-  const sv: number[] = [];
-  const si: number[] = [];
-  buildUnitBox(sv, si, -0.09, 0.0, 0, 0.06, 0.04, 0.52, [0.15, 0.2, 0.28]);
-  buildUnitBox(sv, si, 0.09, 0.0, 0, 0.06, 0.04, 0.52, [0.15, 0.2, 0.28]);
-  buildUnitBox(sv, si, 0, 0.04, 0, 0.24, 0.34, 0.18, [-1, -1, -1]);
-  buildUnitBox(sv, si, 0, 0.38, 0, 0.17, 0.17, 0.17, [0.96, 0.86, 0.76]);
-
-  // Open chairlift bench (slim steel hanger + horizontal seat + upright backrest, open air)
-  const chv: number[] = [];
-  const chi: number[] = [];
-  buildUnitBox(chv, chi, 0, 0.10, 0, 0.04, 0.34, 0.04, [0.68, 0.74, 0.82]);
-  buildUnitBox(chv, chi, 0, -0.02, 0.02, 0.52, 0.06, 0.20, [-1, -1, -1]);
-  buildUnitBox(chv, chi, 0, 0.04, -0.07, 0.52, 0.20, 0.05, [-1, -1, -1]);
-
-  // Surface lift platter / T-bar hanger
-  const sfv: number[] = [];
-  const sfi: number[] = [];
-  buildUnitBox(sfv, sfi, 0, 0.02, 0, 0.035, 0.52, 0.035, [0.70, 0.76, 0.84]);
-  buildUnitBox(sfv, sfi, 0, -0.02, 0, 0.26, 0.05, 0.07, [-1, -1, -1]);
-
-  // Enclosed Gondola / Cable Car cabin with panoramic glass band
-  const cbv: number[] = [];
-  const cbi: number[] = [];
-  buildUnitBox(cbv, cbi, 0, 0.16, 0, 0.05, 0.32, 0.05, [0.65, 0.72, 0.80]);
-  buildUnitBox(cbv, cbi, 0, -0.18, 0, 0.40, 0.36, 0.36, [-1, -1, -1]);
-  buildUnitBox(cbv, cbi, 0, -0.04, 0, 0.42, 0.14, 0.38, [0.66, 0.82, 0.94]);
-
-  // Snowcat groomer (compact piste cab + blade)
-  const gv: number[] = [];
-  const gi: number[] = [];
-  buildUnitBox(gv, gi, 0, 0, 0, 0.75, 0.26, 1.05, [0.14, 0.18, 0.24]);
-  buildUnitBox(gv, gi, 0, 0.26, -0.05, 0.64, 0.34, 0.68, [0.95, 0.58, 0.08]);
-  buildUnitBox(gv, gi, 0, 0.05, 0.62, 0.96, 0.22, 0.12, [0.78, 0.82, 0.88]);
-
-  // Crisp snowflake speck
-  const fv: number[] = [];
-  const fi: number[] = [];
-  buildUnitBox(fv, fi, 0, -0.10, 0, 0.20, 0.20, 0.20, [0.94, 0.98, 1.0]);
-
+  const TINT: [number, number, number] = [-1, -1, -1];
+  const DARK: [number, number, number] = [0.22, 0.26, 0.34];
+  const STEEL: [number, number, number] = [0.66, 0.72, 0.80];
+  const SKI: [number, number, number] = [0.15, 0.20, 0.28];
+  const BUBBLE: [number, number, number] = [0.46, 0.72, 0.92];
   return {
-    skier: { vertices: new Float32Array(sv), indices: new Uint16Array(si) },
-    chair: { vertices: new Float32Array(chv), indices: new Uint16Array(chi) },
-    cabin: { vertices: new Float32Array(cbv), indices: new Uint16Array(cbi) },
-    surface: { vertices: new Float32Array(sfv), indices: new Uint16Array(sfi) },
-    snowcat: { vertices: new Float32Array(gv), indices: new Uint16Array(gi) },
-    flake: { vertices: new Float32Array(fv), indices: new Uint16Array(fi) },
+    skier: makeUnit([
+      [-0.09, 0.0, 0, 0.06, 0.04, 0.52, SKI],
+      [0.09, 0.0, 0, 0.06, 0.04, 0.52, SKI],
+      [0, 0.04, 0, 0.24, 0.34, 0.18, TINT],
+      [0, 0.38, 0, 0.17, 0.17, 0.17, [0.96, 0.86, 0.76]],
+    ]),
+    chair: makeUnit([
+      [0, -0.03, 0, 0.09, 0.08, 0.12, STEEL],
+      [0, -0.44, -0.06, 0.045, 0.44, 0.05, STEEL],
+      [0, -0.46, 0.02, 0.56, 0.05, 0.22, TINT],
+      [0, -0.41, -0.08, 0.56, 0.22, 0.05, TINT],
+      [-0.23, -0.58, 0.09, 0.03, 0.16, 0.03, DARK],
+      [0.23, -0.58, 0.09, 0.03, 0.16, 0.03, DARK],
+      [0, -0.59, 0.11, 0.48, 0.03, 0.04, DARK],
+    ]),
+    bubbleChair: makeUnit([
+      [0, -0.03, 0, 0.10, 0.09, 0.14, STEEL],
+      [0, -0.46, -0.07, 0.05, 0.46, 0.055, STEEL],
+      [0, -0.49, 0.02, 0.68, 0.055, 0.24, TINT],
+      [0, -0.44, -0.09, 0.68, 0.24, 0.055, TINT],
+      [0, -0.61, 0.12, 0.58, 0.03, 0.04, DARK],
+      [0, -0.22, -0.06, 0.70, 0.16, 0.12, BUBBLE],
+      [0, -0.09, 0.01, 0.68, 0.09, 0.22, BUBBLE],
+    ]),
+    cabin: makeUnit([
+      [0, -0.03, 0, 0.10, 0.08, 0.14, STEEL],
+      [0, -0.22, 0, 0.05, 0.22, 0.05, STEEL],
+      [0, -0.28, 0, 0.34, 0.06, 0.36, [0.88, 0.92, 0.96]],
+      [0, -0.48, 0, 0.42, 0.20, 0.44, BUBBLE],
+      [0, -0.66, 0, 0.36, 0.18, 0.38, TINT],
+      [-0.20, -0.63, 0, 0.04, 0.16, 0.18, DARK],
+      [0.20, -0.63, 0, 0.04, 0.16, 0.18, DARK],
+    ]),
+    tram: makeUnit([
+      [0, -0.03, 0, 0.14, 0.10, 0.48, DARK],
+      [0, -0.40, -0.20, 0.07, 0.38, 0.07, STEEL],
+      [0, -0.40, 0.20, 0.07, 0.38, 0.07, STEEL],
+      [0, -0.44, 0, 0.50, 0.08, 0.88, [0.92, 0.95, 0.98]],
+      [0, -0.72, 0, 0.54, 0.28, 0.92, [0.54, 0.78, 0.94]],
+      [0, -0.72, 0, 0.55, 0.28, 0.06, STEEL],
+      [0, -0.92, 0, 0.50, 0.20, 0.88, TINT],
+    ]),
+    surface: makeUnit([
+      [0, -0.04, 0, 0.10, 0.08, 0.12, DARK],
+      [0, -0.60, 0, 0.032, 0.60, 0.032, STEEL],
+      [0, -0.63, 0, 0.28, 0.045, 0.09, TINT],
+    ]),
+    rider: makeUnit([
+      [-0.08, -0.10, 0.06, 0.045, 0.025, 0.44, SKI],
+      [0.08, -0.10, 0.06, 0.045, 0.025, 0.44, SKI],
+      [0, -0.06, 0.05, 0.18, 0.09, 0.14, SKI],
+      [0, 0.0, -0.01, 0.20, 0.24, 0.15, TINT],
+      [0, 0.24, 0.0, 0.13, 0.12, 0.13, [0.96, 0.86, 0.76]],
+    ]),
+    snowcat: makeUnit([
+      [0, 0, 0, 0.75, 0.26, 1.05, [0.14, 0.18, 0.24]],
+      [0, 0.26, -0.05, 0.64, 0.34, 0.68, [0.95, 0.58, 0.08]],
+      [0, 0.05, 0.62, 0.96, 0.22, 0.12, [0.78, 0.82, 0.88]],
+    ]),
+    flake: makeUnit([[0, -0.10, 0, 0.20, 0.20, 0.20, [0.94, 0.98, 1.0]]]),
   };
 }
