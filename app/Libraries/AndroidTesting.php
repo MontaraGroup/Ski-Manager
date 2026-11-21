@@ -84,7 +84,7 @@ class AndroidTesting
     /** The tester reward: the first REWARD_CAP players to use the Android app on REWARD_DAYS different days */
     public const REWARD_DAYS = 14;
     public const REWARD_CAP = 14;
-    public const REWARD_GENEPIS = 50;
+    public const REWARD_GENEPIS = 200;
 
     /**
      * Notes that this player used the Android app today (called by the AppToken filter on each app
