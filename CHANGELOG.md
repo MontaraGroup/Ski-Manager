@@ -1,3 +1,11 @@
+## Release 2026-11-21 01:40
+
+* Merge branch 'MontaraGroup:main' into main (1eba3c5f)
+* Merge pull request #150 from Montara-Group/fix/android-tester-reward-200 (0e3fd2ac)
+* feat(beta): Android tester reward is 200 Génépis (96fee984)
+* Merge pull request #149 from Montara-Group/fix/lift-demolish-refund (feada266)
+* feat(map): demolishing a lift pays back 50% of its build cost (2dd8322d)
+
 ## Release 2026-11-19 23:51
 
 * Merge branch 'MontaraGroup:main' into main (1f0efed8)
