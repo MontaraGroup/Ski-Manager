@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { ConditionPct, DifficultyBadge, ItemStatus } from '@/components/ItemBadges';
 import { CsrfInput, Page, Panel } from '@/components/Page';
 import { LiftSwapDialog, liftLabel, type LiftSwapOption } from './resort-map/LiftSwapDialog';
 import { formatCurrency } from './resort-map/shared';
@@ -153,20 +154,6 @@ export default function ResortPage({
       done(false);
     }
   }
-  const getDifficultyBadge = (diff: string) => {
-    switch (diff) {
-      case 'green':
-        return 'bg-success/15 text-success border-success/30';
-      case 'red':
-        return 'bg-danger/15 text-danger border-danger/30';
-      case 'black':
-      case 'double_black':
-        return 'bg-neutral/20 text-foreground border-neutral/40';
-      default:
-        return 'bg-primary/15 text-primary border-primary/30';
-    }
-  };
-
   return (
     <Page
       title={resort.name}
@@ -354,40 +341,16 @@ export default function ResortPage({
                               {slope.name}
                             </td>
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${getDifficultyBadge(
-                                  slope.difficulty
-                                )}`}
-                              >
-                                {slope.difficultyLabel}
-                              </span>
+                              <DifficultyBadge difficulty={slope.difficulty} label={slope.difficultyLabel} />
                             </td>
                             <td className="py-2.5 px-3 text-muted tabular-nums">
                               {slope.snow_depth_formatted} · {slope.snow_quality}
                             </td>
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`font-semibold tabular-nums ${
-                                  slope.condition_pct >= 70
-                                    ? 'text-success'
-                                    : slope.condition_pct >= 40
-                                    ? 'text-warning'
-                                    : 'text-danger'
-                                }`}
-                              >
-                                {slope.condition_pct}%
-                              </span>
+                              <ConditionPct pct={slope.condition_pct} />
                             </td>
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                  slope.status === 'open'
-                                    ? 'bg-success/20 text-success'
-                                    : 'bg-muted/20 text-muted'
-                                }`}
-                              >
-                                {slope.status}
-                              </span>
+                              <ItemStatus status={slope.status} />
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <form action={`/resort/toggle/${slope.id}`} method="post" className="inline">
@@ -440,30 +403,10 @@ export default function ResortPage({
                               {lift.length_meters}m
                             </td>
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`font-semibold tabular-nums ${
-                                  lift.condition_pct >= 70
-                                    ? 'text-success'
-                                    : lift.condition_pct >= 40
-                                    ? 'text-warning'
-                                    : 'text-danger'
-                                }`}
-                              >
-                                {lift.condition_pct}%
-                              </span>
+                              <ConditionPct pct={lift.condition_pct} />
                             </td>
                             <td className="py-2.5 px-3">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                  lift.status === 'open'
-                                    ? 'bg-success/20 text-success'
-                                    : lift.status === 'broken'
-                                    ? 'bg-danger/20 text-danger'
-                                    : 'bg-muted/20 text-muted'
-                                }`}
-                              >
-                                {lift.status}
-                              </span>
+                              <ItemStatus status={lift.status} showBroken />
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <div className="flex items-center justify-end gap-1.5">
