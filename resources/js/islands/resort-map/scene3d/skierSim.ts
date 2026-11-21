@@ -26,6 +26,8 @@ interface CarrierAgent {
   pts: [number, number][];
   progress: number;
   speed: number;
+  yOffset: number;
+  scale: number;
   color: [number, number, number];
 }
 
@@ -64,7 +66,9 @@ function deterministicRand(seed: number): () => number {
 
 export class SkierSimulation {
   private skiers: SkierAgent[] = [];
-  private carriers: CarrierAgent[] = [];
+  private chairs: CarrierAgent[] = [];
+  private cabins: CarrierAgent[] = [];
+  private surfaces: CarrierAgent[] = [];
   private snowcats: SnowcatAgent[] = [];
   private flakes: Particle[] = [];
 
@@ -73,10 +77,20 @@ export class SkierSimulation {
   skierColor = new Float32Array(0);
   skierCount = 0;
 
-  carrierPos = new Float32Array(0);
-  carrierYawScale = new Float32Array(0);
-  carrierColor = new Float32Array(0);
-  carrierCount = 0;
+  chairPos = new Float32Array(0);
+  chairYawScale = new Float32Array(0);
+  chairColor = new Float32Array(0);
+  chairCount = 0;
+
+  cabinPos = new Float32Array(0);
+  cabinYawScale = new Float32Array(0);
+  cabinColor = new Float32Array(0);
+  cabinCount = 0;
+
+  surfacePos = new Float32Array(0);
+  surfaceYawScale = new Float32Array(0);
+  surfaceColor = new Float32Array(0);
+  surfaceCount = 0;
 
   snowcatPos = new Float32Array(0);
   snowcatYawScale = new Float32Array(0);
@@ -119,7 +133,9 @@ export class SkierSimulation {
     showSkiers: boolean
   ) {
     this.skiers = [];
-    this.carriers = [];
+    this.chairs = [];
+    this.cabins = [];
+    this.surfaces = [];
     this.snowcats = [];
     this.flakes = [];
 
@@ -146,16 +162,54 @@ export class SkierSimulation {
       }
     }
 
-    // Lift carriers animate smoothly on open built lifts
+    // Lift carriers split accurately by lift subtype
     for (const { seg, item, pts } of openLifts) {
       const sub = item.subtype || 'chair_fixed';
-      const numCarriers = sub === 'cable_car' ? 2 : sub === 'gondola' ? 5 : 6;
-      const spd = sub === 'chair_detach' || sub === 'gondola' || sub === 'cable_car' ? 0.08 : 0.052;
-      const col: [number, number, number] =
-        sub === 'gondola' || sub === 'cable_car' ? [0.85, 0.25, 0.22] : [0.22, 0.27, 0.36];
-
-      for (let k = 0; k < numCarriers; k++) {
-        this.carriers.push({ pts, progress: k / numCarriers, speed: spd, color: col });
+      const seats = Number(item.seats || 2);
+      if (sub === 'button') {
+        const n = 6;
+        for (let k = 0; k < n; k++) {
+          this.surfaces.push({
+            pts,
+            progress: k / n,
+            speed: 0.048,
+            yOffset: 0.34,
+            scale: 0.95,
+            color: [0.95, 0.64, 0.14],
+          });
+        }
+      } else if (sub === 'gondola' || sub === 'cable_car') {
+        const isTram = sub === 'cable_car';
+        const n = isTram ? 2 : 5;
+        const scale = isTram ? 1.38 : 0.98;
+        const cableH = isTram ? 2.15 : 1.65;
+        for (let k = 0; k < n; k++) {
+          this.cabins.push({
+            pts,
+            progress: k / n,
+            speed: 0.08,
+            yOffset: cableH - 0.45 * scale,
+            scale,
+            color: [0.84, 0.24, 0.22],
+          });
+        }
+      } else {
+        // chair_fixed or chair_detach: open bench chairs hung directly below the cable
+        const isDetach = sub === 'chair_detach';
+        const cableH = isDetach ? 1.55 : 1.45;
+        const scale = seats >= 6 ? 1.12 : seats >= 4 ? 1.0 : 0.88;
+        const col: [number, number, number] = isDetach ? [0.16, 0.34, 0.58] : [0.24, 0.30, 0.40];
+        const n = 6;
+        for (let k = 0; k < n; k++) {
+          this.chairs.push({
+            pts,
+            progress: k / n,
+            speed: isDetach ? 0.08 : 0.052,
+            yOffset: cableH - 0.42 * scale,
+            scale,
+            color: col,
+          });
+        }
       }
 
       // Queue skiers neatly lined near lift base
@@ -271,10 +325,20 @@ export class SkierSimulation {
     this.skierYawScale = new Float32Array(this.skierCount * 2);
     this.skierColor = new Float32Array(this.skierCount * 4);
 
-    this.carrierCount = this.carriers.length;
-    this.carrierPos = new Float32Array(this.carrierCount * 3);
-    this.carrierYawScale = new Float32Array(this.carrierCount * 2);
-    this.carrierColor = new Float32Array(this.carrierCount * 4);
+    this.chairCount = this.chairs.length;
+    this.chairPos = new Float32Array(this.chairCount * 3);
+    this.chairYawScale = new Float32Array(this.chairCount * 2);
+    this.chairColor = new Float32Array(this.chairCount * 4);
+
+    this.cabinCount = this.cabins.length;
+    this.cabinPos = new Float32Array(this.cabinCount * 3);
+    this.cabinYawScale = new Float32Array(this.cabinCount * 2);
+    this.cabinColor = new Float32Array(this.cabinCount * 4);
+
+    this.surfaceCount = this.surfaces.length;
+    this.surfacePos = new Float32Array(this.surfaceCount * 3);
+    this.surfaceYawScale = new Float32Array(this.surfaceCount * 2);
+    this.surfaceColor = new Float32Array(this.surfaceCount * 4);
 
     this.snowcatCount = this.snowcats.length;
     this.snowcatPos = new Float32Array(this.snowcatCount * 3);
@@ -287,6 +351,36 @@ export class SkierSimulation {
     this.flakeColor = new Float32Array(this.flakeCount * 4);
 
     this.step(0);
+  }
+
+  private stepCarrierPool(
+    pool: CarrierAgent[],
+    pos: Float32Array,
+    yawScale: Float32Array,
+    color: Float32Array,
+    stepDt: number
+  ) {
+    for (let i = 0; i < pool.length; i++) {
+      const c = pool[i];
+      c.progress = (c.progress + c.speed * stepDt) % 1;
+      const goingUp = c.progress < 0.5;
+      const t = goingUp ? c.progress * 2 : 1 - (c.progress - 0.5) * 2;
+      const sample = samplePolylineAt(c.pts, t);
+      const side = goingUp ? 0.24 : -0.24;
+      const mx = sample.mapX - sample.ty * side;
+      const my = sample.mapY + sample.tx * side;
+      const [wx, wy, wz] = this.hf.toWorld(mx, my, c.yOffset);
+      const yaw = goingUp ? Math.atan2(sample.tx, -sample.ty) : Math.atan2(-sample.tx, sample.ty);
+      pos[i * 3] = wx;
+      pos[i * 3 + 1] = wy;
+      pos[i * 3 + 2] = wz;
+      yawScale[i * 2] = yaw;
+      yawScale[i * 2 + 1] = c.scale;
+      color[i * 4] = c.color[0];
+      color[i * 4 + 1] = c.color[1];
+      color[i * 4 + 2] = c.color[2];
+      color[i * 4 + 3] = 1;
+    }
   }
 
   step(dt: number) {
@@ -334,27 +428,9 @@ export class SkierSimulation {
       this.skierColor[i * 4 + 3] = 1;
     }
 
-    for (let i = 0; i < this.carrierCount; i++) {
-      const c = this.carriers[i];
-      c.progress = (c.progress + c.speed * stepDt) % 1;
-      const goingUp = c.progress < 0.5;
-      const t = goingUp ? c.progress * 2 : 1 - (c.progress - 0.5) * 2;
-      const sample = samplePolylineAt(c.pts, t);
-      const side = goingUp ? 0.24 : -0.24;
-      const mx = sample.mapX - sample.ty * side;
-      const my = sample.mapY + sample.tx * side;
-      const [wx, wy, wz] = this.hf.toWorld(mx, my, 1.42);
-      const yaw = Math.atan2(sample.tx, -sample.ty);
-      this.carrierPos[i * 3] = wx;
-      this.carrierPos[i * 3 + 1] = wy;
-      this.carrierPos[i * 3 + 2] = wz;
-      this.carrierYawScale[i * 2] = yaw;
-      this.carrierYawScale[i * 2 + 1] = 0.95;
-      this.carrierColor[i * 4] = c.color[0];
-      this.carrierColor[i * 4 + 1] = c.color[1];
-      this.carrierColor[i * 4 + 2] = c.color[2];
-      this.carrierColor[i * 4 + 3] = 1;
-    }
+    this.stepCarrierPool(this.chairs, this.chairPos, this.chairYawScale, this.chairColor, stepDt);
+    this.stepCarrierPool(this.cabins, this.cabinPos, this.cabinYawScale, this.cabinColor, stepDt);
+    this.stepCarrierPool(this.surfaces, this.surfacePos, this.surfaceYawScale, this.surfaceColor, stepDt);
 
     for (let i = 0; i < this.snowcatCount; i++) {
       const g = this.snowcats[i];

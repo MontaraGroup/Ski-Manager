@@ -335,7 +335,9 @@ export function createMap3DRenderer(
 
   const unitMeshes = buildUnitMeshes();
   const skierGpu = makeInstancedGPU(unitMeshes.skier);
-  const carrierGpu = makeInstancedGPU(unitMeshes.carrier);
+  const chairGpu = makeInstancedGPU(unitMeshes.chair);
+  const cabinGpu = makeInstancedGPU(unitMeshes.cabin);
+  const surfaceGpu = makeInstancedGPU(unitMeshes.surface);
   const snowcatGpu = makeInstancedGPU(unitMeshes.snowcat);
   const flakeGpu = makeInstancedGPU(unitMeshes.flake);
 
@@ -364,7 +366,9 @@ export function createMap3DRenderer(
       gl!.bufferData(gl!.ARRAY_BUFFER, col, gl!.DYNAMIC_DRAW);
     };
     syncOne(skierGpu, sim.skierPos, sim.skierYawScale, sim.skierColor, sim.skierCount);
-    syncOne(carrierGpu, sim.carrierPos, sim.carrierYawScale, sim.carrierColor, sim.carrierCount);
+    syncOne(chairGpu, sim.chairPos, sim.chairYawScale, sim.chairColor, sim.chairCount);
+    syncOne(cabinGpu, sim.cabinPos, sim.cabinYawScale, sim.cabinColor, sim.cabinCount);
+    syncOne(surfaceGpu, sim.surfacePos, sim.surfaceYawScale, sim.surfaceColor, sim.surfaceCount);
     syncOne(snowcatGpu, sim.snowcatPos, sim.snowcatYawScale, sim.snowcatColor, sim.snowcatCount);
     syncOne(flakeGpu, sim.flakePos, sim.flakeYawScale, sim.flakeColor, sim.flakeCount);
   }
@@ -746,7 +750,9 @@ export function createMap3DRenderer(
       gl!.bindVertexArray(g.vao);
       gl!.drawElementsInstanced(gl!.TRIANGLES, g.indexCount, gl!.UNSIGNED_SHORT, 0, g.count);
     };
-    drawInst(carrierGpu);
+    drawInst(chairGpu);
+    drawInst(cabinGpu);
+    drawInst(surfaceGpu);
     drawInst(skierGpu);
     drawInst(snowcatGpu);
     drawInst(flakeGpu);
@@ -761,6 +767,7 @@ export function createMap3DRenderer(
     updateState(next: Scene3DState) {
       const rebuildSim =
         next.builtIds !== state.builtIds ||
+        next.builtItems !== state.builtItems ||
         next.liveSkiers !== state.liveSkiers ||
         next.showSkiers !== state.showSkiers ||
         next.facilities !== state.facilities ||

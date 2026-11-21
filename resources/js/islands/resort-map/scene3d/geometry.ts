@@ -411,7 +411,9 @@ export function buildOverlayStaticMesh(
       // Ground track guide under the lift cable
       drawGroundRibbon(mb, hf, pts, selected ? 0.36 : 0.20, 0.08, selected ? 0.42 : 0.16, rgb, options.lens, false, selected);
 
-      const cableHeight = 1.55;
+      const sub = item?.subtype || 'chair_fixed';
+      const cableHeight =
+        sub === 'button' ? 0.85 : sub === 'chair_fixed' ? 1.45 : sub === 'chair_detach' ? 1.55 : sub === 'cable_car' ? 2.15 : 1.65;
       const baseSample = samplePolylineAt(pts, 0);
       const topSample = samplePolylineAt(pts, 1);
       const baseYaw = Math.atan2(baseSample.tx, -baseSample.ty);
@@ -419,21 +421,61 @@ export function buildOverlayStaticMesh(
 
       const [bx, by, bz] = hf.toWorld(baseSample.mapX, baseSample.mapY, 0);
       const [tx, ty, tz] = hf.toWorld(topSample.mapX, topSample.mapY, 0);
+      const steelCol: RGBA = [0.68, 0.74, 0.82, 0.08];
+      const darkSteel: RGBA = [0.34, 0.40, 0.48, 0.06];
       const shellCol: RGBA = closed ? [0.22, 0.26, 0.32, 0.04] : [0.24, 0.29, 0.38, 0.10];
-      const trimCol: RGBA = selected ? [0.22, 0.78, 0.98, 0.55] : [rgb[0], rgb[1], rgb[2], 0.20];
+      const trimCol: RGBA = selected ? [0.22, 0.78, 0.98, 0.55] : [rgb[0], rgb[1], rgb[2], 0.22];
+      const glassCol: RGBA = closed ? [0.22, 0.28, 0.36, 0.04] : [0.58, 0.80, 0.95, isNight ? 0.45 : 0.15];
 
-      // Sleek low-profile aligned drive & return terminals (sunk -0.35 into hillside)
-      mb.orientedBox(bx, by - 0.35, bz, 1.25, 1.12, 1.45, baseYaw, shellCol);
-      mb.orientedBox(bx, by + 0.77, bz, 1.34, 0.14, 1.54, baseYaw, trimCol);
-      mb.orientedBox(tx, ty - 0.35, tz, 1.12, 1.05, 1.30, topYaw, shellCol);
-      mb.orientedBox(tx, ty + 0.70, tz, 1.22, 0.14, 1.40, topYaw, trimCol);
+      const hutX = -baseSample.ty * 0.92;
+      const hutZ = -baseSample.tx * 0.92;
+
+      if (sub === 'button') {
+        mb.orientedBox(bx, by - 0.25, bz, 0.16, 0.88, 0.16, baseYaw, steelCol);
+        mb.orientedBox(bx, by + 0.63, bz, 0.56, 0.14, 0.56, baseYaw, trimCol);
+        mb.orientedBox(bx + hutX, by - 0.25, bz + hutZ, 0.42, 0.62, 0.42, baseYaw, shellCol);
+        mb.orientedBox(tx, ty - 0.25, tz, 0.16, 0.88, 0.16, topYaw, steelCol);
+        mb.orientedBox(tx, ty + 0.63, tz, 0.52, 0.14, 0.52, topYaw, trimCol);
+      } else if (sub === 'chair_fixed') {
+        // Open steel bullwheel portal frame (air open beneath) + tiny offset liftie hut
+        mb.orientedBox(bx, by - 0.28, bz, 0.22, cableHeight + 0.20, 0.22, baseYaw, darkSteel);
+        mb.orientedBox(bx, by + cableHeight - 0.08, bz, 0.88, 0.14, 0.88, baseYaw, steelCol);
+        mb.orientedBox(bx, by + cableHeight + 0.06, bz, 0.78, 0.09, 0.78, baseYaw, trimCol);
+        mb.orientedBox(bx + hutX, by - 0.25, bz + hutZ, 0.50, 0.68, 0.50, baseYaw, shellCol);
+        mb.orientedBox(bx + hutX, by + 0.43, bz + hutZ, 0.56, 0.10, 0.56, baseYaw, trimCol);
+
+        mb.orientedBox(tx, ty - 0.28, tz, 0.20, cableHeight + 0.20, 0.20, topYaw, darkSteel);
+        mb.orientedBox(tx, ty + cableHeight - 0.08, tz, 0.82, 0.14, 0.82, topYaw, steelCol);
+        mb.orientedBox(tx, ty + cableHeight + 0.06, tz, 0.72, 0.09, 0.72, topYaw, trimCol);
+      } else if (sub === 'chair_detach') {
+        // Detachable chairlift: open cantilevered bullwheel canopy hood on central steel piers + side booth
+        mb.orientedBox(bx, by - 0.28, bz, 0.24, cableHeight + 0.16, 0.42, baseYaw, darkSteel);
+        mb.orientedBox(bx, by + cableHeight - 0.12, bz, 1.12, 0.18, 1.40, baseYaw, shellCol);
+        mb.orientedBox(bx, by + cableHeight + 0.06, bz, 1.18, 0.10, 1.46, baseYaw, trimCol);
+        mb.orientedBox(bx + hutX * 1.1, by - 0.25, bz + hutZ * 1.1, 0.52, 0.72, 0.52, baseYaw, shellCol);
+
+        mb.orientedBox(tx, ty - 0.28, tz, 0.22, cableHeight + 0.16, 0.38, topYaw, darkSteel);
+        mb.orientedBox(tx, ty + cableHeight - 0.12, tz, 1.04, 0.18, 1.28, topYaw, shellCol);
+        mb.orientedBox(tx, ty + cableHeight + 0.06, tz, 1.10, 0.10, 1.34, topYaw, trimCol);
+      } else {
+        // Gondola or Cable Car: enclosed architectural terminal with glass window band
+        const stScale = sub === 'cable_car' ? 1.25 : 1.0;
+        const stH = cableHeight - 0.18;
+        mb.orientedBox(bx, by - 0.32, bz, 1.25 * stScale, stH + 0.32, 1.50 * stScale, baseYaw, shellCol);
+        mb.orientedBox(bx, by + 0.28, bz, 1.29 * stScale, 0.34, 0.96 * stScale, baseYaw, glassCol);
+        mb.orientedBox(bx, by + stH, bz, 1.34 * stScale, 0.14, 1.58 * stScale, baseYaw, trimCol);
+
+        mb.orientedBox(tx, ty - 0.32, tz, 1.14 * stScale, stH + 0.28, 1.36 * stScale, topYaw, shellCol);
+        mb.orientedBox(tx, ty + 0.26, tz, 1.18 * stScale, 0.32, 0.86 * stScale, topYaw, glassCol);
+        mb.orientedBox(tx, ty + stH - 0.04, tz, 1.22 * stScale, 0.14, 1.44 * stScale, topYaw, trimCol);
+      }
 
       // Slender metallic haul cables & minimalist T-pylons
       const totalMapLen = pts.reduce((acc, p, idx) => (idx === 0 ? 0 : acc + Math.hypot(p[0] - pts[idx - 1][0], p[1] - pts[idx - 1][1])), 0);
       const spans = Math.max(2, Math.min(6, Math.round(totalMapLen / 18)));
       const cableCol: RGBA = selected ? [0.24, 0.78, 0.98, 0.5] : [0.46, 0.52, 0.60, 0.10];
-      const steelCol: RGBA = [0.68, 0.74, 0.82, 0.08];
       const cableOff = 0.24;
+      const mastW = sub === 'button' ? 0.10 : 0.14;
 
       let prevSample = samplePolylineAt(pts, 0);
       let prevW = hf.toWorld(prevSample.mapX, prevSample.mapY, cableHeight);
@@ -452,7 +494,7 @@ export function buildOverlayStaticMesh(
         if (s < spans) {
           const groundY = hf.sampleHeight(curSample.mapX, curSample.mapY);
           const pYaw = Math.atan2(curSample.tx, -curSample.ty);
-          mb.box(curW[0], groundY - 0.30, curW[2], 0.14, cableHeight + 0.30, 0.14, steelCol);
+          mb.box(curW[0], groundY - 0.30, curW[2], mastW, cableHeight + 0.30, mastW, steelCol);
           mb.beam(
             curW[0] - offX * 1.35, curW[1], curW[2] - offZ * 1.35,
             curW[0] + offX * 1.35, curW[1], curW[2] + offZ * 1.35,
@@ -588,10 +630,12 @@ function buildUnitBox(
   quad(x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0);
 }
 
-/** Crisp miniature instanced actor templates scaled to fit 0.92-wide trails and 1.55-high lifts */
+/** Crisp miniature instanced actor templates scaled to fit 0.92-wide trails and distinct lift types */
 export function buildUnitMeshes(): {
   skier: UnitMeshData;
-  carrier: UnitMeshData;
+  chair: UnitMeshData;
+  cabin: UnitMeshData;
+  surface: UnitMeshData;
   snowcat: UnitMeshData;
   flake: UnitMeshData;
 } {
@@ -603,11 +647,25 @@ export function buildUnitMeshes(): {
   buildUnitBox(sv, si, 0, 0.04, 0, 0.24, 0.34, 0.18, [-1, -1, -1]);
   buildUnitBox(sv, si, 0, 0.38, 0, 0.17, 0.17, 0.17, [0.96, 0.86, 0.76]);
 
-  // Lift carrier (compact chair / cabin suspended below 1.55 haul cable)
-  const cv: number[] = [];
-  const ci: number[] = [];
-  buildUnitBox(cv, ci, 0, 0.18, 0, 0.05, 0.36, 0.05, [0.65, 0.72, 0.80]);
-  buildUnitBox(cv, ci, 0, -0.18, 0, 0.42, 0.34, 0.36, [-1, -1, -1]);
+  // Open chairlift bench (slim steel hanger + horizontal seat + upright backrest, open air)
+  const chv: number[] = [];
+  const chi: number[] = [];
+  buildUnitBox(chv, chi, 0, 0.10, 0, 0.04, 0.34, 0.04, [0.68, 0.74, 0.82]);
+  buildUnitBox(chv, chi, 0, -0.02, 0.02, 0.52, 0.06, 0.20, [-1, -1, -1]);
+  buildUnitBox(chv, chi, 0, 0.04, -0.07, 0.52, 0.20, 0.05, [-1, -1, -1]);
+
+  // Surface lift platter / T-bar hanger
+  const sfv: number[] = [];
+  const sfi: number[] = [];
+  buildUnitBox(sfv, sfi, 0, 0.02, 0, 0.035, 0.52, 0.035, [0.70, 0.76, 0.84]);
+  buildUnitBox(sfv, sfi, 0, -0.02, 0, 0.26, 0.05, 0.07, [-1, -1, -1]);
+
+  // Enclosed Gondola / Cable Car cabin with panoramic glass band
+  const cbv: number[] = [];
+  const cbi: number[] = [];
+  buildUnitBox(cbv, cbi, 0, 0.16, 0, 0.05, 0.32, 0.05, [0.65, 0.72, 0.80]);
+  buildUnitBox(cbv, cbi, 0, -0.18, 0, 0.40, 0.36, 0.36, [-1, -1, -1]);
+  buildUnitBox(cbv, cbi, 0, -0.04, 0, 0.42, 0.14, 0.38, [0.66, 0.82, 0.94]);
 
   // Snowcat groomer (compact piste cab + blade)
   const gv: number[] = [];
@@ -623,7 +681,9 @@ export function buildUnitMeshes(): {
 
   return {
     skier: { vertices: new Float32Array(sv), indices: new Uint16Array(si) },
-    carrier: { vertices: new Float32Array(cv), indices: new Uint16Array(ci) },
+    chair: { vertices: new Float32Array(chv), indices: new Uint16Array(chi) },
+    cabin: { vertices: new Float32Array(cbv), indices: new Uint16Array(cbi) },
+    surface: { vertices: new Float32Array(sfv), indices: new Uint16Array(sfi) },
     snowcat: { vertices: new Float32Array(gv), indices: new Uint16Array(gi) },
     flake: { vertices: new Float32Array(fv), indices: new Uint16Array(fi) },
   };
