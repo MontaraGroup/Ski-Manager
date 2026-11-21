@@ -195,6 +195,201 @@ void main() {
   fragColor = vec4(col, 1.0);
 }`;
 
+export const RIBBON_VS = `#version 300 es
+precision highp float;
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aSide;
+layout(location=2) in vec4 aColorWidth; // rgb = core color, a = base half-width
+layout(location=3) in vec4 aUvStyle;    // x = capX (-1..1), y = capY (-1..0..1), z = alongDist, w = style
+layout(location=4) in vec2 aMeta;       // x = segIdx, y = nightLit (0 or 1)
+
+uniform mat4 uViewProj;
+uniform vec3 uCameraPos;
+uniform float uHoveredSegIdx;
+uniform float uSelectedSegIdx;
+
+out vec3 vWorldPos;
+out vec3 vColor;
+out vec2 vCap;
+out float vAlong;
+out float vStyle;
+out float vNightLit;
+out float vHovered;
+out float vSelected;
+out float vHalfW;
+
+void main() {
+  float isSel = step(abs(aMeta.x - uSelectedSegIdx), 0.25);
+  float isHov = step(abs(aMeta.x - uHoveredSegIdx), 0.25) * (1.0 - isSel);
+  float distScale = clamp(pow(max(1.0, length(uCameraPos - aPos)) / 165.0, 0.40), 0.74, 1.80);
+  float isPin = step(5.5, aUvStyle.w);
+  float stateBoost = mix(1.0 + isHov * 0.22 + isSel * 0.42, 1.0, isPin);
+  float halfW = aColorWidth.a * distScale * stateBoost;
+  float yExtra = max(0.0, distScale - 1.0) * 0.045 + isSel * 0.025 + isHov * 0.012;
+  vec3 worldPos = aPos + aSide * halfW + vec3(0.0, yExtra, 0.0);
+
+  vWorldPos = worldPos;
+  vColor = aColorWidth.rgb;
+  vCap = aUvStyle.xy;
+  vAlong = aUvStyle.z;
+  vStyle = aUvStyle.w;
+  vNightLit = aMeta.y;
+  vHovered = isHov;
+  vSelected = isSel;
+  vHalfW = halfW;
+  gl_Position = uViewProj * vec4(worldPos, 1.0);
+}`;
+
+export const RIBBON_FS = `#version 300 es
+precision highp float;
+in vec3 vWorldPos;
+in vec3 vColor;
+in vec2 vCap;
+in float vAlong;
+in float vStyle;
+in float vNightLit;
+in float vHovered;
+in float vSelected;
+in float vHalfW;
+
+uniform vec3 uFogColor;
+uniform vec3 uCameraPos;
+uniform float uLightMode;
+uniform float uTime;
+
+out vec4 fragColor;
+
+float computePillEdge(float along, float halfW, vec2 cap, float period, float flatHalf, float capXAa, float alongAa, out float pillAa) {
+  float dAlong = abs(fract(along / period) - 0.5) * period;
+  float capScale = max(0.22, halfW * 0.92);
+  float pillAlong = max(0.0, dAlong - flatHalf) / capScale;
+  float e = length(vec2(cap.x, max(abs(cap.y), pillAlong)));
+  pillAa = max(0.04, capXAa * 1.25 + (alongAa / capScale) * 0.55);
+  return e;
+}
+
+void main() {
+  int st = int(vStyle + 0.5);
+  float radialEdge = length(vCap);
+  float radialAa = max(0.035, fwidth(radialEdge) * 1.25);
+  float capXAa = fwidth(vCap.x);
+  float alongAa = fwidth(vAlong);
+
+  float diagPhase = (vAlong + vCap.x * 1.1) / 3.2;
+  float diagAa = max(0.04, fwidth(diagPhase) * 1.25);
+
+  float chevPhase = (vAlong - uTime * 3.8 + abs(vCap.x) * 1.55) / 4.2;
+  float chevAa = max(0.04, fwidth(chevPhase) * 1.3);
+
+  vec3 casingCol = uLightMode < 0.5
+    ? vec3(0.96, 0.98, 1.0)
+    : (uLightMode < 1.5 ? vec3(0.98, 0.94, 0.90) : vec3(0.80, 0.88, 0.96));
+
+  bool isNightGlow = (vNightLit > 0.5 && uLightMode > 0.5);
+  vec3 shadowCol = vec3(0.06, 0.10, 0.16);
+  vec3 outerBaseCol = isNightGlow ? vec3(1.0, 0.84, 0.42) : shadowCol;
+
+  float edge = radialEdge;
+  float aa = radialAa;
+  float coreR = 0.56;
+  float caseR = 0.78;
+  vec3 coreCol = vColor;
+  vec3 outerCol = outerBaseCol;
+  float outerMax = isNightGlow ? 0.52 : 0.34;
+  float opacity = 1.0;
+
+  if (st == 6) {
+    // Circular selection endpoint pin
+    coreR = 0.52;
+    caseR = 0.80;
+    outerCol = shadowCol;
+    outerMax = 0.45;
+  } else if (st == 1 && vSelected < 0.5) {
+    // Unbuilt available slope: uniform arc-length pill dashes
+    edge = computePillEdge(vAlong, vHalfW, vCap, 3.6, 0.32, capXAa, alongAa, aa);
+    coreR = 0.62;
+    caseR = 0.86;
+    outerCol = shadowCol;
+    outerMax = 0.35;
+    opacity = mix(0.74, 1.0, vHovered);
+  } else if ((st == 3 || st == 4) && vSelected < 0.5) {
+    // Lift ground line (built or available)
+    float period = st == 3 ? 4.6 : 4.0;
+    float flatHalf = st == 3 ? 1.25 : 0.95;
+    edge = computePillEdge(vAlong, vHalfW, vCap, period, flatHalf, capXAa, alongAa, aa);
+    coreR = 0.60;
+    caseR = 0.84;
+    outerCol = shadowCol;
+    outerMax = 0.32;
+    opacity = st == 3 ? mix(0.60, 0.95, vHovered) : mix(0.76, 1.0, vHovered);
+  } else {
+    // Built slopes (0 open, 2 closed, 5 crosscountry) or selected preview trail
+    float centerSheen = (1.0 - smoothstep(0.0, 0.52, abs(vCap.x))) * 0.13;
+    coreCol = clamp(vColor + vec3(centerSheen), 0.0, 1.0);
+
+    if (st == 5) {
+      float trackGroove = 1.0 - smoothstep(0.04, 0.11, abs(abs(vCap.x) - 0.18));
+      coreCol = mix(coreCol, vec3(0.90, 0.97, 0.96), trackGroove * 0.32);
+    } else if (st == 2) {
+      float luma = dot(vColor, vec3(0.30, 0.59, 0.11));
+      vec3 muted = mix(vColor, vec3(luma), 0.52);
+      float diagDist = abs(fract(diagPhase) - 0.5);
+      float barMask = 1.0 - smoothstep(0.18 - diagAa, 0.18 + diagAa, diagDist);
+      coreCol = mix(muted, vec3(0.18, 0.22, 0.28), barMask * 0.72);
+      opacity = mix(0.88, 1.0, max(vHovered, vSelected));
+    }
+
+    if (vHovered > 0.5 || vSelected > 0.5) {
+      float chevDist = abs(fract(chevPhase) - 0.5);
+      float chevMask = 1.0 - smoothstep(0.09 - chevAa, 0.09 + chevAa, chevDist);
+      coreCol = mix(coreCol, vec3(0.98, 0.99, 1.0), chevMask * (vSelected > 0.5 ? 0.26 : 0.16));
+    }
+
+    if (vSelected > 0.5) {
+      coreR = 0.44;
+      caseR = 0.66;
+      outerCol = vec3(0.86, 0.97, 1.0);
+      outerMax = 0.78;
+    }
+  }
+
+  if (edge > 1.0 + aa) {
+    discard;
+  }
+
+  float caseMix = smoothstep(coreR - aa, coreR + aa, edge);
+  vec3 innerCol = mix(coreCol, casingCol, caseMix);
+
+  float rimMix = smoothstep(caseR - aa, caseR + aa, edge);
+  vec3 rgb = mix(innerCol, outerCol, rimMix);
+
+  float outerSpan = max(0.02, 1.0 - caseR);
+  float outerFalloff = pow(clamp(1.0 - (edge - caseR) / outerSpan, 0.0, 1.0), 1.45);
+  float alpha = mix(1.0, outerMax * outerFalloff, rimMix) * opacity;
+
+  bool isUnbuilt = (st == 1 || st == 4) && vSelected < 0.5;
+  if (uLightMode > 0.5 && uLightMode < 1.5) {
+    rgb *= vec3(1.02, 0.96, 0.90);
+  } else if (uLightMode >= 1.5) {
+    if (isUnbuilt) {
+      rgb *= 0.68;
+      alpha *= 0.84;
+    } else {
+      float nightBoost = mix(0.82, 1.04, clamp(vNightLit + vSelected * 0.8 + vHovered * 0.5, 0.0, 1.0));
+      rgb *= nightBoost;
+    }
+  }
+
+  float dist = length(uCameraPos - vWorldPos);
+  float fog = clamp((dist - 580.0) / 900.0, 0.0, 0.25);
+  rgb = mix(rgb, uFogColor, fog);
+
+  if (alpha < 0.004) {
+    discard;
+  }
+  fragColor = vec4(rgb, alpha);
+}`;
+
 export function compileProgram(gl: WebGL2RenderingContext, vsSrc: string, fsSrc: string): WebGLProgram {
   const compile = (type: number, src: string) => {
     const sh = gl.createShader(type);

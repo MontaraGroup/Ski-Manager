@@ -273,7 +273,9 @@ export default function Map3DViewport({
         ref={canvasRef}
         role="application"
         aria-label={`Interactive 3D trail map of ${mapConfig.name}. Drag to pan, right-drag or two-finger twist to orbit, scroll or pinch to zoom.`}
-        className={`block h-full w-full touch-none ${placingFacility ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
+        className={`block h-full w-full touch-none ${
+          placingFacility ? 'cursor-crosshair' : hoverInfo ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
+        }`}
       />
 
       {hdLoading && (

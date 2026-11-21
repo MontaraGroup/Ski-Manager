@@ -8,7 +8,7 @@ import type {
   PlacedFacility,
 } from '../types';
 import type { Heightfield } from './heightfield';
-import { clamp, samplePolylineAt } from './math';
+import { clamp, samplePolylineAt, smoothTrailPolyline } from './math';
 
 interface SkierAgent {
   kind: 'slope' | 'village' | 'queue';
@@ -157,7 +157,8 @@ export class SkierSimulation {
         const pts = rawPts[0][0] <= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
         openLifts.push({ seg, item, pts });
       } else {
-        const pts = rawPts[0][0] >= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
+        const oriented = rawPts[0][0] >= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
+        const pts = smoothTrailPolyline(oriented, false, 2.2);
         openSlopes.push({ seg, item, pts });
       }
     }
@@ -416,7 +417,7 @@ export class SkierSimulation {
         scale = 0.58;
       }
 
-      const [wx, wy, wz] = this.hf.toWorld(mx, my, 0.16);
+      const [wx, wy, wz] = this.hf.toWorld(mx, my, 0.21);
       this.skierPos[i * 3] = wx;
       this.skierPos[i * 3 + 1] = wy;
       this.skierPos[i * 3 + 2] = wz;
@@ -443,7 +444,7 @@ export class SkierSimulation {
         g.dir = 1;
       }
       const sample = samplePolylineAt(g.pts, g.progress);
-      const [wx, wy, wz] = this.hf.toWorld(sample.mapX, sample.mapY, 0.16);
+      const [wx, wy, wz] = this.hf.toWorld(sample.mapX, sample.mapY, 0.20);
       const yaw = Math.atan2(sample.tx * g.dir, -sample.ty * g.dir);
       this.snowcatPos[i * 3] = wx;
       this.snowcatPos[i * 3 + 1] = wy;

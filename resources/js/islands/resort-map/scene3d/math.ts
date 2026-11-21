@@ -203,3 +203,102 @@ export function distToSegment2D(px: number, py: number, ax: number, ay: number, 
   const t = clamp(((px - ax) * vx + (py - ay) * vy) / len2, 0, 1);
   return Math.hypot(px - (ax + t * vx), py - (ay + t * vy));
 }
+
+export function smoothTrailPolyline(rawPts: [number, number][], isLift: boolean, stepUnits = 1.8): [number, number][] {
+  if (rawPts.length < 2) return rawPts;
+  const clean: [number, number][] = [rawPts[0]];
+  for (let i = 1; i < rawPts.length; i++) {
+    const prev = clean[clean.length - 1];
+    if (Math.hypot(rawPts[i][0] - prev[0], rawPts[i][1] - prev[1]) >= 0.05) {
+      clean.push(rawPts[i]);
+    }
+  }
+  if (clean.length < 2) return rawPts;
+
+  const out: [number, number][] = [];
+  const pushPoint = (y: number, x: number) => {
+    const last = out[out.length - 1];
+    if (!last || Math.hypot(y - last[0], x - last[1]) >= 0.05) {
+      out.push([y, x]);
+    }
+  };
+
+  if (isLift || clean.length === 2) {
+    const linearStep = Math.max(2.2, stepUnits);
+    for (let i = 0; i < clean.length - 1; i++) {
+      const a = clean[i];
+      const b = clean[i + 1];
+      const dist = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const sub = clamp(Math.ceil(dist / linearStep), 1, 24);
+      for (let s = 0; s < sub; s++) {
+        const t = s / sub;
+        pushPoint(lerp(a[0], b[0], t), lerp(a[1], b[1], t));
+      }
+    }
+    const end = clean[clean.length - 1];
+    out.push([end[0], end[1]]);
+    return out;
+  }
+
+  const n = clean.length;
+  const pPre: [number, number] = [2 * clean[0][0] - clean[1][0], 2 * clean[0][1] - clean[1][1]];
+  const pPost: [number, number] = [2 * clean[n - 1][0] - clean[n - 2][0], 2 * clean[n - 1][1] - clean[n - 2][1]];
+
+  const evalCatmull = (
+    p0: [number, number],
+    p1: [number, number],
+    p2: [number, number],
+    p3: [number, number],
+    t: number,
+    t0: number,
+    t1: number,
+    t2: number,
+    t3: number
+  ): [number, number] => {
+    const d10 = Math.max(1e-5, t1 - t0);
+    const d21 = Math.max(1e-5, t2 - t1);
+    const d32 = Math.max(1e-5, t3 - t2);
+    const d20 = Math.max(1e-5, t2 - t0);
+    const d31 = Math.max(1e-5, t3 - t1);
+    const interp = (k: 0 | 1) => {
+      const a1 = ((t1 - t) / d10) * p0[k] + ((t - t0) / d10) * p1[k];
+      const a2 = ((t2 - t) / d21) * p1[k] + ((t - t1) / d21) * p2[k];
+      const a3 = ((t3 - t) / d32) * p2[k] + ((t - t2) / d32) * p3[k];
+      const b1 = ((t2 - t) / d20) * a1 + ((t - t0) / d20) * a2;
+      const b2 = ((t3 - t) / d31) * a2 + ((t - t1) / d31) * a3;
+      return ((t2 - t) / d21) * b1 + ((t - t1) / d21) * b2;
+    };
+    return [interp(0), interp(1)];
+  };
+
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = i === 0 ? pPre : clean[i - 1];
+    const p1 = clean[i];
+    const p2 = clean[i + 1];
+    const p3 = i + 2 < n ? clean[i + 2] : pPost;
+
+    const dt0 = Math.pow(Math.max(1e-4, Math.hypot(p1[0] - p0[0], p1[1] - p0[1])), 0.5);
+    const dt1 = Math.pow(Math.max(1e-4, Math.hypot(p2[0] - p1[0], p2[1] - p1[1])), 0.5);
+    const dt2 = Math.pow(Math.max(1e-4, Math.hypot(p3[0] - p2[0], p3[1] - p2[1])), 0.5);
+    const t0 = 0;
+    const t1 = dt0;
+    const t2 = t1 + dt1;
+    const t3 = t2 + dt2;
+
+    const spanDist = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    const steps = clamp(Math.ceil(spanDist / stepUnits), 2, 16);
+    for (let s = 0; s < steps; s++) {
+      const t = lerp(t1, t2, s / steps);
+      const [py, px] = evalCatmull(p0, p1, p2, p3, t, t0, t1, t2, t3);
+      pushPoint(py, px);
+    }
+  }
+
+  const end = clean[n - 1];
+  if (out.length === 0 || Math.hypot(end[0] - out[out.length - 1][0], end[1] - out[out.length - 1][1]) >= 0.05) {
+    out.push([end[0], end[1]]);
+  } else {
+    out[out.length - 1] = [end[0], end[1]];
+  }
+  return out;
+}

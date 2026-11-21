@@ -11,8 +11,10 @@ import type {
 } from '../types';
 import {
   buildOverlayStaticMesh,
+  buildRibbonMesh,
   buildTerrainMesh,
   buildUnitMeshes,
+  type RibbonMeshData,
   type StaticMeshData,
   type UnitMeshData,
 } from './geometry';
@@ -25,9 +27,20 @@ import {
   mat4LookAt,
   mat4Multiply,
   mat4Perspective,
+  smoothTrailPolyline,
   unprojectPoint,
 } from './math';
-import { compileProgram, INSTANCED_FS, INSTANCED_VS, SOLID_FS, SOLID_VS, TERRAIN_FS, TERRAIN_VS } from './shaders';
+import {
+  compileProgram,
+  INSTANCED_FS,
+  INSTANCED_VS,
+  RIBBON_FS,
+  RIBBON_VS,
+  SOLID_FS,
+  SOLID_VS,
+  TERRAIN_FS,
+  TERRAIN_VS,
+} from './shaders';
 import { SkierSimulation } from './skierSim';
 
 export type PickResult =
@@ -132,10 +145,19 @@ export function createMap3DRenderer(
   let state = initialState;
   const hf: Heightfield = buildHeightfield(mapConfig, state.segments);
   const segPtsCache = new Map<string, [number, number][]>();
-  for (const s of state.segments) {
-    const pts = parsePoints(s.points);
-    if (pts.length >= 2) segPtsCache.set(String(s.id), pts);
+  const segIdxMap = new Map<string, number>();
+  function rebuildSegmentCaches() {
+    segPtsCache.clear();
+    segIdxMap.clear();
+    state.segments.forEach((s, idx) => {
+      const pts = parsePoints(s.points);
+      if (pts.length >= 2) {
+        segPtsCache.set(String(s.id), smoothTrailPolyline(pts, s.type === 'lift', 2.4));
+      }
+      segIdxMap.set(String(s.id), idx);
+    });
   }
+  rebuildSegmentCaches();
 
   const W = mapConfig.width || 600;
   const H = mapConfig.height || 340;
@@ -187,10 +209,12 @@ export function createMap3DRenderer(
   let terrainProg: WebGLProgram;
   let solidProg: WebGLProgram;
   let instProg: WebGLProgram;
+  let ribbonProg: WebGLProgram;
   try {
     terrainProg = compileProgram(gl, TERRAIN_VS, TERRAIN_FS);
     solidProg = compileProgram(gl, SOLID_VS, SOLID_FS);
     instProg = compileProgram(gl, INSTANCED_VS, INSTANCED_FS);
+    ribbonProg = compileProgram(gl, RIBBON_VS, RIBBON_FS);
   } catch (err: any) {
     callbacks.onWebGLFailed(err?.message || 'Could not compile 3D shaders.');
     return null;
@@ -208,6 +232,16 @@ export function createMap3DRenderer(
     uContours: gl.getUniformLocation(terrainProg, 'uContours'),
     uNightLit: gl.getUniformLocation(terrainProg, 'uNightLit'),
     uMapTex: gl.getUniformLocation(terrainProg, 'uMapTex'),
+  };
+
+  const ribbonLocs = {
+    uViewProj: gl.getUniformLocation(ribbonProg, 'uViewProj'),
+    uCameraPos: gl.getUniformLocation(ribbonProg, 'uCameraPos'),
+    uHoveredSegIdx: gl.getUniformLocation(ribbonProg, 'uHoveredSegIdx'),
+    uSelectedSegIdx: gl.getUniformLocation(ribbonProg, 'uSelectedSegIdx'),
+    uFogColor: gl.getUniformLocation(ribbonProg, 'uFogColor'),
+    uLightMode: gl.getUniformLocation(ribbonProg, 'uLightMode'),
+    uTime: gl.getUniformLocation(ribbonProg, 'uTime'),
   };
 
   const solidLocs = {
@@ -251,6 +285,12 @@ export function createMap3DRenderer(
   gl.vertexAttribPointer(3, 1, gl.FLOAT, false, TS, 32);
   gl.bindVertexArray(null);
 
+  // Trail Ribbon VAO
+  const ribbonVao = gl.createVertexArray()!;
+  const ribbonVbo = gl.createBuffer()!;
+  const ribbonIbo = gl.createBuffer()!;
+  let ribbonIndexCount = 0;
+
   // Overlay Static VAO
   const solidVao = gl.createVertexArray()!;
   const solidVbo = gl.createBuffer()!;
@@ -258,6 +298,38 @@ export function createMap3DRenderer(
   let solidIndexCount = 0;
 
   function uploadStaticOverlay() {
+    const ribbon: RibbonMeshData = buildRibbonMesh(
+      hf,
+      state.segments,
+      state.builtIds,
+      state.builtItems,
+      state.liveSkiers,
+      {
+        filter: state.filter,
+        showAvailable: state.showAvailable,
+        selectedSegId: state.selectedSegId,
+        lens: state.lens,
+      }
+    );
+    gl!.bindVertexArray(ribbonVao);
+    gl!.bindBuffer(gl!.ARRAY_BUFFER, ribbonVbo);
+    gl!.bufferData(gl!.ARRAY_BUFFER, ribbon.vertices, gl!.DYNAMIC_DRAW);
+    gl!.bindBuffer(gl!.ELEMENT_ARRAY_BUFFER, ribbonIbo);
+    gl!.bufferData(gl!.ELEMENT_ARRAY_BUFFER, ribbon.indices, gl!.DYNAMIC_DRAW);
+    const RS = 16 * 4;
+    gl!.enableVertexAttribArray(0);
+    gl!.vertexAttribPointer(0, 3, gl!.FLOAT, false, RS, 0);
+    gl!.enableVertexAttribArray(1);
+    gl!.vertexAttribPointer(1, 3, gl!.FLOAT, false, RS, 12);
+    gl!.enableVertexAttribArray(2);
+    gl!.vertexAttribPointer(2, 4, gl!.FLOAT, false, RS, 24);
+    gl!.enableVertexAttribArray(3);
+    gl!.vertexAttribPointer(3, 4, gl!.FLOAT, false, RS, 40);
+    gl!.enableVertexAttribArray(4);
+    gl!.vertexAttribPointer(4, 2, gl!.FLOAT, false, RS, 56);
+    gl!.bindVertexArray(null);
+    ribbonIndexCount = ribbon.indices.length;
+
     const mesh: StaticMeshData = buildOverlayStaticMesh(
       hf,
       state.segments,
@@ -576,6 +648,8 @@ export function createMap3DRenderer(
   const activePointers = new Map<number, { x: number; y: number }>();
   let lastPinchDist = 0;
   let lastPinchAngle = 0;
+  let hoveredSegIdx = -1;
+  let animTime = 0;
 
   const onPointerDown = (e: PointerEvent) => {
     canvas.setPointerCapture(e.pointerId);
@@ -586,6 +660,7 @@ export function createMap3DRenderer(
       lastPy = downPy = e.clientY;
     } else if (activePointers.size === 2) {
       dragMode = null;
+      hoveredSegIdx = -1;
       const pts = Array.from(activePointers.values());
       lastPinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
       lastPinchAngle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
@@ -597,6 +672,7 @@ export function createMap3DRenderer(
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
     if (activePointers.size === 2) {
+      hoveredSegIdx = -1;
       const pts = Array.from(activePointers.values());
       const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
       const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
@@ -612,6 +688,7 @@ export function createMap3DRenderer(
       return;
     }
     if (dragMode) {
+      hoveredSegIdx = -1;
       const dx = e.clientX - lastPx;
       const dy = e.clientY - lastPy;
       lastPx = e.clientX;
@@ -630,7 +707,13 @@ export function createMap3DRenderer(
       return;
     }
     const p = pickAt(e.clientX, e.clientY);
+    hoveredSegIdx = p && p.kind === 'segment' ? (segIdxMap.get(String(p.segment.id)) ?? -1) : -1;
     callbacks.onHover(p, e.clientX, e.clientY);
+  };
+
+  const onPointerLeave = () => {
+    hoveredSegIdx = -1;
+    callbacks.onHover(null, 0, 0);
   };
 
   const onPointerUp = (e: PointerEvent) => {
@@ -657,6 +740,7 @@ export function createMap3DRenderer(
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
 
   canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointerleave', onPointerLeave);
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerCancel);
@@ -686,6 +770,7 @@ export function createMap3DRenderer(
     maybeLoadFullTex();
 
     if (!state.paused) {
+      animTime += clamp(dt, 0, 0.08);
       sim.step(dt);
       uploadSimInstances();
     }
@@ -697,12 +782,14 @@ export function createMap3DRenderer(
 
     gl!.enable(gl!.DEPTH_TEST);
     gl!.enable(gl!.CULL_FACE);
+    gl!.depthMask(true);
+    gl!.disable(gl!.BLEND);
     gl!.clearColor(lp.fog[0], lp.fog[1], lp.fog[2], 1.0);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
 
     // 1. Draw Terrain with slight polygon offset so ground ribbons never z-fight
     gl!.enable(gl!.POLYGON_OFFSET_FILL);
-    gl!.polygonOffset(1.2, 1.2);
+    gl!.polygonOffset(2.0, 2.0);
     gl!.useProgram(terrainProg);
     gl!.uniformMatrix4fv(terrainLocs.uViewProj, false, vpMat);
     gl!.uniform3fv(terrainLocs.uSunDir, lp.sun);
@@ -721,7 +808,27 @@ export function createMap3DRenderer(
     gl!.drawElements(gl!.TRIANGLES, terrainData.indices.length, gl!.UNSIGNED_INT, 0);
     gl!.disable(gl!.POLYGON_OFFSET_FILL);
 
-    // 2. Draw Slopes, Sleek Lifts, Diorama Plinth & Miniature Buildings
+    // 2. Draw Anti-Aliased Trail & Ground Guide Ribbons
+    if (ribbonIndexCount > 0) {
+      const selectedSegIdx = state.selectedSegId !== null ? (segIdxMap.get(String(state.selectedSegId)) ?? -1) : -1;
+      gl!.enable(gl!.BLEND);
+      gl!.blendFunc(gl!.SRC_ALPHA, gl!.ONE_MINUS_SRC_ALPHA);
+      gl!.depthMask(false);
+      gl!.useProgram(ribbonProg);
+      gl!.uniformMatrix4fv(ribbonLocs.uViewProj, false, vpMat);
+      gl!.uniform3fv(ribbonLocs.uCameraPos, camPos);
+      gl!.uniform1f(ribbonLocs.uHoveredSegIdx, hoveredSegIdx);
+      gl!.uniform1f(ribbonLocs.uSelectedSegIdx, selectedSegIdx);
+      gl!.uniform3fv(ribbonLocs.uFogColor, lp.fog);
+      gl!.uniform1f(ribbonLocs.uLightMode, lp.mode);
+      gl!.uniform1f(ribbonLocs.uTime, animTime);
+      gl!.bindVertexArray(ribbonVao);
+      gl!.drawElements(gl!.TRIANGLES, ribbonIndexCount, gl!.UNSIGNED_INT, 0);
+      gl!.depthMask(true);
+      gl!.disable(gl!.BLEND);
+    }
+
+    // 3. Draw Lifts, Snowmakers, Lights, Diorama Plinth & Miniature Buildings
     if (solidIndexCount > 0) {
       gl!.useProgram(solidProg);
       gl!.uniformMatrix4fv(solidLocs.uViewProj, false, vpMat);
@@ -736,7 +843,7 @@ export function createMap3DRenderer(
       gl!.drawElements(gl!.TRIANGLES, solidIndexCount, gl!.UNSIGNED_INT, 0);
     }
 
-    // 3. Draw Instanced Skiers, Lift Carriers, Snowcats & Snow Particles
+    // 4. Draw Instanced Skiers, Lift Carriers, Snowcats & Snow Particles
     gl!.useProgram(instProg);
     gl!.uniformMatrix4fv(instLocs.uViewProj, false, vpMat);
     gl!.uniform3fv(instLocs.uSunDir, lp.sun);
@@ -765,7 +872,9 @@ export function createMap3DRenderer(
 
   return {
     updateState(next: Scene3DState) {
+      const rebuildCaches = next.segments !== state.segments;
       const rebuildSim =
+        next.segments !== state.segments ||
         next.builtIds !== state.builtIds ||
         next.builtItems !== state.builtItems ||
         next.liveSkiers !== state.liveSkiers ||
@@ -774,6 +883,9 @@ export function createMap3DRenderer(
         next.groomerActive !== state.groomerActive ||
         next.weather !== state.weather;
       state = next;
+      if (rebuildCaches) {
+        rebuildSegmentCaches();
+      }
       uploadStaticOverlay();
       if (rebuildSim) {
         sim.rebuild(
@@ -822,6 +934,7 @@ export function createMap3DRenderer(
       cancelAnimationFrame(raf);
       ro.disconnect();
       canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointerleave', onPointerLeave);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('pointercancel', onPointerCancel);

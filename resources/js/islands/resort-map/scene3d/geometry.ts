@@ -8,10 +8,15 @@ import type {
   PlacedFacility,
 } from '../types';
 import type { Heightfield } from './heightfield';
-import { clamp, lerp, normalize3, samplePolylineAt } from './math';
+import { clamp, lerp, normalize3, samplePolylineAt, smoothTrailPolyline } from './math';
 
 export interface StaticMeshData {
   vertices: Float32Array; // stride 10: pos(3), normal(3), color(4) [rgb + emissive]
+  indices: Uint32Array;
+}
+
+export interface RibbonMeshData {
+  vertices: Float32Array; // stride 16: pos(3), side(3), colorWidth(4), uvStyle(4), meta(2)
   indices: Uint32Array;
 }
 
@@ -181,16 +186,16 @@ function trailColor(seg: MapSegment): [number, number, number] {
   if (seg.type === 'lift') return [0.95, 0.62, 0.08];
   switch (seg.difficulty || seg.type) {
     case 'green':
-      return [0.16, 0.76, 0.38];
+      return [0.09, 0.74, 0.34];
     case 'blue':
-      return [0.22, 0.52, 0.94];
+      return [0.18, 0.50, 0.95];
     case 'black':
-      return [0.16, 0.21, 0.30];
+      return [0.10, 0.14, 0.21];
     case 'double_black':
-      return [0.86, 0.22, 0.22];
+      return [0.86, 0.17, 0.20];
     case 'snowpark':
     case 'terrain_park':
-      return [0.64, 0.34, 0.92];
+      return [0.64, 0.34, 0.94];
     case 'crosscountry':
       return [0.08, 0.72, 0.65];
     default:
@@ -232,68 +237,393 @@ function steepColor(deg: number): [number, number, number] {
   return [0.88, 0.22, 0.24];
 }
 
-function subdividePolyline(pts: [number, number][], stepUnits: number, maxSubPerSeg = 12): [number, number][] {
-  const out: [number, number][] = [];
-  for (let i = 0; i < pts.length; i++) {
-    if (i > 0) {
-      const dist = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-      const sub = Math.min(maxSubPerSeg, Math.max(1, Math.round(dist / stepUnits)));
-      for (let s = 1; s < sub; s++) {
-        const t = s / sub;
-        out.push([lerp(pts[i - 1][0], pts[i][0], t), lerp(pts[i - 1][1], pts[i][1], t)]);
-      }
-    }
-    out.push(pts[i]);
+class RibbonMeshBuilder {
+  v: number[] = [];
+  i: number[] = [];
+
+  private pushVert(
+    wx: number, wy: number, wz: number,
+    sx: number, sy: number, sz: number,
+    r: number, g: number, b: number, baseHalfW: number,
+    capX: number, capY: number, along: number, style: number,
+    segIdx: number, nightLit: number
+  ): number {
+    const idx = this.v.length / 16;
+    this.v.push(
+      wx, wy, wz,
+      sx, sy, sz,
+      r, g, b, baseHalfW,
+      capX, capY, along, style,
+      segIdx, nightLit
+    );
+    return idx;
   }
-  return out;
+
+  addPolyline(
+    hf: Heightfield,
+    pts: [number, number][],
+    options: {
+      baseHalfW: number;
+      yLift: number;
+      style: number;
+      segIdx: number;
+      nightLit: number;
+      baseRgb: [number, number, number];
+      lens: MapLens;
+    }
+  ) {
+    const m = pts.length;
+    if (m < 2) return;
+
+    const { baseHalfW, yLift, style, segIdx, nightLit, baseRgb, lens } = options;
+    const cum = new Float64Array(m);
+    for (let k = 1; k < m; k++) {
+      cum[k] = cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+    }
+    const totalLen = cum[m - 1];
+    if (totalLen < 1e-4) return;
+
+    const segT: [number, number][] = new Array(m - 1);
+    let lastValid: [number, number] = [1, 0];
+    for (let k = 0; k < m - 1; k++) {
+      const dx = pts[k + 1][1] - pts[k][1];
+      const dy = pts[k + 1][0] - pts[k][0];
+      const len = Math.hypot(dx, dy);
+      if (len >= 1e-5) {
+        lastValid = [dx / len, dy / len];
+      }
+      segT[k] = lastValid;
+    }
+
+    const eps = 0.8;
+    const bodyLeftIdx: number[] = [];
+    const bodyRightIdx: number[] = [];
+
+    let firstMeta: {
+      mx: number; wy: number; wz: number;
+      sideL: [number, number, number]; sideR: [number, number, number];
+      col: [number, number, number];
+      t: [number, number]; hC: number;
+    } | null = null;
+    let lastMeta: {
+      mx: number; wy: number; wz: number;
+      sideL: [number, number, number]; sideR: [number, number, number];
+      col: [number, number, number];
+      t: [number, number]; hC: number;
+    } | null = null;
+
+    // Precompute body vertex info first so start cap precedes body rows cleanly
+    const rows: {
+      mx: number; wy: number; wz: number;
+      sideL: [number, number, number]; sideR: [number, number, number];
+      col: [number, number, number];
+      along: number;
+      hC: number;
+    }[] = new Array(m);
+
+    for (let k = 0; k < m; k++) {
+      const my = pts[k][0];
+      const mx = pts[k][1];
+      let rx: number;
+      let ry: number;
+      let miterScale = 1.0;
+
+      if (k === 0) {
+        rx = segT[0][1];
+        ry = -segT[0][0];
+      } else if (k === m - 1) {
+        rx = segT[m - 2][1];
+        ry = -segT[m - 2][0];
+      } else {
+        const [t0x, t0y] = segT[k - 1];
+        const [t1x, t1y] = segT[k];
+        const n0x = t0y;
+        const n0y = -t0x;
+        const n1x = t1y;
+        const n1y = -t1x;
+        const dotT = t0x * t1x + t0y * t1y;
+        if (dotT < -0.7) {
+          rx = n1x;
+          ry = n1y;
+        } else {
+          const mxv = n0x + n1x;
+          const myv = n0y + n1y;
+          const mLen = Math.hypot(mxv, myv);
+          if (mLen < 1e-5) {
+            rx = n1x;
+            ry = n1y;
+          } else {
+            rx = mxv / mLen;
+            ry = myv / mLen;
+            const proj = rx * n1x + ry * n1y;
+            miterScale = Math.min(1.65, 1.0 / Math.max(0.5, proj));
+          }
+        }
+      }
+
+      const hC = hf.sampleHeight(mx, my);
+      const hR = hf.sampleHeight(mx + rx * eps, my + ry * eps);
+      const hL = hf.sampleHeight(mx - rx * eps, my - ry * eps);
+      const ridgeLift = Math.max(0, hC - 0.5 * (hL + hR));
+      const dyR = clamp((hR - hC) / eps, -1.2, 1.2);
+      const dyL = clamp((hL - hC) / eps, -1.2, 1.2);
+      const wy = hC + ridgeLift + yLift;
+      const wz = hf.height - my;
+
+      const sideR: [number, number, number] = [rx * miterScale, dyR * miterScale, -ry * miterScale];
+      const sideL: [number, number, number] = [-rx * miterScale, dyL * miterScale, ry * miterScale];
+      const col = lens === 'steepness' ? steepColor(hf.sampleSlopeDeg(mx, my)) : baseRgb;
+      rows[k] = { mx, wy, wz, sideL, sideR, col, along: cum[k], hC };
+    }
+
+    const r0 = rows[0];
+    const [t0x, t0y] = segT[0];
+    const dyFwd0 = clamp((hf.sampleHeight(r0.mx + t0x * eps, pts[0][0] + t0y * eps) - r0.hC) / eps, -1.2, 1.2);
+    firstMeta = { ...r0, t: [t0x, t0y], hC: dyFwd0 };
+
+    const rn = rows[m - 1];
+    const [tnx, tny] = segT[m - 2];
+    const dyFwdN = clamp((hf.sampleHeight(rn.mx + tnx * eps, pts[m - 1][0] + tny * eps) - rn.hC) / eps, -1.2, 1.2);
+    lastMeta = { ...rn, t: [tnx, tny], hC: dyFwdN };
+
+    // Start cap row
+    const sL = this.pushVert(
+      firstMeta.mx, firstMeta.wy, firstMeta.wz,
+      firstMeta.sideL[0] - firstMeta.t[0], firstMeta.sideL[1] - firstMeta.hC, firstMeta.sideL[2] + firstMeta.t[1],
+      firstMeta.col[0], firstMeta.col[1], firstMeta.col[2], baseHalfW,
+      -1, -1, -baseHalfW, style, segIdx, nightLit
+    );
+    const sR = this.pushVert(
+      firstMeta.mx, firstMeta.wy, firstMeta.wz,
+      firstMeta.sideR[0] - firstMeta.t[0], firstMeta.sideR[1] - firstMeta.hC, firstMeta.sideR[2] + firstMeta.t[1],
+      firstMeta.col[0], firstMeta.col[1], firstMeta.col[2], baseHalfW,
+      1, -1, -baseHalfW, style, segIdx, nightLit
+    );
+    bodyLeftIdx.push(sL);
+    bodyRightIdx.push(sR);
+
+    for (let k = 0; k < m; k++) {
+      const row = rows[k];
+      bodyLeftIdx.push(
+        this.pushVert(
+          row.mx, row.wy, row.wz,
+          row.sideL[0], row.sideL[1], row.sideL[2],
+          row.col[0], row.col[1], row.col[2], baseHalfW,
+          -1, 0, row.along, style, segIdx, nightLit
+        )
+      );
+      bodyRightIdx.push(
+        this.pushVert(
+          row.mx, row.wy, row.wz,
+          row.sideR[0], row.sideR[1], row.sideR[2],
+          row.col[0], row.col[1], row.col[2], baseHalfW,
+          1, 0, row.along, style, segIdx, nightLit
+        )
+      );
+    }
+
+    // End cap row
+    const eL = this.pushVert(
+      lastMeta.mx, lastMeta.wy, lastMeta.wz,
+      lastMeta.sideL[0] + lastMeta.t[0], lastMeta.sideL[1] + lastMeta.hC, lastMeta.sideL[2] - lastMeta.t[1],
+      lastMeta.col[0], lastMeta.col[1], lastMeta.col[2], baseHalfW,
+      -1, 1, totalLen + baseHalfW, style, segIdx, nightLit
+    );
+    const eR = this.pushVert(
+      lastMeta.mx, lastMeta.wy, lastMeta.wz,
+      lastMeta.sideR[0] + lastMeta.t[0], lastMeta.sideR[1] + lastMeta.hC, lastMeta.sideR[2] - lastMeta.t[1],
+      lastMeta.col[0], lastMeta.col[1], lastMeta.col[2], baseHalfW,
+      1, 1, totalLen + baseHalfW, style, segIdx, nightLit
+    );
+    bodyLeftIdx.push(eL);
+    bodyRightIdx.push(eR);
+
+    for (let k = 0; k < bodyLeftIdx.length - 1; k++) {
+      const aL = bodyLeftIdx[k];
+      const aR = bodyRightIdx[k];
+      const bR = bodyRightIdx[k + 1];
+      const bL = bodyLeftIdx[k + 1];
+      this.i.push(aL, aR, bR, aL, bR, bL);
+    }
+  }
+
+  addEndpointPin(
+    hf: Heightfield,
+    mapX: number,
+    mapY: number,
+    radius: number,
+    yLift: number,
+    rgb: [number, number, number],
+    segIdx: number
+  ) {
+    const hC = hf.sampleHeight(mapX, mapY);
+    const wy = hC + yLift;
+    const wz = hf.height - mapY;
+    const eps = 0.8;
+    const corners: [number, number][] = [
+      [-1, -1], // SW
+      [1, -1],  // SE
+      [1, 1],   // NE
+      [-1, 1],  // NW
+    ];
+    const base = this.v.length / 16;
+    for (const [cx, cy] of corners) {
+      const dy = clamp((hf.sampleHeight(mapX + cx * eps, mapY + cy * eps) - hC) / eps, -1.2, 1.2);
+      this.pushVert(
+        mapX, wy, wz,
+        cx, dy, -cy,
+        rgb[0], rgb[1], rgb[2], radius,
+        cx, cy, 0, 6.0, segIdx, 0
+      );
+    }
+    this.i.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+
+  build(): RibbonMeshData {
+    return {
+      vertices: new Float32Array(this.v),
+      indices: new Uint32Array(this.i),
+    };
+  }
 }
 
-function drawGroundRibbon(
-  mb: MeshBuilder,
+export function buildRibbonMesh(
   hf: Heightfield,
-  pts: [number, number][],
-  halfW: number,
-  yLift: number,
-  emissive: number,
-  baseRgb: [number, number, number],
-  lens: MapLens,
-  dashed: boolean,
-  selected: boolean
-) {
-  const dense = subdividePolyline(pts, dashed ? 3.0 : 4.2, dashed ? 24 : 10);
-  for (let i = 0; i < dense.length - 1; i++) {
-    if (dashed && !selected && i % 2 === 1) continue;
-    const [ay, ax] = dense[i];
-    const [by, bx] = dense[i + 1];
-    const dx = bx - ax;
-    const dy = by - ay;
-    const dLen = Math.hypot(dx, dy) || 1;
-    const px = (-dy / dLen) * halfW;
-    const py = (dx / dLen) * halfW;
+  segments: MapSegment[],
+  builtIds: (string | number)[],
+  builtItems: Record<string, BuiltItem>,
+  liveSkiers: LiveSkiersSnapshot | null,
+  options: {
+    filter: string;
+    showAvailable: boolean;
+    selectedSegId: string | number | null;
+    lens: MapLens;
+  }
+): RibbonMeshData {
+  const rb = new RibbonMeshBuilder();
+  if (options.filter === 'buildings') return rb.build();
 
-    let rgb = baseRgb;
-    if (lens === 'steepness') {
-      rgb = steepColor(hf.sampleSlopeDeg((ax + bx) * 0.5, (ay + by) * 0.5));
+  const isBuilt = (id: string | number) => builtIds.some((b) => sameId(b, id));
+  const perSeg = liveSkiers?.perSegment ?? {};
+
+  interface RibbonJob {
+    pts: [number, number][];
+    baseHalfW: number;
+    yLift: number;
+    style: number;
+    segIdx: number;
+    nightLit: number;
+    baseRgb: [number, number, number];
+    selected: boolean;
+  }
+
+  const layers: RibbonJob[][] = [[], [], [], [], []];
+
+  segments.forEach((seg, segIdx) => {
+    const built = isBuilt(seg.id);
+    if (options.filter === 'lift' && seg.type !== 'lift') return;
+    if (options.filter === 'slope' && seg.type === 'lift') return;
+    if (options.filter === 'built' && !built) return;
+    if (!built && !options.showAvailable) return;
+
+    const rawPts = parsePoints(seg.points);
+    if (rawPts.length < 2) return;
+
+    const item = builtItems[String(seg.id)];
+    const selected = options.selectedSegId !== null && sameId(options.selectedSegId, seg.id);
+    const closed = built && item && item.status !== 'open';
+    const isLift = seg.type === 'lift';
+
+    let rgb = trailColor(seg);
+    if (options.lens === 'traffic' && built) {
+      rgb = heatLoadColor(perSeg[String(seg.id)]?.loadPct ?? 0);
+    } else if (options.lens === 'snow' && built && !isLift) {
+      rgb = snowColor(item?.snow_quality);
     }
-    const col: RGBA = [rgb[0], rgb[1], rgb[2], emissive];
 
-    const [ax0, ay0, az0] = hf.toWorld(ax - px, ay - py, yLift);
-    const [ax1, ay1, az1] = hf.toWorld(ax + px, ay + py, yLift);
-    const [bx0, by0, bz0] = hf.toWorld(bx - px, by - py, yLift);
-    const [bx1, by1, bz1] = hf.toWorld(bx + px, by + py, yLift);
-    mb.quad(ax0, ay0, az0, bx0, by0, bz0, bx1, by1, bz1, ax1, ay1, az1, col);
+    const orientedPts = isLift
+      ? rawPts[0][0] <= rawPts[rawPts.length - 1][0]
+        ? rawPts
+        : [...rawPts].reverse()
+      : rawPts[0][0] >= rawPts[rawPts.length - 1][0]
+        ? rawPts
+        : [...rawPts].reverse();
+
+    const pts = smoothTrailPolyline(orientedPts, isLift);
+    const nightLit = !isLift && built && !closed && item?.night_lit ? 1 : 0;
+
+    let style: number;
+    let baseHalfW: number;
+    let yLift: number;
+    let layerIdx: number;
+
+    if (isLift) {
+      style = built ? 3 : 4;
+      baseHalfW = built ? 0.28 : 0.34;
+      yLift = built ? 0.09 : 0.08;
+      layerIdx = built ? 1 : 0;
+      if (closed && !selected) {
+        rgb = [rgb[0] * 0.62, rgb[1] * 0.62, rgb[2] * 0.62];
+      }
+    } else if (!built) {
+      style = 1;
+      baseHalfW = 0.38;
+      yLift = 0.08;
+      layerIdx = 0;
+    } else if (closed) {
+      style = 2;
+      baseHalfW = 0.56;
+      yLift = 0.11;
+      layerIdx = 2;
+    } else {
+      const isXC = seg.type === 'crosscountry' || seg.difficulty === 'crosscountry';
+      style = isXC ? 5 : 0;
+      baseHalfW = 0.62;
+      yLift = 0.12;
+      layerIdx = 3;
+    }
 
     if (selected) {
-      const hw = halfW + 0.34;
-      const hpx = (-dy / dLen) * hw;
-      const hpy = (dx / dLen) * hw;
-      const [hx0, hy0, hz0] = hf.toWorld(ax - hpx, ay - hpy, yLift - 0.04);
-      const [hx1, hy1, hz1] = hf.toWorld(ax + hpx, ay + hpy, yLift - 0.04);
-      const [kx0, ky0, kz0] = hf.toWorld(bx - hpx, by - hpy, yLift - 0.04);
-      const [kx1, ky1, kz1] = hf.toWorld(bx + hpx, by + hpy, yLift - 0.04);
-      mb.quad(hx0, hy0, hz0, kx0, ky0, kz0, kx1, ky1, kz1, hx1, hy1, hz1, [0.95, 0.98, 1.0, 0.5]);
+      layerIdx = 4;
+      yLift = 0.15;
+    }
+
+    layers[layerIdx].push({
+      pts,
+      baseHalfW,
+      yLift,
+      style,
+      segIdx,
+      nightLit,
+      baseRgb: rgb,
+      selected,
+    });
+  });
+
+  for (const bucket of layers) {
+    for (const job of bucket) {
+      rb.addPolyline(hf, job.pts, {
+        baseHalfW: job.baseHalfW,
+        yLift: job.yLift,
+        style: job.style,
+        segIdx: job.segIdx,
+        nightLit: job.nightLit,
+        baseRgb: job.baseRgb,
+        lens: options.lens,
+      });
+      if (job.selected) {
+        const start = job.pts[0];
+        const end = job.pts[job.pts.length - 1];
+        const pinRadius = Math.max(0.72, job.baseHalfW * 1.45);
+        const startCol = options.lens === 'steepness' ? steepColor(hf.sampleSlopeDeg(start[1], start[0])) : job.baseRgb;
+        const endCol = options.lens === 'steepness' ? steepColor(hf.sampleSlopeDeg(end[1], end[0])) : job.baseRgb;
+        rb.addEndpointPin(hf, start[1], start[0], pinRadius, 0.17, startCol, job.segIdx);
+        rb.addEndpointPin(hf, end[1], end[0], pinRadius, 0.17, endCol, job.segIdx);
+      }
     }
   }
+
+  return rb.build();
 }
 
 export function buildOverlayStaticMesh(
@@ -366,33 +696,21 @@ export function buildOverlayStaticMesh(
     }
 
     if (seg.type !== 'lift') {
-      const pts = rawPts[0][0] >= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
-      drawGroundRibbon(
-        mb,
-        hf,
-        pts,
-        selected ? 0.76 : built ? 0.46 : 0.24,
-        selected ? 0.16 : built ? 0.12 : 0.09,
-        selected ? 0.42 : built ? 0.14 : 0.05,
-        rgb,
-        options.lens,
-        !built && !selected,
-        selected
-      );
-
-      // Compact snowmaking fan guns & slender night light poles along built slopes
+      // Compact snowmaking fan guns & slender night light poles placed cleanly outside the slope casing
       if (built && item) {
+        const oriented = rawPts[0][0] >= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
+        const smoothPts = smoothTrailPolyline(oriented, false);
         const smCount = Math.min(3, item.snowmakers_count || 0);
         for (let g = 0; g < smCount; g++) {
-          const sample = samplePolylineAt(pts, (g + 0.5) / Math.max(1, smCount));
-          const [gx, gy, gz] = hf.toWorld(sample.mapX - sample.ty * 0.72, sample.mapY + sample.tx * 0.72, 0);
+          const sample = samplePolylineAt(smoothPts, (g + 0.5) / Math.max(1, smCount));
+          const [gx, gy, gz] = hf.toWorld(sample.mapX - sample.ty * 0.85, sample.mapY + sample.tx * 0.85, 0);
           mb.box(gx, gy - 0.1, gz, 0.22, 0.26, 0.22, [0.82, 0.86, 0.92, 0.06]);
           mb.box(gx, gy + 0.16, gz, 0.26, 0.24, 0.34, [0.22, 0.56, 0.96, item.snowmakers_active ? 0.32 : 0.05]);
         }
         if (item.night_lit && isNight) {
           for (let l = 0; l < 4; l++) {
-            const sample = samplePolylineAt(pts, (l + 0.5) / 4);
-            const [lx, ly, lz] = hf.toWorld(sample.mapX + sample.ty * 0.72, sample.mapY - sample.tx * 0.72, 0);
+            const sample = samplePolylineAt(smoothPts, (l + 0.5) / 4);
+            const [lx, ly, lz] = hf.toWorld(sample.mapX + sample.ty * 0.85, sample.mapY - sample.tx * 0.85, 0);
             mb.box(lx, ly - 0.1, lz, 0.09, 1.15, 0.09, [0.34, 0.40, 0.50, 0.0]);
             mb.box(lx, ly + 1.05, lz, 0.24, 0.14, 0.24, [1.0, 0.88, 0.45, 0.85]);
           }
@@ -401,15 +719,7 @@ export function buildOverlayStaticMesh(
     } else {
       // Lifts always oriented ascending low->high
       const pts = rawPts[0][0] <= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
-
-      if (!built && !selected) {
-        // Available unbuilt lifts sit cleanly as subtle dashed ground ribbons (zero overhead clutter)
-        drawGroundRibbon(mb, hf, pts, 0.24, 0.10, 0.06, rgb, options.lens, true, false);
-        continue;
-      }
-
-      // Ground track guide under the lift cable
-      drawGroundRibbon(mb, hf, pts, selected ? 0.36 : 0.20, 0.08, selected ? 0.42 : 0.16, rgb, options.lens, false, selected);
+      if (!built && !selected) continue;
 
       const sub = item?.subtype || 'chair_fixed';
       const cableHeight =
