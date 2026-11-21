@@ -65,17 +65,12 @@ class Finances extends BaseController
             if ($tk['ticket_type'] === 'full_day') $ticketIncome = (int) $tk['price'] * $visitorCount;
         }
 
-        $hotelIncome = 0;
-        $hotels = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'hotel')->where('status', 'open')->get()->getResultArray();
-        foreach ($hotels as $h) { $hotelIncome += (int) ($h['revenue_per_day'] ?? 0); }
-
-        $restaurantIncome = 0;
-        $restaurants = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'restaurant')->where('status', 'open')->get()->getResultArray();
-        foreach ($restaurants as $r) { $restaurantIncome += (int) ($r['revenue_per_day'] ?? 0); }
-
-        $rentalIncome = 0;
-        $rentals = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'rental')->where('status', 'open')->get()->getResultArray();
-        foreach ($rentals as $r) { $rentalIncome += (int) ($r['revenue_per_day'] ?? 0); }
+        $buildingIncome = ['hotel' => 0, 'restaurant' => 0, 'rental' => 0];
+        $openBuildings = $db->table('buildings')->select('building_type, revenue_per_day')->where('user_id', $userId)->whereIn('building_type', array_keys($buildingIncome))->where('status', 'open')->get()->getResultArray();
+        foreach ($openBuildings as $b) { $buildingIncome[$b['building_type']] += (int) ($b['revenue_per_day'] ?? 0); }
+        $hotelIncome = $buildingIncome['hotel'];
+        $restaurantIncome = $buildingIncome['restaurant'];
+        $rentalIncome = $buildingIncome['rental'];
 
         // Economy v2: last tick's real ticket revenue, and buildings earn by how full they were
         $lastTick = featureEnabled('economy_v2') ? json_decode((string) ($visitors['last_tick'] ?? ''), true) : null;

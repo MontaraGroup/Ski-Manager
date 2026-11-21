@@ -101,9 +101,11 @@ class Dashboard extends BaseController
         if (class_exists('\\App\\Libraries\\Achievements')) {
             \App\Libraries\Achievements::sync($userId, false);
         }
-        $unclaimedAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 1)->where('claimed', 0)->countAllResults();
-        $completedAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 1)->countAllResults();
-        $inProgressAchievements = $db->table('achievements')->where('user_id', $userId)->where('completed', 0)->orderBy('progress', 'DESC')->limit(5)->get()->getResultArray();
+        $achievementRows = $db->table('achievements')->where('user_id', $userId)->orderBy('progress', 'DESC')->get()->getResultArray();
+        $completedRows = array_filter($achievementRows, fn($a) => (int) $a['completed'] === 1);
+        $unclaimedAchievements = count(array_filter($completedRows, fn($a) => (int) $a['claimed'] === 0));
+        $completedAchievements = count($completedRows);
+        $inProgressAchievements = array_slice(array_values(array_filter($achievementRows, fn($a) => (int) $a['completed'] === 0)), 0, 5);
         $recentActivity = $db->table('activity_log')->where('user_id', $userId)->orderBy('created_at', 'DESC')->limit(8)->get()->getResultArray();
         $dailyBonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
         $bonusAvailable = !$dailyBonus || ($dailyBonus['last_claim_date'] ?? null) < date('Y-m-d');
@@ -116,7 +118,7 @@ class Dashboard extends BaseController
         $dailyVisitors = (int) (Demo::estimate((int) $userId)['visitors'] ?? $finance['daily_visitors'] ?? 0);
         $netProfit = ($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0);
 
-        $cashflow = $this->calcCashflowBreakdown($userId, $dailyVisitors, $staffAll, $equipment, $loans, $marketing, $buildingsAll, $insurance, $finance['difficulty'] ?? 'standard');
+        $cashflow = $this->calcCashflowBreakdown($userId, $dailyVisitors, $staffAll, $equipment, $loans, $marketing, $buildingsAll, $insurance, $finance['difficulty'] ?? 'standard', $finance);
         $resortMapKey = $finance['resort_map'] ?? 'ParkCity';
         $resortNames = ResortMap::getResortMapNames();
         $resortMapName = $resortNames[$resortMapKey] ?? 'Park City';
@@ -133,7 +135,7 @@ class Dashboard extends BaseController
         $genepisBal = (int) ($genepis['balance'] ?? 0);
         $resortOpen = (bool) ($finance['resort_open'] ?? 1);
 
-        $rawAlerts = $this->getAlerts($userId, $finance, $equipment, $staffAll, $totalLifts, $totalSlopes);
+        $rawAlerts = $this->getAlerts($userId, $finance, $equipment, $staffAll, $totalLifts, $totalSlopes, $slopesAll);
         $formattedAlerts = array_map(function ($a) {
             $cleanIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) ($a['icon'] ?? 'fa-circle-exclamation'));
             $tone = ($a['type'] ?? '') === 'error' ? 'danger' : 'warning';
@@ -624,7 +626,8 @@ class Dashboard extends BaseController
         array $marketing,
         array $buildings,
         array $insurance = [],
-        string $difficulty = 'standard'
+        string $difficulty = 'standard',
+        ?array $finance = null
     ): array {
         $db = db_connect();
 
@@ -657,7 +660,8 @@ class Dashboard extends BaseController
 
         // Economy v2: tickets and buildings depend on demand and occupancy, so show what the last tick actually paid
         if (featureEnabled('economy_v2')) {
-            $last = json_decode((string) ($db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick') ?? ''), true);
+            $lastTick = $finance !== null ? ($finance['last_tick'] ?? null) : $db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick');
+            $last = json_decode((string) ($lastTick ?? ''), true);
             $last = $last ?: (Demo::estimate((int) $userId)['tick'] ?? null);
             if ($last) {
                 $ticketIncome = (int) ($last['tickets'] ?? 0);
@@ -687,7 +691,7 @@ class Dashboard extends BaseController
         ];
     }
 
-    private function getAlerts(int $userId, ?array $finance = null, ?array $equipment = null, ?array $staff = null, int $totalLifts = 0, int $totalSlopes = 0): array
+    private function getAlerts(int $userId, ?array $finance = null, ?array $equipment = null, ?array $staff = null, int $totalLifts = 0, int $totalSlopes = 0, ?array $slopes = null): array
     {
         $alerts = [];
         $db = db_connect();
@@ -707,7 +711,9 @@ class Dashboard extends BaseController
             $alerts[] = ['type' => 'warning', 'icon' => 'fa-solid fa-wrench', 'msg' => $broken . ' equipment broken. Repair needed.', 'link' => '/equipment'];
         }
 
-        $critical = $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope','downhill','crosscountry','snowpark','luge'])->where('condition_pct <', 40)->countAllResults();
+        $critical = $slopes !== null
+            ? count(array_filter($slopes, fn($s) => $s['condition_pct'] !== null && (float) $s['condition_pct'] < 40))
+            : $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope','downhill','crosscountry','snowpark','luge'])->where('condition_pct <', 40)->countAllResults();
         if ($critical > 0) {
             $alerts[] = ['type' => 'error', 'icon' => 'fa-solid fa-mountain', 'msg' => $critical . ' slope(s) in critical condition!', 'link' => '/grooming'];
         }
