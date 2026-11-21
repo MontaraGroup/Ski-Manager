@@ -42,28 +42,41 @@ function isPageHidden(string $page): bool
     return in_array($page, explode(',', $hidden));
 }
 
+/**
+ * The signed-in player's achievement rows and the defs that unlock features, read once per
+ * request: the nav checks every locked feature, and the locked page lists them all.
+ */
+function featureUnlockData(): array
+{
+    static $byUser = [];
+    $userId = (int) auth()->id();
+    if (!isset($byUser[$userId])) {
+        $db = db_connect();
+        $claimed = [];
+        $progress = [];
+        foreach ($db->table('achievements')->select('achievement_key, claimed, progress')->where('user_id', $userId)->orderBy('id')->get()->getResultArray() as $row) {
+            if ((int) $row['claimed'] === 1) $claimed[$row['achievement_key']] = true;
+            $progress[$row['achievement_key']] ??= (int) $row['progress'];
+        }
+        $byUser[$userId] = [
+            'claimed' => $claimed,
+            'progress' => $progress,
+            'defs' => $db->table('achievement_defs')->where('unlocks IS NOT NULL')->get()->getResultArray(),
+        ];
+    }
+    return $byUser[$userId];
+}
+
 function isFeatureUnlocked(string $feature): bool
 {
     if (!function_exists('auth') || !auth()->loggedIn()) return false;
-    $difficulty = getDifficulty();
-    if ($difficulty === 'easy') return true;
+    if (getDifficulty() === 'easy') return true;
 
-    static $unlocked = null;
-    if ($unlocked === null) {
-        $db = db_connect();
-        $userId = auth()->id();
-        $claimed = $db->table('achievements')->where('user_id', $userId)->where('claimed', 1)->get()->getResultArray();
-        $claimedKeys = array_column($claimed, 'achievement_key');
-
-        $defs = $db->table('achievement_defs')->where('unlocks IS NOT NULL')->get()->getResultArray();
-        $unlocked = [];
-        foreach ($defs as $d) {
-            if (in_array($d['achievement_key'], $claimedKeys)) {
-                $unlocked[] = $d['unlocks'];
-            }
-        }
+    $data = featureUnlockData();
+    foreach ($data['defs'] as $d) {
+        if ($d['unlocks'] === $feature && isset($data['claimed'][$d['achievement_key']])) return true;
     }
-    return in_array($feature, $unlocked);
+    return false;
 }
 
 function getLockedFeatures(): array
@@ -71,18 +84,11 @@ function getLockedFeatures(): array
     if (!function_exists('auth') || !auth()->loggedIn()) return [];
     if (getDifficulty() === 'easy') return [];
 
-    $db = db_connect();
-    $userId = auth()->id();
-    $claimed = $db->table('achievements')->where('user_id', $userId)->where('claimed', 1)->get()->getResultArray();
-    $claimedKeys = array_column($claimed, 'achievement_key');
-
-    $defs = $db->table('achievement_defs')->where('unlocks IS NOT NULL')->get()->getResultArray();
+    $data = featureUnlockData();
     $locked = [];
-    foreach ($defs as $d) {
-        if (!in_array($d['achievement_key'], $claimedKeys)) {
-            $locked[$d['unlocks']] = ['name' => $d['name'], 'desc' => $d['description'], 'label' => $d['unlock_label'], 'icon' => $d['icon'], 'progress' => 0, 'target' => (int) $d['target']];
-            $userAch = $db->table('achievements')->where('user_id', $userId)->where('achievement_key', $d['achievement_key'])->get()->getRowArray();
-            if ($userAch) $locked[$d['unlocks']]['progress'] = (int) $userAch['progress'];
+    foreach ($data['defs'] as $d) {
+        if (!isset($data['claimed'][$d['achievement_key']])) {
+            $locked[$d['unlocks']] = ['name' => $d['name'], 'desc' => $d['description'], 'label' => $d['unlock_label'], 'icon' => $d['icon'], 'progress' => $data['progress'][$d['achievement_key']] ?? 0, 'target' => (int) $d['target']];
         }
     }
     return $locked;
