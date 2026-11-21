@@ -18,6 +18,10 @@ export default defineConfig({
     manifest: true,
     rollupOptions: {
       input: { islands: resolve(rootDir, 'resources/js/main.tsx') },
+      output: {
+        // Leaflet in its own chunk: only the trail map loads it, and it stays cached across map-code deploys
+        manualChunks: (id: string) => (id.includes('/node_modules/leaflet/') ? 'leaflet' : undefined),
+      },
     },
   },
   resolve: {

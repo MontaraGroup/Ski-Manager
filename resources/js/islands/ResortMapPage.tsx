@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button, Chip, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Select } from '@/components/Select';
+// Leaflet's own CSS loads with this chunk, after islands.css, so resort-map.css overrides keep applying
+import 'leaflet/dist/leaflet.css';
 import { createMapEngine } from './resort-map/mapEngine';
 import type { BuiltItem, MapSegment, ResortMapProps, Sector, EditorState } from './resort-map/types';
 import { MapHeader } from './resort-map/MapHeader';

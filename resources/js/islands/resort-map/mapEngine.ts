@@ -1,3 +1,4 @@
+import * as L from 'leaflet';
 import type { BuiltItem, MapConfig, MapSegment, ResortMapProps, Sector, EditorState } from './types';
 
 // Palette mapping
@@ -73,18 +74,22 @@ function closestOnLine(p: [number, number], a: [number, number], b: [number, num
   return [a[0] + t * dy, a[1] + t * dx];
 }
 
+/** Marker `drag` events carry the pointer event at runtime (Leaflet's Draggable sets it); its type omits it */
+type DragEventWithPointer = L.MarkerMoveEvent & { originalEvent?: PointerEvent };
+
 export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallbacks) {
-  let map: any = null;
-  let mapBounds: any = null;
-  let segmentLayers: Record<string, any> = {};
-  let hitLayers: Record<string, any> = {};
-  let stationMarkers: any[] = [];
-  let sectorPolygons: any[] = [];
+  // Both set by init(); every other function runs after it (guards check `map` for calls that come early)
+  let map!: L.Map;
+  let mapBounds!: L.LatLngBoundsExpression;
+  let segmentLayers: Record<string, L.Polyline> = {};
+  let hitLayers: Record<string, L.Polyline> = {};
+  let stationMarkers: L.Marker[] = [];
+  let sectorPolygons: L.Polygon[] = [];
   let showSectorPolygons = false;
   let selectedSegId: number | string | null = null;
   let buildMode: string | null = null;
   let mapFilter = 'all';
-  let selectionLayers: any[] = [];
+  let selectionLayers: L.Layer[] = [];
   // Set when the player drags, scrolls or touches the map; automatic fitting stops then
   let userMoved = false;
   // Players see the runs they can build unless they switch them off (remembered per browser)
@@ -117,12 +122,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   let redoStack: [number, number][][] = [];
   // Esc on a line with work in it only arms the discard; a second Esc before this time cancels
   let discardArmedUntil = 0;
-  let editorLine: any = null;
-  let rubberBandLine: any = null;
-  let snapMarker: any = null;
+  let editorLine: L.Polyline | L.Polygon | null = null;
+  let rubberBandLine: L.Polyline | null = null;
+  let snapMarker: L.Marker | null = null;
   let currentSnapTarget: { lat: number; lng: number; label: string } | null = null;
-  let vertexMarkers: any[] = [];
-  let midpointMarkers: any[] = [];
+  let vertexMarkers: L.Marker[] = [];
+  let midpointMarkers: L.Marker[] = [];
   let lastClickTime = 0;
   // A save is on its way: Enter or a double-click again must not post the line twice
   let saving = false;
@@ -166,7 +171,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     if (!Array.isArray(pts)) return [];
     // Leaflet 2 throws on coordinates that aren't numbers; LatLng.validate() accepts exactly what it takes,
     // so a broken point is dropped instead of being drawn at the map's corner (0, 0)
-    const valid = (window as any).L?.LatLng?.validate ?? ((a: number, b: number) => Number.isFinite(+a) && Number.isFinite(+b));
+    const valid = (a: unknown, b: unknown) => L.LatLng.validate(a as number, b as number);
     return pts
       .map((p): [any, any] | null => {
         if (Array.isArray(p)) return [p[0], p[1]];
@@ -224,8 +229,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   /** Adds a point where the admin clicked (snapped unless Alt is held). A lift is a straight line: its second point saves it. */
-  function addEditorPoint(latlng: any, altKey: boolean, shiftKey: boolean) {
-    const L = (window as any).L;
+  function addEditorPoint(latlng: L.LatLng, altKey: boolean, shiftKey: boolean) {
     const targetLl = getSnappedLatLng(latlng, altKey);
 
     // The two clicks of a double-click land on the same spot: keep one point, and finish a new line
@@ -283,11 +287,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function init(container: HTMLElement) {
-    const L = (window as any).L;
-    if (!L) {
-      console.error('Leaflet library (window.L) is not loaded.');
-      return;
-    }
     if (map) return;
 
     mapBounds = [
@@ -319,7 +318,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     // Leaflet 2 puts originalEvent on movestart/zoomstart only when the player moved the view
     // (drag, wheel, pinch, keyboard, zoom buttons), not for our own fitBounds/setView calls
-    map.on('movestart zoomstart', (e: any) => {
+    map.on('movestart zoomstart', (e) => {
       if (e.originalEvent) userMoved = true;
     });
 
@@ -327,7 +326,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     new L.FullscreenControl({ position: 'topleft', enterTitle: 'Full screen map', exitTitle: 'Exit full screen' }).addTo(map);
 
     // Map Event Listeners for Editor
-    map.on('pointermove', (e: any) => {
+    map.on('pointermove', (e) => {
       if (!editorMode) return;
       if (!isAppending()) {
         if (rubberBandLine) {
@@ -337,12 +336,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         return;
       }
 
-      const altKey = e.originalEvent && e.originalEvent.altKey;
+      const altKey = !!e.originalEvent?.altKey;
       const targetLl = getSnappedLatLng(e.latlng, altKey);
 
       if (editorPoints.length > 0) {
         const lastPt = editorPoints[editorPoints.length - 1];
-        const previewPts = [lastPt, [targetLl.lat, targetLl.lng]];
+        const previewPts: L.LatLngExpression[] = [lastPt, [targetLl.lat, targetLl.lng]];
         const accent = getActiveEditorAccentColor();
         if (!rubberBandLine) {
           rubberBandLine = new L.Polyline(previewPts, {
@@ -359,7 +358,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       }
     });
 
-    map.on('click', (e: any) => {
+    map.on('click', (e) => {
       if (!editorMode) return;
       if (!isAppending()) {
         selectedVertexIdx = -1;
@@ -370,7 +369,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       addEditorPoint(e.latlng, !!(orig && orig.altKey), !!(orig && orig.shiftKey));
     });
 
-    map.on('dblclick', (e: any) => {
+    map.on('dblclick', (e) => {
       if (!editorMode) return;
       // The second click already finished the line (addEditorPoint / vertex click)
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
@@ -441,7 +440,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function initProgressiveOverlays() {
-    const L = (window as any).L;
     const basePath = mapConfig.image.replace(/\.jpg$/i, '');
     const webp = mapConfig.webp ?? { low: false, med: false, full: false };
     const imgLow = basePath + (webp.low ? '_low.webp' : '_low.jpg');
@@ -449,7 +447,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const imgFull = webp.full ? basePath + '.webp' : mapConfig.image;
 
     new L.ImageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
-    let fullOverlay: any = null;
+    let fullOverlay: L.ImageOverlay | null = null;
     let fullLoading = false;
 
     const medPreload = new Image();
@@ -501,8 +499,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
   /** A halo under the selected run and a dot on each end, so it reads at any zoom */
   function drawSelectionMarks(seg: MapSegment) {
-    const L = (window as any).L;
-    if (!L || !map) return;
+    if (!map) return;
     clearSelectionMarks();
     const ll = parsePoints(seg.points);
     if (ll.length < 2) return;
@@ -520,8 +517,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function renderSegments(newBuildMode?: string | null) {
-    const L = (window as any).L;
-    if (!L || !map) return;
+    if (!map) return;
 
     if (typeof newBuildMode !== 'undefined') {
       buildMode = newBuildMode;
@@ -605,7 +601,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         }
       });
 
-      hitLine.on('click', (e: any) => {
+      hitLine.on('click', (e) => {
         if (L.DomEvent) L.DomEvent.stopPropagation(e);
         if (editorMode) {
           if (isAppending()) {
@@ -636,8 +632,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function renderSectorPolygons() {
-    const L = (window as any).L;
-    if (!L || !map) return;
+    if (!map) return;
 
     sectorPolygons.forEach((p) => map.removeLayer(p));
     sectorPolygons = [];
@@ -719,8 +714,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
-  function openAdminSegmentPopup(seg: MapSegment, latlng: any) {
-    const L = (window as any).L;
+  function openAdminSegmentPopup(seg: MapSegment, latlng: L.LatLngExpression) {
     const c = segColor(seg);
     const secName = getSectorName(seg.sector);
     const diffBadge = seg.difficulty
@@ -858,8 +852,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   // Snapping logic
-  function getSnappedLatLng(latlng: any, altPressed?: boolean) {
-    const L = (window as any).L;
+  function getSnappedLatLng(latlng: L.LatLng, altPressed?: boolean) {
     currentSnapTarget = null;
     if (!snapEnabled || altPressed || editorMode === 'sector_boundary') {
       hideSnapIndicator();
@@ -923,7 +916,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function showSnapIndicator(pt: [number, number], label: string) {
-    const L = (window as any).L;
     if (!snapMarker) {
       const icon = new L.DivIcon({
         className: 'snap-indicator-wrap',
@@ -983,7 +975,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function createVertexMarker(latlng: [number, number], index: number, total: number, accentColor: string) {
-    const L = (window as any).L;
     const isStart = index === 0;
     const isEnd = total > 1 && index === total - 1 && editorMode !== 'sector_boundary';
     const isSel = index === selectedVertexIdx;
@@ -1031,9 +1022,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       selectedVertexIdx = index;
     });
 
-    marker.on('drag', (e: any) => {
+    marker.on('drag', (e) => {
       const rawLl = marker.getLatLng();
-      const altKey = e.originalEvent && e.originalEvent.altKey;
+      const altKey = !!(e as DragEventWithPointer).originalEvent?.altKey;
       const snapped = getSnappedLatLng(rawLl, altKey);
       editorPoints[index] = [snapped.lat, snapped.lng];
       updateEditorDisplay(false);
@@ -1048,7 +1039,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       notifyEditorState();
     });
 
-    marker.on('click', (e: any) => {
+    marker.on('click', (e) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
       const orig = e.originalEvent;
       if (orig && (orig.altKey || orig.shiftKey)) {
@@ -1065,12 +1056,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       updateEditorDisplay(true);
     });
 
-    marker.on('contextmenu', (e: any) => {
+    marker.on('contextmenu', (e) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
       deleteVertexAt(index);
     });
 
-    marker.on('dblclick', (e: any) => {
+    marker.on('dblclick', (e) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
     });
 
@@ -1078,7 +1069,6 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function createMidpointMarker(index: number, nextIndex: number, accentColor: string) {
-    const L = (window as any).L;
     const p1 = editorPoints[index];
     const p2 = editorPoints[nextIndex];
     const midLat = (p1[0] + p2[0]) / 2;
@@ -1101,7 +1091,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     let insertedIndex = -1;
 
-    marker.on('click', (e: any) => {
+    marker.on('click', (e) => {
       if (L.DomEvent) L.DomEvent.stopPropagation(e);
       pushUndoState();
       const insertAt = index + 1;
@@ -1120,10 +1110,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       selectedVertexIdx = insertedIndex;
     });
 
-    marker.on('drag', (e: any) => {
+    marker.on('drag', (e) => {
       if (insertedIndex !== -1) {
         const rawLl = marker.getLatLng();
-        const altKey = e.originalEvent && e.originalEvent.altKey;
+        const altKey = !!(e as DragEventWithPointer).originalEvent?.altKey;
         const snapped = getSnappedLatLng(rawLl, altKey);
         editorPoints[insertedIndex] = [snapped.lat, snapped.lng];
         updateEditorDisplay(false);
@@ -1154,8 +1144,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   }
 
   function updateEditorDisplay(rebuildMarkers: boolean) {
-    const L = (window as any).L;
-    if (!L || !map) return;
+    if (!map) return;
     const accentColor = getActiveEditorAccentColor();
 
     if (editorLine) {
@@ -1515,7 +1504,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     document.removeEventListener('keydown', handleKeydown);
     if (map) {
       map.remove();
-      map = null;
+      // Back to "not initialised" so the guards (`if (!map)`) skip late calls and init() can run again
+      map = undefined as unknown as L.Map;
     }
   }
 
@@ -1544,13 +1534,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     getShowAvailable: () => showAvailable,
     /** The container changed size (the page fits itself to the screen after load): redraw and refit */
     resize: (bottomPad = 0) => {
-      const L = (window as any).L;
-      if (!map || !L) return;
+      if (!map) return;
       map.invalidateSize({ animate: false });
       // Once the player has moved the map themselves, leave their view alone
       if (userMoved || !mapBounds) return;
       // Fit the part of the mountain with runs on it, in the space above the phone's bottom sheet
-      const layers = Object.values(segmentLayers).filter((l: any) => typeof l.getBounds === 'function');
+      const layers = Object.values(segmentLayers).filter((l) => typeof l.getBounds === 'function');
       let bounds = layers.length ? new L.FeatureGroup(layers).getBounds() : new L.LatLngBounds(mapBounds);
       const size = map.getSize();
       if (size.x < size.y) {

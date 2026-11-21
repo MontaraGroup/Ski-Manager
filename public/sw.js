@@ -1,8 +1,7 @@
-const CACHE_NAME = 'ski-manager-v2';
+// v3: Leaflet is bundled by Vite now, so the old /js/leaflet.js and /css/leaflet.css copies are dropped
+const CACHE_NAME = 'ski-manager-v3';
 const PRECACHE = [
   '/css/style.css',
-  '/css/leaflet.css',
-  '/js/leaflet.js',
   '/favicon.svg',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png'
