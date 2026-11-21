@@ -27,7 +27,7 @@ class Auth extends AuthActivation
             return $this->fail($wrong, 401, ['code' => 'invalid_credentials']);
         }
 
-        // Every address shares one bucket per account, same as /api/auth
+        // Every address shares one bucket per account
         $throttler = service('throttler');
         $key = 'auth-account-' . hash('sha256', strtolower($identity));
         if (!$throttler->check($key, self::ACCOUNT_ATTEMPTS, self::ACCOUNT_WINDOW)) {

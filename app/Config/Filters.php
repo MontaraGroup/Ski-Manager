@@ -86,7 +86,7 @@ class Filters extends BaseFilters
         'before' => [
             'maintenance',
             // 'honeypot',
-            'csrf' => ['except' => ['api/auth', 'api/sync', 'api/v1/app/*']],
+            'csrf' => ['except' => ['api/v1/app/*']],
             'invalidchars',
         ],
         'after' => [
@@ -122,7 +122,7 @@ class Filters extends BaseFilters
      */
     public array $filters = [
         'throttle' => [
-            'before' => ['login*', 'register*', 'magic-link*', 'api/auth*', 'api/v1/app/auth*', 'demo/claim'],
+            'before' => ['login*', 'register*', 'magic-link*', 'api/v1/app/auth*', 'demo/claim'],
             'after'  => ['login'],
         ],
         'admin' => ['before' => ['admin*']],
