@@ -214,7 +214,7 @@ export default function ScenicLiftsPage({
       <section className="space-y-3 pt-2">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Icon name="fa-sparkles" className="text-warning text-base" />
+            <Icon name="fa-wand-magic-sparkles" className="text-warning text-base" />
             Available upgrades
           </h2>
           <p className="text-xs text-muted mt-0.5">

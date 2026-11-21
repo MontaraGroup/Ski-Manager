@@ -277,7 +277,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
-    <script async src="https://kit.fontawesome.com/e8108d3d5f.js" crossorigin="anonymous"></script>
+    <script async src="https://kit.fontawesome.com/bbfd599354.js" crossorigin="anonymous"></script>
     <script>
         var saved = localStorage.getItem('theme') || 'carboncloud';
         document.documentElement.setAttribute('data-theme', saved);

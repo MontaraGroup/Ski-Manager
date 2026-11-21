@@ -67,11 +67,11 @@ class ScenicLifts extends BaseController
             foreach ($installed as $uKey) {
                 if (isset(self::SCENIC_UPGRADES[$uKey])) {
                     $up = self::SCENIC_UPGRADES[$uKey];
-                    $rawIcon = $up['icon'] ?? 'fa-solid fa-sparkles';
+                    $rawIcon = $up['icon'] ?? 'fa-solid fa-wand-magic-sparkles';
                     $formattedUpgrades[] = [
                         'key' => $uKey,
                         'name' => (string) $up['name'],
-                        'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-sparkles',
+                        'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-wand-magic-sparkles',
                     ];
                 }
             }
@@ -107,11 +107,11 @@ class ScenicLifts extends BaseController
 
         $formattedUpgradesList = [];
         foreach (self::SCENIC_UPGRADES as $uKey => $up) {
-            $rawIcon = $up['icon'] ?? 'fa-solid fa-sparkles';
+            $rawIcon = $up['icon'] ?? 'fa-solid fa-wand-magic-sparkles';
             $formattedUpgradesList[] = [
                 'key' => (string) $uKey,
                 'name' => (string) $up['name'],
-                'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-sparkles',
+                'icon' => preg_match('/^[a-z0-9 -]+$/i', $rawIcon) ? $rawIcon : 'fa-solid fa-wand-magic-sparkles',
                 'cost' => (int) $up['cost'],
                 'costText' => currency((int) $up['cost']),
                 'revenueBoost' => (int) $up['revenue_boost'],
