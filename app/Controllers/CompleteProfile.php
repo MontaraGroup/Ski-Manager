@@ -65,6 +65,12 @@ class CompleteProfile extends BaseController
         $userId = auth()->id();
         $db = db_connect();
 
+        // This sets the starting cash, so it only runs once
+        $done = $db->table('player_finances')->select('profile_completed')->where('user_id', $userId)->get()->getRow('profile_completed');
+        if ($done) {
+            return redirect()->to('/dashboard');
+        }
+
         $difficulty = $this->request->getPost('difficulty');
         $resortMap = $this->request->getPost('resort_map');
         $terms = $this->request->getPost('terms');

@@ -123,7 +123,7 @@ export default function RegisterPage({
         </div>
 
         {/* Right Side: Registration Form */}
-        <div className="p-6 sm:p-8 lg:p-10 flex flex-col justify-center overflow-y-auto max-h-[90vh]">
+        <div className="p-6 sm:p-8 lg:p-10 flex flex-col lg:justify-center">
           <div className="w-full max-w-sm mx-auto space-y-5">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
@@ -252,7 +252,7 @@ export default function RegisterPage({
                     required
                     minLength={8}
                     autoComplete="new-password"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-11"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-11"
                   />
                   <Button
                     type="button"
@@ -261,7 +261,7 @@ export default function RegisterPage({
                     size="sm"
                     onPress={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 min-h-8 min-w-8 text-muted hover:text-foreground"
+                    className="absolute right-0.5 top-1/2 -translate-y-1/2 size-11 min-h-11 min-w-11 text-muted hover:text-foreground"
                   >
                     <Icon name={showPassword ? 'fa-eye-slash' : 'fa-eye'} className="w-4 h-4" />
                   </Button>
@@ -306,7 +306,7 @@ export default function RegisterPage({
                       <label
                         key={d.key}
                         onClick={() => setSelectedDifficulty(d.key)}
-                        className={`cursor-pointer rounded-lg border p-2.5 text-center transition-all ${
+                        className={`cursor-pointer rounded-lg border p-2.5 text-center transition-all has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary has-[:focus-visible]:ring-offset-2 ${
                           isSelected
                             ? 'border-primary bg-primary/10 shadow-sm'
                             : 'border-border bg-surface hover:border-foreground/40'
@@ -335,7 +335,7 @@ export default function RegisterPage({
                         <div className="text-xs font-bold text-foreground mt-1 tabular-nums">
                           {d.cashText}
                         </div>
-                        <p className="text-[10px] text-muted leading-tight mt-0.5 line-clamp-1">
+                        <p className="text-xs text-muted leading-tight mt-0.5">
                           {d.note}
                         </p>
                       </label>

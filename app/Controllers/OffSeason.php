@@ -53,6 +53,7 @@ class OffSeason extends BaseController
 
         $avgSlopeCond = count($slopes) > 0 ? (int) round(array_sum(array_column($slopes, 'condition_pct')) / count($slopes)) : 100;
         $avgLiftCond = count($lifts) > 0 ? (int) round(array_sum(array_column($lifts, 'condition_pct')) / count($lifts)) : 100;
+        $avgBuildingCond = count($buildings) > 0 ? (int) round(array_sum(array_column($buildings, 'condition_pct')) / count($buildings)) : 100;
         $avgEquipCond = count($equipment) > 0 ? (int) round(array_sum(array_column($equipment, 'condition_pct')) / count($equipment)) : 100;
         $avgParkCond = count($terrainParks) > 0 ? (int) round(array_sum(array_column($terrainParks, 'condition_pct')) / count($terrainParks)) : 100;
 
@@ -144,7 +145,7 @@ class OffSeason extends BaseController
                 'isSummer' => $isSummer,
                 'summerDay' => $isSummer ? $seasonDay - getWinterDays() : 0,
                 'daysUntilWinter' => $isSummer ? getSeasonLength() - $seasonDay + 1 : 0,
-                'daysUntilSummer' => $isWinter ? 100 - $seasonDay + 1 : 0,
+                'daysUntilSummer' => $isWinter ? getWinterDays() - $seasonDay + 1 : 0,
                 'winterDays' => getWinterDays(),
                 'summerDays' => getSummerDays(),
                 'seasonLength' => getSeasonLength(),
@@ -154,7 +155,7 @@ class OffSeason extends BaseController
             'health' => [
                 'slopes' => ['count' => count($slopes), 'avgCondition' => $avgSlopeCond],
                 'lifts' => ['count' => count($lifts), 'avgCondition' => $avgLiftCond],
-                'buildings' => ['count' => count($buildings), 'avgCondition' => 100],
+                'buildings' => ['count' => count($buildings), 'avgCondition' => $avgBuildingCond],
                 'equipment' => ['count' => count($equipment), 'avgCondition' => $avgEquipCond],
                 'terrainParks' => ['count' => count($terrainParks), 'avgCondition' => $avgParkCond],
             ],

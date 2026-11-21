@@ -6,7 +6,7 @@ use App\Controllers\ResortMap;
 
 /**
  * Replacing a built lift with another system on the same line, instead of demolishing it and
- * building again. The price is what demolish + rebuild would cost (new build less the 25% salvage)
+ * building again. The price is what demolish + rebuild would cost (new build less the lift's 50% salvage)
  * with a small discount for keeping the line. A swap to a cheaper lift pays back exactly what
  * demolish + rebuild would, so swapping back and forth can never make money.
  */

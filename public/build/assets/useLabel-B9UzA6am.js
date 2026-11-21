@@ -1,1 +1,0 @@
-import{V as e}from"./compose-D6kK_d5z.js";import{i as t}from"./VisuallyHidden-B-NeAmX9.js";function n(n){let{id:r,label:i,"aria-labelledby":a,"aria-label":o,labelElementType:s=`label`}=n;r=e(r);let c=e(),l={};i&&(a=a?`${c} ${a}`:c,l={id:c,htmlFor:s===`label`?r:void 0});let u=t({id:r,"aria-label":o,"aria-labelledby":a});return{labelProps:l,fieldProps:u}}export{n as t};
