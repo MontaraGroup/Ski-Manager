@@ -156,36 +156,6 @@ function getCurrentSeason(): array
     return $season;
 }
 
-function getNextSeason(): ?array
-{
-    static $nextSeason = null;
-    if ($nextSeason !== null) return $nextSeason;
-
-    $db = db_connect();
-    if (!$db->tableExists('seasons')) return null;
-
-    $nextSeason = $db->table('seasons')
-        ->where('active', 0)
-        ->where('season_number >', getSeasonNumber())
-        ->orderBy('season_number', 'ASC')
-        ->get()->getRowArray();
-
-    return $nextSeason ?: null;
-}
-
-function getDaysUntilNextSeason(): int
-{
-    $next = getNextSeason();
-    if ($next && !empty($next['start_date'])) {
-        $diff = (int) ceil((strtotime($next['start_date']) - strtotime(date('Y-m-d'))) / 86400);
-        return max(0, $diff);
-    }
-    $curr = getCurrentSeason();
-    $len = (int) ($curr['duration_days'] ?? 135);
-    $day = getSeasonDay();
-    return max(0, $len - $day);
-}
-
 function triggerSeasonRollover(?int $targetSeasonNumber = null, bool $force = false): bool
 {
     // Prevent automated season rollover while maintenance mode is active, unless explicitly forced

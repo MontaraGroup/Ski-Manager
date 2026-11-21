@@ -111,7 +111,7 @@ Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/anti
 │   │   └── game_helper.php         # Global helpers: currency(), temp(), snow(), speed(), getGameDay(), getSeasonLength(), featureEnabled()
 │   ├── Libraries/
 │   │   └── AdminSession.php        # Secondary password/session verification for /admin
-│   ├── Models/                     # CI4 models (FinanceModel,WeatherModel, DashboardWidgetModel, PresetLiftModel, PresetSlopeModel, etc.)
+│   ├── Models/                     # CI4 models (FinanceModel, DashboardWidgetModel, PresetLiftModel, PresetSlopeModel, etc.)
 │   └── Views/
 │       ├── layouts/
 │       │   ├── main.php            # Main player navbar, sidebar, theme & global scripts

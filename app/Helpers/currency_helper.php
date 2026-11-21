@@ -23,11 +23,6 @@ function currency($amount): string
         : $sign . $formatted . ' €';
 }
 
-function currencyConvert($amount): int
-{
-    return isImperial() ? (int) round($amount * 1.08) : (int) $amount;
-}
-
 function temp(int $celsius): string
 {
     if (isImperial()) {
@@ -69,5 +64,4 @@ function altitude(mixed $meters): string
     return number_format($meters) . ' m';
 }
 
-function speedUnit(): string { return isImperial() ? 'mph' : 'km/h'; }
 function distanceUnit(): string { return isImperial() ? 'ft' : 'm'; }
