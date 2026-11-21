@@ -151,6 +151,7 @@ class ResortMap extends BaseController
     {
         $resortMap  = $this->getSelectedMap();
         $mapConfig  = self::RESORT_MAPS[$resortMap] ?? self::RESORT_MAPS['ParkCity'];
+        $cleanImage = (string) $mapConfig['image'];
         $isAdmin    = $this->isAdmin();
         // Admins trace runs over <Map>-Big.jpg (the same view with lifts and runs drawn in) when it is on the server
         if ($isAdmin) {
@@ -159,8 +160,9 @@ class ResortMap extends BaseController
                 $mapConfig['image'] = $adminImage;
             }
         }
-        $userId     = auth()->id();
-        $db         = db_connect();
+        $userId       = auth()->id();
+        $db           = db_connect();
+        $map3dEnabled = function_exists('featureEnabled') && featureEnabled('map_3d');
 
         $sectorsQuery = $db->table('resort_sectors')
             ->where('resort_map', $resortMap)
@@ -187,18 +189,221 @@ class ResortMap extends BaseController
         $builtSegmentIds = [];
         $builtItems      = [];
         $userCash        = 0;
+        $resortOpen      = true;
+        $buildings       = [];
+        $parking         = [];
+        $terrainParks    = [];
+        $groomerFleet    = ['active' => 0, 'total' => 0];
+        $nightLighting   = ['activeCount' => 0, 'totalCoverage' => 0];
+        $weatherSummary  = null;
+        $liveSkiers      = null;
+
         if ($userId) {
-            $built = $db->table('player_items')
-                ->select('id, segment_id, item_type, subtype, name, length_meters, capacity, seats, difficulty, sector, status, snow_quality')
+            $finRow     = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
+            $userCash   = (int) ($finRow['cash'] ?? 0);
+            $resortOpen = (bool) ((int) ($finRow['resort_open'] ?? 1) === 1);
+
+            $allItems = $db->table('player_items')
+                ->select('id, segment_id, item_type, subtype, name, level, length_meters, capacity, seats, difficulty, sector, status, condition_pct, snow_quality, snow_depth, made_snow_cm, snow_target_cm, groomed_day')
                 ->where('user_id', $userId)
-                ->where('segment_id IS NOT NULL')
                 ->get()->getResultArray();
-            $builtSegmentIds = array_column($built, 'segment_id');
-            foreach ($built as $b) {
-                $builtItems[(int) $b['segment_id']] = self::withSwaps($b + ['salvage' => self::salvageValue($b)]);
+
+            $mechanicsByLift  = [];
+            $snowmakersBySlope = [];
+            $parksBySlope     = [];
+            $scenicByItem     = [];
+            $nightSlopeMatches = [];
+            $rawBuildings     = [];
+            $rawLights        = [];
+
+            if ($map3dEnabled) {
+                // Mechanics assigned to lifts
+                foreach ($db->table('staff')->select('name, assigned_to')->where('user_id', $userId)->where('role', 'mechanic')->where('status', 'active')->where('assigned_to IS NOT NULL')->get()->getResultArray() as $st) {
+                    $mechanicsByLift[(string) $st['assigned_to']] = (string) $st['name'];
+                }
+                // Equipment (snowmakers assigned to slopes + groomer fleet count)
+                foreach ($db->table('equipment')->select('id, equipment_type, status, assigned_to')->where('user_id', $userId)->get()->getResultArray() as $eq) {
+                    if ($eq['equipment_type'] === 'groomer') {
+                        $groomerFleet['total']++;
+                        if ($eq['status'] === 'active') {
+                            $groomerFleet['active']++;
+                        }
+                    } elseif ($eq['equipment_type'] === 'snowmaker' && !empty($eq['assigned_to']) && preg_match('/^slope_(\d+)$/', (string) $eq['assigned_to'], $m)) {
+                        $sid = (int) $m[1];
+                        if (!isset($snowmakersBySlope[$sid])) {
+                            $snowmakersBySlope[$sid] = ['total' => 0, 'active' => 0];
+                        }
+                        $snowmakersBySlope[$sid]['total']++;
+                        if ($eq['status'] === 'active') {
+                            $snowmakersBySlope[$sid]['active']++;
+                        }
+                    }
+                }
+                // Terrain parks
+                if ($db->tableExists('terrain_parks')) {
+                    foreach ($db->table('terrain_parks')->where('user_id', $userId)->get()->getResultArray() as $tp) {
+                        $parkRow = [
+                            'id'             => (int) $tp['id'],
+                            'name'           => (string) $tp['name'],
+                            'park_type'      => (string) $tp['park_type'],
+                            'size'           => (string) $tp['size'],
+                            'condition_pct'  => (float) ($tp['condition_pct'] ?? 100),
+                            'daily_visitors' => (int) ($tp['daily_visitors'] ?? 0),
+                            'status'         => (string) ($tp['status'] ?? 'open'),
+                            'slope_id'       => !empty($tp['slope_id']) ? (int) $tp['slope_id'] : null,
+                        ];
+                        $terrainParks[] = $parkRow;
+                        if ($parkRow['slope_id'] !== null && !isset($parksBySlope[$parkRow['slope_id']])) {
+                            $parksBySlope[$parkRow['slope_id']] = $parkRow;
+                        }
+                    }
+                }
+                // Night skiing lights
+                if ($db->tableExists('night_skiing')) {
+                    $rawLights = $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
+                    foreach ($rawLights as $lt) {
+                        $nightLighting['activeCount']++;
+                        $nightLighting['totalCoverage'] += (int) ($lt['coverage'] ?? 0);
+                        if (!empty($lt['assigned_slope'])) {
+                            $nightSlopeMatches[(string) $lt['assigned_slope']] = true;
+                        }
+                    }
+                }
+                // Scenic lifts
+                if ($db->tableExists('scenic_lifts')) {
+                    foreach ($db->table('scenic_lifts')->select('item_id, ticket_price, revenue_per_day')->where('user_id', $userId)->get()->getResultArray() as $sc) {
+                        $scenicByItem[(int) $sc['item_id']] = [
+                            'ticket_price'    => (int) ($sc['ticket_price'] ?? 25),
+                            'revenue_per_day' => (int) ($sc['revenue_per_day'] ?? 0),
+                        ];
+                    }
+                }
+                // Buildings + building_types metadata
+                $typeMeta = [];
+                if ($db->tableExists('building_types')) {
+                    foreach ($db->table('building_types')->select('type_key, label, singular, icon, route')->get()->getResultArray() as $bt) {
+                        $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) ($bt['icon'] ?? 'fa-building'));
+                        $typeMeta[$bt['type_key']] = [
+                            'label' => (string) ($bt['singular'] ?: $bt['label']),
+                            'icon'  => $icon,
+                            'route' => '/' . ltrim((string) ($bt['route'] ?? 'hotels'), '/'),
+                        ];
+                    }
+                }
+                $rawBuildings = $db->table('buildings')->where('user_id', $userId)->get()->getResultArray();
+                foreach ($rawBuildings as $rb) {
+                    $meta = $typeMeta[$rb['building_type']] ?? ['label' => ucwords(str_replace('_', ' ', (string) $rb['building_type'])), 'icon' => 'fa-building', 'route' => '/resort'];
+                    $buildings[] = [
+                        'id'              => (int) $rb['id'],
+                        'building_type'   => (string) $rb['building_type'],
+                        'typeLabel'       => $meta['label'],
+                        'icon'            => $meta['icon'],
+                        'route'           => $meta['route'],
+                        'name'            => (string) $rb['name'],
+                        'level'           => (int) ($rb['level'] ?? 1),
+                        'capacity'        => (int) ($rb['capacity'] ?? 0),
+                        'revenue_per_day' => (int) ($rb['revenue_per_day'] ?? 0),
+                        'upkeep_per_day'  => (int) ($rb['upkeep_per_day'] ?? 0),
+                        'condition_pct'   => (int) ($rb['condition_pct'] ?? 100),
+                        'status'          => (string) ($rb['status'] ?? 'open'),
+                        'map_x'           => isset($rb['map_x']) && $rb['map_x'] !== null ? (float) $rb['map_x'] : null,
+                        'map_y'           => isset($rb['map_y']) && $rb['map_y'] !== null ? (float) $rb['map_y'] : null,
+                        'resort_map'      => $rb['resort_map'] ?? null,
+                        'guests'          => 0,
+                        'occupancyPct'    => 0,
+                    ];
+                }
+                // Parking
+                if ($db->tableExists('parking')) {
+                    foreach ($db->table('parking')->where('user_id', $userId)->get()->getResultArray() as $pk) {
+                        $pType = (string) ($pk['parking_type'] ?? 'surface_lot');
+                        $cap = (int) ($pk['capacity'] ?? 0);
+                        $occ = (int) ($pk['occupied'] ?? 0);
+                        $parking[] = [
+                            'id'            => (int) $pk['id'],
+                            'parking_type'  => $pType,
+                            'typeLabel'     => \App\Models\ParkingModel::getLabel($pType),
+                            'icon'          => \App\Models\ParkingModel::getIcon($pType),
+                            'name'          => (string) $pk['name'],
+                            'capacity'      => $cap,
+                            'occupied'      => $occ,
+                            'occupancyPct'  => $cap > 0 ? min(100, (int) round(($occ / $cap) * 100)) : 0,
+                            'daily_revenue' => (float) ($pk['daily_revenue'] ?? 0),
+                            'condition_pct' => (float) ($pk['condition_pct'] ?? 100),
+                            'status'        => (string) ($pk['status'] ?? 'open'),
+                            'map_x'         => isset($pk['map_x']) && $pk['map_x'] !== null ? (float) $pk['map_x'] : null,
+                            'map_y'         => isset($pk['map_y']) && $pk['map_y'] !== null ? (float) $pk['map_y'] : null,
+                            'resort_map'    => $pk['resort_map'] ?? null,
+                        ];
+                    }
+                }
+
+                $weatherRow = function_exists('getCurrentWeather') ? getCurrentWeather() : null;
+                if ($weatherRow) {
+                    $weatherSummary = [
+                        'condition_name'    => (string) ($weatherRow['condition_name'] ?? 'Partly Cloudy'),
+                        'temp'              => (int) ($weatherRow['temp'] ?? -4),
+                        'tempFormatted'     => (string) ($weatherRow['temp_formatted'] ?? ($weatherRow['temp'] . '°C')),
+                        'snow_base'         => (int) ($weatherRow['snow_base'] ?? 50),
+                        'snowBaseFormatted' => (string) ($weatherRow['snow_formatted'] ?? ($weatherRow['snow_base'] . ' cm')),
+                        'snowfall'          => (int) ($weatherRow['snowfall'] ?? 0),
+                        'wind'              => (int) ($weatherRow['wind'] ?? 12),
+                        'isWinter'          => function_exists('isWinterDay') ? isWinterDay() : true,
+                    ];
+                }
+
+                $liveSkiers = \App\Libraries\LiveSkiers::snapshot($userId, [
+                    'finance'   => $finRow,
+                    'items'     => $allItems,
+                    'buildings' => $rawBuildings,
+                    'lights'    => $rawLights,
+                    'weather'   => $weatherRow,
+                ]);
+
+                // Attach real-time occupancy back to formatted buildings
+                $perB = $liveSkiers['perBuilding'] ?? [];
+                foreach ($buildings as &$bld) {
+                    if (isset($perB[$bld['id']])) {
+                        $bld['guests'] = (int) $perB[$bld['id']]['guests'];
+                        $bld['occupancyPct'] = (int) $perB[$bld['id']]['occupancyPct'];
+                    }
+                }
+                unset($bld);
             }
-            $finRow   = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
-            $userCash = (int) ($finRow['cash'] ?? 0);
+
+            $anyNightLit = $nightLighting['activeCount'] > 0 && empty($nightSlopeMatches);
+            foreach ($allItems as $b) {
+                if ($b['segment_id'] === null) {
+                    continue;
+                }
+                $segId = (int) $b['segment_id'];
+                $builtSegmentIds[] = $segId;
+                $entry = self::withSwaps($b + ['salvage' => self::salvageValue($b)]);
+                if ($map3dEnabled) {
+                    $iid = (int) $b['id'];
+                    $entry['condition_pct'] = (int) ($b['condition_pct'] ?? 100);
+                    if ($b['item_type'] === 'lift') {
+                        $lName = (string) ($b['name'] ?? '');
+                        $entry['mechanic_name'] = $mechanicsByLift[$lName] ?? ($mechanicsByLift['Lift #' . $iid] ?? null);
+                        $entry['scenic'] = $scenicByItem[$iid] ?? null;
+                    } else {
+                        $entry['snow_depth'] = (int) ($b['snow_depth'] ?? 50);
+                        $entry['made_snow_cm'] = (int) ($b['made_snow_cm'] ?? 0);
+                        $entry['snow_target_cm'] = (int) ($b['snow_target_cm'] ?? 30);
+                        $entry['groomed_day'] = (int) ($b['groomed_day'] ?? 0);
+                        $sm = $snowmakersBySlope[$iid] ?? ['total' => 0, 'active' => 0];
+                        $entry['snowmakers_count'] = $sm['total'];
+                        $entry['snowmakers_active'] = $sm['active'];
+                        $entry['terrain_park'] = $parksBySlope[$iid] ?? null;
+                        $sKey = 'slope_' . $iid;
+                        $entry['night_lit'] = isset($nightSlopeMatches[$sKey])
+                            || isset($nightSlopeMatches[(string) $iid])
+                            || isset($nightSlopeMatches[(string) ($b['name'] ?? '')])
+                            || ($anyNightLit && ($b['status'] ?? '') === 'open' && in_array((string) ($b['difficulty'] ?? ''), ['green', 'blue'], true));
+                    }
+                }
+                $builtItems[$segId] = $entry;
+            }
         }
 
         $releasedSectorIds = array_column(array_filter($sectors, fn($s) => $s['released']), 'id');
@@ -214,7 +419,12 @@ class ResortMap extends BaseController
         $page = [
             'resortMap'         => $resortMap,
             'resortMaps'        => self::RESORT_MAPS,
-            'mapConfig'         => $mapConfig + ['webp' => self::webpSizes((string) $mapConfig['image']), 'tiles' => self::tiles((string) $mapConfig['image'])],
+            'mapConfig'         => $mapConfig + [
+                'webp'       => self::webpSizes((string) $mapConfig['image']),
+                'tiles'      => self::tiles((string) $mapConfig['image']),
+                'cleanImage' => $cleanImage,
+                'cleanWebp'  => self::webpSizes($cleanImage),
+            ],
             'segments'          => $segments,
             'sectors'           => $sectors,
             'builtSegmentIds'   => $builtSegmentIds,
@@ -223,6 +433,15 @@ class ResortMap extends BaseController
             'userCash'          => $userCash,
             'userCashText'      => $userCashText,
             'isAdmin'           => $isAdmin,
+            'map3dEnabled'      => $map3dEnabled,
+            'resortOpen'        => $resortOpen,
+            'buildings'         => $buildings,
+            'parking'           => $parking,
+            'terrainParks'      => $terrainParks,
+            'groomerFleet'      => $groomerFleet,
+            'nightLighting'     => $nightLighting,
+            'weather'           => $weatherSummary,
+            'liveSkiers'        => $liveSkiers,
             'liftCount'         => $lifts,
             'slopeCount'        => $slopes,
             'segmentCount'      => count($segments),
@@ -255,10 +474,6 @@ class ResortMap extends BaseController
     }
 
     /**
-     * Which map sizes have a WebP copy next to the JPEG (low, med, full). The copies are made on the
-     * server (often 15-30% smaller); a map without them keeps loading the JPEGs.
-     */
-    /**
      * The map's tile set (scripts/make_map_tiles.py, run by deploy.sh), or null until it has been built:
      * the page then falls back to the low/med/full images. meta.json is written last, so its presence means
      * every tile is there; its version goes in the URL because /img/ is cached as immutable.
@@ -276,6 +491,10 @@ class ResortMap extends BaseController
         ];
     }
 
+    /**
+     * Which map sizes have a WebP copy next to the JPEG (low, med, full). The copies are made on the
+     * server (often 15-30% smaller); a map without them keeps loading the JPEGs.
+     */
     public static function webpSizes(string $image): array
     {
         $base = FCPATH . ltrim(preg_replace('/\.jpe?g$/i', '', $image), '/');
@@ -546,8 +765,17 @@ class ResortMap extends BaseController
 
         // 4. Insert built item and financial transaction
         $db->table('player_items')->insert($itemData);
-        $itemData['id']      = (int) $db->insertID();
-        $itemData['salvage'] = self::salvageValue($itemData);
+        $itemData['id']            = (int) $db->insertID();
+        $itemData['status']        = 'open';
+        $itemData['condition_pct'] = 100;
+        if ($itemData['item_type'] !== 'lift') {
+            $itemData['snow_quality']   = 'packed';
+            $itemData['snow_depth']     = 50;
+            $itemData['made_snow_cm']   = 0;
+            $itemData['snow_target_cm'] = 30;
+            $itemData['groomed_day']    = 0;
+        }
+        $itemData['salvage']       = self::salvageValue($itemData);
         $itemData = self::withSwaps($itemData);
 
         $db->table('financial_transactions')->insert([
@@ -575,14 +803,20 @@ class ResortMap extends BaseController
         $newFin  = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
         $newCash = (int) ($newFin['cash'] ?? 0);
 
-        return $this->response->setJSON([
+        $payload = [
             'success'    => true,
             'cost'       => $cost,
             'new_cash'   => $newCash,
             'item'       => $itemData,
             'csrf_token' => csrf_token(),
             'csrf_hash'  => csrf_hash(),
-        ]);
+        ];
+        if (function_exists('featureEnabled') && featureEnabled('map_3d')) {
+            \App\Libraries\LiveSkiers::clearCache();
+            $payload['liveSkiers'] = \App\Libraries\LiveSkiers::snapshot($userId);
+        }
+
+        return $this->response->setJSON($payload);
     }
 
     /**
@@ -643,7 +877,7 @@ class ResortMap extends BaseController
             return redirect()->back()->with('success', $msg);
         }
         $fin = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
-        return $this->response->setJSON([
+        $payload = [
             'success'    => true,
             'message'    => $msg,
             'refund'     => $refund,
@@ -651,7 +885,12 @@ class ResortMap extends BaseController
             'new_cash'   => (int) ($fin['cash'] ?? 0),
             'csrf_token' => csrf_token(),
             'csrf_hash'  => csrf_hash(),
-        ]);
+        ];
+        if (function_exists('featureEnabled') && featureEnabled('map_3d')) {
+            \App\Libraries\LiveSkiers::clearCache();
+            $payload['liveSkiers'] = \App\Libraries\LiveSkiers::snapshot($userId);
+        }
+        return $this->response->setJSON($payload);
     }
 
     /** A built lift with the systems it can be swapped to (LiftSwap), for the map and the app */
@@ -734,12 +973,166 @@ class ResortMap extends BaseController
         $item = self::withSwaps(array_merge($item, $update));
         $item['salvage'] = self::salvageValue($item);
         $fin = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
-        return $this->response->setJSON([
+        $payload = [
             'success'    => true,
             'message'    => $item['name'] . ' is now a ' . $newName . ($price > 0 ? '. Paid ' . currency($price) . '.' : ($price < 0 ? '. ' . currency(-$price) . ' paid back.' : '.')),
             'price'      => $price,
-            'item'       => array_intersect_key($item, array_flip(['id', 'segment_id', 'item_type', 'subtype', 'name', 'length_meters', 'capacity', 'seats', 'difficulty', 'sector', 'status', 'snow_quality', 'salvage', 'run_cost', 'swaps'])),
+            'item'       => array_intersect_key($item, array_flip(['id', 'segment_id', 'item_type', 'subtype', 'name', 'length_meters', 'capacity', 'seats', 'difficulty', 'sector', 'status', 'condition_pct', 'snow_quality', 'salvage', 'run_cost', 'swaps'])),
             'new_cash'   => (int) ($fin['cash'] ?? 0),
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ];
+        if (function_exists('featureEnabled') && featureEnabled('map_3d')) {
+            \App\Libraries\LiveSkiers::clearCache();
+            $payload['liveSkiers'] = \App\Libraries\LiveSkiers::snapshot($userId);
+        }
+        return $this->response->setJSON($payload);
+    }
+
+    /** GET /map/live — lightweight live skier & weather refresh for /map */
+    public function live()
+    {
+        $userId = auth()->id();
+        if (!$userId) {
+            return $this->response->setStatusCode(401)->setJSON(['error' => 'Login required']);
+        }
+        if (!function_exists('featureEnabled') || !featureEnabled('map_3d')) {
+            return $this->response->setStatusCode(403)->setJSON(['error' => '3D map is not enabled for your account.']);
+        }
+
+        $weatherSummary = null;
+        if (function_exists('getCurrentWeather')) {
+            $weatherRow = getCurrentWeather();
+            $weatherSummary = [
+                'condition_name'    => (string) ($weatherRow['condition_name'] ?? 'Partly Cloudy'),
+                'temp'              => (int) ($weatherRow['temp'] ?? -4),
+                'tempFormatted'     => (string) ($weatherRow['temp_formatted'] ?? ($weatherRow['temp'] . '°C')),
+                'snow_base'         => (int) ($weatherRow['snow_base'] ?? 50),
+                'snowBaseFormatted' => (string) ($weatherRow['snow_formatted'] ?? ($weatherRow['snow_base'] . ' cm')),
+                'snowfall'          => (int) ($weatherRow['snowfall'] ?? 0),
+                'wind'              => (int) ($weatherRow['wind'] ?? 12),
+                'isWinter'          => function_exists('isWinterDay') ? isWinterDay() : true,
+            ];
+        }
+
+        return $this->response->setJSON([
+            'success'    => true,
+            'liveSkiers' => \App\Libraries\LiveSkiers::snapshot((int) $userId),
+            'weather'    => $weatherSummary,
+            'serverNow'  => time(),
+        ]);
+    }
+
+    /** POST /map/building-position — pin a built building or parking lot to map coords */
+    public function saveBuildingPosition()
+    {
+        $userId = auth()->id();
+        $fail = fn(int $code, string $msg) => $this->response->setStatusCode($code)->setJSON([
+            'success'    => false,
+            'error'      => $msg,
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
+        if (!$userId) {
+            return $fail(401, 'Login required');
+        }
+        if (!function_exists('featureEnabled') || !featureEnabled('map_3d')) {
+            return $fail(403, 'Not available');
+        }
+
+        $data = $this->request->getJSON(true) ?? [];
+        $kind = (string) ($data['kind'] ?? 'building');
+        $id   = (int) ($data['id'] ?? 0);
+        if (!in_array($kind, ['building', 'parking'], true) || $id <= 0) {
+            return $fail(400, 'Invalid facility specified.');
+        }
+        if (!isset($data['map_x'], $data['map_y']) || !is_numeric($data['map_x']) || !is_numeric($data['map_y'])) {
+            return $fail(400, 'Missing coordinates.');
+        }
+
+        $resortMap = $this->getSelectedMap();
+        $cfg = self::RESORT_MAPS[$resortMap] ?? self::RESORT_MAPS['ParkCity'];
+        $maxW = (float) ($cfg['width'] ?? 600);
+        $maxH = (float) ($cfg['height'] ?? 340);
+        $mapX = round(max(4.0, min($maxW - 4.0, (float) $data['map_x'])), 2);
+        $mapY = round(max(4.0, min($maxH - 4.0, (float) $data['map_y'])), 2);
+
+        $table = $kind === 'parking' ? 'parking' : 'buildings';
+        $db = db_connect();
+        if (!$db->fieldExists('map_x', $table)) {
+            return $fail(500, 'Map placement columns are not migrated yet.');
+        }
+
+        $row = $db->table($table)->select('id')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
+        if (!$row) {
+            return $fail(404, 'Facility not found.');
+        }
+
+        $db->table($table)->where('id', $id)->where('user_id', $userId)->update([
+            'map_x'      => $mapX,
+            'map_y'      => $mapY,
+            'resort_map' => $resortMap,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->response->setJSON([
+            'success'    => true,
+            'kind'       => $kind,
+            'id'         => $id,
+            'map_x'      => $mapX,
+            'map_y'      => $mapY,
+            'resort_map' => $resortMap,
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
+    }
+
+    /** POST /map/building-position/reset — clear custom map coords back to automatic village placement */
+    public function resetBuildingPosition()
+    {
+        $userId = auth()->id();
+        $fail = fn(int $code, string $msg) => $this->response->setStatusCode($code)->setJSON([
+            'success'    => false,
+            'error'      => $msg,
+            'csrf_token' => csrf_token(),
+            'csrf_hash'  => csrf_hash(),
+        ]);
+        if (!$userId) {
+            return $fail(401, 'Login required');
+        }
+        if (!function_exists('featureEnabled') || !featureEnabled('map_3d')) {
+            return $fail(403, 'Not available');
+        }
+
+        $data = $this->request->getJSON(true) ?? [];
+        $kind = (string) ($data['kind'] ?? 'building');
+        $id   = (int) ($data['id'] ?? 0);
+        if (!in_array($kind, ['building', 'parking'], true) || $id <= 0) {
+            return $fail(400, 'Invalid facility specified.');
+        }
+
+        $table = $kind === 'parking' ? 'parking' : 'buildings';
+        $db = db_connect();
+        if (!$db->fieldExists('map_x', $table)) {
+            return $fail(500, 'Map placement columns are not migrated yet.');
+        }
+
+        $row = $db->table($table)->select('id')->where('id', $id)->where('user_id', $userId)->get()->getRowArray();
+        if (!$row) {
+            return $fail(404, 'Facility not found.');
+        }
+
+        $db->table($table)->where('id', $id)->where('user_id', $userId)->update([
+            'map_x'      => null,
+            'map_y'      => null,
+            'resort_map' => null,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->response->setJSON([
+            'success'    => true,
+            'kind'       => $kind,
+            'id'         => $id,
             'csrf_token' => csrf_token(),
             'csrf_hash'  => csrf_hash(),
         ]);

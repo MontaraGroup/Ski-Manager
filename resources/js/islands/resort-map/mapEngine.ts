@@ -1,5 +1,14 @@
 import * as L from 'leaflet';
-import type { BuiltItem, MapConfig, MapSegment, ResortMapProps, Sector, EditorState } from './types';
+import type {
+  BuiltItem,
+  EditorState,
+  LiveSkiersSnapshot,
+  MapConfig,
+  MapSegment,
+  PlacedFacility,
+  ResortMapProps,
+  Sector,
+} from './types';
 
 // Palette mapping
 const COLORS: Record<string, string> = {
@@ -17,6 +26,8 @@ const COLORS: Record<string, string> = {
 
 export interface MapEngineCallbacks {
   onSelectSegment: (seg: MapSegment | null) => void;
+  onSelectFacility?: (fac: PlacedFacility) => void;
+  onPlaceFacility?: (mapX: number, mapY: number) => void;
   onOpenBuildDrawer: (tab: 'lift' | 'slope') => void;
   onCloseBuildDrawer: () => void;
   onEditorStateChange: (state: EditorState) => void;
@@ -24,6 +35,8 @@ export interface MapEngineCallbacks {
   onSectorsUpdate: (sectors: Sector[]) => void;
   onBuiltUpdate: (builtIds: (string | number)[], builtItems: Record<string, BuiltItem>) => void;
   onCashUpdate: (cash: number) => void;
+  onLiveSkiersUpdate?: (live: LiveSkiersSnapshot) => void;
+  onCsrfRotate?: (hash: string) => void;
   onToast: (msg: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
@@ -108,6 +121,19 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
   let csrfName = props.csrf.name;
   let csrfHash = props.csrf.hash;
+
+  // 2D facility pins & live skier canvas overlay
+  let mapContainerEl: HTMLElement | null = null;
+  let facilityMarkers: L.Marker[] = [];
+  let currentFacilities: PlacedFacility[] = [];
+  let showFacilitiesLayer = true;
+  let selectedFacilityKey: string | null = null;
+  let placingMode = false;
+  let currentLiveSkiers: LiveSkiersSnapshot | null = props.liveSkiers ?? null;
+  let showSkiersOverlay = true;
+  let skierCanvas: HTMLCanvasElement | null = null;
+  let skierRaf = 0;
+  let skierDots: { pts: [number, number][]; cum: number[]; total: number; prog: number; speed: number; color: string }[] = [];
 
   // Admin Editor State
   let editorMode: 'draw' | 'edit' | 'sector_boundary' | null = null;
@@ -289,6 +315,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function init(container: HTMLElement) {
     if (map) return;
 
+    mapContainerEl = container;
     mapBounds = [
       [0, 0],
       [mapConfig.height, mapConfig.width],
@@ -304,6 +331,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       attributionControl: false,
     }).setView([mapConfig.height / 2, mapConfig.width / 2], 0);
 
+    skierCanvas = document.createElement('canvas');
+    skierCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:450;';
+    container.appendChild(skierCanvas);
+
     initProgressiveOverlays();
 
     map.fitBounds(mapBounds);
@@ -315,6 +346,9 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     ]);
 
     renderSegments();
+    rebuildSkierDots();
+    map.on('move zoom viewreset resize', () => drawSkierFrame());
+    document.addEventListener('visibilitychange', syncSkierLoop);
 
     // Leaflet 2 puts originalEvent on movestart/zoomstart only when the player moved the view
     // (drag, wheel, pinch, keyboard, zoom buttons), not for our own fitBounds/setView calls
@@ -359,6 +393,10 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
 
     map.on('click', (e) => {
+      if (placingMode && e.latlng) {
+        callbacks.onPlaceFacility?.(Number(e.latlng.lng.toFixed(2)), Number(e.latlng.lat.toFixed(2)));
+        return;
+      }
       if (!editorMode) return;
       if (!isAppending()) {
         selectedVertexIdx = -1;
@@ -534,6 +572,164 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     });
   }
 
+  function samplePolyline2D(pts: [number, number][], cum: number[], total: number, frac: number): [number, number] {
+    if (pts.length === 0) return [0, 0];
+    if (pts.length === 1 || total <= 1e-4) return pts[0];
+    const target = Math.max(0, Math.min(1, frac)) * total;
+    let idx = 0;
+    for (let i = 1; i < cum.length; i++) {
+      if (cum[i] >= target) {
+        idx = i - 1;
+        break;
+      }
+    }
+    const segLen = Math.max(1e-4, cum[idx + 1] - cum[idx]);
+    const t = (target - cum[idx]) / segLen;
+    return [
+      pts[idx][0] + (pts[idx + 1][0] - pts[idx][0]) * t,
+      pts[idx][1] + (pts[idx + 1][1] - pts[idx][1]) * t,
+    ];
+  }
+
+  let lastSkierTs = 0;
+  function drawSkierFrame(ts?: number) {
+    if (!skierCanvas || !map) return;
+    const w = skierCanvas.clientWidth;
+    const h = skierCanvas.clientHeight;
+    if (w <= 0 || h <= 0) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const pw = Math.round(w * dpr);
+    const ph = Math.round(h * dpr);
+    if (skierCanvas.width !== pw || skierCanvas.height !== ph) {
+      skierCanvas.width = pw;
+      skierCanvas.height = ph;
+    }
+    const ctx = skierCanvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    if (!showSkiersOverlay || skierDots.length === 0 || mapFilter === 'buildings') return;
+
+    const dt = typeof ts === 'number' && lastSkierTs > 0 ? Math.min(0.08, (ts - lastSkierTs) / 1000) : 0;
+    if (typeof ts === 'number') lastSkierTs = ts;
+
+    ctx.lineWidth = 1.25;
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+    for (const dot of skierDots) {
+      if (dt > 0) dot.prog = (dot.prog + dot.speed * dt) % 1;
+      const ll = samplePolyline2D(dot.pts, dot.cum, dot.total, dot.prog);
+      const pt = map.latLngToContainerPoint(ll);
+      if (pt.x < -8 || pt.x > w + 8 || pt.y < -8 || pt.y > h + 8) continue;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = dot.color;
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  function syncSkierLoop() {
+    if (skierRaf) {
+      cancelAnimationFrame(skierRaf);
+      skierRaf = 0;
+    }
+    lastSkierTs = 0;
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    drawSkierFrame();
+    if (!showSkiersOverlay || skierDots.length === 0 || document.hidden || reduced || mapFilter === 'buildings') {
+      return;
+    }
+    const tick = (now: number) => {
+      if (document.hidden || !showSkiersOverlay) {
+        skierRaf = 0;
+        return;
+      }
+      drawSkierFrame(now);
+      skierRaf = requestAnimationFrame(tick);
+    };
+    skierRaf = requestAnimationFrame(tick);
+  }
+
+  function rebuildSkierDots() {
+    skierDots = [];
+    if (!showSkiersOverlay || (currentLiveSkiers && (!currentLiveSkiers.resortOpen || currentLiveSkiers.liveTotal <= 0))) {
+      syncSkierLoop();
+      return;
+    }
+    const palette = ['#ef4444', '#38bdf8', '#f59e0b', '#10b981', '#ffffff'];
+    const openSlopes = segments.filter((s) => {
+      if (s.type === 'lift' || !isSegmentBuilt(s.id)) return false;
+      const bi = builtItems[String(s.id)];
+      return !bi || bi.status === 'open';
+    });
+    if (openSlopes.length === 0) {
+      syncSkierLoop();
+      return;
+    }
+    const perSeg = currentLiveSkiers?.perSegment ?? {};
+    const totalTarget = Math.min(180, Math.max(openSlopes.length, Math.round((currentLiveSkiers?.onSlopes ?? 24) * 0.45)));
+    const weights = openSlopes.map((s) => Math.max(1, perSeg[String(s.id)]?.skiers ?? 4));
+    const sumW = weights.reduce((a, b) => a + b, 0) || 1;
+    let seed = 42;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    openSlopes.forEach((seg, idx) => {
+      const raw = parsePoints(seg.points);
+      if (raw.length < 2) return;
+      const pts = raw[0][0] >= raw[raw.length - 1][0] ? raw : [...raw].reverse();
+      const cum: number[] = [0];
+      let total = 0;
+      for (let i = 1; i < pts.length; i++) {
+        total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+        cum.push(total);
+      }
+      const n = Math.max(1, Math.round((weights[idx] / sumW) * totalTarget));
+      for (let k = 0; k < n; k++) {
+        skierDots.push({
+          pts,
+          cum,
+          total,
+          prog: rand(),
+          speed: 0.055 + rand() * 0.055,
+          color: palette[(idx + k) % palette.length],
+        });
+      }
+    });
+    syncSkierLoop();
+  }
+
+  function renderFacilities() {
+    if (!map) return;
+    facilityMarkers.forEach((m) => map.removeLayer(m));
+    facilityMarkers = [];
+    if (!showFacilitiesLayer) return;
+    if (mapFilter === 'lift' || mapFilter === 'slope' || mapFilter === 'unassigned') return;
+
+    for (const fac of currentFacilities) {
+      const isSel = selectedFacilityKey === fac.key;
+      const badgeHtml = fac.clusterCount > 1 ? `<span class="map-facility-badge">${fac.clusterCount}</span>` : '';
+      const html = `<div class="map-facility-pin kind-${escHtml(fac.kind)}${isSel ? ' is-selected' : ''}" title="${escHtml(fac.label)}"><i class="fa-solid ${escHtml(fac.icon)}"></i>${badgeHtml}</div>`;
+      const icon = new L.DivIcon({
+        className: 'map-facility-icon-wrap',
+        html,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+      const marker = new L.Marker([fac.mapY, fac.mapX], { icon, interactive: true, zIndexOffset: isSel ? 900 : 500 }).addTo(map);
+      marker.on('click', (ev) => {
+        if (L.DomEvent) L.DomEvent.stopPropagation(ev);
+        if (placingMode && ev.latlng) {
+          callbacks.onPlaceFacility?.(Number(ev.latlng.lng.toFixed(2)), Number(ev.latlng.lat.toFixed(2)));
+          return;
+        }
+        callbacks.onSelectFacility?.(fac);
+      });
+      facilityMarkers.push(marker);
+    }
+  }
+
   function renderSegments(newBuildMode?: string | null) {
     if (!map) return;
 
@@ -547,6 +743,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     segmentLayers = {};
     hitLayers = {};
     stationMarkers = [];
+
+    if (mapFilter === 'buildings') {
+      renderSectorPolygons();
+      renderFacilities();
+      return;
+    }
 
     segments.forEach((seg) => {
       if (editingSegId && String(seg.id) === String(editingSegId)) return;
@@ -647,6 +849,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     }
 
     renderSectorPolygons();
+    renderFacilities();
   }
 
   function renderSectorPolygons() {
@@ -699,7 +902,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         callbacks.onCashUpdate(userCash);
       }
       callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+      if (res.liveSkiers) {
+        currentLiveSkiers = res.liveSkiers;
+        callbacks.onLiveSkiersUpdate?.(res.liveSkiers);
+      }
       renderSegments(buildMode);
+      rebuildSkierDots();
       callbacks.onToast(res.message || name + ' replaced.', 'success');
       if (cb) cb(true);
     });
@@ -726,7 +934,12 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         callbacks.onCashUpdate(userCash);
       }
       callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+      if (res.liveSkiers) {
+        currentLiveSkiers = res.liveSkiers;
+        callbacks.onLiveSkiersUpdate?.(res.liveSkiers);
+      }
       renderSegments(buildMode);
+      rebuildSkierDots();
       callbacks.onToast(res.message || name + ' demolished.', 'success');
       if (cb) cb(true);
     });
@@ -1507,6 +1720,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       .then((json) => {
         if (json && json.csrf_hash) {
           csrfHash = json.csrf_hash;
+          callbacks.onCsrfRotate?.(json.csrf_hash);
         }
         if (callback) callback(json);
       })
@@ -1520,11 +1734,21 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
   function destroy() {
     document.removeEventListener('keydown', handleKeydown);
+    document.removeEventListener('visibilitychange', syncSkierLoop);
+    if (skierRaf) {
+      cancelAnimationFrame(skierRaf);
+      skierRaf = 0;
+    }
+    if (skierCanvas && skierCanvas.parentNode) {
+      skierCanvas.parentNode.removeChild(skierCanvas);
+      skierCanvas = null;
+    }
     if (map) {
       map.remove();
       // Back to "not initialised" so the guards (`if (!map)`) skip late calls and init() can run again
       map = undefined as unknown as L.Map;
     }
+    mapContainerEl = null;
   }
 
   return {
@@ -1532,11 +1756,41 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     destroy,
     fitBounds,
     zoomToSegment,
+    zoomToPoint: (mapX: number, mapY: number) => {
+      if (!map) return;
+      map.setView([mapY, mapX], Math.max(map.getZoom(), 1), { animate: true });
+    },
     selectSegment,
     deselectSegment,
+    setCsrfHash: (hash: string) => {
+      csrfHash = hash;
+    },
+    syncBuiltState: (nextBuiltIds: (string | number)[], nextBuiltItems: Record<string, BuiltItem>, nextCash?: number) => {
+      builtIds = [...nextBuiltIds];
+      builtItems = { ...nextBuiltItems };
+      if (typeof nextCash === 'number') userCash = nextCash;
+      renderSegments(buildMode);
+      rebuildSkierDots();
+    },
+    setFacilities: (facs: PlacedFacility[], show: boolean, selKey: string | null) => {
+      currentFacilities = facs;
+      showFacilitiesLayer = show;
+      selectedFacilityKey = selKey;
+      renderFacilities();
+    },
+    setPlacingMode: (active: boolean) => {
+      placingMode = active;
+      if (mapContainerEl) mapContainerEl.classList.toggle('map-placing-cursor', active);
+    },
+    updateLiveSkiers: (live: LiveSkiersSnapshot | null, show: boolean) => {
+      currentLiveSkiers = live;
+      showSkiersOverlay = show;
+      rebuildSkierDots();
+    },
     setFilter: (f: string) => {
       mapFilter = f;
       renderSegments(buildMode);
+      syncSkierLoop();
     },
     setBuildMode: (m: string | null) => {
       buildMode = m;
@@ -1679,9 +1933,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
             callbacks.onCashUpdate(userCash);
           }
           callbacks.onBuiltUpdate([...builtIds], { ...builtItems });
+          if (res.liveSkiers) {
+            currentLiveSkiers = res.liveSkiers;
+            callbacks.onLiveSkiersUpdate?.(res.liveSkiers);
+          }
           // The panel says what was built and what to do next
           deselectSegment();
           renderSegments(buildMode);
+          rebuildSkierDots();
           if (typeof (window as any).loadTutorial === 'function') (window as any).loadTutorial();
           if (cb) cb(true);
         } else {

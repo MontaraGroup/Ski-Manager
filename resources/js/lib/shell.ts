@@ -32,6 +32,7 @@ export type Stats = {
   timezone: string;
   genepis: number;
   stars: number;
+  liveSkiers?: number | null;
 };
 
 /** One notification as NotificationFeed::item() sends it */

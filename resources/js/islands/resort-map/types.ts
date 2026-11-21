@@ -1,5 +1,9 @@
 import type { LiftSwapOption } from './LiftSwapDialog';
 
+export type MapViewMode = '3d' | '2d';
+export type MapLens = 'trails' | 'traffic' | 'snow' | 'steepness';
+export type MapLighting = 'day' | 'sunset' | 'night' | 'live';
+
 export interface MapSegment {
   id: number | string;
   name?: string;
@@ -22,34 +26,165 @@ export interface Sector {
   sort_order?: number;
 }
 
+export interface SlopeTerrainParkInfo {
+  id: number;
+  name: string;
+  park_type: string;
+  size: string;
+  condition_pct: number;
+  daily_visitors: number;
+  status: string;
+}
+
 export interface BuiltItem {
   id: number;
   segment_id: number | string;
   item_type: string;
   subtype?: string;
   name?: string;
+  level?: number;
   length_meters?: number;
   capacity?: number;
   difficulty?: string;
   sector?: number | string;
   status?: string;
+  condition_pct?: number;
   snow_quality?: string;
+  snow_depth?: number;
+  made_snow_cm?: number;
+  snow_target_cm?: number;
+  groomed_day?: number;
   salvage?: number;
   seats?: number;
-  /** Lifts: running cost per day, and the systems it can be swapped to (LiftSwapDialog) */
+  /** Lifts: running cost per day, mechanic assigned, scenic upgrade, swaps */
   run_cost?: number;
   swaps?: LiftSwapOption[];
+  mechanic_name?: string | null;
+  scenic?: { ticket_price: number; revenue_per_day: number } | null;
+  /** Slopes: snowmakers, attached terrain park, night lighting */
+  snowmakers_count?: number;
+  snowmakers_active?: number;
+  terrain_park?: SlopeTerrainParkInfo | null;
+  night_lit?: boolean;
+}
+
+export interface MapBuilding {
+  id: number;
+  building_type: string;
+  typeLabel: string;
+  icon: string;
+  route: string;
+  name: string;
+  level: number;
+  capacity: number;
+  revenue_per_day: number;
+  upkeep_per_day: number;
+  condition_pct: number;
+  status: string;
+  map_x: number | null;
+  map_y: number | null;
+  resort_map: string | null;
+  guests: number;
+  occupancyPct: number;
+}
+
+export interface MapParking {
+  id: number;
+  parking_type: string;
+  typeLabel: string;
+  icon: string;
+  name: string;
+  capacity: number;
+  occupied: number;
+  occupancyPct: number;
+  daily_revenue: number;
+  condition_pct: number;
+  status: string;
+  map_x: number | null;
+  map_y: number | null;
+  resort_map: string | null;
+}
+
+export interface MapTerrainPark {
+  id: number;
+  name: string;
+  park_type: string;
+  size: string;
+  condition_pct: number;
+  daily_visitors: number;
+  status: string;
+  slope_id: number | null;
+}
+
+export interface PlacedFacility {
+  key: string;
+  kind: 'building' | 'parking' | 'terrain_park';
+  id: number;
+  subType: string;
+  label: string;
+  typeLabel: string;
+  icon: string;
+  route: string;
+  status: string;
+  level: number;
+  conditionPct: number;
+  occupancyPct: number;
+  capacity: number;
+  currentCount: number;
+  dailyRevenue: number;
+  dailyUpkeep: number;
+  mapX: number;
+  mapY: number;
+  customPlaced: boolean;
+  slopeId?: number | null;
+  clusterCount: number;
+  clusteredFacilities?: PlacedFacility[];
+}
+
+export interface MapWeather {
+  condition_name: string;
+  temp: number;
+  tempFormatted: string;
+  snow_base: number;
+  snowBaseFormatted: string;
+  snowfall: number;
+  wind: number;
+  isWinter: boolean;
+}
+
+export interface SegmentTraffic {
+  skiers: number;
+  loadPct: number;
+  queue: number;
+}
+
+export interface LiveSkiersSnapshot {
+  liveTotal: number;
+  onSlopes: number;
+  onLifts: number;
+  inVillage: number;
+  dailyProjected: number;
+  dailyLastTick: number;
+  liftUtilizationPct: number;
+  resortOpen: boolean;
+  operatingPhase: string;
+  nightLit: boolean;
+  serverNow: number;
+  perSegment: Record<string, SegmentTraffic>;
+  perBuilding: Record<string, { guests: number; occupancyPct: number }>;
 }
 
 export interface MapConfig {
   name: string;
   location: string;
   image: string;
+  cleanImage?: string;
   admin_image?: string;
   width: number;
   height: number;
   /** Which sizes also exist as .webp (smaller); the engine uses those and the JPEGs for the rest */
   webp?: { low: boolean; med: boolean; full: boolean };
+  cleanWebp?: { low: boolean; med: boolean; full: boolean };
   /** 256 px tiles (scripts/make_map_tiles.py); null until the server has built them */
   tiles?: { url: string; maxZoom: number } | null;
 }
@@ -83,6 +218,15 @@ export interface ResortMapProps {
   userCash: number;
   userCashText: string;
   isAdmin: boolean;
+  map3dEnabled?: boolean;
+  resortOpen?: boolean;
+  buildings?: MapBuilding[];
+  parking?: MapParking[];
+  terrainParks?: MapTerrainPark[];
+  groomerFleet?: { active: number; total: number };
+  nightLighting?: { activeCount: number; totalCoverage: number };
+  weather?: MapWeather | null;
+  liveSkiers?: LiveSkiersSnapshot | null;
   liftCount: number;
   slopeCount: number;
   segmentCount: number;

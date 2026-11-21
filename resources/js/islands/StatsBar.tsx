@@ -125,6 +125,17 @@ export default function StatsBar(stats: Stats) {
         <Stat href="/resort-analysis" label={`Resort rating ${stats.stars} of 5 stars. Open the analysis`} icon="fa-star" tone="text-warning">
           <span className="tabular-nums">{stats.stars}/5</span>
         </Stat>
+        {typeof stats.liveSkiers === 'number' && (
+          <Stat
+            href="/map"
+            label={`${stats.liveSkiers.toLocaleString('en-US')} skiers currently in resort. Open Trail Map`}
+            icon="fa-person-skiing"
+            tone="text-link"
+          >
+            <span className="font-semibold tabular-nums">{stats.liveSkiers.toLocaleString('en-US')}</span>
+            <span className="hidden text-xs text-muted sm:inline">live</span>
+          </Stat>
+        )}
       </ul>
     </div>
   );

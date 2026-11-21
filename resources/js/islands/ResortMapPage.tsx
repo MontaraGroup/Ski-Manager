@@ -1,45 +1,126 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Button, Chip, Spinner } from '@heroui/react';
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Button, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Select } from '@/components/Select';
 // Leaflet's own CSS loads with this chunk, after islands.css, so resort-map.css overrides keep applying
 import 'leaflet/dist/leaflet.css';
-import { createMapEngine } from './resort-map/mapEngine';
-import type { BuiltItem, MapSegment, ResortMapProps, Sector, EditorState } from './resort-map/types';
-import { MapHeader } from './resort-map/MapHeader';
-import { MapPanel } from './resort-map/MapPanel';
-import { MapKey } from './resort-map/MapKey';
+import { BuildingInspectorView } from './resort-map/BuildingInspectorView';
 import { BuildFooter, BuildView } from './resort-map/BuildView';
+import { BrowseView, type BuildNotice, type SortOrder, type Suggestion } from './resort-map/BrowseView';
 import { BuiltRunView } from './resort-map/BuiltRunView';
 import type { LiftSwapOption } from './resort-map/LiftSwapDialog';
-import { BrowseView, type BuildNotice, type SortOrder, type Suggestion } from './resort-map/BrowseView';
-import { TrailSign, buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
+import { MapHeader } from './resort-map/MapHeader';
+import { MapKey } from './resort-map/MapKey';
+import { MapPanel } from './resort-map/MapPanel';
+import { createMapApi } from './resort-map/mapApi';
+import { computePlacedFacilities } from './resort-map/placement';
+import type { Map3DViewportHandle } from './resort-map/scene3d/Map3DViewport';
+import { buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
+import type {
+  BuiltItem,
+  EditorState,
+  LiveSkiersSnapshot,
+  MapBuilding,
+  MapLens,
+  MapLighting,
+  MapParking,
+  MapSegment,
+  MapViewMode,
+  MapWeather,
+  PlacedFacility,
+  ResortMapProps,
+  Sector,
+} from './resort-map/types';
+
+type MapEngineInstance = ReturnType<typeof import('./resort-map/mapEngine')['createMapEngine']>;
+
+const Map3DViewport = lazy(() => import('./resort-map/scene3d/Map3DViewport'));
+const AdminEditorToolbar = lazy(() =>
+  import('./resort-map/AdminMapStudio').then((m) => ({ default: m.AdminEditorToolbar }))
+);
+const AdminInspectorDrawer = lazy(() =>
+  import('./resort-map/AdminMapStudio').then((m) => ({ default: m.AdminInspectorDrawer }))
+);
+
+function detectWebGL2(): boolean {
+  if (typeof document === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(canvas.getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
+function readShowAvailable(): boolean {
+  try {
+    return localStorage.getItem('map_show_available') !== '0';
+  } catch {
+    return true;
+  }
+}
+
+function readInitialViewMode(enabled: boolean, supported: boolean): MapViewMode {
+  if (!enabled || !supported) return '2d';
+  try {
+    if (localStorage.getItem('map_view_mode') === '2d') return '2d';
+  } catch {}
+  return '3d';
+}
 
 export default function ResortMapPage(props: ResortMapProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<ReturnType<typeof createMapEngine> | null>(null);
+  const engineRef = useRef<MapEngineInstance | null>(null);
+  const [engineApi, setEngineApi] = useState<MapEngineInstance | null>(null);
+  const viewport3dRef = useRef<Map3DViewportHandle | null>(null);
 
-  // Data states
+  const map3dEnabled = Boolean(props.map3dEnabled);
+  const [webglSupported, setWebglSupported] = useState<boolean>(() => (map3dEnabled ? detectWebGL2() : false));
+  const [viewMode, setViewMode] = useState<MapViewMode>(() =>
+    readInitialViewMode(map3dEnabled, map3dEnabled ? detectWebGL2() : false)
+  );
+
+  // Core world & live states
   const [segments, setSegments] = useState<MapSegment[]>(props.segments);
   const [sectors, setSectors] = useState<Sector[]>(props.sectors);
   const [builtIds, setBuiltIds] = useState<(string | number)[]>(props.builtSegmentIds);
   const [builtItems, setBuiltItems] = useState<Record<string, BuiltItem>>(props.builtItems);
   const [userCash, setUserCash] = useState<number>(props.userCash);
+  const [buildings, setBuildings] = useState<MapBuilding[]>(props.buildings ?? []);
+  const [parking, setParking] = useState<MapParking[]>(props.parking ?? []);
+  const terrainParks = props.terrainParks ?? [];
+  const [weather, setWeather] = useState<MapWeather | null>(props.weather ?? null);
+  const [liveSkiers, setLiveSkiers] = useState<LiveSkiersSnapshot | null>(props.liveSkiers ?? null);
 
-  const isBuilt = (id: string | number) => builtIds.some((b) => sameId(b, id));
-  const builtSlopes = useMemo(() => segments.filter((s) => s.type !== 'lift' && builtIds.some((b) => sameId(b, s.id))), [segments, builtIds]);
-  const builtLiftCount = useMemo(() => segments.filter((s) => s.type === 'lift' && builtIds.some((b) => sameId(b, s.id))).length, [segments, builtIds]);
-  // A new player gets the panel open on their first step: a slope, then a lift
+  const isBuilt = useCallback(
+    (id: string | number) => builtIds.some((b) => sameId(b, id)),
+    [builtIds]
+  );
+  const builtSlopes = useMemo(
+    () => segments.filter((s) => s.type !== 'lift' && builtIds.some((b) => sameId(b, s.id))),
+    [segments, builtIds]
+  );
+  const builtLiftCount = useMemo(
+    () => segments.filter((s) => s.type === 'lift' && builtIds.some((b) => sameId(b, s.id))).length,
+    [segments, builtIds]
+  );
   const needsFirst = !props.isAdmin && (builtSlopes.length === 0 || builtLiftCount === 0);
 
   // UI states
   const [mapFilter, setMapFilter] = useState<string>('all');
-  const [showAvailable, setShowAvailable] = useState<boolean>(true);
+  const [showAvailable, setShowAvailable] = useState<boolean>(readShowAvailable);
+  const [lens, setLens] = useState<MapLens>('trails');
+  const [lighting, setLighting] = useState<MapLighting>('day');
+  const [showBuildings, setShowBuildings] = useState<boolean>(true);
+  const [showSkiers, setShowSkiers] = useState<boolean>(true);
+
   const [isBuildDrawerOpen, setIsBuildDrawerOpen] = useState<boolean>(needsFirst);
   const [isInspectorDrawerOpen, setIsInspectorDrawerOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'lift' | 'slope'>(builtSlopes.length === 0 ? 'slope' : 'lift');
   const [selectedSeg, setSelectedSeg] = useState<MapSegment | null>(null);
+  const [selectedFacilityKey, setSelectedFacilityKey] = useState<string | null>(null);
+  const [placingFacility, setPlacingFacility] = useState<PlacedFacility | null>(null);
   const [notice, setNotice] = useState<BuildNotice | null>(null);
 
   // Build options
@@ -53,14 +134,7 @@ export default function ResortMapPage(props: ResortMapProps) {
   const [diffFilter, setDiffFilter] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('cost_asc');
 
-  // Inspector search / filter
-  const [inspectorSearch, setInspectorSearch] = useState<string>('');
-  const [inspectorFilter, setInspectorFilter] = useState<string>('all');
-  const [showNewSectorForm, setShowNewSectorForm] = useState<boolean>(false);
-  const [newSecName, setNewSecName] = useState<string>('');
-  const [newSecColor, setNewSecColor] = useState<string>('#3b82f6');
-
-  // Editor state
+  // Admin 2D editor state
   const [editorState, setEditorState] = useState<EditorState>({
     active: false,
     mode: null,
@@ -79,15 +153,80 @@ export default function ResortMapPage(props: ResortMapProps) {
     snapStatus: null,
   });
 
+  // Shared CSRF client
+  const mapApi = useMemo(
+    () =>
+      createMapApi(props.csrf, (nextHash) => {
+        engineRef.current?.setCsrfHash(nextHash);
+      }),
+    []
+  );
+
   // Toast
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
-  function triggerToast(msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') {
+  const triggerToast = useCallback((msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToast({ msg, type });
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3200);
-  }
+  }, []);
+
+  // Computed facility placements shared identically by 3D and 2D maps
+  const facilities = useMemo(
+    () =>
+      computePlacedFacilities(
+        props.resortMap,
+        props.mapConfig,
+        segments,
+        builtIds,
+        builtItems,
+        buildings,
+        parking,
+        terrainParks
+      ),
+    [props.resortMap, props.mapConfig, segments, builtIds, builtItems, buildings, parking, terrainParks]
+  );
+
+  const selectedFacility = useMemo(() => {
+    if (!selectedFacilityKey) return null;
+    for (const f of facilities) {
+      if (f.key === selectedFacilityKey) return f;
+      const child = f.clusteredFacilities?.find((c) => c.key === selectedFacilityKey);
+      if (child) return child;
+    }
+    return null;
+  }, [facilities, selectedFacilityKey]);
+
+  // Ref for latest props/handlers used by async callbacks and 2D engine init
+  const stateRef = useRef({
+    builtIds,
+    builtItems,
+    userCash,
+    segments,
+    sectors,
+    facilities,
+    showBuildings,
+    selectedFacilityKey,
+    liveSkiers,
+    showSkiers,
+    mapFilter,
+    placingFacility,
+  });
+  stateRef.current = {
+    builtIds,
+    builtItems,
+    userCash,
+    segments,
+    sectors,
+    facilities,
+    showBuildings,
+    selectedFacilityKey,
+    liveSkiers,
+    showSkiers,
+    mapFilter,
+    placingFacility,
+  };
 
   /*
    * Fill the screen between the navbar and the phone dock. A fixed calc() left the bottom of the
@@ -105,7 +244,6 @@ export default function ResortMapPage(props: ResortMapProps) {
     }
     fit();
     window.addEventListener('resize', fit);
-    // The navbar and stats bar above can finish rendering after this island: measure again when they do
     const ro = new ResizeObserver(fit);
     ro.observe(document.body);
     return () => {
@@ -114,58 +252,247 @@ export default function ResortMapPage(props: ResortMapProps) {
     };
   }, []);
 
-  // Initialize Map Engine
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    const engine = createMapEngine(props, {
-      onSelectSegment: (seg) => {
-        setSelectedSeg(seg);
-        if (seg) {
-          setNotice(null);
-          if (seg.type !== 'lift') {
-            setSlopeType(seg.type && seg.type !== 'slope' ? seg.type : 'downhill');
-          }
-        }
-      },
-      onOpenBuildDrawer: (tab) => {
-        setIsInspectorDrawerOpen(false);
-        setIsBuildDrawerOpen(true);
-        setActiveTab(tab);
-      },
-      onCloseBuildDrawer: () => {
-        setIsBuildDrawerOpen(false);
-        setSelectedSeg(null);
-      },
-      onEditorStateChange: (state) => setEditorState(state),
-      onSegmentsUpdate: (segs) => setSegments(segs),
-      onSectorsUpdate: (secs) => setSectors(secs),
-      onBuiltUpdate: (ids, items) => {
-        setBuiltIds(ids);
-        setBuiltItems(items);
-      },
-      onCashUpdate: (cash) => setUserCash(cash),
-      onToast: triggerToast,
-    });
-
-    engine.init(mapContainerRef.current);
-    engineRef.current = engine;
-    setShowAvailable(engine.getShowAvailable());
-    if (needsFirst) engine.setBuildMode(builtSlopes.length === 0 ? 'slope' : 'lift');
-    // The frame may already have its final size by now; fit once the panel has laid out
-    requestAnimationFrame(syncMapSize);
-
-    return () => {
-      engine.destroy();
-      document.body.classList.remove('map-drawer-open');
-    };
+  // Facility select & place handlers
+  const handleSelectFacility = useCallback((fac: PlacedFacility) => {
+    setPlacingFacility(null);
+    setSelectedSeg(null);
+    setNotice(null);
+    engineRef.current?.deselectSegment();
+    setSelectedFacilityKey(fac.key);
+    setIsInspectorDrawerOpen(false);
+    setIsBuildDrawerOpen(true);
   }, []);
 
-  /*
-   * Leaflet measures its box once: tell it when the frame is resized. Until the player moves the map
-   * (the engine tracks that), it also refits to the runs, above the phone's bottom sheet. The sheet's
-   * maximum (half the map, MapPanel) is used rather than its height mid-layout.
-   */
+  const handlePlaceFacility = useCallback(
+    async (mapX: number, mapY: number) => {
+      const target = stateRef.current.placingFacility;
+      if (!target || (target.kind !== 'building' && target.kind !== 'parking')) return;
+      setPlacingFacility(null);
+      try {
+        const res = await mapApi.postJSON('/map/building-position', {
+          kind: target.kind,
+          id: target.id,
+          map_x: mapX,
+          map_y: mapY,
+        });
+        if (!res?.success) {
+          triggerToast(res?.error || 'Could not move facility.', 'error');
+          return;
+        }
+        if (target.kind === 'building') {
+          setBuildings((prev) =>
+            prev.map((b) =>
+              b.id === target.id
+                ? { ...b, map_x: res.map_x, map_y: res.map_y, resort_map: res.resort_map }
+                : b
+            )
+          );
+        } else {
+          setParking((prev) =>
+            prev.map((p) =>
+              p.id === target.id
+                ? { ...p, map_x: res.map_x, map_y: res.map_y, resort_map: res.resort_map }
+                : p
+            )
+          );
+        }
+        triggerToast(`Moved ${target.label}`, 'success');
+      } catch (err: any) {
+        triggerToast(err?.message || 'Could not save position.', 'error');
+      }
+    },
+    [mapApi, triggerToast]
+  );
+
+  const handleResetFacility = useCallback(
+    async (fac: PlacedFacility) => {
+      if (fac.kind !== 'building' && fac.kind !== 'parking') return;
+      try {
+        const res = await mapApi.postJSON('/map/building-position/reset', {
+          kind: fac.kind,
+          id: fac.id,
+        });
+        if (!res?.success) {
+          triggerToast(res?.error || 'Could not reset position.', 'error');
+          return;
+        }
+        if (fac.kind === 'building') {
+          setBuildings((prev) =>
+            prev.map((b) => (b.id === fac.id ? { ...b, map_x: null, map_y: null, resort_map: null } : b))
+          );
+        } else {
+          setParking((prev) =>
+            prev.map((p) => (p.id === fac.id ? { ...p, map_x: null, map_y: null, resort_map: null } : p))
+          );
+        }
+        triggerToast(`Reset ${fac.label} to auto placement`, 'info');
+      } catch (err: any) {
+        triggerToast(err?.message || 'Could not reset position.', 'error');
+      }
+    },
+    [mapApi, triggerToast]
+  );
+
+  const applyLiveSnapshot = useCallback((live: LiveSkiersSnapshot | null, nextWeather?: MapWeather | null) => {
+    if (live) {
+      setLiveSkiers(live);
+      if (live.perBuilding) {
+        setBuildings((prev) =>
+          prev.map((b) => {
+            const u = live.perBuilding[String(b.id)];
+            return u ? { ...b, guests: u.guests, occupancyPct: u.occupancyPct } : b;
+          })
+        );
+      }
+    }
+    if (nextWeather) setWeather(nextWeather);
+  }, []);
+
+  // Dynamically load & mount 2D Leaflet engine only when viewMode === '2d'
+  useEffect(() => {
+    if (viewMode !== '2d' || !mapContainerRef.current) return;
+    let cancelled = false;
+    let mountedEngine: MapEngineInstance | null = null;
+
+    import('./resort-map/mapEngine').then(({ createMapEngine }) => {
+      if (cancelled || !mapContainerRef.current) return;
+      const snap = stateRef.current;
+      const engine = createMapEngine(
+        {
+          ...props,
+          segments: snap.segments,
+          sectors: snap.sectors,
+          builtSegmentIds: snap.builtIds,
+          builtItems: snap.builtItems,
+          userCash: snap.userCash,
+          liveSkiers: snap.liveSkiers,
+          csrf: { name: props.csrf.name, hash: mapApi.getCsrfHash() },
+        },
+        {
+          onSelectSegment: (seg) => {
+            setSelectedFacilityKey(null);
+            setSelectedSeg(seg);
+            if (seg) {
+              setNotice(null);
+              if (seg.type !== 'lift') {
+                setSlopeType(seg.type && seg.type !== 'slope' ? seg.type : 'downhill');
+              }
+            }
+          },
+          onSelectFacility: handleSelectFacility,
+          onPlaceFacility: handlePlaceFacility,
+          onOpenBuildDrawer: (tab) => {
+            setIsInspectorDrawerOpen(false);
+            setIsBuildDrawerOpen(true);
+            setActiveTab(tab);
+          },
+          onCloseBuildDrawer: () => {
+            setIsBuildDrawerOpen(false);
+            setSelectedSeg(null);
+            setSelectedFacilityKey(null);
+          },
+          onEditorStateChange: (state) => setEditorState(state),
+          onSegmentsUpdate: (segs) => setSegments(segs),
+          onSectorsUpdate: (secs) => setSectors(secs),
+          onBuiltUpdate: (ids, items) => {
+            setBuiltIds(ids);
+            setBuiltItems(items);
+          },
+          onCashUpdate: (cash) => setUserCash(cash),
+          onLiveSkiersUpdate: (live) => applyLiveSnapshot(live),
+          onCsrfRotate: (h) => mapApi.setCsrfHash(h),
+          onToast: triggerToast,
+        }
+      );
+
+      engine.init(mapContainerRef.current);
+      mountedEngine = engine;
+      engineRef.current = engine;
+      setEngineApi(engine);
+      setShowAvailable(engine.getShowAvailable());
+      if (needsFirst) engine.setBuildMode(builtSlopes.length === 0 ? 'slope' : 'lift');
+      if (snap.mapFilter !== 'all') engine.setFilter(snap.mapFilter);
+      engine.setFacilities(snap.facilities, snap.showBuildings, snap.selectedFacilityKey);
+      engine.setPlacingMode(Boolean(snap.placingFacility));
+      engine.updateLiveSkiers(snap.liveSkiers, snap.showSkiers);
+      requestAnimationFrame(syncMapSize);
+    });
+
+    return () => {
+      cancelled = true;
+      if (mountedEngine) {
+        mountedEngine.destroy();
+      }
+      if (engineRef.current === mountedEngine) {
+        engineRef.current = null;
+      }
+      setEngineApi(null);
+    };
+  }, [viewMode]);
+
+  // Keep 2D engine overlays synced when state changes while 2D is mounted
+  useEffect(() => {
+    if (viewMode !== '2d' || !engineRef.current) return;
+    engineRef.current.setFacilities(facilities, showBuildings, selectedFacilityKey);
+  }, [viewMode, facilities, showBuildings, selectedFacilityKey]);
+
+  useEffect(() => {
+    if (viewMode !== '2d' || !engineRef.current) return;
+    engineRef.current.updateLiveSkiers(liveSkiers, showSkiers);
+  }, [viewMode, liveSkiers, showSkiers]);
+
+  useEffect(() => {
+    if (viewMode !== '2d' || !engineRef.current) return;
+    engineRef.current.setPlacingMode(Boolean(placingFacility));
+  }, [viewMode, placingFacility]);
+
+  // 30s live skier & weather polling when map3dEnabled is active
+  useEffect(() => {
+    if (!map3dEnabled) return;
+    let lastFetchAt = Date.now();
+    const poll = async () => {
+      if (document.hidden) return;
+      try {
+        const res = await mapApi.getJSON('/map/live');
+        if (res?.success) {
+          lastFetchAt = Date.now();
+          applyLiveSnapshot(res.liveSkiers ?? null, res.weather ?? null);
+        }
+      } catch {
+        // Silent background refresh
+      }
+    };
+
+    const timer = setInterval(poll, 30000);
+    const onVis = () => {
+      if (!document.hidden && Date.now() - lastFetchAt > 20000) {
+        poll();
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [map3dEnabled, mapApi, applyLiveSnapshot]);
+
+  // Keyboard shortcuts (Escape cancels placement or closes panel; F fits mountain)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase() || '';
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+      if (e.key === 'Escape' && placingFacility) {
+        e.preventDefault();
+        setPlacingFacility(null);
+      } else if ((e.key === 'f' || e.key === 'F') && !editorState.active) {
+        if (viewMode === '3d') viewport3dRef.current?.fit();
+        else engineRef.current?.fitBounds();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [placingFacility, editorState.active, viewMode]);
+
   const panelOpen = isBuildDrawerOpen || isInspectorDrawerOpen;
   function syncMapSize() {
     if (!engineRef.current || !mapContainerRef.current) return;
@@ -174,12 +501,14 @@ export default function ResortMapPage(props: ResortMapProps) {
     engineRef.current.resize(pad);
   }
   useEffect(() => {
-    if (frameHeight) syncMapSize();
-  }, [frameHeight, panelOpen]);
+    if (frameHeight && viewMode === '2d') syncMapSize();
+  }, [frameHeight, panelOpen, viewMode]);
 
-  // The tutorial card (layouts/main.php) moves out of the way on phones while a panel is open
   useEffect(() => {
     document.body.classList.toggle('map-drawer-open', isBuildDrawerOpen || isInspectorDrawerOpen);
+    return () => {
+      document.body.classList.remove('map-drawer-open');
+    };
   }, [isBuildDrawerOpen, isInspectorDrawerOpen]);
 
   // Keep the carrier size valid for the chosen lift system
@@ -198,7 +527,6 @@ export default function ResortMapPage(props: ResortMapProps) {
   const availLiftsCount = buildable.filter((s) => s.type === 'lift').length;
   const availSlopesCount = buildable.length - availLiftsCount;
 
-  // Runs for the list: this tab, search, difficulty, then sorted by the real price
   const availableItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const list = buildable.filter((s) => {
@@ -217,11 +545,6 @@ export default function ResortMapPage(props: ResortMapProps) {
     return list;
   }, [buildable, activeTab, searchQuery, diffFilter, sortOrder]);
 
-  /*
-   * First-build help. No slope yet: the three cheapest easy runs. A slope but no lift: the three lifts
-   * whose ends are closest to an end of a built slope. The game doesn't require them to connect, so
-   * this is a suggestion, not a rule.
-   */
   const { suggestions, suggestionTitle } = useMemo((): { suggestions: Suggestion[]; suggestionTitle: string | null } => {
     if (props.isAdmin) return { suggestions: [], suggestionTitle: null };
     if (builtSlopes.length === 0 && activeTab === 'slope') {
@@ -257,18 +580,45 @@ export default function ResortMapPage(props: ResortMapProps) {
   const selectedItem = selectedSeg ? builtItems[String(selectedSeg.id)] ?? builtItems[Number(selectedSeg.id) as any] : undefined;
   const selectedIsBuilt = !!selectedSeg && isBuilt(selectedSeg.id);
 
+  function handleViewMode(mode: MapViewMode) {
+    if (mode === '3d' && !webglSupported) return;
+    setPlacingFacility(null);
+    if (mode === '3d') {
+      setIsInspectorDrawerOpen(false);
+    }
+    setViewMode(mode);
+    try {
+      localStorage.setItem('map_view_mode', mode);
+    } catch {}
+  }
+
+  function handleOpenMapStudio() {
+    handleCloseBuildDrawer();
+    setPlacingFacility(null);
+    setViewMode('2d');
+    try {
+      localStorage.setItem('map_view_mode', '2d');
+    } catch {}
+    setIsInspectorDrawerOpen(true);
+  }
+
   function handleFilterClick(filter: string) {
     setMapFilter(filter);
+    if (filter === 'buildings') setShowBuildings(true);
     engineRef.current?.setFilter(filter);
   }
 
   function handleShowAvailable(v: boolean) {
     setShowAvailable(v);
+    try {
+      localStorage.setItem('map_show_available', v ? '1' : '0');
+    } catch {}
     engineRef.current?.setShowAvailable(v);
   }
 
   function handleOpenBuildDrawer(tab: 'lift' | 'slope') {
     setIsInspectorDrawerOpen(false);
+    setSelectedFacilityKey(null);
     setIsBuildDrawerOpen(true);
     setActiveTab(tab);
     engineRef.current?.setBuildMode(tab);
@@ -282,53 +632,142 @@ export default function ResortMapPage(props: ResortMapProps) {
   function handleCloseBuildDrawer() {
     setIsBuildDrawerOpen(false);
     setSelectedSeg(null);
+    setSelectedFacilityKey(null);
+    setPlacingFacility(null);
     setNotice(null);
     engineRef.current?.deselectSegment();
     engineRef.current?.setBuildMode(null);
   }
 
-  /** Back from a run to the list, keeping the panel open */
   function handleBack() {
     engineRef.current?.deselectSegment();
     setSelectedSeg(null);
+    setSelectedFacilityKey(null);
+    setPlacingFacility(null);
   }
 
   function handleSelectSeg(seg: MapSegment) {
-    engineRef.current?.selectSegment(seg);
+    setSelectedFacilityKey(null);
+    setPlacingFacility(null);
+    setSelectedSeg(seg);
+    setNotice(null);
+    if (seg.type !== 'lift') {
+      setSlopeType(seg.type && seg.type !== 'slope' ? seg.type : 'downhill');
+    }
+    setIsInspectorDrawerOpen(false);
+    setIsBuildDrawerOpen(true);
+    if (viewMode === '2d') {
+      engineRef.current?.selectSegment(seg);
+    } else {
+      viewport3dRef.current?.focusSegment(seg.id);
+    }
   }
 
-  function handleConstruct() {
+  async function handleConstruct() {
     if (!selectedSeg || isConstructing) return;
     const seg = selectedSeg;
     const wasSlope = seg.type !== 'lift';
+    const body: Record<string, any> = { segment_id: seg.id };
+    if (wasSlope) {
+      body.slope_type = slopeType || 'downhill';
+    } else {
+      body.lift_type = liftType || 'chair_fixed';
+      body.seats = seats || 4;
+    }
+
     setIsConstructing(true);
-    engineRef.current?.buildSegment(seg, { liftType, seats, slopeType }, (ok: boolean) => {
+    try {
+      const res = await mapApi.postJSON('/map/build', body);
       setIsConstructing(false);
-      if (!ok) return;
-      // One next step: the other half of a working resort, then ticket prices before tonight
+      if (!res?.success) {
+        triggerToast(res?.error || 'Construction failed', 'error');
+        return;
+      }
+
+      const nextBuiltIds = [...builtIds, seg.id];
+      const nextBuiltItems = {
+        ...builtItems,
+        ...(res.item ? { [String(seg.id)]: res.item } : {}),
+      };
+      setBuiltIds(nextBuiltIds);
+      setBuiltItems(nextBuiltItems);
+      const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
+      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
+      engineRef.current?.syncBuiltState(nextBuiltIds, nextBuiltItems, nextCash);
+      engineRef.current?.deselectSegment();
+
+      setSelectedSeg(null);
       const slopes = builtSlopes.length + (wasSlope ? 1 : 0);
       const lifts = builtLiftCount + (wasSlope ? 0 : 1);
       const next: BuildNotice['next'] = lifts === 0 ? 'lift' : slopes === 0 ? 'slope' : 'tickets';
       setNotice({ name: seg.name || (wasSlope ? 'your slope' : 'your lift'), next });
       if (next === 'lift' || next === 'slope') handleTab(next);
       if (typeof (window as any).loadTutorial === 'function') (window as any).loadTutorial();
-    });
+    } catch (err: any) {
+      setIsConstructing(false);
+      triggerToast(err?.message || 'Construction failed', 'error');
+    }
   }
 
-  function handleDemolish(done: (ok: boolean) => void) {
-    if (!selectedSeg) return done(false);
-    engineRef.current?.demolish(selectedSeg, (ok: boolean) => {
-      done(ok);
-      if (ok) {
-        engineRef.current?.deselectSegment();
-        setSelectedSeg(null);
+  async function handleDemolish(done: (ok: boolean) => void) {
+    if (!selectedSeg || !selectedItem?.id) return done(false);
+    const seg = selectedSeg;
+    const name = seg.name || (seg.type === 'lift' ? 'this lift' : 'this slope');
+    try {
+      const res = await mapApi.postJSON(`/map/demolish/${selectedItem.id}`, {});
+      if (!res?.success) {
+        triggerToast(res?.error || `Could not demolish ${name}. Nothing was changed.`, 'error');
+        return done(false);
       }
-    });
+      const nextBuiltIds = builtIds.filter((id) => !sameId(id, seg.id));
+      const nextBuiltItems = { ...builtItems };
+      delete nextBuiltItems[String(seg.id)];
+      delete (nextBuiltItems as Record<number, BuiltItem>)[Number(seg.id)];
+      setBuiltIds(nextBuiltIds);
+      setBuiltItems(nextBuiltItems);
+      const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
+      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
+      engineRef.current?.syncBuiltState(nextBuiltIds, nextBuiltItems, nextCash);
+      engineRef.current?.deselectSegment();
+      setSelectedSeg(null);
+      triggerToast(res.message || `${name} demolished.`, 'success');
+      done(true);
+    } catch (err: any) {
+      triggerToast(err?.message || `Could not demolish ${name}.`, 'error');
+      done(false);
+    }
   }
 
-  function handleSwap(option: LiftSwapOption, done: (ok: boolean) => void) {
-    if (!selectedSeg) return done(false);
-    engineRef.current?.swapLift(selectedSeg, option.lift_type, option.seats, done);
+  async function handleSwap(option: LiftSwapOption, done: (ok: boolean) => void) {
+    if (!selectedSeg || !selectedItem?.id) return done(false);
+    const seg = selectedSeg;
+    const name = seg.name || 'this lift';
+    try {
+      const res = await mapApi.postJSON(`/map/upgrade/${selectedItem.id}`, {
+        lift_type: option.lift_type,
+        seats: option.seats,
+      });
+      if (!res?.success) {
+        triggerToast(res?.error || `Could not replace ${name}. Nothing was changed.`, 'error');
+        return done(false);
+      }
+      const nextBuiltItems = {
+        ...builtItems,
+        ...(res.item ? { [String(seg.id)]: res.item } : {}),
+      };
+      setBuiltItems(nextBuiltItems);
+      const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
+      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
+      engineRef.current?.syncBuiltState(builtIds, nextBuiltItems, nextCash);
+      triggerToast(res.message || `${name} replaced.`, 'success');
+      done(true);
+    } catch (err: any) {
+      triggerToast(err?.message || `Could not replace ${name}.`, 'error');
+      done(false);
+    }
   }
 
   function handleResortChange(eOrVal: React.ChangeEvent<HTMLSelectElement> | string | number) {
@@ -339,7 +778,7 @@ export default function ResortMapPage(props: ResortMapProps) {
     const csrfInput = document.createElement('input');
     csrfInput.type = 'hidden';
     csrfInput.name = props.csrf.name;
-    csrfInput.value = props.csrf.hash;
+    csrfInput.value = mapApi.getCsrfHash();
     form.appendChild(csrfInput);
     const mapInput = document.createElement('input');
     mapInput.type = 'hidden';
@@ -350,23 +789,6 @@ export default function ResortMapPage(props: ResortMapProps) {
     form.submit();
   }
 
-  // Used by the admin inspector's segment list
-  function renderTrailSign(seg: MapSegment) {
-    return <TrailSign seg={seg} />;
-  }
-
-  // Filtered segments for Inspector
-  const inspectorSegments = useMemo(() => {
-    const q = inspectorSearch.trim().toLowerCase();
-    return segments.filter((s) => {
-      if (inspectorFilter === 'lift' && s.type !== 'lift') return false;
-      if (inspectorFilter === 'slope' && s.type === 'lift') return false;
-      if (inspectorFilter === 'unassigned' && Number(s.sector || 0) !== 0) return false;
-      if (q && (s.name || '').toLowerCase().indexOf(q) === -1) return false;
-      return true;
-    });
-  }, [segments, inspectorSearch, inspectorFilter]);
-
   function getSectorLabel(secId: any) {
     if (!secId || secId === '0' || secId === 0) return props.isAdmin ? 'Default (0)' : 'Main area';
     const sec = sectors.find((s) => String(s.id) === String(secId) || s.name === String(secId));
@@ -375,18 +797,20 @@ export default function ResortMapPage(props: ResortMapProps) {
 
   const adminActions = props.isAdmin ? (
     <>
-      <Button
-        variant="outline"
-        onPress={() => {
-          handleCloseBuildDrawer();
-          setIsInspectorDrawerOpen((prev) => !prev);
-        }}
-        className="min-h-11 gap-1.5 font-semibold text-foreground md:min-h-9"
-        aria-label="Open Segment & Sector Manager"
-      >
-        <Icon name="fa-list-check" className="text-link" />
-        <span className="hidden sm:inline">Segments & Sectors</span>
-      </Button>
+      {viewMode === '2d' && (
+        <Button
+          variant="outline"
+          onPress={() => {
+            handleCloseBuildDrawer();
+            setIsInspectorDrawerOpen((prev) => !prev);
+          }}
+          className="min-h-11 gap-1.5 font-semibold text-foreground md:min-h-9"
+          aria-label="Open Segment and Sector Manager"
+        >
+          <Icon name="fa-list-check" className="text-link" />
+          <span className="hidden sm:inline">Segments & Sectors</span>
+        </Button>
+      )}
       <Select
         value={props.resortMap}
         onChange={handleResortChange}
@@ -401,6 +825,7 @@ export default function ResortMapPage(props: ResortMapProps) {
 
   const cashText = formatCurrency(userCash, props.isImperial);
   const settle = settleText(props.settleAt);
+  const builtFacilityCount = buildings.length + parking.length + terrainParks.length;
 
   return (
     <div
@@ -412,302 +837,124 @@ export default function ResortMapPage(props: ResortMapProps) {
         mapName={props.mapConfig.name}
         builtSlopes={builtSlopes.length}
         builtLifts={builtLiftCount}
+        builtBuildingsCount={builtFacilityCount}
         cashText={cashText}
         filter={mapFilter}
         onFilter={handleFilterClick}
         showAvailable={showAvailable}
         onShowAvailable={handleShowAvailable}
-        onFit={() => engineRef.current?.fitBounds()}
+        onFit={() => (viewMode === '3d' ? viewport3dRef.current?.fit() : engineRef.current?.fitBounds())}
         onBuild={() => handleOpenBuildDrawer(builtSlopes.length === 0 ? 'slope' : activeTab)}
         isAdmin={props.isAdmin}
         adminActions={adminActions}
+        map3dEnabled={map3dEnabled}
+        viewMode={viewMode}
+        onViewMode={handleViewMode}
+        webglSupported={webglSupported}
+        lens={lens}
+        onLens={setLens}
+        showBuildings={showBuildings}
+        onShowBuildings={setShowBuildings}
+        showSkiers={showSkiers}
+        onShowSkiers={setShowSkiers}
+        liveSkiers={liveSkiers}
+        weather={weather}
+        onOpenMapStudio={handleOpenMapStudio}
       />
 
       {/* Main Map Viewport */}
       <div className="relative flex-1 overflow-hidden">
-        <div ref={mapContainerRef} id="map" aria-label="Trail map" />
-
-        {/* Shown by the engine while the full-size map image loads */}
-        <div
-          id="hdBadge"
-          className="absolute top-3 right-3 z-[800] hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground shadow-sm"
-        >
-          <Spinner size="sm" />
-          <span>Loading the detailed map…</span>
-        </div>
-
-        <MapKey isAdmin={props.isAdmin} />
-
-        {/* Admin Floating Top Editor Toolbar */}
-        {props.isAdmin && (
-          <div
-            className={`pointer-events-none absolute top-3 left-0 right-0 z-[850] flex justify-center px-3 transition-all ${
-              isBuildDrawerOpen || isInspectorDrawerOpen ? 'lg:right-[390px]' : ''
-            }`}
+        {viewMode === '3d' ? (
+          <Suspense
+            fallback={
+              <div className="flex h-full w-full items-center justify-center gap-2 text-sm text-muted">
+                <Spinner size="sm" />
+                <span>Loading 3D mountain view...</span>
+              </div>
+            }
           >
-            <div className="pointer-events-auto max-w-[96vw] rounded-xl border border-white/15 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-md">
-              {!editorState.active ? (
-                /* Idle View */
-                <div className="flex flex-wrap items-center gap-2">
-                  <Chip size="sm" variant="soft" color="accent" className="font-semibold">
-                    <Icon name="fa-compass-drafting" className="mr-1" />
-                    Map Studio
-                  </Chip>
-
-                  <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-800/80 px-2 py-0.5 text-xs">
-                    <span className="font-semibold text-muted">Sector:</span>
-                    <Select
-                      value={editorState.sector}
-                      onChange={(val) => engineRef.current?.setEditorSector(Number(val))}
-                      aria-label="Editor Sector"
-                      options={[
-                        { id: 0, label: 'Default (0)' },
-                        ...sectors.map((sec) => ({
-                          id: sec.id,
-                          label: `${sec.name} (#${sec.id})`,
-                        })),
-                      ]}
-                      className="text-xs"
-                    />
-                  </div>
-
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onPress={() => engineRef.current?.startDraw('lift')}
-                    className="h-7 text-xs font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
-                    aria-label="Draw New Lift (Shortcut: L)"
-                  >
-                    <Icon name="fa-elevator" />
-                    + New Lift
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onPress={() => engineRef.current?.startDraw('slope')}
-                    className="h-7 text-xs font-semibold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
-                    aria-label="Draw New Slope (Shortcut: S)"
-                  >
-                    <Icon name="fa-person-skiing" />
-                    + New Slope
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant={editorState.snapEnabled ? 'outline' : 'ghost'}
-                    onPress={() => engineRef.current?.toggleSnap()}
-                    className="h-7 text-xs font-semibold text-foreground"
-                    aria-label="Magnetic Endpoint Snapping"
-                  >
-                    <Icon name="fa-magnet" />
-                    Snap: {editorState.snapEnabled ? 'ON' : 'OFF'}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant={editorState.showSectorPolygons ? 'primary' : 'outline'}
-                    onPress={() => engineRef.current?.toggleSectors()}
-                    className="h-7 text-xs font-semibold"
-                    aria-label="Show/Hide Sector Boundaries"
-                  >
-                    <Icon name="fa-draw-polygon" />
-                    Sectors
-                  </Button>
-
-                  <span className="hidden text-xs text-muted xl:inline">
-                    <b>L</b> Lift • <b>S</b> Slope • Click run to edit
-                  </span>
-                </div>
-              ) : (
-                /* Active Draw / Edit View */
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Chip
-                      size="sm"
-                      variant="soft"
-                      color={editorState.type === 'lift' ? 'warning' : 'success'}
-                      className="font-bold uppercase"
-                    >
-                      <Icon name="fa-pen-nib" className="mr-1" />
-                      {editorState.mode === 'sector_boundary'
-                        ? 'Sector Boundary'
-                        : `${editorState.mode === 'edit' ? 'Edit' : 'New'} ${editorState.type}`}
-                    </Chip>
-
-                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/90 px-2 py-1 font-mono text-xs">
-                      <span className="font-bold text-accent">
-                        <Icon name="fa-ruler" className="mr-1" />
-                        {editorState.liveLength.toLocaleString()} {props.distUnit}
-                      </span>
-                      <span className="text-muted">|</span>
-                      <span className="text-link">
-                        <Icon name="fa-location-dot" className="mr-1" />
-                        {editorState.pointCount} pts
-                      </span>
-                    </div>
-
-                    {editorState.mode !== 'sector_boundary' && (
-                      <>
-                        <input
-                          type="text"
-                          value={editorState.name}
-                          onChange={(e) => engineRef.current?.setEditorName(e.target.value)}
-                          placeholder="Segment name"
-                          className="h-7 w-36 rounded-md border border-white/15 bg-slate-900 px-2 text-xs font-semibold text-foreground outline-none focus:border-accent"
-                        />
-
-                        <Select
-                          value={editorState.sector}
-                          onChange={(val) => engineRef.current?.setEditorSector(Number(val))}
-                          aria-label="Sector"
-                          options={[
-                            { id: 0, label: 'Default (0)' },
-                            ...sectors.map((sec) => ({
-                              id: sec.id,
-                              label: sec.name,
-                            })),
-                          ]}
-                          className="h-7 w-28 text-xs"
-                        />
-
-                        {editorState.type !== 'lift' && (
-                          <>
-                            <Select
-                              value={editorState.slopeType}
-                              onChange={(val) => engineRef.current?.setEditorSlopeType(String(val))}
-                              aria-label="Slope type"
-                              options={[
-                                { id: 'downhill', label: 'Downhill' },
-                                { id: 'crosscountry', label: 'Cross-Country' },
-                                { id: 'snowpark', label: 'Snow Park' },
-                                { id: 'luge', label: 'Luge' },
-                              ]}
-                              className="h-7 w-28 text-xs"
-                            />
-
-                            <Select
-                              value={editorState.difficulty}
-                              onChange={(val) => engineRef.current?.setEditorDifficulty(String(val))}
-                              aria-label="Difficulty"
-                              options={[
-                                { id: 'green', label: '● Green (Easy)' },
-                                { id: 'blue', label: '■ Blue (Intermediate)' },
-                                { id: 'black', label: '◆ Black (Advanced)' },
-                                { id: 'double_black', label: '◆◆ Double Black' },
-                              ]}
-                              className="h-7 w-32 text-xs"
-                            />
-                          </>
-                        )}
-
-                        {editorState.mode === 'edit' && (
-                          <Button
-                            size="sm"
-                            variant={editorState.appendMode ? 'primary' : 'outline'}
-                            onPress={() => engineRef.current?.toggleAppend()}
-                            className="h-7 text-xs font-semibold"
-                            aria-label="Toggle whether clicking appends points"
-                          >
-                            <Icon name="fa-plus" /> Append: {editorState.appendMode ? 'ON' : 'OFF'}
-                          </Button>
-                        )}
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onPress={() => engineRef.current?.reverse()}
-                          className="h-7 text-xs text-foreground"
-                          aria-label="Reverse Start (S) and End (E)"
-                        >
-                          <Icon name="fa-right-left" /> Reverse
-                        </Button>
-                      </>
-                    )}
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onPress={() => engineRef.current?.undo()}
-                      className="h-7 text-xs text-warning"
-                      aria-label="Undo point (Z)"
-                    >
-                      <Icon name="fa-rotate-left" /> Undo
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onPress={() => engineRef.current?.redo()}
-                      className="h-7 text-xs text-foreground"
-                      aria-label="Redo point (Shift+Z)"
-                    >
-                      <Icon name="fa-rotate-right" /> Redo
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onPress={() => engineRef.current?.saveEditor(false)}
-                      className="h-7 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500"
-                      aria-label="Save (Enter)"
-                    >
-                      <Icon name="fa-check" /> Save
-                    </Button>
-
-                    {editorState.mode === 'draw' && (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onPress={() => engineRef.current?.saveEditor(true)}
-                        className="h-7 text-xs font-bold"
-                        aria-label="Save & Immediately Draw Next"
-                      >
-                        <Icon name="fa-forward-step" /> Save + Next
-                      </Button>
-                    )}
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onPress={() => engineRef.current?.cancelEditor()}
-                      className="h-7 text-xs text-danger"
-                      aria-label="Cancel (Esc)"
-                    >
-                      <Icon name="fa-xmark" /> Cancel
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-white/10 pt-1 text-xs text-muted">
-                    <span>
-                      {editorState.mode === 'draw' && editorState.type === 'lift' ? (
-                        <>
-                          <b>Click</b> the bottom station, then the top: the lift saves itself • <b>Shift-click</b> the top to add bends
-                        </>
-                      ) : editorState.mode === 'draw' ? (
-                        <>
-                          <b>Click</b> from the top down • <b>Double-click</b> or <b>Enter</b> to finish • <b>Alt</b> to skip snapping
-                        </>
-                      ) : (
-                        <>
-                          <b>Click map</b> to add • <b>Drag dots</b> to move • <b>Click/drag + midpoints</b> to bend •{' '}
-                          <b>Right-click</b> point to delete
-                        </>
-                      )}
-                    </span>
-                    {editorState.snapStatus && (
-                      <span className="font-mono text-link">Snapped: {editorState.snapStatus}</span>
-                    )}
-                  </div>
-                </div>
-              )}
+            <Map3DViewport
+              mapConfig={props.mapConfig}
+              segments={segments}
+              builtIds={builtIds}
+              builtItems={builtItems}
+              facilities={facilities}
+              liveSkiers={liveSkiers}
+              groomerActive={props.groomerFleet?.active ?? 0}
+              nightLitCount={props.nightLighting?.activeCount ?? 0}
+              weather={weather}
+              filter={mapFilter}
+              showAvailable={showAvailable}
+              showBuildings={showBuildings}
+              showSkiers={showSkiers}
+              selectedSegId={selectedSeg?.id ?? null}
+              selectedFacilityKey={selectedFacilityKey}
+              lens={lens}
+              lighting={lighting}
+              onLightingChange={setLighting}
+              placingFacility={placingFacility}
+              onCancelPlacing={() => setPlacingFacility(null)}
+              onSelectSegment={handleSelectSeg}
+              onSelectFacility={handleSelectFacility}
+              onPlaceFacility={handlePlaceFacility}
+              onFallbackTo2D={(reason) => {
+                setWebglSupported(false);
+                setViewMode('2d');
+                triggerToast(reason || 'Switched to 2D map.', 'info');
+              }}
+              viewportRef={viewport3dRef}
+              distUnit={props.distUnit}
+              isImperial={props.isImperial}
+            />
+          </Suspense>
+        ) : (
+          <>
+            <div ref={mapContainerRef} id="map" />
+            <div
+              id="hdBadge"
+              className="absolute top-3 right-3 z-[800] hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground shadow-sm"
+            >
+              <Spinner size="sm" />
+              <span>Loading the detailed map…</span>
             </div>
-          </div>
+            {placingFacility && (
+              <div className="absolute top-3 left-1/2 z-[880] flex -translate-x-1/2 items-center gap-2 rounded-xl border border-accent bg-surface px-3.5 py-2 text-sm text-foreground shadow-lg">
+                <Icon name="fa-location-dot" className="text-link" />
+                <span>
+                  Click anywhere on the mountain to move <b>{placingFacility.label}</b>
+                </span>
+                <Button size="sm" variant="ghost" onPress={() => setPlacingFacility(null)} className="min-h-9 text-muted hover:text-foreground">
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
+        <MapKey
+          isAdmin={props.isAdmin}
+          map3dEnabled={map3dEnabled}
+          viewMode={viewMode}
+          lens={lens}
+          showBuildings={showBuildings}
+          showSkiers={showSkiers}
+        />
+
+        {/* Lazy Admin 2D Map Studio Toolbar */}
+        {props.isAdmin && viewMode === '2d' && (
+          <Suspense fallback={null}>
+            <AdminEditorToolbar
+              editorState={editorState}
+              sectors={sectors}
+              distUnit={props.distUnit}
+              panelOpen={panelOpen}
+              engine={engineApi}
+            />
+          </Suspense>
+        )}
 
         {/* Build button on the map, for when the panel is closed */}
-        {!isBuildDrawerOpen && !isInspectorDrawerOpen && !editorState.active && (
+        {!isBuildDrawerOpen && !isInspectorDrawerOpen && !editorState.active && !placingFacility && (
           <Button
             variant="primary"
             isIconOnly
@@ -719,9 +966,33 @@ export default function ResortMapPage(props: ResortMapProps) {
           </Button>
         )}
 
-        {/* Player panel: a run's build view or details, or the list of runs */}
+        {/* Inspector / Build Panel */}
         {isBuildDrawerOpen && (
-          selectedSeg && selectedIsBuilt && selectedItem ? (
+          selectedFacility ? (
+            <MapPanel
+              title={selectedFacility.label}
+              subtitle={selectedFacility.typeLabel}
+              icon={selectedFacility.icon}
+              onClose={handleCloseBuildDrawer}
+              onBack={handleBack}
+            >
+              <BuildingInspectorView
+                facility={selectedFacility}
+                isImperial={props.isImperial}
+                canReposition={map3dEnabled}
+                onStartMove={(f) => {
+                  setShowBuildings(true);
+                  setPlacingFacility(f);
+                }}
+                onResetMove={handleResetFacility}
+                onSelectClusterItem={(child) => setSelectedFacilityKey(child.key)}
+                onZoom={() => {
+                  if (viewMode === '3d') viewport3dRef.current?.focusPoint(selectedFacility.mapX, selectedFacility.mapY);
+                  else engineRef.current?.zoomToPoint(selectedFacility.mapX, selectedFacility.mapY);
+                }}
+              />
+            </MapPanel>
+          ) : selectedSeg && selectedIsBuilt && selectedItem ? (
             <MapPanel title={selectedSeg.name || 'Your run'} subtitle="Yours" onClose={handleCloseBuildDrawer} onBack={handleBack}>
               <BuiltRunView
                 seg={selectedSeg}
@@ -730,7 +1001,12 @@ export default function ResortMapPage(props: ResortMapProps) {
                 distUnit={props.distUnit}
                 sectorLabel={getSectorLabel(selectedSeg.sector)}
                 economyV2={props.economyV2}
-                onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
+                traffic={liveSkiers?.perSegment?.[String(selectedSeg.id)] ?? null}
+                onZoom={() =>
+                  viewMode === '3d'
+                    ? viewport3dRef.current?.focusSegment(selectedSeg.id)
+                    : engineRef.current?.zoomToSegment(selectedSeg.id)
+                }
                 onDemolish={handleDemolish}
                 cash={userCash}
                 onSwap={handleSwap}
@@ -768,7 +1044,11 @@ export default function ResortMapPage(props: ResortMapProps) {
                 onSeats={setSeats}
                 slopeType={slopeType}
                 onSlopeType={setSlopeType}
-                onZoom={() => engineRef.current?.zoomToSegment(selectedSeg.id)}
+                onZoom={() =>
+                  viewMode === '3d'
+                    ? viewport3dRef.current?.focusSegment(selectedSeg.id)
+                    : engineRef.current?.zoomToSegment(selectedSeg.id)
+                }
               />
             </MapPanel>
           ) : (
@@ -799,305 +1079,21 @@ export default function ResortMapPage(props: ResortMapProps) {
           )
         )}
 
-        {/* Admin Inspector Drawer */}
-        {props.isAdmin && isInspectorDrawerOpen && (
-          <aside className="absolute top-3 right-3 bottom-3 z-[950] flex w-96 max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-xl border border-border bg-surface text-foreground shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border p-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-link/15 text-link">
-                  <Icon name="fa-compass-drafting" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">Map inspector</h2>
-                  <p className="text-xs text-muted">Segments and sectors</p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={() => setIsInspectorDrawerOpen(false)}
-                className="size-8 p-0 text-muted hover:text-foreground"
-                aria-label="Close"
-              >
-                <Icon name="fa-xmark" />
-              </Button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 space-y-5 overflow-y-auto p-3.5">
-              {/* Mountain Sectors */}
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">Mountain Sectors</span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onPress={() => engineRef.current?.autoAssignSectors()}
-                      className="h-7 text-xs font-semibold text-foreground"
-                      aria-label="Auto-assign segments"
-                    >
-                      <Icon name="fa-object-group" className="text-link" />
-                      Auto-assign
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onPress={() => setShowNewSectorForm((prev) => !prev)}
-                      className="h-7 text-xs font-semibold"
-                    >
-                      <Icon name="fa-plus" />
-                      Add sector
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Inline New Sector Form */}
-                {showNewSectorForm && (
-                  <div className="mb-3 rounded-lg border border-border bg-surface-secondary p-2.5 space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newSecName}
-                        onChange={(e) => setNewSecName(e.target.value)}
-                        placeholder="Sector name (e.g. Sector 3)"
-                        className="h-8 flex-1 rounded-md border border-border bg-surface px-2.5 text-xs text-foreground outline-none focus:border-accent"
-                      />
-                      <input
-                        type="color"
-                        value={newSecColor}
-                        onChange={(e) => setNewSecColor(e.target.value)}
-                        className="h-8 w-10 cursor-pointer rounded border border-border bg-transparent p-0.5"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => setShowNewSectorForm(false)}
-                        className="h-7 text-xs"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onPress={() => {
-                          if (!newSecName.trim()) {
-                            triggerToast('Please enter a sector name', 'warning');
-                            return;
-                          }
-                          engineRef.current?.createSector(newSecName.trim(), newSecColor, () => {
-                            setNewSecName('');
-                            setShowNewSectorForm(false);
-                          });
-                        }}
-                        className="h-7 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500"
-                      >
-                        Create
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Sector List */}
-                <div className="flex flex-col gap-1.5">
-                  {sectors.map((sec) => {
-                    const bp = typeof sec.boundary_points === 'string' ? JSON.parse(sec.boundary_points || '[]') : sec.boundary_points || [];
-                    const hasBoundary = bp.length >= 3;
-                    const countInSec = segments.filter((s) => Number(s.sector) === Number(sec.id)).length;
-
-                    return (
-                      <div
-                        key={sec.id}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-surface-secondary p-2 text-xs"
-                      >
-                        <div
-                          className="flex size-7 shrink-0 items-center justify-center rounded-md border text-xs font-bold"
-                          style={{
-                            borderColor: sec.color || '#3b82f6',
-                            color: sec.color || '#3b82f6',
-                            background: `${sec.color || '#3b82f6'}22`,
-                          }}
-                        >
-                          <Icon name="fa-layer-group" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-semibold text-foreground">{sec.name}</span>
-                            <span className="font-mono text-[10px] text-muted">#{sec.id}</span>
-                          </div>
-                          <div className="text-[11px] text-muted">
-                            {countInSec} runs • {hasBoundary ? '✓ Boundary set' : 'No boundary'}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onPress={() => {
-                              setIsInspectorDrawerOpen(false);
-                              engineRef.current?.startEditSectorBoundary(sec);
-                            }}
-                            className="size-7 p-0 text-xs text-muted hover:text-link"
-                            aria-label="Draw Sector Boundary"
-                          >
-                            <Icon name="fa-draw-polygon" className={hasBoundary ? 'text-link' : 'opacity-40'} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onPress={() => engineRef.current?.toggleSectorVisibility(sec.id)}
-                            className="size-7 p-0 text-xs text-muted"
-                            aria-label="Toggle Visibility"
-                          >
-                            <Icon
-                              name={Number(sec.visible) ? 'fa-eye' : 'fa-eye-slash'}
-                              className={Number(sec.visible) ? 'text-success' : 'opacity-40'}
-                            />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onPress={() => engineRef.current?.deleteSector(sec.id)}
-                            className="size-7 p-0 text-xs text-danger hover:bg-danger/10"
-                            aria-label="Delete Sector"
-                          >
-                            <Icon name="fa-trash" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Segments Directory */}
-              <div className="border-t border-border pt-4">
-                <div className="mb-2.5 flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                    All segments ({segments.length})
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onPress={() => {
-                        setIsInspectorDrawerOpen(false);
-                        engineRef.current?.startDraw('lift');
-                      }}
-                      className="h-7 text-xs font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
-                    >
-                      <Icon name="fa-plus" /> Lift
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onPress={() => {
-                        setIsInspectorDrawerOpen(false);
-                        engineRef.current?.startDraw('slope');
-                      }}
-                      className="h-7 text-xs font-semibold bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
-                    >
-                      <Icon name="fa-plus" /> Slope
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mb-2.5 flex gap-2">
-                  <div className="relative flex-1">
-                    <Icon name="fa-magnifying-glass" className="absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted" />
-                    <input
-                      type="text"
-                      value={inspectorSearch}
-                      onChange={(e) => setInspectorSearch(e.target.value)}
-                      placeholder="Filter by name..."
-                      className="h-8 w-full rounded-lg border border-border bg-surface-secondary pl-8 pr-2.5 text-xs text-foreground outline-none focus:border-accent"
-                    />
-                  </div>
-                  <Select
-                    value={inspectorFilter}
-                    onChange={(val) => setInspectorFilter(String(val))}
-                    aria-label="Filter inspector items"
-                    options={[
-                      { id: 'all', label: 'All types' },
-                      { id: 'lift', label: 'Lifts only' },
-                      { id: 'slope', label: 'Slopes only' },
-                      { id: 'unassigned', label: 'Unassigned' },
-                    ]}
-                    className="h-8 text-xs"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  {inspectorSegments.map((seg) => (
-                    <div
-                      key={seg.id}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-surface-secondary p-2 text-xs"
-                    >
-                      <div
-                        onClick={() => engineRef.current?.zoomToSegment(seg.id)}
-                        className="flex flex-1 cursor-pointer items-center gap-2.5 min-w-0"
-                      >
-                        <div className="flex size-6 shrink-0 items-center justify-center">
-                          {renderTrailSign(seg)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate font-semibold text-foreground">{seg.name || 'Unnamed'}</div>
-                          <div className="text-[11px] text-muted">
-                            <span className="font-mono">
-                              {Math.round(seg.length_meters || 0)} {props.distUnit}
-                            </span>{' '}
-                            • {getSectorLabel(seg.sector)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => {
-                            setIsInspectorDrawerOpen(false);
-                            engineRef.current?.zoomToSegment(seg.id);
-                            engineRef.current?.startEditSegment(seg);
-                          }}
-                          className="size-7 p-0 text-xs text-link"
-                          aria-label="Edit Path & Details"
-                        >
-                          <Icon name="fa-pen-to-square" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onPress={() => {
-                            if (!confirm(`Delete "${seg.name || 'Segment'}"? This cannot be undone.`)) return;
-                            engineRef.current?.postJSON(`/map/segment/delete/${seg.id}`, {}, (res) => {
-                              if (res && res.success) {
-                                const updated = segments.filter((s) => String(s.id) !== String(seg.id));
-                                setSegments(updated);
-                                engineRef.current?.setFilter(mapFilter);
-                                triggerToast(`Deleted "${seg.name || 'Segment'}"`, 'success');
-                              } else {
-                                triggerToast(res?.error || 'Failed to delete segment', 'error');
-                              }
-                            });
-                          }}
-                          className="size-7 p-0 text-xs text-danger"
-                          aria-label="Delete Segment"
-                        >
-                          <Icon name="fa-trash" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
+        {/* Lazy Admin Inspector Drawer (2D Map Studio) */}
+        {props.isAdmin && viewMode === '2d' && isInspectorDrawerOpen && (
+          <Suspense fallback={null}>
+            <AdminInspectorDrawer
+              sectors={sectors}
+              segments={segments}
+              distUnit={props.distUnit}
+              mapFilter={mapFilter}
+              engine={engineApi}
+              getSectorLabel={getSectorLabel}
+              onSegmentsChange={setSegments}
+              onClose={() => setIsInspectorDrawerOpen(false)}
+              onToast={triggerToast}
+            />
+          </Suspense>
         )}
 
         {/* Toast for results the panel doesn't show itself (errors, admin actions) */}

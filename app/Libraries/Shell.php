@@ -205,6 +205,9 @@ class Shell
                 'timezone' => 'America/New_York',
                 'genepis' => (int) ($genepis['balance'] ?? 0),
                 'stars' => (int) ($rating['stars'] ?? 0),
+                'liveSkiers' => (function_exists('featureEnabled') && featureEnabled('live_visitors') && featureEnabled('map_3d'))
+                    ? LiveSkiers::countOnly((int) $userId)
+                    : null,
             ] : null,
             'notifications' => [
                 'unread' => $userId ? unreadNotificationCount($userId) : 0,

@@ -15,6 +15,7 @@ class ParkingModel extends Model
     protected $allowedFields = [
         'user_id', 'name', 'parking_type', 'capacity', 'occupied',
         'fee_per_day', 'daily_revenue', 'condition_pct', 'status', 'build_days_left',
+        'map_x', 'map_y', 'resort_map',
     ];
 
     public const PARKING_CONFIG = [

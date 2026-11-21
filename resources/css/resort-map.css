@@ -149,3 +149,62 @@
   display: inline-flex;
   gap: 3px;
 }
+
+/* 2D Leaflet facility markers (buildings, parking lots, terrain parks) */
+.map-facility-icon-wrap {
+  background: transparent;
+  border: none;
+}
+.map-facility-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: var(--surface, #1e293b);
+  color: var(--foreground, #f8fafc);
+  border: 2px solid var(--border, rgba(148, 163, 184, 0.4));
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32);
+  font-size: 13px;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.map-facility-pin:hover {
+  transform: scale(1.1);
+}
+.map-facility-pin.kind-parking {
+  color: var(--link, #38bdf8);
+}
+.map-facility-pin.kind-terrain_park {
+  color: #a855f7;
+}
+.map-facility-pin.kind-building {
+  color: var(--warning, #f59e0b);
+}
+.map-facility-pin.is-selected {
+  border-color: var(--link, #38bdf8);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--link, #38bdf8) 38%, transparent), 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: scale(1.12);
+}
+.map-facility-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: var(--accent, #2563eb);
+  color: var(--accent-foreground, #ffffff);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  border: 1.5px solid var(--surface, #1e293b);
+}
+.map-placing-cursor,
+.map-placing-cursor .leaflet-grab,
+.map-placing-cursor .leaflet-interactive {
+  cursor: crosshair !important;
+}
