@@ -228,7 +228,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const now = Date.now();
     if (now - lastClickTime < DOUBLE_CLICK_MS && editorPoints.length > 0) {
       const prev = editorPoints[editorPoints.length - 1];
-      const a = map.latLngToContainerPoint(L.latLng(prev[0], prev[1]));
+      const a = map.latLngToContainerPoint(new L.LatLng(prev[0], prev[1]));
       const b = map.latLngToContainerPoint(targetLl);
       if (a.distanceTo(b) < 6) {
         finishOnDoubleClick();
@@ -291,8 +291,8 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       [mapConfig.height, mapConfig.width],
     ];
 
-    map = L.map(container, {
-      crs: L.CRS.Simple,
+    map = new L.Map(container, {
+      crs: L.SimpleCRS,
       minZoom: -3,
       maxZoom: 4,
       zoomSnap: 0.25,
@@ -323,7 +323,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     map.zoomControl?.getContainer()?.addEventListener('click', markMoved);
 
     // Map Event Listeners for Editor
-    map.on('mousemove', (e: any) => {
+    map.on('pointermove', (e: any) => {
       if (!editorMode) return;
       if (!isAppending()) {
         if (rubberBandLine) {
@@ -341,7 +341,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
         const previewPts = [lastPt, [targetLl.lat, targetLl.lng]];
         const accent = getActiveEditorAccentColor();
         if (!rubberBandLine) {
-          rubberBandLine = L.polyline(previewPts, {
+          rubberBandLine = new L.Polyline(previewPts, {
             color: accent,
             weight: 3,
             opacity: 0.65,
@@ -444,13 +444,13 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const imgMed = basePath + (webp.med ? '_med.webp' : '_med.jpg');
     const imgFull = webp.full ? basePath + '.webp' : mapConfig.image;
 
-    L.imageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
+    new L.ImageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
     let fullOverlay: any = null;
     let fullLoading = false;
 
     const medPreload = new Image();
     medPreload.onload = () => {
-      L.imageOverlay(imgMed, mapBounds, { zIndex: 2 }).addTo(map);
+      new L.ImageOverlay(imgMed, mapBounds, { zIndex: 2 }).addTo(map);
     };
     medPreload.src = imgMed;
 
@@ -462,7 +462,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
         const fullPreload = new Image();
         fullPreload.onload = () => {
-          fullOverlay = L.imageOverlay(imgFull, mapBounds, { zIndex: 3 }).addTo(map);
+          fullOverlay = new L.ImageOverlay(imgFull, mapBounds, { zIndex: 3 }).addTo(map);
           if (hdBadge) hdBadge.style.display = 'none';
         };
         fullPreload.onerror = () => {
@@ -503,14 +503,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const ll = parsePoints(seg.points);
     if (ll.length < 2) return;
     selectionLayers.push(
-      L.polyline(ll, { color: '#ffffff', weight: 14, opacity: 0.55, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+      new L.Polyline(ll, { color: '#ffffff', weight: 14, opacity: 0.55, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
     );
     selectionLayers.push(
-      L.polyline(ll, { color: segColor(seg), weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
+      new L.Polyline(ll, { color: segColor(seg), weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map)
     );
     [ll[0], ll[ll.length - 1]].forEach((pt) => {
       selectionLayers.push(
-        L.circleMarker(pt, { radius: 6, color: '#ffffff', weight: 2, fillColor: segColor(seg), fillOpacity: 1, interactive: false }).addTo(map)
+        new L.CircleMarker(pt, { radius: 6, color: '#ffffff', weight: 2, fillColor: segColor(seg), fillOpacity: 1, interactive: false }).addTo(map)
       );
     });
   }
@@ -550,7 +550,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       const style = segStyle(seg);
       const { weight, opacity } = style;
 
-      const line = L.polyline(ll, {
+      const line = new L.Polyline(ll, {
         ...style,
         lineCap: 'round',
         lineJoin: 'round',
@@ -558,7 +558,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       }).addTo(map);
 
       // Wide invisible line so a finger can hit a thin run
-      const hitLine = L.polyline(ll, {
+      const hitLine = new L.Polyline(ll, {
         color: '#000',
         weight: 24,
         opacity: 0.001,
@@ -587,14 +587,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
       hitLine.bindTooltip(tooltipHtml, { sticky: true });
 
-      hitLine.on('mouseover', () => {
+      hitLine.on('pointerover', () => {
         if (editorMode) return;
         if (!selectedSegId || String(selectedSegId) !== String(seg.id)) {
           line.setStyle({ weight: weight + 3, opacity: 1 });
         }
       });
 
-      hitLine.on('mouseout', () => {
+      hitLine.on('pointerout', () => {
         if (editorMode) return;
         if (!selectedSegId || String(selectedSegId) !== String(seg.id)) {
           line.setStyle({ weight, opacity });
@@ -644,7 +644,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       const pts = parsePoints(sec.boundary_points);
       if (pts.length < 3) return;
       const col = sec.color || '#3b82f6';
-      const poly = L.polygon(pts, {
+      const poly = new L.Polygon(pts, {
         color: col,
         weight: 2,
         dashArray: '6, 4',
@@ -774,7 +774,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       selectSegment(seg);
     });
 
-    L.popup({ minWidth: 220, maxWidth: 280, className: 'admin-leaflet-popup' })
+    new L.Popup({ minWidth: 220, maxWidth: 280, className: 'admin-leaflet-popup' })
       .setLatLng(latlng)
       .setContent(popupContent)
       .openOn(map);
@@ -863,7 +863,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     }
 
     const p1 = map.latLngToContainerPoint(latlng);
-    const p2 = L.point(p1.x + 14, p1.y);
+    const p2 = new L.Point(p1.x + 14, p1.y);
     const ll2 = map.containerPointToLatLng(p2);
     const maxDist = Math.abs(ll2.lng - latlng.lng) || 5;
 
@@ -911,7 +911,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     if (bestPt) {
       currentSnapTarget = { lat: bestPt[0], lng: bestPt[1], label: bestLabel };
       showSnapIndicator([bestPt[0], bestPt[1]], bestLabel);
-      return L.latLng(bestPt[0], bestPt[1]);
+      return new L.LatLng(bestPt[0], bestPt[1]);
     }
 
     hideSnapIndicator();
@@ -921,13 +921,13 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
   function showSnapIndicator(pt: [number, number], label: string) {
     const L = (window as any).L;
     if (!snapMarker) {
-      const icon = L.divIcon({
+      const icon = new L.DivIcon({
         className: 'snap-indicator-wrap',
         html: '<div class="snap-indicator-ring"></div>',
         iconSize: [24, 24],
         iconAnchor: [12, 12],
       });
-      snapMarker = L.marker(pt, { icon, interactive: false, zIndexOffset: 2000 }).addTo(map);
+      snapMarker = new L.Marker(pt, { icon, interactive: false, zIndexOffset: 2000 }).addTo(map);
     } else {
       snapMarker.setLatLng(pt);
     }
@@ -992,7 +992,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const size = isStart || isEnd ? 20 : 16;
     const anchor = size / 2;
 
-    const icon = L.divIcon({
+    const icon = new L.DivIcon({
       className: 'custom-vertex-wrap',
       html:
         '<div class="' +
@@ -1006,7 +1006,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       iconAnchor: [anchor, anchor],
     });
 
-    const marker = L.marker(latlng, {
+    const marker = new L.Marker(latlng, {
       icon,
       draggable: true,
       zIndexOffset: isStart || isEnd ? 1200 : 1000,
@@ -1080,14 +1080,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const midLat = (p1[0] + p2[0]) / 2;
     const midLng = (p1[1] + p2[1]) / 2;
 
-    const icon = L.divIcon({
+    const icon = new L.DivIcon({
       className: 'custom-midpoint-wrap',
       html: '<div class="custom-midpoint-handle" style="background:' + accentColor + '">+</div>',
       iconSize: [12, 12],
       iconAnchor: [6, 6],
     });
 
-    const marker = L.marker([midLat, midLng], {
+    const marker = new L.Marker([midLat, midLng], {
       icon,
       draggable: true,
       zIndexOffset: 900,
@@ -1161,7 +1161,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     if (editorPoints.length > 0) {
       if (editorMode === 'sector_boundary' && editorPoints.length >= 3) {
-        editorLine = L.polygon(editorPoints, {
+        editorLine = new L.Polygon(editorPoints, {
           color: accentColor,
           weight: 3,
           opacity: 0.95,
@@ -1171,7 +1171,7 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
           interactive: false,
         }).addTo(map);
       } else {
-        editorLine = L.polyline(editorPoints, {
+        editorLine = new L.Polyline(editorPoints, {
           color: accentColor,
           weight: 5,
           opacity: 0.95,
@@ -1547,13 +1547,13 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       if (userMoved || !mapBounds) return;
       // Fit the part of the mountain with runs on it, in the space above the phone's bottom sheet
       const layers = Object.values(segmentLayers).filter((l: any) => typeof l.getBounds === 'function');
-      let bounds = layers.length ? L.featureGroup(layers).getBounds() : L.latLngBounds(mapBounds);
+      let bounds = layers.length ? new L.FeatureGroup(layers).getBounds() : new L.LatLngBounds(mapBounds);
       const size = map.getSize();
       if (size.x < size.y) {
         // Portrait phone: the runs spread wider than the screen. Fit their height and centre them;
         // fitting the width too would shrink the mountain to a strip the sheet then covers.
         const c = bounds.getCenter();
-        bounds = L.latLngBounds([bounds.getSouth(), c.lng], [bounds.getNorth(), c.lng]);
+        bounds = new L.LatLngBounds([bounds.getSouth(), c.lng], [bounds.getNorth(), c.lng]);
       }
       map.fitBounds(bounds, { animate: false, paddingTopLeft: [16, 56], paddingBottomRight: [16, bottomPad + 16] });
     },
