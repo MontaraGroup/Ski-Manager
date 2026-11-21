@@ -126,12 +126,11 @@ class Genepis extends BaseController
             return redirect()->back()->with('error', 'Not enough Génépis. Need ' . $cost . ', have ' . $genepis['balance'] . '.');
         }
 
-        // Check if timed boost already active
-        if ($cfg['duration']) {
-            $existing = $db->table('player_boosts')->where('user_id', $userId)->where('boost_type', $item)->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults();
-            if ($existing > 0) {
-                return redirect()->back()->with('error', $cfg['name'] . ' is already active.');
-            }
+        // Already active: a timed boost still running, or a permanent upgrade (stored with a 2099 expiry).
+        // Instant items write no boost row, so they can be bought again.
+        $existing = $db->table('player_boosts')->where('user_id', $userId)->where('boost_type', $item)->where('expires_at >', date('Y-m-d H:i:s'))->countAllResults();
+        if ($existing > 0) {
+            return redirect()->back()->with('error', $cfg['name'] . ($cfg['duration'] ? ' is already active.' : ' is already yours.'));
         }
 
         $db->transStart();

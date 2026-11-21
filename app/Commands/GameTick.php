@@ -110,6 +110,14 @@ class GameTick extends BaseCommand
             // Active Génépis perks, loaded before any revenue so the revenue boost applies to all of it
             $activeBoostRows = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
             $activeBoostTypes = array_column($activeBoostRows, 'boost_type');
+            // Weather Control (Génépis): this resort skis in clear, cold, calm weather while it lasts
+            if (in_array('skip_weather', $activeBoostTypes, true)) {
+                $weather = array_merge($weather, [
+                    'condition_name' => 'Sunny', 'wind' => min((int) ($weather['wind'] ?? 0), 10), 'temp' => min((int) ($weather['temp'] ?? -5), -3),
+                ]);
+            }
+            // Speed Boost (Génépis): construction counts down two days per night instead of one
+            $buildStep = in_array('speed_boost', $activeBoostTypes, true) ? 2 : 1;
             if (in_array('revenue_boost', $activeBoostTypes)) {
                 $revMult *= 1.25;
             }
@@ -524,7 +532,8 @@ class GameTick extends BaseCommand
 
                 // Buildings earn in proportion to how full they are; a staffed one earns the staff bonus.
                 // Real estate has its own market (below), so it's left out here.
-                $guestBuildings = array_values(array_filter($buildings, fn($b) => $b['building_type'] !== 'real_estate'));
+                // Ski patrol is safety, not a guest venue (no BUILDING_SHARE): leaving it in put a 0% occupancy into the average
+                $guestBuildings = array_values(array_filter($buildings, fn($b) => !in_array($b['building_type'], ['real_estate', 'ski_patrol'], true)));
                 $util = \App\Libraries\Economy::buildingUtilization($guestBuildings, $visitors, $summerTourists);
                 $perType = array_count_values(array_column($guestBuildings, 'building_type'));
                 $buildingRevenue = 0;
@@ -545,7 +554,7 @@ class GameTick extends BaseCommand
                     $rent = 0; $fees = 0;
                     foreach ($estate as $re) {
                         if ($re['status'] === 'upgrading') {
-                            $left = max(0, (int) $re['build_days_left'] - 1);
+                            $left = max(0, (int) $re['build_days_left'] - $buildStep);
                             // A finished property is leased out straight away; the owner can sell it any time
                             $db->table('buildings')->where('id', $re['id'])->update($left > 0 ? ['build_days_left' => $left] : ['build_days_left' => 0, 'status' => 'open']);
                             if ($left === 0) notify($userId, 'real_estate', $re['name'] . ' is finished', 'It\'s leased out and earning rent. You can also sell it on the property market.', 'fa-solid fa-city', '/real-estate');
@@ -625,7 +634,7 @@ class GameTick extends BaseCommand
 
             foreach ($userParks as $park) {
                 if ($park['status'] === 'under_construction') {
-                    $daysLeft = $park['build_days_left'] - 1;
+                    $daysLeft = $park['build_days_left'] - $buildStep;
                     if ($daysLeft <= 0) {
                         $terrainParkModel->update($park['id'], ['build_days_left' => 0, 'status' => 'open']);
                         log_activity($userId, 'terrain_park_complete', $park['name'] . ' construction complete!');
@@ -671,7 +680,7 @@ class GameTick extends BaseCommand
 
             foreach ($userParking as $lot) {
                 if ($lot['status'] === 'under_construction') {
-                    $lotDaysLeft = $lot['build_days_left'] - 1;
+                    $lotDaysLeft = $lot['build_days_left'] - $buildStep;
                     if ($lotDaysLeft <= 0) {
                         $parkingModel->update($lot['id'], ['build_days_left' => 0, 'status' => 'open']);
                         log_activity($userId, 'parking_complete', $lot['name'] . ' construction complete!');
@@ -722,7 +731,7 @@ class GameTick extends BaseCommand
                 $resSources = $db->table($resTable)->where('user_id', $userId)->get()->getResultArray();
                 foreach ($resSources as $res) {
                     if ($res['status'] === 'under_construction') {
-                        $resDays = $res['build_days_left'] - 1;
+                        $resDays = $res['build_days_left'] - $buildStep;
                         if ($resDays <= 0) {
                             $db->table($resTable)->where('id', $res['id'])->update(['build_days_left' => 0, 'status' => 'active']);
                             log_activity($userId, $resType . '_complete', $res['name'] . ' construction complete!');
@@ -782,6 +791,8 @@ class GameTick extends BaseCommand
             $vipMagnetBonus = in_array('vip_magnet', $activeBoostTypes) ? 100 : 0;
             // VIPs only visit a resort that had skiers today (they used to tip empty, slope-less resorts)
             $vipChance = $resortOpen && $visitors > 0 ? min(100, ($resortRating * 8) + $vipBonus + $vipMagnetBonus + ($visitors > 200 ? 10 : 0) + ($countTotal('manager') * 3)) : 0;
+            $vipRolls = $vipMagnetBonus > 0 ? 3 : 1;
+            for ($vipRoll = 0; $vipRoll < $vipRolls; $vipRoll++) {
             if (rand(1, 100) <= $vipChance) {
                 $vipTypes = [
                     ['type' => 'celebrity', 'name' => 'Celebrity Guest', 'icon' => 'fa-solid fa-star', 'cash_min' => 5000, 'cash_max' => 20000, 'rep' => 5],
@@ -797,7 +808,7 @@ class GameTick extends BaseCommand
                 $maxIndex = min(count($vipTypes) - 1, (int) floor($resortRating * 1.5));
                 $vip = $vipTypes[rand(0, $maxIndex)];
                 $vipCash = $v2 ? \App\Libraries\Economy::vipReward((int) round($ticketRevenue * $revMult), $vip['cash_max']) : rand($vip['cash_min'], $vip['cash_max']);
-                $breakdown['vip'] = $vipCash;
+                $breakdown['vip'] = ($breakdown['vip'] ?? 0) + $vipCash;
 
                 $vipNames = ['Von Schneider', 'Beaumont', 'Larsson', 'Tanaka', 'De Rossi', 'Petrov', 'Ashworth', 'Magnusson', 'Dubois', 'Van den Berg'];
                 $vipFirstNames = ['Alexander', 'Isabella', 'Viktor', 'Sophia', 'Marcus', 'Elena', 'James', 'Yuki', 'Charlotte', 'Erik'];
@@ -820,6 +831,7 @@ class GameTick extends BaseCommand
                 log_activity($userId, 'vip_arrival', $vip['name'] . ' ' . $vipFullName . ' has arrived! +' . number_format($vipCash) . '€', $vip['icon']);
                 notify($userId, 'vip', $vip['name'] . ' arrived!', $vipFullName . ' is visiting your resort for ' . $stayDays . ' days. +' . number_format($vipCash) . '€', $vip['icon'], '/vip-guests');
             }
+            }
 
             // Process departing VIPs with satisfaction check
             $departingVips = $db->table('vip_guests')->where('user_id', $userId)->where('status', 'visiting')->get()->getResultArray();
@@ -833,6 +845,8 @@ class GameTick extends BaseCommand
                     if (!empty($vReqs['min_staff']) && count($allStaff) < $vReqs['min_staff']) $satisfied = false;
                     if (!empty($vReqs['min_buildings']) && count($buildings) < $vReqs['min_buildings']) $satisfied = false;
                     if (!empty($vReqs['min_lifts']) && $openLifts < $vReqs['min_lifts']) $satisfied = false;
+                    if (!empty($vReqs['min_terrain_parks']) && count(array_filter($userParks ?? [], fn($p) => $p['status'] === 'open')) < $vReqs['min_terrain_parks']) $satisfied = false;
+                    if (!empty($vReqs['min_hotels']) && count(array_filter($buildings, fn($b) => $b['building_type'] === 'hotel' && $b['status'] === 'open')) < $vReqs['min_hotels']) $satisfied = false;
 
                     $finalStatus = $satisfied ? 'satisfied' : 'disappointed';
                     $db->table('vip_guests')->where('id', $vg['id'])->update(['status' => $finalStatus, 'days_remaining' => 0]);
