@@ -1,3 +1,27 @@
+## Release 2026-11-21 01:40
+
+* Merge branch 'MontaraGroup:main' into main (1eba3c5f)
+* Merge pull request #150 from Montara-Group/fix/android-tester-reward-200 (0e3fd2ac)
+* feat(beta): Android tester reward is 200 Génépis (96fee984)
+* Merge pull request #149 from Montara-Group/fix/lift-demolish-refund (feada266)
+* feat(map): demolishing a lift pays back 50% of its build cost (2dd8322d)
+
+## Release 2026-11-19 23:51
+
+* Merge branch 'MontaraGroup:main' into main (1f0efed8)
+* Merge pull request #131 from Montara-Group/feat/heroui-shared-components (6e70f799)
+* build: rebuild islands for HeroUI shared components (a55e5251)
+* feat(ui): shared page blocks use HeroUI components (b8f4fc00)
+* Merge pull request #130 from Montara-Group/feat/roadmap-comments (9a5a7159)
+
+## Release 2026-11-19 18:14
+
+* Merge branch 'MontaraGroup:main' into main (61b8188c)
+* Merge pull request #125 from Montara-Group/feat/android-play-games-479 (e19581d4)
+* Merge pull request #124 from Montara-Group/feat/android-beta-google-group (d6ffa5f3)
+* chore(android): Play Games project 479519104582 (Cloud project ski-manager-496921) (91930b8b)
+* chore(changelog): update CHANGELOG.md and updates view [skip ci] (b87057c8)
+
 ## Release 2026-11-19 16:33
 
 * Merge branch 'MontaraGroup:main' into main (c15c260a)
