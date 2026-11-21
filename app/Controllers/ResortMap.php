@@ -214,7 +214,7 @@ class ResortMap extends BaseController
         $page = [
             'resortMap'         => $resortMap,
             'resortMaps'        => self::RESORT_MAPS,
-            'mapConfig'         => $mapConfig + ['webp' => self::webpSizes((string) $mapConfig['image'])],
+            'mapConfig'         => $mapConfig + ['webp' => self::webpSizes((string) $mapConfig['image']), 'tiles' => self::tiles((string) $mapConfig['image'])],
             'segments'          => $segments,
             'sectors'           => $sectors,
             'builtSegmentIds'   => $builtSegmentIds,
@@ -258,6 +258,24 @@ class ResortMap extends BaseController
      * Which map sizes have a WebP copy next to the JPEG (low, med, full). The copies are made on the
      * server (often 15-30% smaller); a map without them keeps loading the JPEGs.
      */
+    /**
+     * The map's tile set (scripts/make_map_tiles.py, run by deploy.sh), or null until it has been built:
+     * the page then falls back to the low/med/full images. meta.json is written last, so its presence means
+     * every tile is there; its version goes in the URL because /img/ is cached as immutable.
+     */
+    public static function tiles(string $image): ?array
+    {
+        $name = basename((string) preg_replace('/\.jpe?g$/i', '', $image));
+        $meta = FCPATH . 'img/tiles/v2/' . $name . '/meta.json';
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', $name) || !is_file($meta)) return null;
+        $info = json_decode((string) file_get_contents($meta), true);
+        if (!is_array($info) || empty($info['version'])) return null;
+        return [
+            'url'     => '/img/tiles/v2/' . $name . '/{z}/{x}_{y}.webp?v=' . rawurlencode((string) $info['version']),
+            'maxZoom' => (int) ($info['maxZoom'] ?? 4),
+        ];
+    }
+
     public static function webpSizes(string $image): array
     {
         $base = FCPATH . ltrim(preg_replace('/\.jpe?g$/i', '', $image), '/');

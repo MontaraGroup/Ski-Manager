@@ -447,6 +447,24 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
     const imgFull = webp.full ? basePath + '.webp' : mapConfig.image;
 
     new L.ImageOverlay(imgLow, mapBounds, { zIndex: 1 }).addTo(map);
+
+    // Tiles: the browser fetches and decodes only the 256 px pieces on screen, instead of a 1.3 MB image and
+    // then a 100+ megapixel one that froze the page while it decoded. The small image stays underneath, so
+    // there's never a blank map while tiles arrive.
+    if (mapConfig.tiles) {
+      new L.TileLayer(mapConfig.tiles.url, {
+        bounds: new L.LatLngBounds(mapBounds),
+        minNativeZoom: 0,
+        maxNativeZoom: mapConfig.tiles.maxZoom,
+        minZoom: map.getMinZoom(),
+        maxZoom: map.getMaxZoom(),
+        noWrap: true,
+        keepBuffer: 4,
+        zIndex: 2,
+      }).addTo(map);
+      return;
+    }
+
     let fullOverlay: L.ImageOverlay | null = null;
     let fullLoading = false;
 

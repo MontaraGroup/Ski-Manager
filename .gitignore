@@ -133,3 +133,6 @@ node_modules/
 public/css/style.css
 /public/build/
 .scannerwork/
+
+# Built on the server by scripts/make_map_tiles.py (deploy.sh) from the map images, which aren't in git either
+/public/img/tiles/v2/
