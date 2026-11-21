@@ -148,6 +148,16 @@ if docker ps --format '{{.Names}}' | grep -q "${OPENRESTY_CONTAINER}"; then
     docker exec "${OPENRESTY_CONTAINER}" openresty -s reload 2>/dev/null || true
 fi
 
+# 8b. Map tiles (scripts/make_map_tiles.py): rebuilt in the background only when a map image changed, so the
+# deploy doesn't wait. Until meta.json exists the trail map uses the plain images. Needs python3 with Pillow.
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import PIL' >/dev/null 2>&1; then
+    echo "Checking map tiles in the background (log: writable/logs/map-tiles.log)..."
+    nohup nice -n 19 ionice -c3 python3 "${HOST_PATH}/scripts/make_map_tiles.py" "${HOST_PATH}/public" \
+        >> "${HOST_PATH}/writable/logs/map-tiles.log" 2>&1 < /dev/null &
+else
+    echo "WARNING: python3 with Pillow not found; map tiles not built (the map uses the plain images)." >&2
+fi
+
 # 9. Post-Deploy Smoke Test & Health Check
 echo "Running post-deploy health check on ${DOMAIN}..."
 sleep 2

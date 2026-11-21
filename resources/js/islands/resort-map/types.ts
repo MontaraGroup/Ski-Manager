@@ -50,6 +50,8 @@ export interface MapConfig {
   height: number;
   /** Which sizes also exist as .webp (smaller); the engine uses those and the JPEGs for the rest */
   webp?: { low: boolean; med: boolean; full: boolean };
+  /** 256 px tiles (scripts/make_map_tiles.py); null until the server has built them */
+  tiles?: { url: string; maxZoom: number } | null;
 }
 
 export interface EconomyV2Config {
