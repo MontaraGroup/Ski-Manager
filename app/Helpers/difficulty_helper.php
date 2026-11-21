@@ -42,24 +42,6 @@ function isPageHidden(string $page): bool
     return in_array($page, explode(',', $hidden));
 }
 
-function getDifficultyLabel(): string
-{
-    return match(getDifficulty()) {
-        'easy' => 'Easy',
-        'hard' => 'Hard',
-        default => 'Standard',
-    };
-}
-
-function getDifficultyBadge(): string
-{
-    return match(getDifficulty()) {
-        'easy' => '<span class="badge badge-success badge-xs">Easy</span>',
-        'hard' => '<span class="badge badge-error badge-xs">Hard</span>',
-        default => '<span class="badge badge-info badge-xs">Standard</span>',
-    };
-}
-
 function isFeatureUnlocked(string $feature): bool
 {
     if (!function_exists('auth') || !auth()->loggedIn()) return false;
