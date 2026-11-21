@@ -40,14 +40,24 @@ class Buildings extends BaseController
         return $defs;
     }
 
+    /** Building types with a web page, and the text shown while the page's island loads */
+    private const PAGES = [
+        'hotel'          => ['title' => 'Hotels',         'loading' => 'Loading hotels…'],
+        'rental'         => ['title' => 'Ski Rentals',    'loading' => 'Loading ski rentals…'],
+        'restaurant'     => ['title' => 'Restaurants',    'loading' => 'Loading restaurants…'],
+        'retail'         => ['title' => 'Retail',         'loading' => 'Loading retail stores…'],
+        'ski_patrol'     => ['title' => 'Ski Patrol',     'loading' => 'Loading ski patrol command…'],
+        'transportation' => ['title' => 'Transportation', 'loading' => 'Loading transportation network…'],
+    ];
+
     public function show(string $type = 'hotel'): ResponseInterface|string
     {
         $page = $this->pageData($type);
 
-        if (!file_exists(APPPATH . 'Views/buildings/' . $type . '.php')) {
+        if (!isset(self::PAGES[$type])) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
-        return view('buildings/' . $type, ['page' => $page]);
+        return view('buildings/show', ['page' => $page] + self::PAGES[$type]);
     }
 
     /** What the page shows; the mobile API sends the same data (Api\V1\App) */
