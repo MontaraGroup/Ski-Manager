@@ -568,7 +568,7 @@ class ResortMap extends BaseController
     }
 
     /**
-     * Demolish a built lift or slope for a 25% salvage refund (same rate as Buildings::sell).
+     * Demolish a built lift (50% salvage refund) or slope (25%, the same rate as Buildings::sell).
      * Answers JSON for the map, or redirects back with a flash message for plain form posts.
      */
     public function demolishItem($id = null)
@@ -620,7 +620,7 @@ class ResortMap extends BaseController
 
         log_activity($userId, 'Construction', 'Demolished ' . $label . ' ' . $item['name'] . ' for ' . currency($refund) . ' salvage', 'fa-solid fa-trash-can');
 
-        $msg = $item['name'] . ' demolished. ' . currency($refund) . ' refunded (25% salvage).';
+        $msg = $item['name'] . ' demolished. ' . currency($refund) . ' refunded (' . (int) round(self::salvageRate($item) * 100) . '% salvage).';
         if (!$isAjax) {
             return redirect()->back()->with('success', $msg);
         }
@@ -743,10 +743,19 @@ class ResortMap extends BaseController
         'cable_car'    => 'Cable car',
     ];
 
-    /** 25% of what the item cost to build */
+    /** Share of the build cost a demolish pays back: lifts keep more resale value than graded slopes */
+    public const LIFT_SALVAGE = 0.5;
+    public const SLOPE_SALVAGE = 0.25;
+
+    public static function salvageRate(array $item): float
+    {
+        return ($item['item_type'] ?? '') === 'lift' ? self::LIFT_SALVAGE : self::SLOPE_SALVAGE;
+    }
+
+    /** What demolishing the item pays back (salvageRate() of its build cost) */
     public static function salvageValue(array $item): int
     {
-        return (int) round(self::buildCost($item) * 0.25);
+        return (int) round(self::buildCost($item) * self::salvageRate($item));
     }
 
     /**

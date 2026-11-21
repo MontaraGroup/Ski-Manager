@@ -167,7 +167,7 @@ export function BuiltRunView({
             </AlertDialog.Header>
             <AlertDialog.Body className="space-y-2 text-sm">
               <p>
-                You get {formatCurrency(salvage, isImperial)} back, a quarter of what it cost. This can't be undone.
+                You get {formatCurrency(salvage, isImperial)} back, {isLift ? 'half' : 'a quarter'} of what it cost. This can't be undone.
               </p>
               {!isLift && <p className="text-muted">Snow cannons and terrain parks on it are kept, but no longer assigned.</p>}
             </AlertDialog.Body>
