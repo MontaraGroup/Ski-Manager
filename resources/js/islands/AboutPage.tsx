@@ -116,7 +116,7 @@ export default function AboutPage({
           <div className="rounded-xl border border-border bg-surface p-5 space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">
-                <Icon name="fa-sparkles" className="w-4 h-4" />
+                <Icon name="fa-wand-magic-sparkles" className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Version 2 Rebuild</h3>

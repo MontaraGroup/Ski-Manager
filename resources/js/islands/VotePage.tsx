@@ -235,7 +235,7 @@ export default function VotePage({
               {/* Unique Mountain Perk */}
               <div className="rounded-lg border border-border bg-surface-secondary/40 p-3 mb-4 space-y-1">
                 <div className="flex items-center gap-1.5 font-semibold text-xs text-foreground">
-                  <Icon name={opt.perk.icon || 'fa-sparkles'} className="text-accent" />
+                  <Icon name={opt.perk.icon || 'fa-wand-magic-sparkles'} className="text-accent" />
                   <span>{opt.perk.title}</span>
                   <span className="text-muted font-normal">· {opt.perk.badge}</span>
                 </div>

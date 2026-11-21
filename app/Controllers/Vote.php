@@ -360,7 +360,7 @@ class Vote extends BaseController
         foreach ($options as $k => $opt) {
             $rawIcon = $opt['icon'] ?? 'fa-mountain';
             $icon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawIcon);
-            $rawPerkIcon = $opt['perk']['icon'] ?? 'fa-sparkles';
+            $rawPerkIcon = $opt['perk']['icon'] ?? 'fa-wand-magic-sparkles';
             $perkIcon = preg_replace('/^fa-(solid|regular|brands)\s+/', '', (string) $rawPerkIcon);
             $votes = (int) ($voteCounts[$k] ?? 0);
             $pct = $totalVotes > 0 ? (float) round($votes / $totalVotes * 100, 1) : 0.0;
