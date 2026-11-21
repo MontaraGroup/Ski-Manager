@@ -381,6 +381,10 @@ export default function Map3DViewport({
         >
           <Icon name={paused ? 'fa-play' : 'fa-pause'} />
         </Button>
+
+        <span className="pointer-events-none hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs text-muted shadow-sm lg:inline-flex">
+          Drag pan · Right-drag orbit · Scroll zoom
+        </span>
       </div>
     </div>
   );

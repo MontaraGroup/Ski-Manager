@@ -68,29 +68,39 @@ interface InstancedGPU {
   count: number;
 }
 
-const LIGHT_PRESETS: Record<'day' | 'sunset' | 'night', { sun: [number, number, number]; sunCol: [number, number, number]; sky: [number, number, number]; gnd: [number, number, number]; fog: [number, number, number]; mode: number }> = {
+const LIGHT_PRESETS: Record<
+  'day' | 'sunset' | 'night',
+  {
+    sun: [number, number, number];
+    sunCol: [number, number, number];
+    sky: [number, number, number];
+    gnd: [number, number, number];
+    fog: [number, number, number];
+    mode: number;
+  }
+> = {
   day: {
-    sun: [0.55, 0.78, 0.42],
-    sunCol: [1.0, 0.98, 0.94],
-    sky: [0.48, 0.56, 0.68],
-    gnd: [0.22, 0.27, 0.34],
-    fog: [0.76, 0.85, 0.94],
+    sun: [0.45, 0.82, 0.42],
+    sunCol: [1.0, 0.99, 0.97],
+    sky: [0.76, 0.85, 0.94],
+    gnd: [0.42, 0.48, 0.56],
+    fog: [0.84, 0.90, 0.96],
     mode: 0,
   },
   sunset: {
-    sun: [-0.72, 0.32, 0.45],
-    sunCol: [1.0, 0.62, 0.34],
-    sky: [0.38, 0.3, 0.44],
-    gnd: [0.2, 0.16, 0.24],
-    fog: [0.55, 0.4, 0.42],
+    sun: [-0.65, 0.38, 0.42],
+    sunCol: [1.0, 0.68, 0.42],
+    sky: [0.56, 0.48, 0.62],
+    gnd: [0.32, 0.28, 0.36],
+    fog: [0.62, 0.46, 0.48],
     mode: 1,
   },
   night: {
-    sun: [-0.25, 0.82, 0.35],
-    sunCol: [0.26, 0.38, 0.62],
-    sky: [0.14, 0.2, 0.32],
-    gnd: [0.06, 0.08, 0.14],
-    fog: [0.08, 0.12, 0.2],
+    sun: [-0.25, 0.84, 0.32],
+    sunCol: [0.36, 0.48, 0.72],
+    sky: [0.22, 0.30, 0.46],
+    gnd: [0.12, 0.16, 0.24],
+    fog: [0.09, 0.13, 0.21],
     mode: 2,
   },
 };
@@ -127,20 +137,21 @@ export function createMap3DRenderer(
     if (pts.length >= 2) segPtsCache.set(String(s.id), pts);
   }
 
-  // Camera spherical coordinates around target (mapX, mapZ in world space)
   const W = mapConfig.width || 600;
   const H = mapConfig.height || 340;
+  const DEFAULT_YAW = 0.05;
+  const DEFAULT_PITCH = 0.76;
+
   const cam = {
     tx: W * 0.42,
-    ty: 18,
+    ty: 12,
     tz: H * 0.58,
-    yaw: 0.08,
-    pitch: 0.62,
-    dist: 300,
+    yaw: DEFAULT_YAW,
+    pitch: DEFAULT_PITCH,
+    dist: 280,
   };
   const targetCam = { ...cam };
 
-  // Compute initial framing around player's built or visible runs
   function computeFitTarget(): { tx: number; ty: number; tz: number; dist: number } {
     const builtSegs = state.segments.filter((s) => state.builtIds.some((b) => sameId(b, s.id)));
     const pool = builtSegs.length > 0 ? builtSegs : state.segments;
@@ -157,15 +168,15 @@ export function createMap3DRenderer(
         if (my > maxY) maxY = my;
       }
     }
-    if (!has) return { tx: W * 0.5, ty: 16, tz: H * 0.5, dist: 340 };
+    if (!has) return { tx: W * 0.5, ty: 10, tz: H * 0.5, dist: 310 };
     const cx = (minX + maxX) * 0.5;
     const cy = (minY + maxY) * 0.5;
-    const span = Math.max(85, Math.hypot(maxX - minX, maxY - minY));
+    const span = Math.max(70, Math.hypot(maxX - minX, maxY - minY));
     return {
       tx: cx,
-      ty: hf.sampleHeight(cx, cy) * 0.8,
+      ty: hf.sampleHeight(cx, cy) * 0.75,
       tz: H - cy,
-      dist: clamp(span * 1.15, 110, 520),
+      dist: clamp(span * 1.12, 90, 480),
     };
   }
 
@@ -185,7 +196,41 @@ export function createMap3DRenderer(
     return null;
   }
 
-  // Build Terrain VAO
+  const terrainLocs = {
+    uViewProj: gl.getUniformLocation(terrainProg, 'uViewProj'),
+    uSunDir: gl.getUniformLocation(terrainProg, 'uSunDir'),
+    uSunColor: gl.getUniformLocation(terrainProg, 'uSunColor'),
+    uSkyColor: gl.getUniformLocation(terrainProg, 'uSkyColor'),
+    uGroundColor: gl.getUniformLocation(terrainProg, 'uGroundColor'),
+    uFogColor: gl.getUniformLocation(terrainProg, 'uFogColor'),
+    uCameraPos: gl.getUniformLocation(terrainProg, 'uCameraPos'),
+    uLightMode: gl.getUniformLocation(terrainProg, 'uLightMode'),
+    uContours: gl.getUniformLocation(terrainProg, 'uContours'),
+    uNightLit: gl.getUniformLocation(terrainProg, 'uNightLit'),
+    uMapTex: gl.getUniformLocation(terrainProg, 'uMapTex'),
+  };
+
+  const solidLocs = {
+    uViewProj: gl.getUniformLocation(solidProg, 'uViewProj'),
+    uSunDir: gl.getUniformLocation(solidProg, 'uSunDir'),
+    uSunColor: gl.getUniformLocation(solidProg, 'uSunColor'),
+    uSkyColor: gl.getUniformLocation(solidProg, 'uSkyColor'),
+    uGroundColor: gl.getUniformLocation(solidProg, 'uGroundColor'),
+    uFogColor: gl.getUniformLocation(solidProg, 'uFogColor'),
+    uCameraPos: gl.getUniformLocation(solidProg, 'uCameraPos'),
+    uLightMode: gl.getUniformLocation(solidProg, 'uLightMode'),
+  };
+
+  const instLocs = {
+    uViewProj: gl.getUniformLocation(instProg, 'uViewProj'),
+    uSunDir: gl.getUniformLocation(instProg, 'uSunDir'),
+    uSunColor: gl.getUniformLocation(instProg, 'uSunColor'),
+    uSkyColor: gl.getUniformLocation(instProg, 'uSkyColor'),
+    uGroundColor: gl.getUniformLocation(instProg, 'uGroundColor'),
+    uLightMode: gl.getUniformLocation(instProg, 'uLightMode'),
+  };
+
+  // Terrain VAO
   const terrainData = buildTerrainMesh(hf);
   const terrainVao = gl.createVertexArray()!;
   const terrainVbo = gl.createBuffer()!;
@@ -206,7 +251,7 @@ export function createMap3DRenderer(
   gl.vertexAttribPointer(3, 1, gl.FLOAT, false, TS, 32);
   gl.bindVertexArray(null);
 
-  // Build Overlay Static VAO
+  // Overlay Static VAO
   const solidVao = gl.createVertexArray()!;
   const solidVbo = gl.createBuffer()!;
   const solidIbo = gl.createBuffer()!;
@@ -247,7 +292,7 @@ export function createMap3DRenderer(
   }
   uploadStaticOverlay();
 
-  // Build Instanced Unit Meshes
+  // Instanced Unit Meshes
   function makeInstancedGPU(unit: UnitMeshData): InstancedGPU {
     const vao = gl!.createVertexArray()!;
     const vbo = gl!.createBuffer()!;
@@ -325,7 +370,7 @@ export function createMap3DRenderer(
   }
   uploadSimInstances();
 
-  // Progressive clean map texture loader
+  // Progressive clean map texture loader with strict tier monotonicity
   const mapTex = gl.createTexture()!;
   gl.bindTexture(gl.TEXTURE_2D, mapTex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([215, 224, 234, 255]));
@@ -337,8 +382,13 @@ export function createMap3DRenderer(
   const anisoExt = gl.getExtension('EXT_texture_filter_anisotropic');
   const maxAniso = anisoExt ? gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1;
 
-  function uploadTexture(img: HTMLImageElement) {
-    if (destroyed) return;
+  let destroyed = false;
+  let loadedTexTier = 0; // 1=low, 2=med, 3=full
+  let fullRequested = false;
+
+  function uploadTexture(img: HTMLImageElement, tier: number) {
+    if (destroyed || tier <= loadedTexTier) return;
+    loadedTexTier = tier;
     const maxTexSize = gl!.getParameter(gl!.MAX_TEXTURE_SIZE) || 4096;
     let source: TexImageSource = img;
     if (img.width > maxTexSize || img.height > maxTexSize) {
@@ -359,8 +409,6 @@ export function createMap3DRenderer(
     }
   }
 
-  let destroyed = false;
-  let fullRequested = false;
   const texSource = mapConfig.cleanImage || mapConfig.image;
   const webp = mapConfig.cleanWebp ?? mapConfig.webp ?? { low: false, med: false, full: false };
   const basePath = texSource.replace(/\.jpg$/i, '');
@@ -369,20 +417,20 @@ export function createMap3DRenderer(
   const fullUrl = webp.full ? basePath + '.webp' : texSource;
 
   const lowImg = new Image();
-  lowImg.onload = () => uploadTexture(lowImg);
+  lowImg.onload = () => uploadTexture(lowImg, 1);
   lowImg.src = lowUrl;
 
   const medImg = new Image();
-  medImg.onload = () => uploadTexture(medImg);
+  medImg.onload = () => uploadTexture(medImg, 2);
   medImg.src = medUrl;
 
   function maybeLoadFullTex() {
-    if (fullRequested || cam.dist > 180) return;
+    if (fullRequested || cam.dist > 200) return;
     fullRequested = true;
     callbacks.onHdLoading(true);
     const fullImg = new Image();
     fullImg.onload = () => {
-      uploadTexture(fullImg);
+      uploadTexture(fullImg, 3);
       callbacks.onHdLoading(false);
     };
     fullImg.onerror = () => callbacks.onHdLoading(false);
@@ -394,15 +442,15 @@ export function createMap3DRenderer(
   const viewMat = new Float32Array(16);
   const vpMat = new Float32Array(16);
   const invVpMat = new Float32Array(16);
-  let camPos: [number, number, number] = [cam.tx, 180, cam.tz + 200];
+  let camPos: [number, number, number] = [cam.tx, 160, cam.tz + 180];
 
   function updateMatrices() {
     const aspect = canvas.width / Math.max(1, canvas.height);
-    mat4Perspective(projMat, 0.72, aspect, 1.5, 2200);
+    mat4Perspective(projMat, 0.72, aspect, 1.2, 2200);
     const horiz = Math.cos(cam.pitch) * cam.dist;
     const vert = Math.sin(cam.pitch) * cam.dist;
     const ex = cam.tx + Math.sin(cam.yaw) * horiz;
-    const ey = Math.max(hf.sampleHeight(clamp(cam.tx, 0, W), clamp(H - cam.tz, 0, H)) + 4, cam.ty + vert);
+    const ey = Math.max(hf.sampleHeight(clamp(cam.tx, 0, W), clamp(H - cam.tz, 0, H)) + 3, cam.ty + vert);
     const ez = cam.tz + Math.cos(cam.yaw) * horiz;
     camPos = [ex, ey, ez];
     mat4LookAt(viewMat, ex, ey, ez, cam.tx, cam.ty, cam.tz);
@@ -434,11 +482,10 @@ export function createMap3DRenderer(
     const dy = pFar[1] - pNear[1];
     const dz = pFar[2] - pNear[2];
 
-    // March ray along terrain bounds
     let prevT = 0;
     let prevDiff = pNear[1] - hf.sampleHeight(pNear[0], H - pNear[2]);
     let hitT = -1;
-    const steps = 42;
+    const steps = 44;
     for (let s = 1; s <= steps; s++) {
       const t = s / steps;
       const rx = pNear[0] + dx * t;
@@ -474,10 +521,9 @@ export function createMap3DRenderer(
       return { kind: 'terrain', mapX, mapY };
     }
 
-    // 1. Check facilities first when visible
     if (state.showBuildings && (state.filter === 'all' || state.filter === 'buildings' || state.filter === 'built')) {
       let bestFac: PlacedFacility | null = null;
-      let bestDist = Math.max(4.8, cam.dist * 0.022);
+      let bestDist = Math.max(2.6, cam.dist * 0.015);
       for (const fac of state.facilities) {
         const d = Math.hypot(fac.mapX - mapX, fac.mapY - mapY);
         if (d < bestDist) {
@@ -490,10 +536,9 @@ export function createMap3DRenderer(
       }
     }
 
-    // 2. Check segments
     if (state.filter !== 'buildings') {
       let bestSeg: MapSegment | null = null;
-      let bestDist = Math.max(3.8, cam.dist * 0.02);
+      let bestDist = Math.max(2.4, cam.dist * 0.014);
       for (const seg of state.segments) {
         const built = state.builtIds.some((b) => sameId(b, seg.id));
         if (state.filter === 'lift' && seg.type !== 'lift') continue;
@@ -524,7 +569,7 @@ export function createMap3DRenderer(
   let lastPy = 0;
   let downPx = 0;
   let downPy = 0;
-  let activePointers = new Map<number, { x: number; y: number }>();
+  const activePointers = new Map<number, { x: number; y: number }>();
   let lastPinchDist = 0;
   let lastPinchAngle = 0;
 
@@ -552,7 +597,7 @@ export function createMap3DRenderer(
       const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
       const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
       if (lastPinchDist > 5) {
-        targetCam.dist = clamp(targetCam.dist * (lastPinchDist / Math.max(5, dist)), 38, 650);
+        targetCam.dist = clamp(targetCam.dist * (lastPinchDist / Math.max(5, dist)), 24, 580);
       }
       let da = angle - lastPinchAngle;
       if (da > Math.PI) da -= Math.PI * 2;
@@ -569,7 +614,7 @@ export function createMap3DRenderer(
       lastPy = e.clientY;
       if (dragMode === 'orbit') {
         targetCam.yaw -= dx * 0.0065;
-        targetCam.pitch = clamp(targetCam.pitch + dy * 0.0055, 0.22, 1.48);
+        targetCam.pitch = clamp(targetCam.pitch + dy * 0.0055, 0.24, 1.48);
       } else {
         const panScale = targetCam.dist * 0.0017;
         const cy = Math.cos(targetCam.yaw);
@@ -602,7 +647,7 @@ export function createMap3DRenderer(
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     const factor = Math.exp(clamp(e.deltaY, -180, 180) * 0.0016);
-    targetCam.dist = clamp(targetCam.dist * factor, 38, 650);
+    targetCam.dist = clamp(targetCam.dist * factor, 24, 580);
   };
 
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -626,7 +671,6 @@ export function createMap3DRenderer(
     const dt = (now - prevTime) / 1000;
     prevTime = now;
 
-    // Smooth camera interpolation
     const damp = 1 - Math.exp(-12 * clamp(dt, 0, 0.05));
     cam.tx = lerp(cam.tx, targetCam.tx, damp);
     cam.ty = lerp(cam.ty, targetCam.ty, damp);
@@ -652,47 +696,50 @@ export function createMap3DRenderer(
     gl!.clearColor(lp.fog[0], lp.fog[1], lp.fog[2], 1.0);
     gl!.clear(gl!.COLOR_BUFFER_BIT | gl!.DEPTH_BUFFER_BIT);
 
-    // 1. Draw Terrain
+    // 1. Draw Terrain with slight polygon offset so ground ribbons never z-fight
+    gl!.enable(gl!.POLYGON_OFFSET_FILL);
+    gl!.polygonOffset(1.2, 1.2);
     gl!.useProgram(terrainProg);
-    gl!.uniformMatrix4fv(gl!.getUniformLocation(terrainProg, 'uViewProj'), false, vpMat);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uSunDir'), lp.sun);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uSunColor'), lp.sunCol);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uSkyColor'), lp.sky);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uGroundColor'), lp.gnd);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uFogColor'), lp.fog);
-    gl!.uniform3fv(gl!.getUniformLocation(terrainProg, 'uCameraPos'), camPos);
-    gl!.uniform1f(gl!.getUniformLocation(terrainProg, 'uLightMode'), lp.mode);
-    gl!.uniform1f(gl!.getUniformLocation(terrainProg, 'uContours'), state.lens === 'steepness' ? 1.0 : 0.0);
-    gl!.uniform1f(gl!.getUniformLocation(terrainProg, 'uNightLit'), state.nightLitCount > 0 ? 1.0 : 0.25);
+    gl!.uniformMatrix4fv(terrainLocs.uViewProj, false, vpMat);
+    gl!.uniform3fv(terrainLocs.uSunDir, lp.sun);
+    gl!.uniform3fv(terrainLocs.uSunColor, lp.sunCol);
+    gl!.uniform3fv(terrainLocs.uSkyColor, lp.sky);
+    gl!.uniform3fv(terrainLocs.uGroundColor, lp.gnd);
+    gl!.uniform3fv(terrainLocs.uFogColor, lp.fog);
+    gl!.uniform3fv(terrainLocs.uCameraPos, camPos);
+    gl!.uniform1f(terrainLocs.uLightMode, lp.mode);
+    gl!.uniform1f(terrainLocs.uContours, state.lens === 'steepness' ? 1.0 : 0.0);
+    gl!.uniform1f(terrainLocs.uNightLit, state.nightLitCount > 0 ? 1.0 : 0.25);
     gl!.activeTexture(gl!.TEXTURE0);
     gl!.bindTexture(gl!.TEXTURE_2D, mapTex);
-    gl!.uniform1i(gl!.getUniformLocation(terrainProg, 'uMapTex'), 0);
+    gl!.uniform1i(terrainLocs.uMapTex, 0);
     gl!.bindVertexArray(terrainVao);
     gl!.drawElements(gl!.TRIANGLES, terrainData.indices.length, gl!.UNSIGNED_INT, 0);
+    gl!.disable(gl!.POLYGON_OFFSET_FILL);
 
-    // 2. Draw Slopes, Lifts & Buildings
+    // 2. Draw Slopes, Sleek Lifts, Diorama Plinth & Miniature Buildings
     if (solidIndexCount > 0) {
       gl!.useProgram(solidProg);
-      gl!.uniformMatrix4fv(gl!.getUniformLocation(solidProg, 'uViewProj'), false, vpMat);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uSunDir'), lp.sun);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uSunColor'), lp.sunCol);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uSkyColor'), lp.sky);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uGroundColor'), lp.gnd);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uFogColor'), lp.fog);
-      gl!.uniform3fv(gl!.getUniformLocation(solidProg, 'uCameraPos'), camPos);
-      gl!.uniform1f(gl!.getUniformLocation(solidProg, 'uLightMode'), lp.mode);
+      gl!.uniformMatrix4fv(solidLocs.uViewProj, false, vpMat);
+      gl!.uniform3fv(solidLocs.uSunDir, lp.sun);
+      gl!.uniform3fv(solidLocs.uSunColor, lp.sunCol);
+      gl!.uniform3fv(solidLocs.uSkyColor, lp.sky);
+      gl!.uniform3fv(solidLocs.uGroundColor, lp.gnd);
+      gl!.uniform3fv(solidLocs.uFogColor, lp.fog);
+      gl!.uniform3fv(solidLocs.uCameraPos, camPos);
+      gl!.uniform1f(solidLocs.uLightMode, lp.mode);
       gl!.bindVertexArray(solidVao);
       gl!.drawElements(gl!.TRIANGLES, solidIndexCount, gl!.UNSIGNED_INT, 0);
     }
 
-    // 3. Draw Instanced Actors
+    // 3. Draw Instanced Skiers, Lift Carriers, Snowcats & Snow Particles
     gl!.useProgram(instProg);
-    gl!.uniformMatrix4fv(gl!.getUniformLocation(instProg, 'uViewProj'), false, vpMat);
-    gl!.uniform3fv(gl!.getUniformLocation(instProg, 'uSunDir'), lp.sun);
-    gl!.uniform3fv(gl!.getUniformLocation(instProg, 'uSunColor'), lp.sunCol);
-    gl!.uniform3fv(gl!.getUniformLocation(instProg, 'uSkyColor'), lp.sky);
-    gl!.uniform3fv(gl!.getUniformLocation(instProg, 'uGroundColor'), lp.gnd);
-    gl!.uniform1f(gl!.getUniformLocation(instProg, 'uLightMode'), lp.mode);
+    gl!.uniformMatrix4fv(instLocs.uViewProj, false, vpMat);
+    gl!.uniform3fv(instLocs.uSunDir, lp.sun);
+    gl!.uniform3fv(instLocs.uSunColor, lp.sunCol);
+    gl!.uniform3fv(instLocs.uSkyColor, lp.sky);
+    gl!.uniform3fv(instLocs.uGroundColor, lp.gnd);
+    gl!.uniform1f(instLocs.uLightMode, lp.mode);
 
     const drawInst = (g: InstancedGPU) => {
       if (g.count <= 0) return;
@@ -741,17 +788,17 @@ export function createMap3DRenderer(
       targetCam.ty = f.ty;
       targetCam.tz = f.tz;
       targetCam.dist = f.dist;
-      targetCam.yaw = 0.08;
-      targetCam.pitch = 0.62;
+      targetCam.yaw = DEFAULT_YAW;
+      targetCam.pitch = DEFAULT_PITCH;
     },
     setTilt(preset: '3d' | 'top') {
-      targetCam.pitch = preset === 'top' ? 1.44 : 0.62;
-      if (preset === 'top') targetCam.yaw = 0;
+      targetCam.pitch = preset === 'top' ? 1.44 : DEFAULT_PITCH;
+      targetCam.yaw = preset === 'top' ? 0 : DEFAULT_YAW;
     },
     zoomBy(factor: number) {
-      targetCam.dist = clamp(targetCam.dist * factor, 38, 650);
+      targetCam.dist = clamp(targetCam.dist * factor, 24, 580);
     },
-    focusPoint(mapX: number, mapY: number, dist = 115) {
+    focusPoint(mapX: number, mapY: number, dist = 78) {
       targetCam.tx = clamp(mapX, 0, W);
       targetCam.tz = clamp(H - mapY, 0, H);
       targetCam.ty = hf.sampleHeight(targetCam.tx, clamp(mapY, 0, H));
@@ -761,7 +808,7 @@ export function createMap3DRenderer(
       const pts = segPtsCache.get(String(segId));
       if (!pts || pts.length === 0) return;
       const mid = pts[Math.floor(pts.length / 2)];
-      this.focusPoint(mid[1], mid[0], 130);
+      this.focusPoint(mid[1], mid[0], 95);
     },
     destroy() {
       destroyed = true;

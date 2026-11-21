@@ -8,7 +8,7 @@ import type {
   PlacedFacility,
 } from '../types';
 import type { Heightfield } from './heightfield';
-import { clamp, lerp, samplePolylineAt } from './math';
+import { clamp, samplePolylineAt } from './math';
 
 interface SkierAgent {
   kind: 'slope' | 'village' | 'queue';
@@ -19,8 +19,6 @@ interface SkierAgent {
   carveAmp: number;
   baseX: number;
   baseY: number;
-  vx: number;
-  vy: number;
   color: [number, number, number];
 }
 
@@ -148,21 +146,21 @@ export class SkierSimulation {
       }
     }
 
-    // Lift carriers always animate smoothly on open built lifts
+    // Lift carriers animate smoothly on open built lifts
     for (const { seg, item, pts } of openLifts) {
       const sub = item.subtype || 'chair_fixed';
-      const numCarriers = sub === 'cable_car' ? 2 : sub === 'gondola' ? 8 : 10;
-      const spd = sub === 'chair_detach' || sub === 'gondola' || sub === 'cable_car' ? 0.085 : 0.055;
+      const numCarriers = sub === 'cable_car' ? 2 : sub === 'gondola' ? 5 : 6;
+      const spd = sub === 'chair_detach' || sub === 'gondola' || sub === 'cable_car' ? 0.08 : 0.052;
       const col: [number, number, number] =
-        sub === 'gondola' || sub === 'cable_car' ? [0.85, 0.25, 0.22] : [0.2, 0.25, 0.34];
+        sub === 'gondola' || sub === 'cable_car' ? [0.85, 0.25, 0.22] : [0.22, 0.27, 0.36];
 
       for (let k = 0; k < numCarriers; k++) {
         this.carriers.push({ pts, progress: k / numCarriers, speed: spd, color: col });
       }
 
-      // Queue skiers near busy lift bases
+      // Queue skiers neatly lined near lift base
       if (showSkiers && resortOpen) {
-        const queueN = Math.min(18, perSeg[String(seg.id)]?.queue ?? 0);
+        const queueN = Math.min(14, perSeg[String(seg.id)]?.queue ?? 0);
         const base = pts[0];
         for (let q = 0; q < queueN; q++) {
           this.skiers.push({
@@ -171,10 +169,8 @@ export class SkierSimulation {
             speed: 0,
             carvePhase: rand() * Math.PI * 2,
             carveAmp: 0,
-            baseY: base[0] - 1.5 - (q % 5) * 1.1 + (rand() - 0.5) * 0.8,
-            baseX: base[1] + (Math.floor(q / 5) - 1.2) * 1.1 + (rand() - 0.5) * 0.6,
-            vx: 0,
-            vy: 0,
+            baseY: base[0] - 0.85 - (q % 4) * 0.45 + (rand() - 0.5) * 0.2,
+            baseX: base[1] + (Math.floor(q / 4) - 1.0) * 0.45 + (rand() - 0.5) * 0.2,
             color: JACKET_COLORS[Math.floor(rand() * JACKET_COLORS.length)],
           });
         }
@@ -182,8 +178,7 @@ export class SkierSimulation {
     }
 
     if (showSkiers && resortOpen && (liveSkiers?.liveTotal ?? 0) > 0) {
-      // Slope skiers scaled up to 420 instanced skiers proportionally to perSegment traffic
-      const totalSlopeTarget = Math.min(420, Math.max(openSlopes.length > 0 ? 12 : 0, Math.round((liveSkiers?.onSlopes ?? 0) * 0.65)));
+      const totalSlopeTarget = Math.min(360, Math.max(openSlopes.length > 0 ? 10 : 0, Math.round((liveSkiers?.onSlopes ?? 0) * 0.6)));
       const slopeWeights = openSlopes.map(({ seg }) => Math.max(1, perSeg[String(seg.id)]?.skiers ?? 4));
       const sumW = slopeWeights.reduce((a, b) => a + b, 0) || 1;
 
@@ -199,19 +194,16 @@ export class SkierSimulation {
             progress: rand(),
             speed: baseSpd * (0.8 + rand() * 0.45),
             carvePhase: rand() * Math.PI * 2,
-            carveAmp: item.difficulty === 'green' ? 0.9 : 1.35,
+            carveAmp: item.difficulty === 'green' ? 0.32 : 0.46,
             baseX: 0,
             baseY: 0,
-            vx: 0,
-            vy: 0,
             color: JACKET_COLORS[Math.floor(rand() * JACKET_COLORS.length)],
           });
         }
       });
 
-      // Village walkers meandering around open buildings / parking
       const openFacs = facilities.filter((f) => f.kind !== 'terrain_park' && f.status === 'open');
-      const villageCount = Math.min(60, Math.round((liveSkiers?.inVillage ?? 0) * 0.35));
+      const villageCount = Math.min(50, Math.round((liveSkiers?.inVillage ?? 0) * 0.35));
       if (openFacs.length > 0) {
         for (let v = 0; v < villageCount; v++) {
           const anchor = openFacs[v % openFacs.length];
@@ -219,22 +211,19 @@ export class SkierSimulation {
           this.skiers.push({
             kind: 'village',
             progress: rand() * Math.PI * 2,
-            speed: 0.5 + rand() * 0.6,
+            speed: 0.45 + rand() * 0.5,
             carvePhase: angle,
-            carveAmp: 2.2 + rand() * 3.0,
+            carveAmp: 0.9 + rand() * 0.9,
             baseX: anchor.mapX,
             baseY: anchor.mapY,
-            vx: Math.cos(angle),
-            vy: Math.sin(angle),
             color: JACKET_COLORS[Math.floor(rand() * JACKET_COLORS.length)],
           });
         }
       }
     }
 
-    // Active snowcats patrolling open slopes
     if (groomerActive > 0 && openSlopes.length > 0) {
-      const catCount = Math.min(6, groomerActive, openSlopes.length);
+      const catCount = Math.min(5, groomerActive, openSlopes.length);
       for (let g = 0; g < catCount; g++) {
         this.snowcats.push({
           pts: openSlopes[(g * 3) % openSlopes.length].pts,
@@ -245,40 +234,38 @@ export class SkierSimulation {
       }
     }
 
-    // Weather snowfall particles + active snowmaking gun mist
     const cond = (weather?.condition_name || '').toLowerCase();
     const isSnowing = (weather?.snowfall ?? 0) > 0 || cond.includes('snow') || cond.includes('blizzard');
-    const flakeTarget = isSnowing ? (cond.includes('blizzard') ? 260 : 140) : 0;
+    const flakeTarget = isSnowing ? (cond.includes('blizzard') ? 220 : 120) : 0;
     const W = this.mapConfig.width || 600;
     const H = this.mapConfig.height || 340;
     for (let i = 0; i < flakeTarget; i++) {
       this.flakes.push({
         x: rand() * W,
-        y: 12 + rand() * 95,
+        y: 8 + rand() * 52,
         z: rand() * H,
-        vy: 12 + rand() * 14,
-        vx: (weather?.wind ?? 10) * 0.35,
-        scale: 0.7 + rand() * 0.7,
+        vy: 10 + rand() * 12,
+        vx: (weather?.wind ?? 10) * 0.3,
+        scale: 0.7 + rand() * 0.6,
       });
     }
     for (const { item, pts } of openSlopes) {
       if ((item.snowmakers_active ?? 0) > 0) {
         const mid = samplePolylineAt(pts, 0.5);
-        const [wx, wy, wz] = this.hf.toWorld(mid.mapX, mid.mapY, 2);
-        for (let m = 0; m < 10; m++) {
+        const [wx, wy, wz] = this.hf.toWorld(mid.mapX, mid.mapY, 1.2);
+        for (let m = 0; m < 8; m++) {
           this.flakes.push({
-            x: wx + (rand() - 0.5) * 6,
-            y: wy + rand() * 4,
-            z: wz + (rand() - 0.5) * 6,
-            vy: 3 + rand() * 3,
-            vx: (rand() - 0.5) * 4,
-            scale: 0.8 + rand() * 0.6,
+            x: wx + (rand() - 0.5) * 3,
+            y: wy + rand() * 2,
+            z: wz + (rand() - 0.5) * 3,
+            vy: 2.2 + rand() * 2.5,
+            vx: (rand() - 0.5) * 2.5,
+            scale: 0.7 + rand() * 0.5,
           });
         }
       }
     }
 
-    // Pre-allocate instance typed arrays
     this.skierCount = this.skiers.length;
     this.skierPos = new Float32Array(this.skierCount * 3);
     this.skierYawScale = new Float32Array(this.skierCount * 2);
@@ -307,38 +294,35 @@ export class SkierSimulation {
     const W = this.mapConfig.width || 600;
     const H = this.mapConfig.height || 340;
 
-    // 1. Update skiers
     for (let i = 0; i < this.skierCount; i++) {
       const s = this.skiers[i];
       let mx = s.baseX;
       let my = s.baseY;
       let yaw = s.carvePhase;
-      let scale = 1.05;
+      let scale = 0.60;
 
       if (s.kind === 'slope' && s.pts) {
         s.progress = (s.progress + s.speed * stepDt) % 1;
         const sample = samplePolylineAt(s.pts, s.progress);
-        const carve = Math.sin(s.progress * 32 + s.carvePhase) * s.carveAmp;
+        const carve = Math.sin(s.progress * 30 + s.carvePhase) * s.carveAmp;
         mx = sample.mapX - sample.ty * carve;
         my = sample.mapY + sample.tx * carve;
-        // Tangent in world space: (dx = tx, dz = -ty)
-        const dirX = sample.tx + Math.cos(s.progress * 32 + s.carvePhase) * 0.25;
+        const dirX = sample.tx + Math.cos(s.progress * 30 + s.carvePhase) * 0.25;
         const dirZ = -sample.ty;
         yaw = Math.atan2(dirX, dirZ);
-        scale = 1.15;
+        scale = 0.72;
       } else if (s.kind === 'village') {
         s.progress += s.speed * stepDt;
         mx = s.baseX + Math.cos(s.progress + s.carvePhase) * s.carveAmp;
         my = s.baseY + Math.sin(s.progress * 0.8 + s.carvePhase) * s.carveAmp * 0.7;
         yaw = s.progress;
-        scale = 0.95;
+        scale = 0.58;
       } else {
-        // Queue gentle weight shift
         yaw = s.carvePhase * 0.2;
-        scale = 0.95;
+        scale = 0.58;
       }
 
-      const [wx, wy, wz] = this.hf.toWorld(mx, my, 0.45);
+      const [wx, wy, wz] = this.hf.toWorld(mx, my, 0.16);
       this.skierPos[i * 3] = wx;
       this.skierPos[i * 3 + 1] = wy;
       this.skierPos[i * 3 + 2] = wz;
@@ -350,30 +334,28 @@ export class SkierSimulation {
       this.skierColor[i * 4 + 3] = 1;
     }
 
-    // 2. Update lift carriers (even loop: 0..0.5 up cable, 0.5..1 down opposing cable)
     for (let i = 0; i < this.carrierCount; i++) {
       const c = this.carriers[i];
       c.progress = (c.progress + c.speed * stepDt) % 1;
       const goingUp = c.progress < 0.5;
       const t = goingUp ? c.progress * 2 : 1 - (c.progress - 0.5) * 2;
       const sample = samplePolylineAt(c.pts, t);
-      const side = goingUp ? 0.7 : -0.7;
+      const side = goingUp ? 0.24 : -0.24;
       const mx = sample.mapX - sample.ty * side;
       const my = sample.mapY + sample.tx * side;
-      const [wx, wy, wz] = this.hf.toWorld(mx, my, 4.1);
+      const [wx, wy, wz] = this.hf.toWorld(mx, my, 1.42);
       const yaw = Math.atan2(sample.tx, -sample.ty);
       this.carrierPos[i * 3] = wx;
       this.carrierPos[i * 3 + 1] = wy;
       this.carrierPos[i * 3 + 2] = wz;
       this.carrierYawScale[i * 2] = yaw;
-      this.carrierYawScale[i * 2 + 1] = 1.1;
+      this.carrierYawScale[i * 2 + 1] = 0.95;
       this.carrierColor[i * 4] = c.color[0];
       this.carrierColor[i * 4 + 1] = c.color[1];
       this.carrierColor[i * 4 + 2] = c.color[2];
       this.carrierColor[i * 4 + 3] = 1;
     }
 
-    // 3. Update snowcats
     for (let i = 0; i < this.snowcatCount; i++) {
       const g = this.snowcats[i];
       g.progress += g.dir * g.speed * stepDt;
@@ -385,25 +367,24 @@ export class SkierSimulation {
         g.dir = 1;
       }
       const sample = samplePolylineAt(g.pts, g.progress);
-      const [wx, wy, wz] = this.hf.toWorld(sample.mapX, sample.mapY, 0.5);
+      const [wx, wy, wz] = this.hf.toWorld(sample.mapX, sample.mapY, 0.16);
       const yaw = Math.atan2(sample.tx * g.dir, -sample.ty * g.dir);
       this.snowcatPos[i * 3] = wx;
       this.snowcatPos[i * 3 + 1] = wy;
       this.snowcatPos[i * 3 + 2] = wz;
       this.snowcatYawScale[i * 2] = yaw;
-      this.snowcatYawScale[i * 2 + 1] = 1.0;
+      this.snowcatYawScale[i * 2 + 1] = 0.85;
       this.snowcatColor[i * 4] = 1;
       this.snowcatColor[i * 4 + 1] = 1;
       this.snowcatColor[i * 4 + 2] = 1;
       this.snowcatColor[i * 4 + 3] = 0;
     }
 
-    // 4. Update snowflakes / mist
     for (let i = 0; i < this.flakeCount; i++) {
       const f = this.flakes[i];
       f.y -= f.vy * stepDt;
       f.x += f.vx * stepDt;
-      if (f.y < 1) f.y = 95;
+      if (f.y < 1) f.y = 55;
       if (f.x > W) f.x -= W;
       if (f.x < 0) f.x += W;
       this.flakePos[i * 3] = f.x;

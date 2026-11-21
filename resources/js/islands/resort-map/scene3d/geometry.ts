@@ -59,40 +59,55 @@ class MeshBuilder {
     const x0 = cx - sx * 0.5, x1 = cx + sx * 0.5;
     const y0 = by, y1 = by + sy;
     const z0 = cz - sz * 0.5, z1 = cz + sz * 0.5;
-    // Front (+Z)
+    // Front (+Z), Back (-Z), Right (+X), Left (-X), Top (+Y)
     this.quad(x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1, col);
-    // Back (-Z)
     this.quad(x1, y0, z0, x0, y0, z0, x0, y1, z0, x1, y1, z0, col);
-    // Right (+X)
     this.quad(x1, y0, z1, x1, y0, z0, x1, y1, z0, x1, y1, z1, col);
-    // Left (-X)
     this.quad(x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0, col);
-    // Top (+Y)
     this.quad(x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0, col);
+  }
+
+  orientedBox(cx: number, by: number, cz: number, sx: number, sy: number, sz: number, yaw: number, col: RGBA) {
+    const hx = sx * 0.5;
+    const hz = sz * 0.5;
+    const y0 = by;
+    const y1 = by + sy;
+    const c = Math.cos(yaw);
+    const s = Math.sin(yaw);
+    const pt = (lx: number, ly: number, lz: number): [number, number, number] => [
+      cx + lx * c + lz * s,
+      ly,
+      cz - lx * s + lz * c,
+    ];
+    const p001 = pt(-hx, y0, hz), p101 = pt(hx, y0, hz), p111 = pt(hx, y1, hz), p011 = pt(-hx, y1, hz);
+    const p000 = pt(-hx, y0, -hz), p100 = pt(hx, y0, -hz), p110 = pt(hx, y1, -hz), p010 = pt(-hx, y1, -hz);
+
+    this.quad(p001[0], p001[1], p001[2], p101[0], p101[1], p101[2], p111[0], p111[1], p111[2], p011[0], p011[1], p011[2], col);
+    this.quad(p100[0], p100[1], p100[2], p000[0], p000[1], p000[2], p010[0], p010[1], p010[2], p110[0], p110[1], p110[2], col);
+    this.quad(p101[0], p101[1], p101[2], p100[0], p100[1], p100[2], p110[0], p110[1], p110[2], p111[0], p111[1], p111[2], col);
+    this.quad(p000[0], p000[1], p000[2], p001[0], p001[1], p001[2], p011[0], p011[1], p011[2], p010[0], p010[1], p010[2], col);
+    this.quad(p011[0], p011[1], p011[2], p111[0], p111[1], p111[2], p110[0], p110[1], p110[2], p010[0], p010[1], p010[2], col);
   }
 
   gableRoof(cx: number, by: number, cz: number, sx: number, sy: number, sz: number, col: RGBA) {
     const x0 = cx - sx * 0.5, x1 = cx + sx * 0.5;
     const y0 = by, y1 = by + sy;
     const z0 = cz - sz * 0.5, z1 = cz + sz * 0.5;
-    // Sloped front (+Z) & back (-Z) meeting along X ridge
     this.quad(x0, y0, z1, x1, y0, z1, x1, y1, cz, x0, y1, cz, col);
     this.quad(x1, y0, z0, x0, y0, z0, x0, y1, cz, x1, y1, cz, col);
-    // Gable end triangles (+X, -X)
     this.tri(x1, y0, z1, x1, y0, z0, x1, y1, cz, col);
     this.tri(x0, y0, z0, x0, y0, z1, x0, y1, cz, col);
   }
 
-  /** Thin beam / cable connecting two 3D points */
+  /** Thin beam or cable connecting two 3D points with outward CCW face winding */
   beam(ax: number, ay: number, az: number, bx: number, by: number, bz: number, r: number, col: RGBA) {
     const dx = bx - ax, dy = by - ay, dz = bz - az;
     const len = Math.hypot(dx, dy, dz);
-    if (len < 0.05) return;
-    // Perpendicular basis
+    if (len < 0.04) return;
     const ux = dx / len, uy = dy / len, uz = dz / len;
     const refX = Math.abs(uy) < 0.9 ? 0 : 1;
     const refY = Math.abs(uy) < 0.9 ? 1 : 0;
-    const [px, py, pz] = normalize3(uy * 0 - uz * refY, uz * refX - ux * 0, ux * refY - uy * refX);
+    const [px, py, pz] = normalize3(-uz * refY, uz * refX, ux * refY - uy * refX);
     const [qx, qy, qz] = normalize3(py * uz - pz * uy, pz * ux - px * uz, px * uy - py * ux);
 
     const a0x = ax + (-px - qx) * r, a0y = ay + (-py - qy) * r, a0z = az + (-pz - qz) * r;
@@ -147,11 +162,10 @@ export function buildTerrainMesh(hf: Heightfield): { vertices: Float32Array; ind
   let q = 0;
   for (let r = 0; r < rows - 1; r++) {
     for (let c = 0; c < cols - 1; c++) {
-      const a = r * cols + c;         // bottom-left (higher worldZ)
-      const b = r * cols + c + 1;     // bottom-right
-      const d = (r + 1) * cols + c;   // top-left (lower worldZ)
-      const e = (r + 1) * cols + c + 1; // top-right
-      // CCW upward (+Y) winding
+      const a = r * cols + c;
+      const b = r * cols + c + 1;
+      const d = (r + 1) * cols + c;
+      const e = (r + 1) * cols + c + 1;
       indices[q++] = d;
       indices[q++] = a;
       indices[q++] = b;
@@ -164,23 +178,23 @@ export function buildTerrainMesh(hf: Heightfield): { vertices: Float32Array; ind
 }
 
 function trailColor(seg: MapSegment): [number, number, number] {
-  if (seg.type === 'lift') return [0.96, 0.62, 0.04];
+  if (seg.type === 'lift') return [0.95, 0.62, 0.08];
   switch (seg.difficulty || seg.type) {
     case 'green':
-      return [0.16, 0.78, 0.4];
+      return [0.16, 0.76, 0.38];
     case 'blue':
-      return [0.22, 0.52, 0.96];
+      return [0.22, 0.52, 0.94];
     case 'black':
-      return [0.14, 0.19, 0.28];
+      return [0.16, 0.21, 0.30];
     case 'double_black':
       return [0.86, 0.22, 0.22];
     case 'snowpark':
     case 'terrain_park':
-      return [0.66, 0.34, 0.94];
+      return [0.64, 0.34, 0.92];
     case 'crosscountry':
       return [0.08, 0.72, 0.65];
     default:
-      return [0.58, 0.64, 0.72];
+      return [0.56, 0.62, 0.70];
   }
 }
 
@@ -197,25 +211,89 @@ function heatLoadColor(loadPct: number): [number, number, number] {
 function snowColor(quality?: string): [number, number, number] {
   switch (quality) {
     case 'powder':
-      return [0.58, 0.9, 1.0];
+      return [0.55, 0.88, 0.98];
     case 'groomed':
-      return [0.24, 0.85, 0.58];
+      return [0.24, 0.82, 0.56];
     case 'packed':
-      return [0.38, 0.68, 0.95];
+      return [0.36, 0.66, 0.94];
     case 'icy':
-      return [0.95, 0.65, 0.22];
+      return [0.94, 0.64, 0.22];
     case 'bare':
       return [0.76, 0.32, 0.24];
     default:
-      return [0.58, 0.64, 0.72];
+      return [0.56, 0.62, 0.70];
   }
 }
 
 function steepColor(deg: number): [number, number, number] {
-  if (deg < 14) return [0.18, 0.78, 0.42];
-  if (deg < 24) return [0.22, 0.52, 0.96];
-  if (deg < 34) return [0.95, 0.62, 0.14];
+  if (deg < 14) return [0.18, 0.76, 0.42];
+  if (deg < 24) return [0.22, 0.52, 0.94];
+  if (deg < 34) return [0.94, 0.62, 0.14];
   return [0.88, 0.22, 0.24];
+}
+
+function subdividePolyline(pts: [number, number][], stepUnits: number, maxSubPerSeg = 12): [number, number][] {
+  const out: [number, number][] = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (i > 0) {
+      const dist = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      const sub = Math.min(maxSubPerSeg, Math.max(1, Math.round(dist / stepUnits)));
+      for (let s = 1; s < sub; s++) {
+        const t = s / sub;
+        out.push([lerp(pts[i - 1][0], pts[i][0], t), lerp(pts[i - 1][1], pts[i][1], t)]);
+      }
+    }
+    out.push(pts[i]);
+  }
+  return out;
+}
+
+function drawGroundRibbon(
+  mb: MeshBuilder,
+  hf: Heightfield,
+  pts: [number, number][],
+  halfW: number,
+  yLift: number,
+  emissive: number,
+  baseRgb: [number, number, number],
+  lens: MapLens,
+  dashed: boolean,
+  selected: boolean
+) {
+  const dense = subdividePolyline(pts, dashed ? 3.0 : 4.2, dashed ? 24 : 10);
+  for (let i = 0; i < dense.length - 1; i++) {
+    if (dashed && !selected && i % 2 === 1) continue;
+    const [ay, ax] = dense[i];
+    const [by, bx] = dense[i + 1];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const dLen = Math.hypot(dx, dy) || 1;
+    const px = (-dy / dLen) * halfW;
+    const py = (dx / dLen) * halfW;
+
+    let rgb = baseRgb;
+    if (lens === 'steepness') {
+      rgb = steepColor(hf.sampleSlopeDeg((ax + bx) * 0.5, (ay + by) * 0.5));
+    }
+    const col: RGBA = [rgb[0], rgb[1], rgb[2], emissive];
+
+    const [ax0, ay0, az0] = hf.toWorld(ax - px, ay - py, yLift);
+    const [ax1, ay1, az1] = hf.toWorld(ax + px, ay + py, yLift);
+    const [bx0, by0, bz0] = hf.toWorld(bx - px, by - py, yLift);
+    const [bx1, by1, bz1] = hf.toWorld(bx + px, by + py, yLift);
+    mb.quad(ax0, ay0, az0, bx0, by0, bz0, bx1, by1, bz1, ax1, ay1, az1, col);
+
+    if (selected) {
+      const hw = halfW + 0.34;
+      const hpx = (-dy / dLen) * hw;
+      const hpy = (dx / dLen) * hw;
+      const [hx0, hy0, hz0] = hf.toWorld(ax - hpx, ay - hpy, yLift - 0.04);
+      const [hx1, hy1, hz1] = hf.toWorld(ax + hpx, ay + hpy, yLift - 0.04);
+      const [kx0, ky0, kz0] = hf.toWorld(bx - hpx, by - hpy, yLift - 0.04);
+      const [kx1, ky1, kz1] = hf.toWorld(bx + hpx, by + hpy, yLift - 0.04);
+      mb.quad(hx0, hy0, hz0, kx0, ky0, kz0, kx1, ky1, kz1, hx1, hy1, hz1, [0.95, 0.98, 1.0, 0.5]);
+    }
+  }
 }
 
 export function buildOverlayStaticMesh(
@@ -236,11 +314,31 @@ export function buildOverlayStaticMesh(
   }
 ): StaticMeshData {
   const mb = new MeshBuilder();
+  const { width: W, height: H, cols, rows } = hf;
+  const plinthCol: RGBA = [0.16, 0.21, 0.28, 0.0];
+  const floorY = -5.5;
+
+  // 0. Architectural diorama plinth skirt around outer terrain edges
+  for (let c = 0; c < cols - 1; c++) {
+    const x0 = (c / (cols - 1)) * W;
+    const x1 = ((c + 1) / (cols - 1)) * W;
+    mb.quad(x0, floorY, H, x1, floorY, H, x1, hf.sampleHeight(x1, 0), H, x0, hf.sampleHeight(x0, 0), H, plinthCol);
+    mb.quad(x1, floorY, 0, x0, floorY, 0, x0, hf.sampleHeight(x0, H), 0, x1, hf.sampleHeight(x1, H), 0, plinthCol);
+  }
+  for (let r = 0; r < rows - 1; r++) {
+    const my0 = (r / (rows - 1)) * H;
+    const my1 = ((r + 1) / (rows - 1)) * H;
+    const z0 = H - my0;
+    const z1 = H - my1;
+    mb.quad(0, floorY, z1, 0, floorY, z0, 0, hf.sampleHeight(0, my0), z0, 0, hf.sampleHeight(0, my1), z1, plinthCol);
+    mb.quad(W, floorY, z0, W, floorY, z1, W, hf.sampleHeight(W, my1), z1, W, hf.sampleHeight(W, my0), z0, plinthCol);
+  }
+
   const isBuilt = (id: string | number) => builtIds.some((b) => sameId(b, id));
   const perSeg = liveSkiers?.perSegment ?? {};
   const isNight = options.lighting === 'night' || options.lighting === 'sunset';
 
-  // 1. Slopes, Lifts, Pylons, Snowmakers & Night Lights
+  // 1. Slopes, Sleek Lifts, Pylons, Snowmakers & Night Lights
   for (const seg of segments) {
     const built = isBuilt(seg.id);
     if (options.filter === 'lift' && seg.type !== 'lift') continue;
@@ -249,8 +347,8 @@ export function buildOverlayStaticMesh(
     if (options.filter === 'buildings') continue;
     if (!built && !options.showAvailable) continue;
 
-    const pts = parsePoints(seg.points);
-    if (pts.length < 2) continue;
+    const rawPts = parsePoints(seg.points);
+    if (rawPts.length < 2) continue;
 
     const item = builtItems[String(seg.id)];
     const selected = options.selectedSegId !== null && sameId(options.selectedSegId, seg.id);
@@ -268,210 +366,180 @@ export function buildOverlayStaticMesh(
     }
 
     if (seg.type !== 'lift') {
-      // Terrain-following ribbon
-      const halfW = selected ? 1.7 : built ? 1.15 : 0.65;
-      const yLift = selected ? 0.65 : built ? 0.45 : 0.3;
-      const emissive = selected ? 0.45 : built ? 0.14 : 0.05;
+      const pts = rawPts[0][0] >= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
+      drawGroundRibbon(
+        mb,
+        hf,
+        pts,
+        selected ? 0.76 : built ? 0.46 : 0.24,
+        selected ? 0.16 : built ? 0.12 : 0.09,
+        selected ? 0.42 : built ? 0.14 : 0.05,
+        rgb,
+        options.lens,
+        !built && !selected,
+        selected
+      );
 
-      // Subdivide long segments slightly so ribbon conforms cleanly to curved slopes
-      const dense: [number, number][] = [];
-      for (let i = 0; i < pts.length; i++) {
-        if (i > 0) {
-          const dist = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-          const sub = Math.min(8, Math.max(1, Math.floor(dist / 6)));
-          for (let s = 1; s < sub; s++) {
-            const t = s / sub;
-            dense.push([lerp(pts[i - 1][0], pts[i][0], t), lerp(pts[i - 1][1], pts[i][1], t)]);
-          }
-        }
-        dense.push(pts[i]);
-      }
-
-      for (let i = 0; i < dense.length - 1; i++) {
-        // Dashed appearance for unbuilt runs
-        if (!built && !selected && i % 2 === 1) continue;
-
-        const [ay, ax] = dense[i];
-        const [by, bx] = dense[i + 1];
-        const dx = bx - ax;
-        const dy = by - ay;
-        const dLen = Math.hypot(dx, dy) || 1;
-        // Normal perpendicular in map space
-        const px = (-dy / dLen) * halfW;
-        const py = (dx / dLen) * halfW;
-
-        let segCol = rgb;
-        if (options.lens === 'steepness') {
-          segCol = steepColor(hf.sampleSlopeDeg((ax + bx) * 0.5, (ay + by) * 0.5));
-        }
-        const col: RGBA = [segCol[0], segCol[1], segCol[2], emissive];
-
-        const [ax0, ay0, az0] = hf.toWorld(ax - px, ay - py, yLift);
-        const [ax1, ay1, az1] = hf.toWorld(ax + px, ay + py, yLift);
-        const [bx0, by0, bz0] = hf.toWorld(bx - px, by - py, yLift);
-        const [bx1, by1, bz1] = hf.toWorld(bx + px, by + py, yLift);
-        mb.quad(ax0, ay0, az0, bx0, by0, bz0, bx1, by1, bz1, ax1, ay1, az1, col);
-
-        if (selected) {
-          const hw = halfW + 0.7;
-          const hpx = (-dy / dLen) * hw;
-          const hpy = (dx / dLen) * hw;
-          const [hx0, hy0, hz0] = hf.toWorld(ax - hpx, ay - hpy, yLift - 0.1);
-          const [hx1, hy1, hz1] = hf.toWorld(ax + hpx, ay + hpy, yLift - 0.1);
-          const [kx0, ky0, kz0] = hf.toWorld(bx - hpx, by - hpy, yLift - 0.1);
-          const [kx1, ky1, kz1] = hf.toWorld(bx + hpx, by + hpy, yLift - 0.1);
-          mb.quad(hx0, hy0, hz0, kx0, ky0, kz0, kx1, ky1, kz1, hx1, hy1, hz1, [1, 1, 1, 0.55]);
-        }
-      }
-
-      // Snowmaking fan guns & night-skiing light poles along built slopes
+      // Compact snowmaking fan guns & slender night light poles along built slopes
       if (built && item) {
-        const smCount = Math.min(4, item.snowmakers_count || 0);
+        const smCount = Math.min(3, item.snowmakers_count || 0);
         for (let g = 0; g < smCount; g++) {
           const sample = samplePolylineAt(pts, (g + 0.5) / Math.max(1, smCount));
-          const [gx, gy, gz] = hf.toWorld(sample.mapX + 1.6, sample.mapY, 0);
-          mb.box(gx, gy, gz, 0.9, 1.4, 0.9, [0.95, 0.85, 0.25, 0.1]);
-          mb.box(gx, gy + 1.4, gz, 1.1, 0.9, 1.4, [0.22, 0.55, 0.95, item.snowmakers_active ? 0.35 : 0.05]);
+          const [gx, gy, gz] = hf.toWorld(sample.mapX - sample.ty * 0.72, sample.mapY + sample.tx * 0.72, 0);
+          mb.box(gx, gy - 0.1, gz, 0.22, 0.26, 0.22, [0.82, 0.86, 0.92, 0.06]);
+          mb.box(gx, gy + 0.16, gz, 0.26, 0.24, 0.34, [0.22, 0.56, 0.96, item.snowmakers_active ? 0.32 : 0.05]);
         }
         if (item.night_lit && isNight) {
           for (let l = 0; l < 4; l++) {
             const sample = samplePolylineAt(pts, (l + 0.5) / 4);
-            const [lx, ly, lz] = hf.toWorld(sample.mapX - 1.5, sample.mapY, 0);
-            mb.box(lx, ly, lz, 0.45, 3.2, 0.45, [0.35, 0.42, 0.52, 0.0]);
-            mb.box(lx, ly + 3.2, lz, 1.1, 0.6, 1.1, [1.0, 0.88, 0.45, 0.9]);
+            const [lx, ly, lz] = hf.toWorld(sample.mapX + sample.ty * 0.72, sample.mapY - sample.tx * 0.72, 0);
+            mb.box(lx, ly - 0.1, lz, 0.09, 1.15, 0.09, [0.34, 0.40, 0.50, 0.0]);
+            mb.box(lx, ly + 1.05, lz, 0.24, 0.14, 0.24, [1.0, 0.88, 0.45, 0.85]);
           }
         }
       }
     } else {
-      // Lifts: cables, terminals, pylons
-      const cableHeight = built ? 4.4 : 2.2;
-      const col: RGBA = selected ? [0.22, 0.74, 0.97, 0.5] : [rgb[0], rgb[1], rgb[2], built ? 0.22 : 0.05];
+      // Lifts always oriented ascending low->high
+      const pts = rawPts[0][0] <= rawPts[rawPts.length - 1][0] ? rawPts : [...rawPts].reverse();
 
-      if (built || selected) {
-        // Base and top stations
-        const bPt = pts[0];
-        const tPt = pts[pts.length - 1];
-        const [bx, by, bz] = hf.toWorld(bPt[1], bPt[0], 0);
-        const [tx, ty, tz] = hf.toWorld(tPt[1], tPt[0], 0);
-        const stCol: RGBA = item?.subtype === 'gondola' || item?.subtype === 'cable_car' ? [0.25, 0.34, 0.46, 0.1] : [0.32, 0.38, 0.46, 0.1];
-        mb.box(bx, by, bz, 3.4, 2.8, 3.4, stCol);
-        mb.gableRoof(bx, by + 2.8, bz, 3.8, 1.2, 3.8, [0.85, 0.42, 0.12, 0.15]);
-        mb.box(tx, ty, tz, 3.0, 2.6, 3.0, stCol);
-        mb.gableRoof(tx, ty + 2.6, tz, 3.4, 1.1, 3.4, [0.85, 0.42, 0.12, 0.15]);
+      if (!built && !selected) {
+        // Available unbuilt lifts sit cleanly as subtle dashed ground ribbons (zero overhead clutter)
+        drawGroundRibbon(mb, hf, pts, 0.24, 0.10, 0.06, rgb, options.lens, true, false);
+        continue;
+      }
 
-        // Dual haul cables & intermediate steel pylons
-        const totalMapLen = pts.reduce((acc, p, idx) => (idx === 0 ? 0 : acc + Math.hypot(p[0] - pts[idx - 1][0], p[1] - pts[idx - 1][1])), 0);
-        const spans = Math.max(2, Math.min(12, Math.round(totalMapLen / 12)));
-        const pylonCol: RGBA = [0.68, 0.74, 0.82, 0.08];
+      // Ground track guide under the lift cable
+      drawGroundRibbon(mb, hf, pts, selected ? 0.36 : 0.20, 0.08, selected ? 0.42 : 0.16, rgb, options.lens, false, selected);
 
-        let prevSample = samplePolylineAt(pts, 0);
-        let prevW = hf.toWorld(prevSample.mapX, prevSample.mapY, cableHeight);
+      const cableHeight = 1.55;
+      const baseSample = samplePolylineAt(pts, 0);
+      const topSample = samplePolylineAt(pts, 1);
+      const baseYaw = Math.atan2(baseSample.tx, -baseSample.ty);
+      const topYaw = Math.atan2(topSample.tx, -topSample.ty);
 
-        for (let s = 1; s <= spans; s++) {
-          const curSample = samplePolylineAt(pts, s / spans);
-          const curW = hf.toWorld(curSample.mapX, curSample.mapY, cableHeight);
-          const offX = -curSample.ty * 0.7;
-          const offZ = -curSample.tx * 0.7;
-          mb.beam(prevW[0] + offX, prevW[1], prevW[2] + offZ, curW[0] + offX, curW[1], curW[2] + offZ, 0.22, col);
-          mb.beam(prevW[0] - offX, prevW[1], prevW[2] - offZ, curW[0] - offX, curW[1], curW[2] - offZ, 0.22, col);
+      const [bx, by, bz] = hf.toWorld(baseSample.mapX, baseSample.mapY, 0);
+      const [tx, ty, tz] = hf.toWorld(topSample.mapX, topSample.mapY, 0);
+      const shellCol: RGBA = closed ? [0.22, 0.26, 0.32, 0.04] : [0.24, 0.29, 0.38, 0.10];
+      const trimCol: RGBA = selected ? [0.22, 0.78, 0.98, 0.55] : [rgb[0], rgb[1], rgb[2], 0.20];
 
-          if (s < spans) {
-            const groundY = hf.sampleHeight(curSample.mapX, curSample.mapY);
-            mb.box(curW[0], groundY, curW[2], 0.5, cableHeight, 0.5, pylonCol);
-            mb.beam(curW[0] - offX * 1.4, curW[1], curW[2] - offZ * 1.4, curW[0] + offX * 1.4, curW[1], curW[2] + offZ * 1.4, 0.22, pylonCol);
-          }
-          prevW = curW;
+      // Sleek low-profile aligned drive & return terminals (sunk -0.35 into hillside)
+      mb.orientedBox(bx, by - 0.35, bz, 1.25, 1.12, 1.45, baseYaw, shellCol);
+      mb.orientedBox(bx, by + 0.77, bz, 1.34, 0.14, 1.54, baseYaw, trimCol);
+      mb.orientedBox(tx, ty - 0.35, tz, 1.12, 1.05, 1.30, topYaw, shellCol);
+      mb.orientedBox(tx, ty + 0.70, tz, 1.22, 0.14, 1.40, topYaw, trimCol);
+
+      // Slender metallic haul cables & minimalist T-pylons
+      const totalMapLen = pts.reduce((acc, p, idx) => (idx === 0 ? 0 : acc + Math.hypot(p[0] - pts[idx - 1][0], p[1] - pts[idx - 1][1])), 0);
+      const spans = Math.max(2, Math.min(6, Math.round(totalMapLen / 18)));
+      const cableCol: RGBA = selected ? [0.24, 0.78, 0.98, 0.5] : [0.46, 0.52, 0.60, 0.10];
+      const steelCol: RGBA = [0.68, 0.74, 0.82, 0.08];
+      const cableOff = 0.24;
+
+      let prevSample = samplePolylineAt(pts, 0);
+      let prevW = hf.toWorld(prevSample.mapX, prevSample.mapY, cableHeight);
+
+      for (let s = 1; s <= spans; s++) {
+        const curSample = samplePolylineAt(pts, s / spans);
+        const curW = hf.toWorld(curSample.mapX, curSample.mapY, cableHeight);
+        const offX = -curSample.ty * cableOff;
+        const offZ = -curSample.tx * cableOff;
+        const pOffX = -prevSample.ty * cableOff;
+        const pOffZ = -prevSample.tx * cableOff;
+
+        mb.beam(prevW[0] + pOffX, prevW[1], prevW[2] + pOffZ, curW[0] + offX, curW[1], curW[2] + offZ, 0.042, cableCol);
+        mb.beam(prevW[0] - pOffX, prevW[1], prevW[2] - pOffZ, curW[0] - offX, curW[1], curW[2] - offZ, 0.042, cableCol);
+
+        if (s < spans) {
+          const groundY = hf.sampleHeight(curSample.mapX, curSample.mapY);
+          const pYaw = Math.atan2(curSample.tx, -curSample.ty);
+          mb.box(curW[0], groundY - 0.30, curW[2], 0.14, cableHeight + 0.30, 0.14, steelCol);
+          mb.beam(
+            curW[0] - offX * 1.35, curW[1], curW[2] - offZ * 1.35,
+            curW[0] + offX * 1.35, curW[1], curW[2] + offZ * 1.35,
+            0.038,
+            steelCol
+          );
+          mb.orientedBox(curW[0] + offX, curW[1] - 0.02, curW[2] + offZ, 0.10, 0.12, 0.24, pYaw, steelCol);
+          mb.orientedBox(curW[0] - offX, curW[1] - 0.02, curW[2] - offZ, 0.10, 0.12, 0.24, pYaw, steelCol);
         }
-      } else {
-        // Unbuilt lift dashed guide line
-        const sampleSteps = 12;
-        for (let s = 0; s < sampleSteps; s += 2) {
-          const p0 = samplePolylineAt(pts, s / sampleSteps);
-          const p1 = samplePolylineAt(pts, Math.min(1, (s + 1) / sampleSteps));
-          const w0 = hf.toWorld(p0.mapX, p0.mapY, cableHeight);
-          const w1 = hf.toWorld(p1.mapX, p1.mapY, cableHeight);
-          mb.beam(w0[0], w0[1], w0[2], w1[0], w1[1], w1[2], 0.28, col);
-        }
+        prevSample = curSample;
+        prevW = curW;
       }
     }
   }
 
-  // 2. Buildings, Parking & Terrain Parks
+  // 2. Miniature Buildings, Parking Lots & Terrain Parks
   if (options.showBuildings && (options.filter === 'all' || options.filter === 'buildings' || options.filter === 'built')) {
     for (const fac of facilities) {
       const [wx, wy, wz] = hf.toWorld(fac.mapX, fac.mapY, 0);
       const selected = options.selectedFacilityKey === fac.key;
-      const scale = fac.clusterCount > 1 ? 1.25 : 1.0;
+      const scale = fac.clusterCount > 1 ? 1.18 : 1.0;
       const closed = fac.status === 'closed' || fac.status === 'broken';
-      const glow = isNight && !closed ? 0.55 : 0.12;
-      const winCol: RGBA = closed ? [0.22, 0.26, 0.32, 0] : [1.0, 0.85, 0.45, glow];
+      const glow = isNight && !closed ? 0.65 : 0.16;
+      const winCol: RGBA = closed ? [0.20, 0.24, 0.30, 0] : [1.0, 0.86, 0.45, glow];
 
       if (selected) {
-        mb.box(wx, wy + 0.05, wz, 7.6 * scale, 0.35, 7.6 * scale, [0.22, 0.74, 0.97, 0.7]);
+        mb.box(wx, wy + 0.04, wz, 3.0 * scale, 0.14, 2.6 * scale, [0.22, 0.76, 0.98, 0.65]);
       }
 
       if (fac.kind === 'terrain_park') {
-        // Groomed snow deck + kicker jumps + blue/orange rails
-        mb.box(wx, wy, wz, 6.4, 0.45, 5.2, [0.92, 0.96, 1.0, 0.1]);
-        mb.gableRoof(wx - 1.4, wy + 0.45, wz, 2.2, 1.1, 2.2, [0.75, 0.88, 1.0, 0.15]);
-        mb.beam(wx + 0.8, wy + 0.9, wz - 1.5, wx + 0.8, wy + 0.7, wz + 1.5, 0.2, [0.66, 0.34, 0.94, 0.35]);
+        mb.box(wx, wy - 0.08, wz, 2.4, 0.20, 1.85, [0.92, 0.96, 1.0, 0.08]);
+        mb.gableRoof(wx - 0.55, wy + 0.12, wz, 0.85, 0.42, 0.85, [0.78, 0.90, 1.0, 0.12]);
+        mb.beam(wx + 0.32, wy + 0.28, wz - 0.65, wx + 0.32, wy + 0.20, wz + 0.65, 0.06, [0.66, 0.34, 0.94, 0.35]);
         continue;
       }
 
       if (fac.kind === 'parking') {
         const isGarage = fac.subType === 'garage' || fac.subType === 'village_gondola';
-        const lotW = (isGarage ? 6.2 : 7.0) * scale;
-        const lotD = 5.4 * scale;
-        mb.box(wx, wy, wz, lotW, isGarage ? 2.4 : 0.35, lotD, [0.24, 0.28, 0.35, 0.05]);
+        const lotW = (isGarage ? 2.4 : 2.7) * scale;
+        const lotD = 1.9 * scale;
+        const deckH = isGarage ? 0.90 : 0.22;
+        mb.box(wx, wy - 0.12, wz, lotW, deckH, lotD, [0.24, 0.28, 0.35, 0.05]);
         if (isGarage) {
-          mb.box(wx, wy + 2.4, wz, lotW + 0.4, 0.35, lotD + 0.4, [0.42, 0.48, 0.58, 0.1]);
+          mb.box(wx, wy - 0.12 + deckH, wz, lotW + 0.16, 0.14, lotD + 0.16, [0.42, 0.48, 0.58, 0.08]);
         }
-        // Render parked cars scaled by occupancyPct
         const cars = Math.max(1, Math.round((fac.occupancyPct / 100) * 6));
         for (let c = 0; c < cars; c++) {
           const cx = wx - lotW * 0.28 + (c % 3) * (lotW * 0.28);
-          const cz = wz - 1.0 + Math.floor(c / 3) * 2.0;
-          const cy = wy + (isGarage ? 2.75 : 0.35);
-          const carCol: RGBA = c % 2 === 0 ? [0.25, 0.55, 0.9, 0.1] : [0.85, 0.32, 0.28, 0.1];
-          mb.box(cx, cy, cz, 1.1, 0.65, 1.6, carCol);
+          const cz = wz - 0.42 + Math.floor(c / 3) * 0.84;
+          const cy = wy - 0.12 + deckH + (isGarage ? 0.14 : 0);
+          const carCol: RGBA = c % 2 === 0 ? [0.26, 0.56, 0.92, 0.1] : [0.86, 0.32, 0.28, 0.1];
+          mb.box(cx, cy, cz, 0.38, 0.22, 0.62, carCol);
         }
         continue;
       }
 
-      // Buildings by type
       const lvl = Math.max(1, Math.min(3, fac.level));
       if (fac.subType === 'hotel') {
-        const h = (2.6 + lvl * 1.4) * scale;
-        const bw = (4.8 + lvl * 0.6) * scale;
-        mb.box(wx, wy, wz, bw, h, 4.2 * scale, [0.84, 0.78, 0.68, 0.08]);
-        mb.gableRoof(wx, wy + h, wz, bw + 0.7, 1.8, 4.8 * scale, [0.26, 0.34, 0.46, 0.08]);
-        mb.box(wx, wy + 1.2, wz, bw + 0.15, h * 0.55, 2.2 * scale, winCol);
+        const h = (0.95 + lvl * 0.35) * scale;
+        const bw = (1.95 + lvl * 0.20) * scale;
+        mb.box(wx, wy - 0.25, wz, bw, h + 0.25, 1.7 * scale, [0.84, 0.78, 0.68, 0.08]);
+        mb.gableRoof(wx, wy + h, wz, bw + 0.28, 0.72, 1.95 * scale, [0.26, 0.34, 0.46, 0.08]);
+        mb.box(wx, wy + 0.42, wz, bw + 0.06, h * 0.50, 0.9 * scale, winCol);
       } else if (fac.subType === 'restaurant') {
-        const h = (2.2 + lvl * 0.8) * scale;
-        mb.box(wx, wy, wz, 4.8 * scale, 1.2, 4.4 * scale, [0.55, 0.36, 0.22, 0.06]);
-        mb.gableRoof(wx, wy + 1.2, wz, 5.2 * scale, h, 4.8 * scale, [0.76, 0.42, 0.16, 0.12]);
-        mb.box(wx, wy + 1.3, wz + 1.7 * scale, 2.4 * scale, 0.9, 0.9, winCol);
+        const h = (0.85 + lvl * 0.25) * scale;
+        mb.box(wx, wy - 0.25, wz, 1.85 * scale, h + 0.25, 1.65 * scale, [0.56, 0.38, 0.24, 0.06]);
+        mb.gableRoof(wx, wy + h, wz, 2.05 * scale, 0.68, 1.85 * scale, [0.76, 0.42, 0.16, 0.12]);
+        mb.box(wx, wy + 0.42, wz + 0.65 * scale, 0.95 * scale, 0.36, 0.36, winCol);
       } else if (fac.subType === 'ski_patrol') {
-        mb.box(wx, wy, wz, 4.0 * scale, 2.4 * scale, 3.8 * scale, [0.94, 0.96, 0.98, 0.12]);
-        mb.gableRoof(wx, wy + 2.4 * scale, wz, 4.4 * scale, 1.1, 4.2 * scale, [0.84, 0.18, 0.2, 0.25]);
-        // Red cross mark
-        mb.box(wx, wy + 3.55 * scale, wz, 1.8, 0.2, 0.5, [0.96, 0.22, 0.22, 0.4]);
-        mb.box(wx, wy + 3.55 * scale, wz, 0.5, 0.2, 1.8, [0.96, 0.22, 0.22, 0.4]);
+        mb.box(wx, wy - 0.25, wz, 1.5 * scale, 0.85 + 0.25, 1.4 * scale, [0.94, 0.96, 0.98, 0.12]);
+        mb.gableRoof(wx, wy + 0.85, wz, 1.68 * scale, 0.46, 1.58 * scale, [0.84, 0.18, 0.20, 0.24]);
+        mb.box(wx, wy + 1.32, wz, 0.68, 0.08, 0.18, [0.96, 0.22, 0.22, 0.45]);
+        mb.box(wx, wy + 1.32, wz, 0.18, 0.08, 0.68, [0.96, 0.22, 0.22, 0.45]);
       } else if (fac.subType === 'transportation') {
-        mb.box(wx, wy, wz, 5.4 * scale, 1.9, 3.2 * scale, [0.24, 0.45, 0.78, 0.12]);
-        mb.gableRoof(wx, wy + 1.9, wz, 5.8 * scale, 0.8, 3.6 * scale, [0.88, 0.92, 0.96, 0.1]);
+        mb.box(wx, wy - 0.25, wz, 2.1 * scale, 0.80 + 0.25, 1.3 * scale, [0.24, 0.46, 0.78, 0.12]);
+        mb.gableRoof(wx, wy + 0.80, wz, 2.28 * scale, 0.34, 1.48 * scale, [0.88, 0.92, 0.96, 0.1]);
       } else {
-        // rental, retail, real_estate, off_season
         const roofCol: RGBA =
           fac.subType === 'retail'
             ? [0.64, 0.32, 0.82, 0.12]
             : fac.subType === 'real_estate'
               ? [0.18, 0.68, 0.48, 0.12]
               : [0.22, 0.52, 0.88, 0.12];
-        const h = (2.1 + lvl * 0.7) * scale;
-        mb.box(wx, wy, wz, 4.2 * scale, h, 3.8 * scale, [0.76, 0.72, 0.66, 0.08]);
-        mb.gableRoof(wx, wy + h, wz, 4.7 * scale, 1.3, 4.2 * scale, roofCol);
-        mb.box(wx, wy + 0.9, wz, 4.35 * scale, 0.8, 1.8 * scale, winCol);
+        const h = (0.85 + lvl * 0.22) * scale;
+        mb.box(wx, wy - 0.25, wz, 1.7 * scale, h + 0.25, 1.5 * scale, [0.76, 0.72, 0.66, 0.08]);
+        mb.gableRoof(wx, wy + h, wz, 1.9 * scale, 0.54, 1.7 * scale, roofCol);
+        mb.box(wx, wy + 0.36, wz, 1.76 * scale, 0.32, 0.72 * scale, winCol);
       }
     }
   }
@@ -520,38 +588,38 @@ function buildUnitBox(
   quad(x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0);
 }
 
-/** Instanced actor templates: skier (head + tinted jacket + twin skis), carrier, snowcat, snowflake */
+/** Crisp miniature instanced actor templates scaled to fit 0.92-wide trails and 1.55-high lifts */
 export function buildUnitMeshes(): {
   skier: UnitMeshData;
   carrier: UnitMeshData;
   snowcat: UnitMeshData;
   flake: UnitMeshData;
 } {
-  // Skier: total ~1.55 world units tall; negative red channel signals INSTANCED_VS to apply jacket tint
+  // Skier (~0.62 world tall at scale 1.0): twin skis + jacket torso + helmet
   const sv: number[] = [];
   const si: number[] = [];
-  buildUnitBox(sv, si, -0.22, 0.0, 0, 0.14, 0.08, 1.15, [0.15, 0.2, 0.28]);
-  buildUnitBox(sv, si, 0.22, 0.0, 0, 0.14, 0.08, 1.15, [0.15, 0.2, 0.28]);
-  buildUnitBox(sv, si, 0, 0.08, 0, 0.55, 0.72, 0.42, [-1, -1, -1]); // Jacket uses instance color
-  buildUnitBox(sv, si, 0, 0.8, 0, 0.38, 0.38, 0.38, [0.96, 0.86, 0.76]); // Helmet / head
+  buildUnitBox(sv, si, -0.09, 0.0, 0, 0.06, 0.04, 0.52, [0.15, 0.2, 0.28]);
+  buildUnitBox(sv, si, 0.09, 0.0, 0, 0.06, 0.04, 0.52, [0.15, 0.2, 0.28]);
+  buildUnitBox(sv, si, 0, 0.04, 0, 0.24, 0.34, 0.18, [-1, -1, -1]);
+  buildUnitBox(sv, si, 0, 0.38, 0, 0.17, 0.17, 0.17, [0.96, 0.86, 0.76]);
 
-  // Lift carrier (chair / gondola shell tinted by instance color)
+  // Lift carrier (compact chair / cabin suspended below 1.55 haul cable)
   const cv: number[] = [];
   const ci: number[] = [];
-  buildUnitBox(cv, ci, 0, 0.35, 0, 0.12, 0.9, 0.12, [0.65, 0.72, 0.8]); // hanger
-  buildUnitBox(cv, ci, 0, -0.45, 0, 1.1, 0.8, 0.85, [-1, -1, -1]);     // cabin / chair body
+  buildUnitBox(cv, ci, 0, 0.18, 0, 0.05, 0.36, 0.05, [0.65, 0.72, 0.80]);
+  buildUnitBox(cv, ci, 0, -0.18, 0, 0.42, 0.34, 0.36, [-1, -1, -1]);
 
-  // Snowcat groomer (bright orange/yellow body + blade + treads)
+  // Snowcat groomer (compact piste cab + blade)
   const gv: number[] = [];
   const gi: number[] = [];
-  buildUnitBox(gv, gi, 0, 0, 0, 1.6, 0.55, 2.2, [0.14, 0.18, 0.24]);
-  buildUnitBox(gv, gi, 0, 0.55, -0.1, 1.35, 0.7, 1.4, [0.95, 0.58, 0.08]);
-  buildUnitBox(gv, gi, 0, 0.1, 1.35, 2.1, 0.45, 0.25, [0.78, 0.82, 0.88]);
+  buildUnitBox(gv, gi, 0, 0, 0, 0.75, 0.26, 1.05, [0.14, 0.18, 0.24]);
+  buildUnitBox(gv, gi, 0, 0.26, -0.05, 0.64, 0.34, 0.68, [0.95, 0.58, 0.08]);
+  buildUnitBox(gv, gi, 0, 0.05, 0.62, 0.96, 0.22, 0.12, [0.78, 0.82, 0.88]);
 
-  // Snowflake / mist cube
+  // Crisp snowflake speck
   const fv: number[] = [];
   const fi: number[] = [];
-  buildUnitBox(fv, fi, 0, -0.25, 0, 0.5, 0.5, 0.5, [0.94, 0.98, 1.0]);
+  buildUnitBox(fv, fi, 0, -0.10, 0, 0.20, 0.20, 0.20, [0.94, 0.98, 1.0]);
 
   return {
     skier: { vertices: new Float32Array(sv), indices: new Uint16Array(si) },

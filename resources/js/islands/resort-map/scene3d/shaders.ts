@@ -34,42 +34,58 @@ uniform vec3 uGroundColor;
 uniform vec3 uFogColor;
 uniform vec3 uCameraPos;
 uniform float uLightMode; // 0=day, 1=sunset, 2=night
-uniform float uContours;  // 0=off, 1=steepness/contour boost
-uniform float uNightLit;  // >0 warms lower village & base lifts at night
+uniform float uContours;  // 0=off, 1=steepness lens contours
+uniform float uNightLit;  // >0.05 warms lower village & base lifts at night
 
 out vec4 fragColor;
 
 void main() {
   vec3 texCol = texture(uMapTex, vUv).rgb;
   vec3 n = normalize(vNormal);
-  float ndotl = max(dot(n, normalize(uSunDir)), 0.0);
+  vec3 sun = normalize(uSunDir);
+  float ndotl = max(dot(n, sun), 0.0);
   float hemi = n.y * 0.5 + 0.5;
-  vec3 ambient = mix(uGroundColor, uSkyColor, hemi);
-  vec3 lit = texCol * (ambient + uSunColor * ndotl);
 
-  // Topographic elevation contour lines (emphasized in Steepness lens)
-  float stepY = 5.0;
-  float modY = fract(vWorldPos.y / stepY);
-  float lineMask = 1.0 - smoothstep(0.0, 0.09, min(modY, 1.0 - modY));
-  float contourMix = uContours > 0.5 ? lineMask * 0.34 : lineMask * 0.07;
-  vec3 contourCol = uLightMode > 1.5 ? vec3(0.32, 0.48, 0.72) : vec3(0.16, 0.25, 0.38);
-  lit = mix(lit, contourCol, contourMix);
-
-  if (uContours > 0.5) {
-    // Soft alpine gradient tint by terrain slope steepness
-    float t = clamp((vSlopeDeg - 8.0) / 34.0, 0.0, 1.0);
-    vec3 gradeCol = mix(vec3(0.22, 0.74, 0.44), mix(vec3(0.26, 0.54, 0.94), vec3(0.92, 0.36, 0.24), clamp((t - 0.45) * 1.8, 0.0, 1.0)), clamp(t * 1.4, 0.0, 1.0));
-    lit = mix(lit, gradeCol * (0.55 + 0.45 * ndotl), 0.28);
+  vec3 lit;
+  if (uLightMode < 0.5) {
+    // Day: preserve pre-shaded trail artwork clarity with crisp gentle directional modulation
+    float relief = mix(0.86, 1.05, clamp(ndotl * 0.65 + hemi * 0.35, 0.0, 1.0));
+    lit = texCol * relief;
+  } else if (uLightMode < 1.5) {
+    // Sunset: warm alpenglow on upper sun-facing terrain + cool alpine shadow fill
+    float elevBlend = smoothstep(4.0, 32.0, vWorldPos.y);
+    vec3 warmTone = mix(vec3(0.96, 0.78, 0.64), vec3(1.06, 0.74, 0.52), elevBlend);
+    vec3 coolShadow = vec3(0.56, 0.54, 0.68);
+    vec3 tint = mix(coolShadow, warmTone, clamp(ndotl * 0.75 + hemi * 0.25, 0.0, 1.0));
+    lit = texCol * tint;
+  } else {
+    // Night: crisp moonlit blue-slate keeping trail lines legible
+    vec3 nightTint = mix(vec3(0.24, 0.31, 0.44), vec3(0.42, 0.50, 0.66), ndotl * 0.5 + hemi * 0.5);
+    lit = texCol * nightTint;
   }
 
-  // Warm alpine night floodlight & village glow when night lighting is active
+  // Topographic elevation contour lines & grade wash rendered strictly on Steepness lens
+  if (uContours > 0.5) {
+    float stepY = 3.5;
+    float modY = fract(vWorldPos.y / stepY);
+    float lineMask = 1.0 - smoothstep(0.0, 0.09, min(modY, 1.0 - modY));
+    vec3 contourCol = uLightMode > 1.5 ? vec3(0.36, 0.54, 0.80) : vec3(0.18, 0.28, 0.42);
+    lit = mix(lit, contourCol, lineMask * 0.28);
+
+    float t = clamp((vSlopeDeg - 7.0) / 30.0, 0.0, 1.0);
+    vec3 midGrade = mix(vec3(0.20, 0.74, 0.44), vec3(0.24, 0.54, 0.94), clamp(t * 1.45, 0.0, 1.0));
+    vec3 gradeCol = mix(midGrade, vec3(0.90, 0.32, 0.24), clamp((t - 0.45) * 1.8, 0.0, 1.0));
+    lit = mix(lit, gradeCol * (0.62 + 0.38 * ndotl), 0.26);
+  }
+
+  // Warm village & base night-skiing glow in evening/night lighting
   if (uLightMode > 1.5 && uNightLit > 0.05) {
-    float baseGlow = exp(-pow((vWorldPos.z - 270.0) / 85.0, 2.0)) * 0.32;
-    lit += vec3(0.95, 0.65, 0.28) * baseGlow * uNightLit;
+    float baseGlow = exp(-pow((vWorldPos.z - 285.0) / 75.0, 2.0)) * 0.30;
+    lit += vec3(0.95, 0.66, 0.30) * baseGlow * uNightLit;
   }
 
   float dist = length(uCameraPos - vWorldPos);
-  float fog = clamp((dist - 420.0) / 760.0, 0.0, 0.55);
+  float fog = clamp((dist - 580.0) / 900.0, 0.0, 0.28);
   lit = mix(lit, uFogColor, fog);
   fragColor = vec4(lit, 1.0);
 }`;
@@ -110,14 +126,23 @@ out vec4 fragColor;
 
 void main() {
   vec3 n = normalize(vNormal);
-  float ndotl = max(dot(n, normalize(uSunDir)), 0.0);
+  vec3 sun = normalize(uSunDir);
+  vec3 viewDir = normalize(uCameraPos - vWorldPos);
+  float ndotl = max(dot(n, sun), 0.0);
   float hemi = n.y * 0.5 + 0.5;
   vec3 ambient = mix(uGroundColor, uSkyColor, hemi);
-  float emissiveBoost = uLightMode > 1.5 ? max(0.35, vColor.a * 1.4) : vColor.a * 0.65;
-  vec3 base = vColor.rgb * (ambient + uSunColor * (ndotl * 0.88 + 0.14)) + vColor.rgb * emissiveBoost;
+
+  vec3 halfVec = normalize(sun + viewDir);
+  float spec = pow(max(dot(n, halfVec), 0.0), 28.0) * 0.14;
+  float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0) * 0.08;
+
+  float emissiveBoost = uLightMode > 1.5 ? max(0.28, vColor.a * 1.25) : vColor.a * 0.45;
+  vec3 base = vColor.rgb * (ambient * 0.55 + uSunColor * (ndotl * 0.65 + 0.35))
+    + vColor.rgb * emissiveBoost
+    + uSunColor * (spec + rim);
 
   float dist = length(uCameraPos - vWorldPos);
-  float fog = clamp((dist - 460.0) / 820.0, 0.0, 0.45);
+  float fog = clamp((dist - 580.0) / 900.0, 0.0, 0.25);
   fragColor = vec4(mix(base, uFogColor, fog), 1.0);
 }`;
 
@@ -143,7 +168,6 @@ void main() {
   vec3 rotNorm = vec3(aNormal.x * c + aNormal.z * s, aNormal.y, -aNormal.x * s + aNormal.z * c);
   vWorldPos = rotPos;
   vNormal = rotNorm;
-  // Negative aBaseColor signal encodes parts that take aInstColor (e.g., skier jacket)
   vColor = mix(aBaseColor, aInstColor.rgb, step(0.0, -aBaseColor.r) * aInstColor.a);
   gl_Position = uViewProj * vec4(rotPos, 1.0);
 }`;
@@ -166,8 +190,8 @@ void main() {
   vec3 n = normalize(vNormal);
   float ndotl = max(dot(n, normalize(uSunDir)), 0.0);
   vec3 ambient = mix(uGroundColor, uSkyColor, n.y * 0.5 + 0.5);
-  float nightPop = uLightMode > 1.5 ? 0.25 : 0.08;
-  vec3 col = vColor * (ambient * 1.15 + uSunColor * (ndotl * 0.85 + 0.2) + nightPop);
+  float nightPop = uLightMode > 1.5 ? 0.22 : 0.06;
+  vec3 col = vColor * (ambient * 0.58 + uSunColor * (ndotl * 0.65 + 0.35) + nightPop);
   fragColor = vec4(col, 1.0);
 }`;
 
