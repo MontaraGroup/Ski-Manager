@@ -423,7 +423,7 @@ export default function ResortMapPage(props: ResortMapProps) {
 
       {/* Main Map Viewport */}
       <div className="relative flex-1 overflow-hidden">
-        <div ref={mapContainerRef} id="map" />
+        <div ref={mapContainerRef} id="map" aria-label="Trail map" />
 
         {/* Shown by the engine while the full-size map image loads */}
         <div

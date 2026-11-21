@@ -164,13 +164,17 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       }
     }
     if (!Array.isArray(pts)) return [];
+    // Leaflet 2 throws on coordinates that aren't numbers; LatLng.validate() accepts exactly what it takes,
+    // so a broken point is dropped instead of being drawn at the map's corner (0, 0)
+    const valid = (window as any).L?.LatLng?.validate ?? ((a: number, b: number) => Number.isFinite(+a) && Number.isFinite(+b));
     return pts
-      .map((p): [number, number] => {
-        if (Array.isArray(p)) return [Number(p[0]) || 0, Number(p[1]) || 0];
-        if (p && typeof p === 'object') return [Number(p.lat ?? p[0] ?? 0), Number(p.lng ?? p[1] ?? 0)];
-        return [0, 0];
+      .map((p): [any, any] | null => {
+        if (Array.isArray(p)) return [p[0], p[1]];
+        if (p && typeof p === 'object') return [p.lat ?? p[0], p.lng ?? p[1]];
+        return null;
       })
-      .filter((p) => !isNaN(p[0]) && !isNaN(p[1]));
+      .filter((p): p is [any, any] => p !== null && p[0] !== null && p[1] !== null && p[0] !== '' && p[1] !== '' && valid(p[0], p[1]))
+      .map((p): [number, number] => [Number(p[0]), Number(p[1])]);
   }
 
   function isSegmentBuilt(segId: number | string): boolean {
@@ -313,14 +317,14 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
 
     renderSegments();
 
-    const markMoved = () => {
-      userMoved = true;
-    };
-    map.on('dragstart', markMoved);
-    container.addEventListener('wheel', markMoved, { passive: true });
-    container.addEventListener('touchstart', markMoved, { passive: true });
-    container.addEventListener('dblclick', markMoved);
-    map.zoomControl?.getContainer()?.addEventListener('click', markMoved);
+    // Leaflet 2 puts originalEvent on movestart/zoomstart only when the player moved the view
+    // (drag, wheel, pinch, keyboard, zoom buttons), not for our own fitBounds/setView calls
+    map.on('movestart zoomstart', (e: any) => {
+      if (e.originalEvent) userMoved = true;
+    });
+
+    // Fullscreen button under the zoom buttons (Leaflet 2 core); fills the window where the Fullscreen API is missing
+    new L.FullscreenControl({ position: 'topleft', enterTitle: 'Full screen map', exitTitle: 'Exit full screen' }).addTo(map);
 
     // Map Event Listeners for Editor
     map.on('pointermove', (e: any) => {
