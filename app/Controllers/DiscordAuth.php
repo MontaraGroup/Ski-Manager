@@ -66,7 +66,6 @@ class DiscordAuth extends BaseController
         ]);
         $response = curl_exec($ch);
         $tokenResponse = $response ? json_decode($response, true) : null;
-        curl_close($ch);
 
         if (!isset($tokenResponse['access_token'])) {
             log_message("error", "Discord token error: " . json_encode($tokenResponse)); return redirect()->to("/login")->with("error", "Discord login failed. Check logs.");
@@ -81,7 +80,6 @@ class DiscordAuth extends BaseController
         ]);
         $response = curl_exec($ch);
         $userInfo = $response ? json_decode($response, true) : null;
-        curl_close($ch);
 
         if (!isset($userInfo['id'])) {
             return redirect()->to('/login')->with('error', 'Could not get Discord user info.');
