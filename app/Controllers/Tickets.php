@@ -60,7 +60,6 @@ class Tickets extends BaseController
         ];
 
         $finance = db_connect()->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRowArray();
-        $v2 = featureEnabled('economy_v2');
         $rawLastTick = json_decode($finance['last_tick'] ?? '', true) ?: null;
 
         $formattedTickets = [];
@@ -99,7 +98,6 @@ class Tickets extends BaseController
         }
 
         $page = [
-            'v2' => $v2,
             'stats' => [
                 'todayRevenueText' => currency($todayRevenue),
                 'todayCountText' => number_format($todayCount),

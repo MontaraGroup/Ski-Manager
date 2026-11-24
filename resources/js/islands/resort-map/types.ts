@@ -189,7 +189,7 @@ export interface MapConfig {
   tiles?: { url: string; maxZoom: number } | null;
 }
 
-export interface EconomyV2Config {
+export interface EconomyConfig {
   capacity: Record<string, number>;
   maxSeats: Record<string, number>;
   liftRun: Record<string, number>;
@@ -232,7 +232,7 @@ export interface ResortMapProps {
   segmentCount: number;
   distUnit: string;
   isImperial: boolean;
-  economyV2: EconomyV2Config | null;
+  economy: EconomyConfig;
   /** ResortMap::calcCost's table, so the page shows what the server charges */
   costs: BuildCosts;
   /** Next nightly settle (ISO 8601) */

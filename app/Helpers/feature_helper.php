@@ -25,7 +25,7 @@ function featureViewerIsAdmin(): bool
 }
 
 /** Flags that stay off until they exist (they change game rules, so a missing flag mustn't switch them on) */
-const FEATURE_DEFAULT_OFF = ['economy_v2', 'season_mode_vote', 'demo_v2', 'map_3d'];
+const FEATURE_DEFAULT_OFF = ['season_mode_vote', 'map_3d'];
 
 const FEATURE_LEVEL_BETA = 3;
 

@@ -72,8 +72,8 @@ class Finances extends BaseController
         $restaurantIncome = $buildingIncome['restaurant'];
         $rentalIncome = $buildingIncome['rental'];
 
-        // Economy v2: last tick's real ticket revenue, and buildings earn by how full they were
-        $lastTick = featureEnabled('economy_v2') ? json_decode((string) ($visitors['last_tick'] ?? ''), true) : null;
+        // Last tick's real ticket revenue, and buildings earn by how full they were
+        $lastTick = json_decode((string) ($visitors['last_tick'] ?? ''), true);
         if ($lastTick) {
             $ticketIncome = (int) ($lastTick['tickets'] ?? 0);
             $occ = $lastTick['occupancy'] ?? [];

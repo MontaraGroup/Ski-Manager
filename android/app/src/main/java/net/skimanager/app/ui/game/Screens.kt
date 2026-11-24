@@ -233,7 +233,7 @@ fun LeaderboardScreen(app: AppState) {
                             StatusBadge("YOU", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
                         }
                     }
-                    Row2(if (data.bool("v2")) "Season profit" else "Cash", if (data.bool("v2")) p.str("profit") else p.str("cash"))
+                    Row2("Season profit", p.str("profit"))
                     Text("${p.int("lifts")} lifts · ${p.int("slopes")} slopes · ${p.int("buildings")} buildings", color = LocalSkiColors.current.muted, style = MaterialTheme.typography.bodySmall)
                 }
             }

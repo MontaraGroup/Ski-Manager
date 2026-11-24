@@ -4,10 +4,9 @@ import { Page, Panel } from '@/components/Page';
 
 type Row = {
   id: number; rank: number; username: string; resortName: string; profit: string; profitPositive: boolean;
-  skiers: string; cash: string; score: string | null; slopes: number; lifts: number; buildings: number; isMe: boolean;
+  skiers: string; cash: string; slopes: number; lifts: number; buildings: number; isMe: boolean;
 };
 type Props = {
-  v2: boolean;
   subtitle: string;
   difficulty: string;
   me: (Row & { behind: string | null }) | null;
@@ -33,20 +32,18 @@ export default function LeaderboardPage(p: Props) {
   const podium = p.players.length >= 3 ? [p.players[1], p.players[0], p.players[2]] : [];
   return (
     <Page title="Leaderboard" icon="fa-trophy" iconTone="text-warning" subtitle={p.subtitle}>
-      {p.v2 && (
-        <nav aria-label="Difficulty board" className="flex w-fit flex-wrap gap-1 rounded-xl bg-default p-1">
-          {BOARDS.map(([key, label]) => (
-            <a
-              key={key}
-              href={`/leaderboard?difficulty=${key}`}
-              aria-current={p.difficulty === key ? 'page' : undefined}
-              className={`flex min-h-10 pointer-coarse:min-h-11 items-center rounded-lg px-4 text-sm font-medium ${p.difficulty === key ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'}`}
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-      )}
+      <nav aria-label="Difficulty board" className="flex w-fit flex-wrap gap-1 rounded-xl bg-default p-1">
+        {BOARDS.map(([key, label]) => (
+          <a
+            key={key}
+            href={`/leaderboard?difficulty=${key}`}
+            aria-current={p.difficulty === key ? 'page' : undefined}
+            className={`flex min-h-10 pointer-coarse:min-h-11 items-center rounded-lg px-4 text-sm font-medium ${p.difficulty === key ? 'bg-surface shadow-sm' : 'text-muted hover:text-foreground'}`}
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
 
       {p.me ? (
         <section aria-label="Your position" className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-xl border border-accent bg-accent-soft p-4 text-sm">
@@ -66,7 +63,7 @@ export default function LeaderboardPage(p: Props) {
             <li key={r.id} className={`rounded-xl border bg-surface p-3 text-center sm:p-4 ${r.rank === 1 ? 'border-warning sm:py-6' : 'border-border'}`}>
               <div className="text-3xl"><Medal rank={r.rank} /><span className="sr-only">Rank {r.rank}</span></div>
               <div className="truncate font-semibold">{r.username}</div>
-              <div className="text-sm font-semibold text-success sm:text-lg">{p.v2 ? r.profit : r.score}</div>
+              <div className="text-sm font-semibold text-success sm:text-lg">{r.profit}</div>
               <div className="text-sm text-muted">{r.slopes} slopes · {r.lifts} lifts</div>
             </li>
           ))}
@@ -80,23 +77,22 @@ export default function LeaderboardPage(p: Props) {
               <tr className="border-b border-border">
                 <th scope="col" className="p-3 font-medium">Rank</th>
                 <th scope="col" className="p-3 font-medium">Resort manager</th>
-                <th scope="col" className="p-3 font-medium">{p.v2 ? 'Season profit' : 'Net profit'}</th>
+                <th scope="col" className="p-3 font-medium">Season profit</th>
                 <th scope="col" className="hidden p-3 font-medium sm:table-cell">Skiers today</th>
                 <th scope="col" className="hidden p-3 font-medium md:table-cell">Resort</th>
                 <th scope="col" className="hidden p-3 font-medium lg:table-cell">Cash</th>
-                {!p.v2 && <th scope="col" className="p-3 font-medium">Score</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {p.players.map((r) => <PlayerRow key={r.id} row={r} v2={p.v2} />)}
+              {p.players.map((r) => <PlayerRow key={r.id} row={r} />)}
               {p.meOutsideTop && p.me && (
                 <>
-                  <tr aria-hidden="true"><td colSpan={7} className="py-1 text-center text-muted">…</td></tr>
-                  <PlayerRow row={p.me} v2={p.v2} />
+                  <tr aria-hidden="true"><td colSpan={6} className="py-1 text-center text-muted">…</td></tr>
+                  <PlayerRow row={p.me} />
                 </>
               )}
               {p.players.length === 0 && (
-                <tr><td colSpan={7} className="py-8 text-center text-muted">No resorts on this board yet. Build one to be the first.</td></tr>
+                <tr><td colSpan={6} className="py-8 text-center text-muted">No resorts on this board yet. Build one to be the first.</td></tr>
               )}
             </tbody>
           </table>
@@ -155,7 +151,7 @@ export default function LeaderboardPage(p: Props) {
   );
 }
 
-function PlayerRow({ row: r, v2 }: { row: Row; v2: boolean }) {
+function PlayerRow({ row: r }: { row: Row }) {
   return (
     <tr className={r.isMe ? 'bg-accent-soft' : ''}>
       <td className="whitespace-nowrap p-3 font-semibold"><Medal rank={r.rank} /> {r.rank}</td>
@@ -179,7 +175,6 @@ function PlayerRow({ row: r, v2 }: { row: Row; v2: boolean }) {
       <td className="hidden whitespace-nowrap p-3 tabular-nums sm:table-cell">{r.skiers}</td>
       <td className="hidden whitespace-nowrap p-3 md:table-cell">{r.slopes} slopes · {r.lifts} lifts · {r.buildings} buildings</td>
       <td className="hidden whitespace-nowrap p-3 tabular-nums lg:table-cell">{r.cash}</td>
-      {!v2 && <td className="p-3 font-semibold">{r.score}</td>}
     </tr>
   );
 }

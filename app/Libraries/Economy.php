@@ -3,7 +3,7 @@
 namespace App\Libraries;
 
 /**
- * Economy v2 rules (feature flag `economy_v2`). Pure functions so the tick, the pages that
+ * Economy rules. Pure functions so the tick, the pages that
  * preview numbers and the season reset all agree. Tuned against a production snapshot:
  * a starter resort pays back in ~3-5 weeks and income runs ~2x expenses.
  */
