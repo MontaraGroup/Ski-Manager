@@ -26,7 +26,9 @@ $page = [
     'conditionName' => $weather['condition_name'] ?? ($weather['condition'] ?? ''),
     'temperature' => isset($weather['temp']) ? temp((int) $weather['temp']) : '',
     'playerCount' => (int) $players,
+    'capEndpoint' => \App\Libraries\Cap::endpoint(),
 ];
 ?>
+<?php if (\App\Libraries\Cap::enabled()) : ?><script src="<?= esc(\App\Libraries\Cap::widgetUrl(), 'attr') ?>" async></script><?php endif ?>
 <?= island('LoginPage', $page, '<p class="max-w-md mx-auto p-4 lg:p-8 text-sm">Loading login…</p>') ?>
 <?= $this->endSection() ?>

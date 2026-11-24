@@ -75,6 +75,10 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://static.cloudflareinsights.com',
+            // Cap CAPTCHA widget and its server (App\Libraries\Cap)
+        'https://cap.ski-manager.net',
+        // Cap compiles its WebAssembly solver
+        'wasm-unsafe-eval',
     ];
 
     /**
@@ -97,6 +101,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://static.cloudflareinsights.com',
+            // Cap CAPTCHA widget and its server (App\Libraries\Cap)
+        'https://cap.ski-manager.net',
     ];
 
     /**
@@ -196,6 +202,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://*.adtrafficquality.google',
+            // Cap CAPTCHA widget and its server (App\Libraries\Cap)
+        'https://cap.ski-manager.net',
     ];
 
     /**

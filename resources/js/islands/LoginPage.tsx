@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { CapWidget } from '@/components/CapWidget';
 import { BotTrap } from '@/components/BotTrap';
 import { Button } from '@heroui/react/button';
 import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
 
 interface LoginPageProps {
+  /** Cap CAPTCHA endpoint (App\Libraries\Cap); empty when Cap is off */
+  capEndpoint?: string;
   actionUrl: string;
   csrfToken: string;
   csrfField: string;
@@ -24,6 +27,7 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({
+  capEndpoint,
   actionUrl,
   csrfToken,
   csrfField,
@@ -241,6 +245,7 @@ export default function LoginPage({
                 </Checkbox>
               )}
 
+              <CapWidget endpoint={capEndpoint} />
               <Button
                 type="submit"
                 variant="primary"

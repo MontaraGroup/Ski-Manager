@@ -39,6 +39,8 @@ $page = [
     'oldDifficulty' => $difficulty,
     'difficulties' => $difficulties,
     'allowDiscord' => (string) env('DISCORD_CLIENT_ID', '') !== '',
+    // The demo's claim form posts to /demo/claim, which Cap doesn't check
+    'capEndpoint' => $isDemo ? '' : \App\Libraries\Cap::endpoint(),
     'error' => session('error'),
     'errors' => session('errors') ? (array) session('errors') : null,
     'season' => $season,
@@ -48,5 +50,6 @@ $page = [
     'playerCount' => (int) $players,
 ];
 ?>
+<?php if (\App\Libraries\Cap::enabled()) : ?><script src="<?= esc(\App\Libraries\Cap::widgetUrl(), 'attr') ?>" async></script><?php endif ?>
 <?= island('RegisterPage', $page, '<p class="max-w-md mx-auto p-4 lg:p-8 text-sm">Loading registration…</p>') ?>
 <?= $this->endSection() ?>

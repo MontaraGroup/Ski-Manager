@@ -11,10 +11,12 @@ $page = [
     'error'     => session('error'),
     'errors'    => session('errors'),
     'message'   => session('message'),
+    'capEndpoint' => \App\Libraries\Cap::endpoint(),
 ];
 ?>
 <?= $this->extend('layouts/main') ?>
 <?= $this->section('title') ?>Login via Magic Link<?= $this->endSection() ?>
 <?= $this->section('content') ?>
+<?php if (\App\Libraries\Cap::enabled()) : ?><script src="<?= esc(\App\Libraries\Cap::widgetUrl(), 'attr') ?>" async></script><?php endif ?>
 <?= island('MagicLinkFormPage', $page, '<p class="max-w-md mx-auto p-8 text-center text-sm">Loading magic link form…</p>') ?>
 <?= $this->endSection() ?>
