@@ -423,6 +423,12 @@ export default function LegalPage({
                           <td className="p-2.5 text-muted">Anonymous aggregate visitor counts</td>
                           <td className="p-2.5 font-mono">2 years</td>
                         </tr>
+                        <tr>
+                          <td className="p-2.5 font-mono text-foreground font-medium">ph_*_posthog</td>
+                          <td className="p-2.5 text-muted">PostHog</td>
+                          <td className="p-2.5 text-muted">Product analytics and session replay, set only after you accept analytics. Form fields are masked in replays.</td>
+                          <td className="p-2.5 font-mono">1 year</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
