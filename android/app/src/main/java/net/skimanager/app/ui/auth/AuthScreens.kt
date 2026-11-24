@@ -30,11 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.posthog.PostHog
 import kotlinx.coroutines.launch
 import net.skimanager.app.api.ApiResult
 import net.skimanager.app.api.SERVER_ERROR
 import net.skimanager.app.api.bool
 import net.skimanager.app.api.str
+import net.skimanager.app.PostHogLogCapture
 import net.skimanager.app.ui.AppState
 import net.skimanager.app.ui.common.OFFLINE_TEXT
 import net.skimanager.app.ui.common.PrimaryButton
@@ -294,7 +296,13 @@ fun ChooseStart(app: AppState) {
                 if (terms) form["terms"] = "on"
                 val result = app.api.post("profile", form)
                 busy = false
-                if (result is ApiResult.Ok) app.needsStart = false else error = messageOf(result)
+                if (result is ApiResult.Ok) {
+                    app.needsStart = false
+                    runCatching {
+                        PostHog.capture("profile_start_selected", mapOf("difficulty" to difficulty))
+                    }
+                    PostHogLogCapture.profileStartSelected(difficulty)
+                } else error = messageOf(result)
             }
         }, Modifier.fillMaxWidth(), enabled = !busy)
     }

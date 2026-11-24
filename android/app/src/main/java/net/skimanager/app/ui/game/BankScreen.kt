@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonObject
+import com.posthog.PostHog
 import kotlinx.coroutines.launch
 import net.skimanager.app.ui.AppState
 import net.skimanager.app.api.ApiResult
@@ -71,6 +72,14 @@ fun BankScreen(app: AppState) {
             when (val r = app.api.post(endpoint, body)) {
                 is ApiResult.Ok -> {
                     actionSuccess = r.message ?: "Transaction complete."
+                    when {
+                        endpoint == "bank/borrow" -> runCatching {
+                            PostHog.capture("bank_loan_borrowed", mapOf("loan_type" to body.getValue("type")))
+                        }
+                        endpoint.endsWith("/repay") -> runCatching {
+                            PostHog.capture("bank_loan_repaid")
+                        }
+                    }
                     reload()
                 }
                 is ApiResult.Failed -> {

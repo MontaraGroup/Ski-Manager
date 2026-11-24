@@ -8,7 +8,15 @@ def localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { localProperties.load(it) }
 }
+def environmentProperties = new Properties()
+def environmentFile = rootProject.file("../.env")
+if (environmentFile.exists()) {
+    environmentFile.withInputStream { environmentProperties.load(it) }
+}
 ext.signingValue = { String name -> System.getenv(name) ?: localProperties.getProperty(name) }
+ext.posthogValue = { String name ->
+    System.getenv(name) ?: localProperties.getProperty(name) ?: environmentProperties.getProperty(name) ?: ""
+}
 
 android {
     namespace 'net.skimanager.app'
@@ -20,6 +28,9 @@ android {
         targetSdk 36
         versionCode VERSION_CODE as Integer
         versionName VERSION_NAME
+
+        buildConfigField "String", "POSTHOG_API_KEY", "\"${posthogValue('POSTHOG_API_KEY')}\""
+        buildConfigField "String", "POSTHOG_HOST", "\"${posthogValue('POSTHOG_HOST')}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -91,6 +102,9 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.13.2'
+
+    // Product analytics, session replay, and error tracking
+    implementation 'com.posthog:posthog-android:3.+'
 
     // Google Play Games: sign-in, achievements and the leaderboard (games/PlayGames.kt)
     implementation 'com.google.android.gms:play-services-games-v2:22.1.0'
