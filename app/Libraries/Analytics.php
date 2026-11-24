@@ -25,6 +25,9 @@ class Analytics
     /** Remote answers for early access flags, per request */
     private static array $remote = [];
 
+    /** Locally evaluated flag snapshots (PostHog::evaluateFlags), per player and admin status, per request */
+    private static array $evaluated = [];
+
     public static function ready(): bool
     {
         if (self::$ready !== null) return self::$ready;
@@ -80,7 +83,13 @@ class Analytics
         $id = self::distinctId($userId);
         try {
             if (self::level($key) !== 3) {
-                return PostHog::isFeatureEnabled($key, $id, [], self::personProps($isAdmin), [], true, false);
+                // One local evaluation of every flag per player per request, rather than one
+                // isFeatureEnabled() call (deprecated in posthog-php 4.27) per flag check
+                $memo = $id . '|' . ($isAdmin ? '1' : '0');
+                if (!array_key_exists($memo, self::$evaluated)) {
+                    self::$evaluated[$memo] = PostHog::evaluateFlags($id, [], self::personProps($isAdmin), [], true);
+                }
+                return self::$evaluated[$memo]->isEnabled($key);
             }
             // Early access flags depend on the player's opt-in, which only PostHog's servers know
             // (local evaluation always says no), so ask PostHog's /flags for all of this
