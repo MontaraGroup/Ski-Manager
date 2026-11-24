@@ -100,17 +100,17 @@ fun BuildingsScreen(app: AppState, initialType: String = "hotel") {
                         path == "buildings/build" -> runCatching {
                             PostHog.capture(
                                 "building_constructed",
-                                mapOf(
+                                properties = mapOf(
                                     "building_type" to params.getValue("type"),
                                     "building_level" to params.getValue("level").toInt(),
                                 ),
                             )
                         }
                         path.endsWith("/upgrade") -> runCatching {
-                            PostHog.capture("building_upgraded", mapOf("building_type" to selectedType))
+                            PostHog.capture("building_upgraded", properties = mapOf("building_type" to selectedType))
                         }
                         path.endsWith("/sell") -> runCatching {
-                            PostHog.capture("building_demolished", mapOf("building_type" to selectedType))
+                            PostHog.capture("building_demolished", properties = mapOf("building_type" to selectedType))
                         }
                     }
                     reload()

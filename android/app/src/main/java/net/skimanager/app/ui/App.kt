@@ -141,6 +141,7 @@ fun App() {
 
     // Play Games signs in on its own at launch; once the game account is ready, mirror achievements and the score
     val activity = LocalActivity.current
+    LaunchedEffect(app.signedIn) { app.identifyRestoredSession() }
     LaunchedEffect(app.signedIn, app.needsStart) {
         if (activity != null && app.signedIn && !app.needsStart) {
             PlayGamesState.refresh(activity)
