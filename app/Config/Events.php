@@ -47,6 +47,24 @@ Events::on('pre_system', static function (): void {
         initSentry();
     }
 
+    /*
+     * --------------------------------------------------------------------
+     * PostHog: PHP error tracking (App\Libraries\Analytics) and request
+     * tracing (App\Libraries\Tracing). Their network calls run at shutdown,
+     * after the response has been handed to the browser.
+     * --------------------------------------------------------------------
+     */
+    \App\Libraries\Analytics::ready();
+    \App\Libraries\Tracing::start();
+    Events::on('DBQuery', [\App\Libraries\Tracing::class, 'query']);
+    register_shutdown_function(static function (): void {
+        if (!is_cli() && function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        \App\Libraries\Tracing::finish();
+        \App\Libraries\Analytics::flush();
+    });
+
 
     /*
      * --------------------------------------------------------------------

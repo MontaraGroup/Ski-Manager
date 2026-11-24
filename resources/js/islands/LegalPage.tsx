@@ -426,7 +426,7 @@ export default function LegalPage({
                         <tr>
                           <td className="p-2.5 font-mono text-foreground font-medium">ph_*_posthog</td>
                           <td className="p-2.5 text-muted">PostHog</td>
-                          <td className="p-2.5 text-muted">Product analytics and session replay, set only after you accept analytics. Form fields are masked in replays.</td>
+                          <td className="p-2.5 text-muted">Product analytics and session replay, set only after you accept analytics. Form fields are masked in replays. Signed-in players are linked to their account id even without the cookie, because feature flags, beta opt-ins and the support chat depend on it.</td>
                           <td className="p-2.5 font-mono">1 year</td>
                         </tr>
                       </tbody>

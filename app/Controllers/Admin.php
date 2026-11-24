@@ -1101,121 +1101,11 @@ class Admin extends BaseController
         return redirect()->to('/admin/changelogs')->with('success', 'Deleted.');
     }
 
-    public function featureFlags(): string|\CodeIgniter\HTTP\RedirectResponse
+    /** Feature flags and beta features are managed in PostHog now */
+    public function featureFlags(): \CodeIgniter\HTTP\RedirectResponse
     {
         if (!$this->checkAdmin()) return redirect()->to('/dashboard')->with('error', 'Unauthorized access.');
-        $flagsRaw = db_connect()->table('feature_flags')->orderBy('name')->get()->getResultArray();
-        $usage = $this->featureFlagUsage();
-
-        $flags = [];
-        $counts = ['everyone' => 0, 'admins' => 0, 'beta' => 0, 'off' => 0, 'unused' => 0];
-        $beta = \App\Libraries\Beta::adminSummary();
-        $counts['members'] = $beta['members'];
-
-        foreach ($flagsRaw as $f) {
-            $lvl = (int) $f['enabled'];
-            if ($lvl === 2) $counts['everyone']++;
-            elseif ($lvl === 1) $counts['admins']++;
-            elseif ($lvl === FEATURE_LEVEL_BETA) $counts['beta']++;
-            else $counts['off']++;
-
-            $isUnused = empty($usage[$f['flag_key']]);
-            if ($isUnused) $counts['unused']++;
-
-            $cleanName = str_replace('[BETA] ', '', $f['name']);
-            $isBeta = str_starts_with($f['flag_key'], 'beta_');
-
-            $flags[] = [
-                'id' => (int) $f['id'],
-                'name' => $f['name'],
-                'cleanName' => $cleanName,
-                'flag_key' => $f['flag_key'],
-                'description' => $f['description'] ?? '',
-                'enabled' => $lvl,
-                'isBeta' => $isBeta,
-                'usage' => $usage[$f['flag_key']] ?? null,
-                // Beta level: members with it on (members minus those who switched it off), and feedback
-                'betaMembersOn' => $lvl === FEATURE_LEVEL_BETA ? max(0, $beta['members'] - ($beta['off'][$f['flag_key']] ?? 0)) : null,
-                'betaSince' => !empty($f['beta_since']) ? date('j M Y', strtotime($f['beta_since'])) : null,
-                'feedback' => $beta['feedback'][$f['flag_key']] ?? null,
-            ];
-        }
-
-        $page = [
-            'flags' => $flags,
-            'counts' => $counts,
-        ];
-
-        return view('admin/features', ['page' => $page]);
-    }
-
-    /**
-     * Where each flag is actually used: pages it gates (FeatureGate) and code that checks it.
-     * Found by scanning the code so the page can point out flags that don't control anything.
-     */
-    private function featureFlagUsage(): array
-    {
-        // Cached for a day; every deploy runs spark cache:clear, which is when this can change
-        $cached = cache('admin_feature_flag_usage');
-        if (is_array($cached)) return $cached;
-        $usage = [];
-        foreach (\App\Filters\FeatureGate::ROUTE_FLAGS as $route => $flag) {
-            $usage[$flag]['pages'][] = '/' . $route;
-        }
-        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(APPPATH, \FilesystemIterator::SKIP_DOTS));
-        foreach ($it as $file) {
-            if ($file->getExtension() !== 'php' || str_contains($file->getFilename(), '.bak')) continue;
-            if (!preg_match_all('/featureEnabled(?:For)?\(\s*[\'"]([a-z0-9_]+)[\'"]\s*[,)]/', file_get_contents($file->getPathname()), $m)) continue;
-            $where = str_replace([APPPATH, '.php'], '', $file->getPathname());
-            foreach (array_unique($m[1]) as $flag) {
-                $usage[$flag]['code'][] = $where;
-            }
-        }
-        cache()->save('admin_feature_flag_usage', $usage, DAY);
-        return $usage;
-    }
-
-    /** POST /admin/features/set/{id} with level 0 (off), 1 (admins only), 3 (beta: admins and beta members) or 2 (everyone) */
-    public function setFlag(int $id)
-    {
-        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
-        $level = (int) $this->request->getPost('level');
-        if (!in_array($level, [0, 1, 2, FEATURE_LEVEL_BETA], true)) return redirect()->to('/admin/features')->with('error', 'Unknown level.');
-
-        $db = db_connect();
-        $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
-        if (!$flag) return redirect()->to('/admin/features')->with('error', 'Flag not found.');
-
-        $labels = [0 => 'off', 1 => 'admins only', 2 => 'everyone', FEATURE_LEVEL_BETA => 'beta'];
-        if ((int) $flag['enabled'] !== $level) {
-            $update = ['enabled' => $level];
-            // When it entered beta, for the "In beta since" line on /beta; cleared once it leaves beta
-            if ($level === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
-            elseif ((int) $flag['enabled'] === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
-            $db->table('feature_flags')->where('id', $id)->update($update);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ': ' . ($labels[(int) $flag['enabled']] ?? $flag['enabled']) . ' -> ' . $labels[$level]);
-        }
-        return redirect()->to('/admin/features#flag-' . $id)->with('success', $flag['name'] . ' is now ' . $labels[$level] . '.');
-    }
-
-    public function toggleFlag(int $id)
-    {
-        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
-        $db = db_connect();
-        $flag = $db->table('feature_flags')->where('id', $id)->get()->getRowArray();
-        if ($flag) {
-            $isBeta = str_starts_with($flag["flag_key"], "beta_");
-            // beta_ keys step through off, admins only, beta, everyone; others switch off/everyone
-            $cycle = [0 => 1, 1 => FEATURE_LEVEL_BETA, FEATURE_LEVEL_BETA => 2, 2 => 0];
-            $old = (int) $flag["enabled"];
-            $new = $isBeta ? ($cycle[$old] ?? 0) : ($old ? 0 : 2);
-            $update = ["enabled" => $new];
-            if ($new === FEATURE_LEVEL_BETA) $update['beta_since'] = date('Y-m-d H:i:s');
-            elseif ($old === FEATURE_LEVEL_BETA) $update['beta_since'] = null;
-            $db->table("feature_flags")->where("id", $id)->update($update);
-            $this->auditLog('feature_flag', null, $flag['flag_key'] . ' ' . ([0 => "off", 1 => "admin only", 2 => "everyone", FEATURE_LEVEL_BETA => "beta"][$new]));
-        }
-        return redirect()->to('/admin/features')->with('success', 'Flag updated.');
+        return redirect()->to(\App\Libraries\Analytics::APP_URL . '/feature_flags');
     }
 
     public function suspiciousActivity(): string|\CodeIgniter\HTTP\RedirectResponse
@@ -1308,22 +1198,6 @@ class Admin extends BaseController
         $db->table('seasons')->where('id', $id)->update(['active' => 1, 'maintenance' => 0, 'maintenance_until' => null]);
         $this->auditLog('activate_season', null, 'Season #' . $id);
         return redirect()->to('/admin/seasons')->with('success', 'Season activated.');
-    }
-
-    public function enableAllFlags()
-    {
-        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
-        db_connect()->table('feature_flags')->update(['enabled' => 2]);
-        $this->auditLog('Enabled all feature flags');
-        return redirect()->to('/admin/features')->with('success', 'All features enabled for everyone.');
-    }
-
-    public function disableAllBeta()
-    {
-        if (!$this->checkAdmin()) return redirect()->to('/admin/features')->with('error', 'Unauthorized access.');
-        db_connect()->table('feature_flags')->where('flag_key LIKE', 'beta_%')->update(['enabled' => 0]);
-        $this->auditLog('Disabled all beta features');
-        return redirect()->to('/admin/features')->with('success', 'All beta features disabled.');
     }
 
     public function activity(): string|\CodeIgniter\HTTP\RedirectResponse

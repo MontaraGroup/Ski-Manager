@@ -75,6 +75,12 @@ PHP and MySQL run inside Docker containers managed via `/srv/ski-manager/docker-
   - **CSS**: Tailwind CSS v4 + DaisyUI v5 (`public/css/input.css` compiled via `npm run build` to `public/css/style.css`).
   - **Icons**: FontAwesome 6 (`fa-solid`, `fa-regular`, `fa-brands`).
   - **Interactive Trail Map (`/map`)**: Custom high-FPS HTML5 `<canvas>` pan/zoom map engine with progressive image loading (`_low.jpg` → `_med.jpg` → `.jpg`), SVG/Canvas lift & slope spline rendering, player Build Menu (`#buildDrawer`), and Admin Map Studio (`#adminEditorToolbar` + `#adminInspectorDrawer`) for drawing/editing presets on the mountain.
+- **PostHog** (project 765435, proxied through `https://j.ski-manager.net`; `.env`: `POSTHOG_KEY`, `POSTHOG_HOST`, `POSTHOG_FLAGS_KEY` = Feature Flags secure key, optional `POSTHOG_TRACE_SAMPLE`):
+  - **Feature flags live in PostHog**, not the `feature_flags` table. `featureEnabled()`/`featureEnabledFor()`/`featureLevel()` (`app/Helpers/feature_helper.php`) evaluate them locally through `App\Libraries\Analytics` from definitions cached by `App\Libraries\PostHogFlagCache` (last good copy in `writable/cache/posthog-flags.json`). Levels: off = flag inactive, admins = condition `is_admin exact true`, everyone = 100%, beta = early access feature. The old table only answers if this server has never downloaded PostHog's definitions. `/admin/features` redirects to PostHog.
+  - **Beta program** (`/beta`, `App\Libraries\Beta`) lists PostHog early access features at alpha/beta; opting in or out is a `$feature_enrollment_update` sent by the server, so the Android app works unchanged. Beta flags are evaluated by PostHog's `/flags` (cached 60 s per player).
+  - **Support**: web players chat through the PostHog Support widget (signed-in only); the Android app still uses `support_messages` and the old admin chat, since PostHog Support has no Android SDK yet.
+  - **Errors and traces**: PHP uncaught exceptions go to PostHog Error tracking (Sentry still runs too); `App\Libraries\Tracing` sends OpenTelemetry request + slow-query spans (20% sampled). Both send from a shutdown function after the response.
+  - Browser: `posthog.init` in `app/Views/layouts/main.php` (consent-gated cookies and replay; players always identified by account id; heatmaps, web scripts, exception capture on).
 - **Game Loop & Cron**:
   - Game ticks run via `app/Controllers/Cron.php` / `spark` commands (advancing `game_day`, weather, snowfall, slope conditions, daily visitor traffic, ticket & building revenue, salaries, loans, and equipment maintenance).
 
@@ -108,7 +114,7 @@ Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/anti
 │   ├── Filters/
 │   │   └── AdminFilter.php         # Protects /admin routes (Shield group + password re-check, AdminConfirm)
 │   ├── Helpers/
-│   │   └── game_helper.php         # Global helpers: currency(), temp(), snow(), speed(), getGameDay(), getSeasonLength(), featureEnabled()
+│   │   └── game_helper.php         # Global helpers: currency(), temp(), snow(), speed(), getGameDay(), getSeasonLength()
 │   ├── Libraries/
 │   ├── Models/                     # CI4 models (FinanceModel, DashboardWidgetModel, PresetLiftModel, PresetSlopeModel, etc.)
 │   └── Views/

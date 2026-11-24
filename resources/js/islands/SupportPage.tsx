@@ -19,6 +19,18 @@ export type SupportPageProps = {
   defaultMessage: string;
 };
 
+type Conversations = { isAvailable?: () => boolean; open?: () => void };
+
+/** PostHog's Support chat (posthog.conversations), once its bundle has loaded */
+function chatApi(): Conversations | null {
+  const c = (window as unknown as { posthog?: { conversations?: Conversations } }).posthog?.conversations;
+  try {
+    return c?.isAvailable?.() ? c : null;
+  } catch {
+    return null;
+  }
+}
+
 const TOPICS = [
   {
     icon: 'fa-bug',
@@ -49,6 +61,23 @@ export default function SupportPage({
   const lastIdRef = useRef(initialLastId);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // 'wait' until PostHog answers; 'chat' = new messages go through the Support chat; 'form' =
+  // the chat couldn't load (blocked or switched off), so the old form below still works
+  const [mode, setMode] = useState<'wait' | 'chat' | 'form'>('wait');
+
+  useEffect(() => {
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (chatApi()) {
+        setMode('chat');
+        clearInterval(timer);
+      } else if (++tries >= 16) {
+        setMode('form');
+        clearInterval(timer);
+      }
+    }, 250);
+    return () => clearInterval(timer);
+  }, []);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -117,7 +146,11 @@ export default function SupportPage({
       title="Support"
       icon="fa-headset"
       iconTone="text-primary"
-      subtitle="Message the Ski Manager team. We read everything, and you'll get a notification when we reply."
+      subtitle={
+        mode === 'chat'
+          ? 'Chat with the Ski Manager team. Replies show up in the chat window on every page.'
+          : "Message the Ski Manager team. We read everything, and you'll get a notification when we reply."
+      }
       width="max-w-3xl"
       actions={
         <a
@@ -128,7 +161,23 @@ export default function SupportPage({
         </a>
       }
     >
+      {mode === 'chat' && (
+        <div className="mb-4 flex flex-col items-start gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="font-semibold">Start a chat</div>
+            <p className="text-sm text-muted">The chat opens in the corner of the page and stays there while you play.</p>
+          </div>
+          <Button variant="primary" onPress={() => chatApi()?.open?.()}>
+            <Icon name="fa-comments" className="mr-1.5" />
+            Open chat
+          </Button>
+        </div>
+      )}
+      {mode === 'chat' && messages.length === 0 ? null : (
       <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+        {mode === 'chat' && (
+          <div className="border-b border-border px-4 py-2 text-xs font-medium text-muted">Earlier messages</div>
+        )}
         {/* Chat message timeline */}
         <div
           className="flex flex-col gap-2.5 p-4 overflow-y-auto"
@@ -196,7 +245,8 @@ export default function SupportPage({
           )}
         </div>
 
-        {/* Compose Form */}
+        {/* Compose Form: only while the Support chat isn't available */}
+        {mode === 'form' && (
         <form action="/support/send" method="post" className="border-t border-border p-3 bg-surface-secondary/20">
           <CsrfInput />
 
@@ -250,7 +300,9 @@ export default function SupportPage({
             </span>
           </div>
         </form>
+        )}
       </div>
+      )}
 
       <p className="text-center text-xs text-muted mt-3">
         Prefer community chat? Find us on{' '}
