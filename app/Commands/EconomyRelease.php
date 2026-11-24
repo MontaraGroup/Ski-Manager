@@ -68,7 +68,6 @@ class EconomyRelease extends BaseCommand
             }
             SeasonReset::restartActiveSeason();
             SeasonReset::apply($num, $season['name']);
-            $db->table('feature_flags')->where('flag_key', 'economy_v2')->update(['enabled' => 2]);
             $db->transComplete();
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -77,7 +76,7 @@ class EconomyRelease extends BaseCommand
         }
         cache()->clean();
         log_message('notice', "Economy v2 released: {$season['name']} restarted, " . count($plan) . ' resorts reset.');
-        CLI::write("Done. {$season['name']} is on day 1 with economy v2 for everyone.", 'green');
+        CLI::write("Done. {$season['name']} is on day 1. Set the economy_v2 flag to 100% in PostHog: " . \App\Libraries\Analytics::APP_URL . '/feature_flags', 'green');
         return EXIT_SUCCESS;
     }
 }

@@ -191,9 +191,11 @@
     // PostHog product analytics. POSTHOG_KEY is the project's public key (phc_…);
     // POSTHOG_HOST is the managed reverse proxy (https://j.ski-manager.net), so ad
     // blockers don't drop events, or https://us.i.posthog.com without the proxy.
-    // Until the visitor accepts analytics it runs cookieless: page views and clicks
-    // with an in-memory id, no session replay, no player id. window.__posthogConsent()
-    // (called from the cookie banner and the Google consent message) switches it up.
+    // Until the visitor accepts analytics it runs cookieless: an in-memory id and no
+    // session replay. Signed-in players are always identified by their account id,
+    // because feature flags, beta opt-ins and support tickets are keyed on it (the
+    // server evaluates flags for the same id). window.__posthogConsent() (called from
+    // the cookie banner and the Google consent message) adds cookies and replay.
     $__phKey  = (string) env('POSTHOG_KEY', '');
     $__phHost = rtrim((string) env('POSTHOG_HOST', 'https://us.i.posthog.com'), '/');
     ?>
@@ -204,7 +206,7 @@
       var consented = false;
       try { var c = localStorage.getItem('cookie_consent'); consented = c === 'all' || c === 'analytics'; } catch (e) {}
       var player = <?= (function_exists('auth') && auth()->loggedIn())
-          ? json_encode(['id' => (string) auth()->id(), 'username' => auth()->user()->username ?? ''], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
+          ? json_encode(['id' => (string) auth()->id(), 'username' => auth()->user()->username ?? '', 'is_admin' => function_exists('featureViewerIsAdmin') && featureViewerIsAdmin()], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
           : 'null' ?>;
       posthog.init(<?= json_encode($__phKey, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>, {
         api_host: <?= json_encode($__phHost, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
@@ -214,19 +216,29 @@
         persistence: consented ? 'localStorage+cookie' : 'memory',
         disable_session_recording: !consented,
         session_recording: { maskAllInputs: true },
-        loaded: function (ph) { if (consented && player) ph.identify(player.id, { username: player.username }); }
+        capture_exceptions: true,
+        enable_heatmaps: true,
+        opt_in_site_apps: true,
+        // Support chat for signed-in players only; it follows the site's light/dark preference
+        disable_conversations: !player,
+        conversations: { theme: { colorScheme: 'auto', borderRadius: '12px' } },
+        loaded: function (ph) { identify(ph); }
       });
+      function identify(ph) {
+        if (player) ph.identify(player.id, { username: player.username, is_admin: player.is_admin ? 'true' : 'false' });
+      }
       window.__posthogConsent = function (granted) {
         if (!window.posthog || granted === consented) return;
         consented = granted;
         if (granted) {
           posthog.set_config({ persistence: 'localStorage+cookie' });
           posthog.startSessionRecording();
-          if (player) posthog.identify(player.id, { username: player.username });
+          identify(posthog);
         } else {
           posthog.stopSessionRecording();
           posthog.reset();
           posthog.set_config({ persistence: 'memory' });
+          identify(posthog);
         }
       };
     })();

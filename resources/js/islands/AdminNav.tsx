@@ -37,7 +37,7 @@ const GROUPS: NavGroup[] = [
   {
     name: 'System',
     links: [
-      { href: '/admin/features', label: 'Feature flags', icon: 'fa-toggle-on' },
+      { href: '/admin/features', label: 'Feature flags (PostHog)', icon: 'fa-toggle-on' },
       { href: '/admin/settings', label: 'Game settings', icon: 'fa-gear' },
       { href: '/admin/seasons', label: 'Seasons', icon: 'fa-calendar-plus' },
       { href: '/admin/errors', label: 'Error log', icon: 'fa-bug' },

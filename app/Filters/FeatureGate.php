@@ -8,7 +8,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class FeatureGate implements FilterInterface
 {
-    /** First URL segment => feature flag. Also used to hide nav links and to describe flags in /admin/features. */
+    /** First URL segment => feature flag. Also used to hide nav links. */
     public const ROUTE_FLAGS = [
         'snowmaking' => 'snowmaking',
         'bank' => 'bank_loans',
