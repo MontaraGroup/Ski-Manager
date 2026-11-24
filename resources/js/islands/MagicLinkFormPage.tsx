@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BotTrap } from '@/components/BotTrap';
 import { Button } from '@heroui/react/button';
 import { Icon } from '@/components/Icon';
 
@@ -70,7 +71,8 @@ export default function MagicLinkFormPage({
         )}
 
         {/* Request Form */}
-        <form action={actionUrl} method="post" className="space-y-4">
+        <form action={actionUrl} method="post" className="space-y-4 relative">
+              <BotTrap />
           <input type="hidden" name={csrfField} value={csrfToken} />
 
           <div className="space-y-1.5">

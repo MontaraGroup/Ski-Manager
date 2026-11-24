@@ -6,6 +6,9 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->get("coming-soon", function(){ return view("countdown"); });
 $routes->match(['get', 'head'], "dashboard/activity", "Dashboard::recentActivity");
+// Admins confirm their password before the panel opens (App\Filters\AdminFilter)
+$routes->get("/admin/confirm", "AdminConfirm::show");
+$routes->post("/admin/confirm", "AdminConfirm::check");
 $routes->get("/admin/activity", "Admin::activityLog");
 $routes->post("/admin/maintenance", "Admin::toggleMaintenance");
 $routes->post("/admin/season", "Admin::updateSeason");

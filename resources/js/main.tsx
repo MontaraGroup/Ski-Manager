@@ -64,6 +64,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   AdminSeasonsPage: () => import('./islands/AdminSeasonsPage'),
   AdminSeasonVotePage: () => import('./islands/AdminSeasonVotePage'),
   AdminResortVotePage: () => import('./islands/AdminResortVotePage'),
+  AdminConfirmPage: () => import('./islands/AdminConfirmPage'),
   AdminAndroidTestingPage: () => import('./islands/AdminAndroidTestingPage'),
   AdminBroadcastPage: () => import('./islands/AdminBroadcastPage'),
   AdminChangelogsPage: () => import('./islands/AdminChangelogsPage'),

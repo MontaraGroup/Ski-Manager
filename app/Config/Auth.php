@@ -108,7 +108,8 @@ class Auth extends ShieldAuth
     public array $actions = [
         // Our subclass: no 500 when the mail can't be sent, and no new email on every page load
         'register' => \App\Authentication\Actions\EmailActivator::class,
-        'login'    => null,
+        // Emailed code on email + password logins, for admins only (App\Authentication\Authenticators\Session)
+        'login'    => \App\Authentication\Actions\Email2FA::class,
     ];
 
     /**
@@ -124,7 +125,7 @@ class Auth extends ShieldAuth
      */
     public array $authenticators = [
         'tokens'  => AccessTokens::class,
-        'session' => Session::class,
+        'session' => \App\Authentication\Authenticators\Session::class,
         'hmac'    => HmacSha256::class,
         // 'jwt'     => JWT::class,
     ];
@@ -280,7 +281,8 @@ class Auth extends ShieldAuth
         CompositionValidator::class,
         NothingPersonalValidator::class,
         DictionaryValidator::class,
-        // PwnedValidator::class,
+        // Breached passwords (Have I Been Pwned); skipped when the service is down
+        \App\Authentication\Passwords\PwnedValidator::class,
     ];
 
     /**
