@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonObject
+import com.posthog.PostHog
 import kotlinx.coroutines.launch
 import net.skimanager.app.ui.AppState
 import net.skimanager.app.api.ApiResult
@@ -94,7 +95,26 @@ fun BuildingsScreen(app: AppState, initialType: String = "hotel") {
                 val result = app.api.post(path, params)
                 failed = result !is ApiResult.Ok
                 note = outcome(result, "Done.")
-                if (result is ApiResult.Ok) reload()
+                if (result is ApiResult.Ok) {
+                    when {
+                        path == "buildings/build" -> runCatching {
+                            PostHog.capture(
+                                "building_constructed",
+                                mapOf(
+                                    "building_type" to params.getValue("type"),
+                                    "building_level" to params.getValue("level").toInt(),
+                                ),
+                            )
+                        }
+                        path.endsWith("/upgrade") -> runCatching {
+                            PostHog.capture("building_upgraded", mapOf("building_type" to selectedType))
+                        }
+                        path.endsWith("/sell") -> runCatching {
+                            PostHog.capture("building_demolished", mapOf("building_type" to selectedType))
+                        }
+                    }
+                    reload()
+                }
             }
         }
 
