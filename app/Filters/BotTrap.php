@@ -7,13 +7,13 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Turns away sign-up, login and magic-link posts that fill in the hidden company_website field
+ * Turns away sign-up, login and magic-link posts that fill in the hidden hp_note_x7 field
  * (resources/js/components/BotTrap.tsx): people never see it, simple bots fill every field. The bot
  * gets the same "try again" a person would, so it learns nothing; the attempt is logged.
  */
 class BotTrap implements FilterInterface
 {
-    public const FIELD = 'company_website';
+    public const FIELD = 'hp_note_x7';
 
     public function before(RequestInterface $request, $arguments = null)
     {

@@ -200,7 +200,7 @@ export default function RegisterPage({
             )}
 
             {/* Form */}
-            <form action={actionUrl} method="post" className="space-y-3.5 relative">
+            <form action={actionUrl} method="post" className="space-y-3.5">
               <BotTrap />
               <input type="hidden" name={csrfField} value={csrfToken} />
 

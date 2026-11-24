@@ -175,7 +175,7 @@ export default function LoginPage({
             </div>
 
             {/* Email + Password Form */}
-            <form action={actionUrl} method="post" className="space-y-4 relative">
+            <form action={actionUrl} method="post" className="space-y-4">
               <BotTrap />
               <input type="hidden" name={csrfField} value={csrfToken} />
 
