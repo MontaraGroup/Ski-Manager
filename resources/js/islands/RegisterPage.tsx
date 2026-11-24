@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CapWidget } from '@/components/CapWidget';
 import { BotTrap } from '@/components/BotTrap';
 import { Button } from '@heroui/react/button';
 import { Checkbox } from '@/components/Checkbox';
@@ -13,6 +14,8 @@ interface RegisterDifficulty {
 }
 
 interface RegisterPageProps {
+  /** Cap CAPTCHA endpoint (App\Libraries\Cap); empty when Cap is off */
+  capEndpoint?: string;
   actionUrl: string;
   isDemo: boolean;
   demoSummary?: { cash: string; lifts: number; runs: number } | null;
@@ -33,6 +36,7 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({
+  capEndpoint,
   actionUrl,
   isDemo,
   demoSummary,
@@ -365,6 +369,7 @@ export default function RegisterPage({
                 </span>
               </Checkbox>
 
+              <CapWidget endpoint={capEndpoint} />
               <Button
                 type="submit"
                 variant="primary"

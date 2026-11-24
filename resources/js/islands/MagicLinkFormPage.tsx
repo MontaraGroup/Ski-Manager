@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { CapWidget } from '@/components/CapWidget';
 import { BotTrap } from '@/components/BotTrap';
 import { Button } from '@heroui/react/button';
 import { Icon } from '@/components/Icon';
 
 interface MagicLinkFormPageProps {
+  /** Cap CAPTCHA endpoint (App\Libraries\Cap); empty when Cap is off */
+  capEndpoint?: string;
   actionUrl: string;
   loginUrl: string;
   csrfToken: string;
@@ -15,6 +18,7 @@ interface MagicLinkFormPageProps {
 }
 
 export default function MagicLinkFormPage({
+  capEndpoint,
   actionUrl,
   loginUrl,
   csrfToken,
@@ -93,6 +97,7 @@ export default function MagicLinkFormPage({
             />
           </div>
 
+          <CapWidget endpoint={capEndpoint} />
           <Button
             type="submit"
             variant="primary"

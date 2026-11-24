@@ -33,6 +33,7 @@ class Filters extends BaseFilters
         'secureheaders' => SecureHeaders::class,
         'throttle'      => \App\Filters\Throttle::class,
         'bottrap'       => \App\Filters\BotTrap::class,
+        'cap'           => \App\Filters\CapVerify::class,
         'profilecomplete' => \App\Filters\ProfileComplete::class,
         'seasongate' => \App\Filters\SeasonGate::class,
         'featuregate' => \App\Filters\FeatureGate::class,
@@ -128,6 +129,8 @@ class Filters extends BaseFilters
         ],
         // Hidden-field bot check on the forms that create accounts, sign in or send email
         'bottrap' => ['before' => ['register', 'login', 'login/magic-link']],
+        // Cap CAPTCHA on the same forms (App\Filters\CapVerify), after the cheaper bot-field check
+        'cap'     => ['before' => ['register', 'login', 'login/magic-link']],
         'admin' => ['before' => ['admin*']],
         'seasongate' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'buildings*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*', 'compliance*', 'vote*', 'support*', 'alliances*', 'tutorial*', 'beta*']],
         'featuregate' => ['before' => ['snowmaking*', 'bank*', 'night-skiing*', 'terrain-parks*', 'tournaments*', 'vip-guests*', 'daily-bonus*', 'marketing*', 'real-estate*', 'scenic*', 'off-season*', 'insurance*', 'ski-lessons*', 'equipment*', 'grooming*', 'hotels*', 'restaurants*', 'rentals*', 'parking*', 'energy*', 'water*', 'emergency*', 'government*', 'leaderboard*', 'tour*', 'retail*', 'transportation*', 'ski-patrol*']],
