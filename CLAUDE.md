@@ -68,7 +68,7 @@ PHP and MySQL run inside Docker containers managed via `/srv/ski-manager/docker-
 ## 4. Site Basics & Tech Stack
 
 - **Framework**: CodeIgniter 4 (PHP 8.5)
-- **Authentication**: CodeIgniter Shield (`users` table + `auth_identities` table for `email_password` hashes + `auth_groups_users` for roles like `admin` / `superadmin`) + custom `AdminSession` second-layer gate for `/admin`.
+- **Authentication**: CodeIgniter Shield (`users` table + `auth_identities` table for `email_password` hashes + `auth_groups_users` for roles like `admin` / `superadmin`) + `/admin` gate `App\Filters\AdminFilter` (admin group, then the admin's password again after 2 h idle, `AdminConfirm`). Admins get an emailed code on email+password login (Email2FA via `App\Authentication\Authenticators\Session`); sign-up/login/magic-link forms carry a hidden bot field (`App\Filters\BotTrap`); breached passwords are rejected (`App\Authentication\Passwords\PwnedValidator`).
   - Primary admin user: `contact` (ID `2`, email `contact@ski-manager.net`).
 - **Frontend Stack**:
   - Server-rendered PHP views in `app/Views/` extending `app/Views/layouts/main.php` (player layout) or `app/Views/layouts/admin.php` (admin panel layout).
@@ -88,7 +88,7 @@ Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/anti
 ├── app/
 │   ├── Config/
 │   │   ├── Routes.php              # All URL routes (player routes, /map APIs, /admin routes)
-│   │   ├── Filters.php             # Auth, CSRF, AdminAuthFilter, MaintenanceFilter
+│   │   ├── Filters.php             # Auth, CSRF, AdminFilter, BotTrap, Throttle, MaintenanceFilter
 │   │   └── AuthGroups.php          # Shield groups/permissions
 │   ├── Controllers/
 │   │   ├── Dashboard.php           # /dashboard executive overview, KPI & cashflow calculations, widget layout AJAX
@@ -106,11 +106,10 @@ Inside `/srv/ski-manager/sites/skiv2/ci4` (and local `/Users/324080/.gemini/anti
 │   │   ├── Cron.php                # Daily game tick processor
 │   │   └── Admin/                  # /admin controllers (AdminAuth, Users, Resorts, GameSettings, Logs, etc.)
 │   ├── Filters/
-│   │   └── AdminAuthFilter.php     # Protects /admin routes (checks Shield group + AdminSession)
+│   │   └── AdminFilter.php         # Protects /admin routes (Shield group + password re-check, AdminConfirm)
 │   ├── Helpers/
 │   │   └── game_helper.php         # Global helpers: currency(), temp(), snow(), speed(), getGameDay(), getSeasonLength(), featureEnabled()
 │   ├── Libraries/
-│   │   └── AdminSession.php        # Secondary password/session verification for /admin
 │   ├── Models/                     # CI4 models (FinanceModel, DashboardWidgetModel, PresetLiftModel, PresetSlopeModel, etc.)
 │   └── Views/
 │       ├── layouts/

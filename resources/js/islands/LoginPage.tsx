@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BotTrap } from '@/components/BotTrap';
 import { Button } from '@heroui/react/button';
 import { Checkbox } from '@/components/Checkbox';
 import { Icon } from '@/components/Icon';
@@ -175,6 +176,7 @@ export default function LoginPage({
 
             {/* Email + Password Form */}
             <form action={actionUrl} method="post" className="space-y-4">
+              <BotTrap />
               <input type="hidden" name={csrfField} value={csrfToken} />
 
               <div className="space-y-1.5">
