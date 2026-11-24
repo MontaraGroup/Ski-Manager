@@ -42,6 +42,8 @@ class Analytics
                     'enabled' => !is_cli() || ENVIRONMENT === 'production',
                     // CodeIgniter already turns PHP warnings into exceptions; only uncaught ones are sent
                     'capture_errors' => false,
+                    // 404s, bad URLs, CSRF failures and redirects are the visitor's request, not a bug
+                    'excluded_exceptions' => [\CodeIgniter\Exceptions\HTTPExceptionInterface::class],
                     'context_provider' => static fn() => ['distinctId' => self::distinctId(self::viewerId())],
                 ],
             ], null, null, ((string) env('POSTHOG_FLAGS_KEY', '')) ?: null);
