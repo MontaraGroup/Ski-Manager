@@ -74,7 +74,7 @@ fun BankScreen(app: AppState) {
                     actionSuccess = r.message ?: "Transaction complete."
                     when {
                         endpoint == "bank/borrow" -> runCatching {
-                            PostHog.capture("bank_loan_borrowed", mapOf("loan_type" to body.getValue("type")))
+                            PostHog.capture("bank_loan_borrowed", properties = mapOf("loan_type" to body.getValue("type")))
                         }
                         endpoint.endsWith("/repay") -> runCatching {
                             PostHog.capture("bank_loan_repaid")

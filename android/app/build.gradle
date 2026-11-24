@@ -14,8 +14,10 @@ if (environmentFile.exists()) {
     environmentFile.withInputStream { environmentProperties.load(it) }
 }
 ext.signingValue = { String name -> System.getenv(name) ?: localProperties.getProperty(name) }
-ext.posthogValue = { String name ->
-    System.getenv(name) ?: localProperties.getProperty(name) ?: environmentProperties.getProperty(name) ?: ""
+// PostHog's project key is public (it ships inside every web page too), so the
+// defaults are built in and every build reports; env or local.properties can override.
+ext.posthogValue = { String name, String fallback ->
+    System.getenv(name) ?: localProperties.getProperty(name) ?: environmentProperties.getProperty(name) ?: fallback
 }
 
 android {
@@ -29,8 +31,8 @@ android {
         versionCode VERSION_CODE as Integer
         versionName VERSION_NAME
 
-        buildConfigField "String", "POSTHOG_API_KEY", "\"${posthogValue('POSTHOG_API_KEY')}\""
-        buildConfigField "String", "POSTHOG_HOST", "\"${posthogValue('POSTHOG_HOST')}\""
+        buildConfigField "String", "POSTHOG_API_KEY", "\"${posthogValue('POSTHOG_API_KEY', 'phc_BRsoK2NATFyPSU4PVVwAZJQsLUtyfySDr9pbpfrbt7Wg')}\""
+        buildConfigField "String", "POSTHOG_HOST", "\"${posthogValue('POSTHOG_HOST', 'https://j.ski-manager.net')}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -104,7 +106,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.13.2'
 
     // Product analytics, session replay, and error tracking
-    implementation 'com.posthog:posthog-android:3.+'
+    implementation 'com.posthog:posthog-android:3.77.1'
 
     // Google Play Games: sign-in, achievements and the leaderboard (games/PlayGames.kt)
     implementation 'com.google.android.gms:play-services-games-v2:22.1.0'

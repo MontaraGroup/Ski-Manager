@@ -299,7 +299,7 @@ fun ChooseStart(app: AppState) {
                 if (result is ApiResult.Ok) {
                     app.needsStart = false
                     runCatching {
-                        PostHog.capture("profile_start_selected", mapOf("difficulty" to difficulty))
+                        PostHog.capture("profile_start_selected", properties = mapOf("difficulty" to difficulty))
                     }
                     PostHogLogCapture.profileStartSelected(difficulty)
                 } else error = messageOf(result)

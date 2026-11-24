@@ -61,6 +61,20 @@ class AppState(private val context: Context) {
         return true
     }
 
+    /**
+     * Players who were already signed in when PostHog arrived never pass through signIn(),
+     * so their events stay anonymous. Once per launch, look up the account and identify it.
+     */
+    suspend fun identifyRestoredSession() {
+        if (!signedIn) return
+        val current = runCatching { PostHog.distinctId() }.getOrNull() ?: return
+        if (current.toIntOrNull() != null) return // already identified as a player id
+        val result = api.get("me")
+        if (result !is net.skimanager.app.api.ApiResult.Ok) return
+        val id = result.dataObject().obj("user").int("id").takeIf { it > 0 } ?: return
+        runCatching { PostHog.identify(id.toString()) }
+    }
+
     fun forget(note: String? = null) {
         runCatching { PostHog.reset() }
         token = null
