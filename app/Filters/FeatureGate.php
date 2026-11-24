@@ -8,37 +8,12 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class FeatureGate implements FilterInterface
 {
-    /** First URL segment => feature flag. Also used to hide nav links. */
-    public const ROUTE_FLAGS = [
-        'snowmaking' => 'snowmaking',
-        'bank' => 'bank_loans',
-        'night-skiing' => 'night_skiing',
-        'terrain-parks' => 'terrain_parks',
-        'tournaments' => 'tournaments',
-        'vip-guests' => 'vip_guests',
-        'daily-bonus' => 'daily_bonus',
-        'marketing' => 'marketing',
-        'real-estate' => 'real_estate',
-        'scenic-lifts' => 'scenic_lifts',
-        'off-season' => 'off_season',
-        'insurance' => 'insurance',
-        'ski-lessons' => 'ski_school',
-        'equipment' => 'equipment_shop',
-        'grooming' => 'grooming',
-        'hotels' => 'hotels',
-        'restaurants' => 'restaurants',
-        'rentals' => 'rentals',
-        'parking' => 'parking',
-        'energy' => 'energy',
-        'water' => 'water',
-        'emergency' => 'emergency',
-        'government' => 'government',
-        'leaderboard' => 'leaderboard',
-        'tour' => 'resort_tours',
-        'retail' => 'retail',
-        'transportation' => 'transportation',
-        'ski-patrol' => 'ski_patrol',
-    ];
+    /**
+     * First URL segment => feature flag, for pages still being tested (admins only or beta).
+     * Also used to hide nav links and to add the "Beta" chip. Released pages aren't listed:
+     * they are always on. Add the same URL pattern to the featuregate entry in Config\Filters.
+     */
+    public const ROUTE_FLAGS = [];
 
     /** The flag that gates a URL path, or null if none does */
     public static function flagForPath(string $path): ?string
