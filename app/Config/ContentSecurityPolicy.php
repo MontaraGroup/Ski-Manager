@@ -75,7 +75,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://static.cloudflareinsights.com',
-        // PostHog loader, session recorder and surveys
+        // PostHog via its managed reverse proxy, and direct as a fallback
+        'https://j.ski-manager.net',
         'https://*.i.posthog.com',
             // Cap CAPTCHA widget and its server (App\Libraries\Cap)
         'https://cap.ski-manager.net',
@@ -103,7 +104,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://static.cloudflareinsights.com',
-        // PostHog loader, session recorder and surveys
+        // PostHog via its managed reverse proxy, and direct as a fallback
+        'https://j.ski-manager.net',
         'https://*.i.posthog.com',
             // Cap CAPTCHA widget and its server (App\Libraries\Cap)
         'https://cap.ski-manager.net',
@@ -206,7 +208,8 @@ class ContentSecurityPolicy extends BaseConfig
         'https://ep1.adtrafficquality.google',
         'https://ep2.adtrafficquality.google',
         'https://*.adtrafficquality.google',
-        // PostHog loader, session recorder and surveys
+        // PostHog via its managed reverse proxy, and direct as a fallback
+        'https://j.ski-manager.net',
         'https://*.i.posthog.com',
             // Cap CAPTCHA widget and its server (App\Libraries\Cap)
         'https://cap.ski-manager.net',
