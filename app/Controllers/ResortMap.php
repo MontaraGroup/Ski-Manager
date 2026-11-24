@@ -447,14 +447,14 @@ class ResortMap extends BaseController
             'segmentCount'      => count($segments),
             'distUnit'          => $distUnit,
             'isImperial'        => $isImperial,
-            'economyV2'         => (function_exists('featureEnabled') && featureEnabled('economy_v2')) ? [
+            'economy'           => [
                 'capacity' => \App\Libraries\Economy::LIFT_CAPACITY,
                 'maxSeats' => \App\Libraries\Economy::LIFT_MAX_SEATS,
                 'liftRun'  => \App\Libraries\Economy::LIFT_RUN_PER_M,
                 'slopeRun' => \App\Libraries\Economy::SLOPE_RUN_PER_M,
                 'perDay'   => \App\Libraries\Economy::LIFT_HOURS / \App\Libraries\Economy::RIDES_PER_SKIER,
                 'liftKwh'  => \App\Libraries\Utilities::LIFT_KWH_PER_M,
-            ] : null,
+            ],
             // The same table calcCost() charges with, so the page never shows a different price
             'costs'             => [
                 'liftPerM'    => self::LIFT_COST_PER_M,

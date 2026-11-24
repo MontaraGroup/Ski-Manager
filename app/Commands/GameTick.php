@@ -103,8 +103,6 @@ class GameTick extends BaseCommand
                     $inspChance = (int) ($diffConfig['inspection_chance'] ?? 5);
                     $visMult = ((int) ($diffConfig['visitor_multiplier'] ?? 100)) / 100;
                     $vipBonus = (int) ($diffConfig['vip_chance_bonus'] ?? 0);
-                    // Economy v2 (App\Libraries\Economy): demand-priced tickets, lift capacity and running costs, building occupancy
-                    $v2 = featureEnabledFor('economy_v2', $userId);
                     $breakdown = [];
 
             // Active Génépis perks, loaded before any revenue so the revenue boost applies to all of it
@@ -166,15 +164,7 @@ class GameTick extends BaseCommand
             $buildings = $db->table('buildings')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray();
             $breakdown['building_upkeep'] = 0;
             foreach ($buildings as $b) {
-                $revenue = (int) $b['revenue_per_day'];
-                $type = $b['building_type'];
-
-                // Staff assignment bonuses: +15% revenue per assigned staff
-                if ($type === 'hotel') $revenue = (int) round($revenue * (1 + $countAssigned('receptionist') * StaffEffects::RECEPTIONIST_REVENUE_BOOST));
-                if ($type === 'restaurant') $revenue = (int) round($revenue * (1 + $countAssigned('chef') * StaffEffects::CHEF_REVENUE_BOOST));
-
-                // v2 pays building revenue after visitors are known (it depends on how full they are)
-                if ($resortOpen && !$v2) $dayIncome += (int) round($revenue * $revMult); // closed resort: no guests, upkeep still due
+                // Building revenue is paid after visitors are known (it depends on how full they are)
                 $dayExpenses += (int) round($b['upkeep_per_day'] * $costMult);
                 $breakdown['building_upkeep'] += (int) round($b['upkeep_per_day'] * $costMult);
                 $bDecay = $isDormant ? 0 : (int) round(rand(0, 2) * $decayMult);
@@ -208,14 +198,12 @@ class GameTick extends BaseCommand
             $baseTemp = (int) ($weather['temp'] ?? 0);
             $snowDay = \App\Libraries\Snowmaking::runDay($userId, $weather, array_filter($equipment, fn($e) => $e['equipment_type'] === 'snowmaker'), $allStaff, !$isWinter);
             $equipment = array_merge(array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'snowmaker')), $snowDay['guns']);
-            // v2: groomers without an operator stay parked (no fuel, no wear); the night shift below uses the same fleet
-            if ($v2) {
-                $crewedGroomers = array_flip(array_map(fn($m) => (int) $m['id'], \App\Libraries\Grooming::fleet(
-                    array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer'),
-                    array_values(array_filter($allStaff, fn($s) => $s['role'] === 'groomer'))
-                )['machines']));
-                $equipment = array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'groomer' || isset($crewedGroomers[(int) $e['id']])));
-            }
+            // Groomers without an operator stay parked (no fuel, no wear); the night shift below uses the same fleet
+            $crewedGroomers = array_flip(array_map(fn($m) => (int) $m['id'], \App\Libraries\Grooming::fleet(
+                array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer'),
+                array_values(array_filter($allStaff, fn($s) => $s['role'] === 'groomer'))
+            )['machines']));
+            $equipment = array_values(array_filter($equipment, fn($e) => $e['equipment_type'] !== 'groomer' || isset($crewedGroomers[(int) $e['id']])));
             $crewedGuns = array_flip(array_column(array_filter($allStaff, fn($s) => $s['role'] === 'snowmaker' && !empty($s['assigned_to'])), 'assigned_to'));
             foreach ($equipment as $e) {
                 // In standby mode, inactive resort does not burn idle fuel
@@ -316,8 +304,8 @@ class GameTick extends BaseCommand
                     if ($item['item_type'] === 'lift' && isset($mechanicLifts[$item['name'] ?? 'Lift #' . $item['id']])) {
                         $decay = max(0, $decay - StaffEffects::MECHANIC_LIFT_WEAR_RELIEF);
                     }
-                    // v2: slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
-                    if ($v2 && $item['item_type'] === 'slope') {
+                    // Slopes wear by difficulty and weather (App\Libraries\Grooming); groomers restore them below
+                    if ($item['item_type'] === 'slope') {
                         $decay = \App\Libraries\Grooming::decay($item, $weather);
                     }
                 }
@@ -331,23 +319,21 @@ class GameTick extends BaseCommand
             // ==============================
             $activeGroomers = count(array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer' && $e['status'] === 'active'));
 
-            // v2 NIGHTLY GROOMING: each machine with an operator grooms its capacity in slopes, worst first
+            // NIGHTLY GROOMING: each machine with an operator grooms its capacity in slopes, worst first
             $groomedToday = [];
-            if ($v2) {
-                $operators = array_values(array_filter($allStaff, fn($s) => $s['role'] === 'groomer'));
-                $fleet = \App\Libraries\Grooming::fleet(array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer'), $operators);
-                if ($fleet['capacity'] > 0) {
-                    $slopeRows = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->whereIn('status', ['open', 'broken'])->get()->getResultArray();
-                    $restore = \App\Libraries\Grooming::restore($operators);
-                    foreach (\App\Libraries\Grooming::pick($slopeRows, $fleet['capacity']) as $sl) {
-                        $db->table('player_items')->where('id', $sl['id'])->update([
-                            'condition_pct' => min(100, (int) $sl['condition_pct'] + $restore), 'groomed_day' => $gameDay, 'groomed_manual' => 0, 'status' => 'open',
-                        ]);
-                        $groomedToday[(int) $sl['id']] = true;
-                    }
-                    if ($groomedToday) {
-                        log_activity($userId, 'Grooming', 'Night shift groomed ' . count($groomedToday) . ' slope' . (count($groomedToday) === 1 ? '' : 's') . ' (+' . $restore . '% each)', 'fa-solid fa-tractor');
-                    }
+            $operators = array_values(array_filter($allStaff, fn($s) => $s['role'] === 'groomer'));
+            $fleet = \App\Libraries\Grooming::fleet(array_filter($equipment, fn($e) => $e['equipment_type'] === 'groomer'), $operators);
+            if ($fleet['capacity'] > 0) {
+                $slopeRows = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->whereIn('status', ['open', 'broken'])->get()->getResultArray();
+                $restore = \App\Libraries\Grooming::restore($operators);
+                foreach (\App\Libraries\Grooming::pick($slopeRows, $fleet['capacity']) as $sl) {
+                    $db->table('player_items')->where('id', $sl['id'])->update([
+                        'condition_pct' => min(100, (int) $sl['condition_pct'] + $restore), 'groomed_day' => $gameDay, 'groomed_manual' => 0, 'status' => 'open',
+                    ]);
+                    $groomedToday[(int) $sl['id']] = true;
+                }
+                if ($groomedToday) {
+                    log_activity($userId, 'Grooming', 'Night shift groomed ' . count($groomedToday) . ' slope' . (count($groomedToday) === 1 ? '' : 's') . ' (+' . $restore . '% each)', 'fa-solid fa-tractor');
                 }
             }
             // AUTO-GROOM PERK
@@ -368,22 +354,15 @@ class GameTick extends BaseCommand
             // ==============================
             // SNOW QUALITY UPDATE
             // ==============================
-            $hasSnowmaking = count($activeSnowmakers) > 0;
             $slopesForQuality = $db->table("player_items")->where("user_id", $userId)->where("item_type", "slope")->where("status", "open")->get()->getResultArray();
             $todayQualities = [];
             foreach ($slopesForQuality as $sl) {
                 $q = "packed";
                 if (($weather["snowfall"] ?? 0) >= 10) { $q = "powder"; }
-                elseif ($v2) {
-                    // v2: only slopes the night shift actually groomed count as groomed
-                    if (isset($groomedToday[(int) $sl['id']])) { $q = "groomed"; }
-                    elseif (in_array($weather["condition_name"] ?? "", ["Freezing Rain", "Rain"], true)) { $q = "icy"; }
-                    elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = (int) ($sl['made_snow_cm'] ?? 0) > 0 ? "packed" : "bare"; }
-                }
-                elseif (($weather["snowfall"] ?? 0) >= 1) { $q = $activeGroomers > 0 ? "groomed" : "packed"; }
-                elseif (($weather["condition_name"] ?? "") === "Freezing Rain") { $q = "icy"; }
-                elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = $hasSnowmaking ? "packed" : "bare"; }
-                elseif ($activeGroomers > 0) { $q = "groomed"; }
+                // Only slopes the night shift actually groomed count as groomed
+                elseif (isset($groomedToday[(int) $sl['id']])) { $q = "groomed"; }
+                elseif (in_array($weather["condition_name"] ?? "", ["Freezing Rain", "Rain"], true)) { $q = "icy"; }
+                elseif (($weather["condition_name"] ?? "") === "Sunny" && ($weather["temp"] ?? -5) >= 0) { $q = (int) ($sl['made_snow_cm'] ?? 0) > 0 ? "packed" : "bare"; }
                 $db->table("player_items")->where("id", $sl["id"])->update(["snow_quality" => $q]);
                 $todayQualities[] = $q;
             }
@@ -393,8 +372,6 @@ class GameTick extends BaseCommand
             // ==============================
             $openSlopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->countAllResults();
             $openLifts = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->countAllResults();
-            $tickets = $db->table('lift_tickets')->where('user_id', $userId)->where('active', 1)->get()->getResultArray();
-            $avgPrice = count($tickets) > 0 ? array_sum(array_column($tickets, 'price')) / count($tickets) : 0;
 
             $baseVisitors = ($openSlopes * 50) + ($openLifts * 30);
             $marketingBoost = array_sum(array_column($campaigns, 'visitor_boost'));
@@ -493,105 +470,87 @@ class GameTick extends BaseCommand
             }
 
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;
-            if ($v2) {
-                // Demand comes from the slopes, is damped by ticket prices and the regional market,
-                // and can't exceed what the open lifts carry
-                $weatherFactor = \App\Libraries\Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
-                $demand = \App\Libraries\Economy::slopeDemand($slopesForQuality) * (1 + $totalBoost / 100) * $visMult * $weatherFactor;
-                if (in_array('visitor_boost', $activeBoostTypes)) $demand *= 1.5;
-                $demand = \App\Libraries\Economy::marketCap($demand);
-                $allTickets = $db->table('lift_tickets')->where('user_id', $userId)->get()->getResultArray();
-                $ticketTerms = \App\Libraries\Economy::ticketTerms($allTickets);
-                $summerTourists = $isWinter ? 0 : (int) round($demand * \App\Libraries\Economy::SUMMER_TOURIST_SHARE);
-                $visitors = (int) round($demand * $ticketTerms['demand'] * ($isWinter ? 1 : 0.15)) + $tournamentVisitors;
-                $liftRows = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray();
-                $liftCapacity = \App\Libraries\Economy::liftDailyCapacity($liftRows);
-                $turnedAwayByLifts = max(0, $visitors - $liftCapacity);
-                $visitors = min($visitors, $liftCapacity);
-                if (!$resortOpen) { $visitors = 0; $summerTourists = 0; }
-                if ($turnedAwayByLifts > 0 && $resortOpen) {
-                    log_activity($userId, 'lift_capacity', number_format($turnedAwayByLifts) . ' skiers stayed away: your lifts carry about ' . number_format($liftCapacity) . ' a day.', 'fa-solid fa-elevator');
-                }
-
-                $ticketRevenue = (int) round($visitors * $ticketTerms['per_visit']);
-                $dayIncome += (int) round($ticketRevenue * $revMult);
-                $breakdown += ['tickets' => (int) round($ticketRevenue * $revMult), 'demand' => (int) round($demand), 'weather_factor' => $weatherFactor, 'price_demand' => round($ticketTerms['demand'], 3),
-                    'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts];
-                if ($visitors > 0) {
-                    $prices = array_column($allTickets, 'price', 'ticket_type') ?: \App\Libraries\Economy::TICKET_REFERENCE;
-                    $sales = [];
-                    foreach ($ticketTerms['mix'] as $type => $share) {
-                        $skiers = (int) round($visitors * $share);
-                        if ($skiers <= 0) continue;
-                        $sales[] = ['user_id' => $userId, 'game_day' => $gameDay, 'ticket_type' => $type, 'quantity' => $skiers,
-                            'revenue' => (int) round($skiers * $prices[$type] / (\App\Libraries\Economy::TICKET_VISITS[$type] ?? 1) * $revMult),
-                            'created_at' => date('Y-m-d H:i:s')];
-                    }
-                    if ($sales) $db->table('ticket_sales')->insertBatch($sales);
-                }
-
-                // Buildings earn in proportion to how full they are; a staffed one earns the staff bonus.
-                // Real estate has its own market (below), so it's left out here.
-                // Ski patrol is safety, not a guest venue (no BUILDING_SHARE): leaving it in put a 0% occupancy into the average
-                $guestBuildings = array_values(array_filter($buildings, fn($b) => !in_array($b['building_type'], ['real_estate', 'ski_patrol'], true)));
-                $util = \App\Libraries\Economy::buildingUtilization($guestBuildings, $visitors, $summerTourists);
-                $perType = array_count_values(array_column($guestBuildings, 'building_type'));
-                $buildingRevenue = 0;
-                foreach ($guestBuildings as $b) {
-                    $t = $b['building_type'];
-                    $buildingRevenue += (int) $b['revenue_per_day'] * ($util[$t] ?? 0) * \App\Libraries\Economy::staffBonus($t, $perType[$t] ?? 0, $assignedByRole);
-                }
-                $buildingRevenue = $resortOpen ? (int) round($buildingRevenue * $revMult) : 0;
-                $dayIncome += $buildingRevenue;
-                $breakdown['buildings'] = $buildingRevenue;
-                $breakdown['occupancy'] = array_map(fn($u) => round($u, 3), $util);
-
-                // Real estate (App\Libraries\RealEstate): construction, rent on leased properties, fees on sold ones
-                $estate = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'real_estate')->get()->getResultArray();
-                if ($estate) {
-                    $conds = array_map(fn($sl) => (int) $sl['condition_pct'], $slopesForQuality);
-                    $market = \App\Libraries\RealEstate::market((int) (resortRating($userId)['stars'] ?? 0), $openSlopes, $conds ? (int) round(array_sum($conds) / count($conds)) : 0)['value'];
-                    $rent = 0; $fees = 0;
-                    foreach ($estate as $re) {
-                        if ($re['status'] === 'upgrading') {
-                            $left = max(0, (int) $re['build_days_left'] - $buildStep);
-                            // A finished property is leased out straight away; the owner can sell it any time
-                            $db->table('buildings')->where('id', $re['id'])->update($left > 0 ? ['build_days_left' => $left] : ['build_days_left' => 0, 'status' => 'open']);
-                            if ($left === 0) notify($userId, 'real_estate', $re['name'] . ' is finished', 'It\'s leased out and earning rent. You can also sell it on the property market.', 'fa-solid fa-city', '/real-estate');
-                        } elseif ($re['tenure'] === 'sold') {
-                            $fees += \App\Libraries\RealEstate::managementFee((int) $re['sale_price']);
-                        } elseif ($re['status'] === 'open') {
-                            $rent += \App\Libraries\RealEstate::rent((int) $re['level'], $market, (int) $re['condition_pct'], $isWinter);
-                        }
-                    }
-                    $estateIncome = (int) round(($rent + $fees) * $revMult);
-                    $dayIncome += $estateIncome;
-                    $breakdown['real_estate'] = $estateIncome;
-                    $breakdown['property_market'] = $market;
-                }
-
-                // Lifts and slopes cost money to run
-                $allItems = $db->table('player_items')->where('user_id', $userId)->get()->getResultArray();
-                $runningCost = (int) round(\App\Libraries\Economy::runningCost($allItems) * $costMult);
-                $dayExpenses += $runningCost;
-                $breakdown['lift_slope_running'] = $runningCost;
-            } else {
-            $visitors = (int) round($baseVisitors * (1 + $totalBoost / 100) * $visMult) + $tournamentVisitors;
-
-            // Apply Génépi visitor boost perk
-            if (in_array('visitor_boost', $activeBoostTypes)) {
-                $visitors = (int) round($visitors * 1.5);
+            // Demand comes from the slopes, is damped by ticket prices and the regional market,
+            // and can't exceed what the open lifts carry
+            $weatherFactor = \App\Libraries\Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+            $demand = \App\Libraries\Economy::slopeDemand($slopesForQuality) * (1 + $totalBoost / 100) * $visMult * $weatherFactor;
+            if (in_array('visitor_boost', $activeBoostTypes)) $demand *= 1.5;
+            $demand = \App\Libraries\Economy::marketCap($demand);
+            $allTickets = $db->table('lift_tickets')->where('user_id', $userId)->get()->getResultArray();
+            $ticketTerms = \App\Libraries\Economy::ticketTerms($allTickets);
+            $summerTourists = $isWinter ? 0 : (int) round($demand * \App\Libraries\Economy::SUMMER_TOURIST_SHARE);
+            $visitors = (int) round($demand * $ticketTerms['demand'] * ($isWinter ? 1 : 0.15)) + $tournamentVisitors;
+            $liftRows = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray();
+            $liftCapacity = \App\Libraries\Economy::liftDailyCapacity($liftRows);
+            $turnedAwayByLifts = max(0, $visitors - $liftCapacity);
+            $visitors = min($visitors, $liftCapacity);
+            if (!$resortOpen) { $visitors = 0; $summerTourists = 0; }
+            if ($turnedAwayByLifts > 0 && $resortOpen) {
+                log_activity($userId, 'lift_capacity', number_format($turnedAwayByLifts) . ' skiers stayed away: your lifts carry about ' . number_format($liftCapacity) . ' a day.', 'fa-solid fa-elevator');
             }
 
-            // Summer reduction
-            if (!$isWinter) $visitors = (int) round($visitors * 0.15);
-
-            // A resort its owner has closed gets no guests (so no tickets, lessons, parking or VIPs); costs still apply
-            if (!$resortOpen) $visitors = 0;
-
-            $ticketRevenue = (int) round($visitors * $avgPrice * 0.6);
+            $ticketRevenue = (int) round($visitors * $ticketTerms['per_visit']);
             $dayIncome += (int) round($ticketRevenue * $revMult);
+            $breakdown += ['tickets' => (int) round($ticketRevenue * $revMult), 'demand' => (int) round($demand), 'weather_factor' => $weatherFactor, 'price_demand' => round($ticketTerms['demand'], 3),
+                'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts];
+            if ($visitors > 0) {
+                $prices = array_column($allTickets, 'price', 'ticket_type') ?: \App\Libraries\Economy::TICKET_REFERENCE;
+                $sales = [];
+                foreach ($ticketTerms['mix'] as $type => $share) {
+                    $skiers = (int) round($visitors * $share);
+                    if ($skiers <= 0) continue;
+                    $sales[] = ['user_id' => $userId, 'game_day' => $gameDay, 'ticket_type' => $type, 'quantity' => $skiers,
+                        'revenue' => (int) round($skiers * $prices[$type] / (\App\Libraries\Economy::TICKET_VISITS[$type] ?? 1) * $revMult),
+                        'created_at' => date('Y-m-d H:i:s')];
+                }
+                if ($sales) $db->table('ticket_sales')->insertBatch($sales);
             }
+
+            // Buildings earn in proportion to how full they are; a staffed one earns the staff bonus.
+            // Real estate has its own market (below), so it's left out here.
+            // Ski patrol is safety, not a guest venue (no BUILDING_SHARE): leaving it in put a 0% occupancy into the average
+            $guestBuildings = array_values(array_filter($buildings, fn($b) => !in_array($b['building_type'], ['real_estate', 'ski_patrol'], true)));
+            $util = \App\Libraries\Economy::buildingUtilization($guestBuildings, $visitors, $summerTourists);
+            $perType = array_count_values(array_column($guestBuildings, 'building_type'));
+            $buildingRevenue = 0;
+            foreach ($guestBuildings as $b) {
+                $t = $b['building_type'];
+                $buildingRevenue += (int) $b['revenue_per_day'] * ($util[$t] ?? 0) * \App\Libraries\Economy::staffBonus($t, $perType[$t] ?? 0, $assignedByRole);
+            }
+            $buildingRevenue = $resortOpen ? (int) round($buildingRevenue * $revMult) : 0;
+            $dayIncome += $buildingRevenue;
+            $breakdown['buildings'] = $buildingRevenue;
+            $breakdown['occupancy'] = array_map(fn($u) => round($u, 3), $util);
+
+            // Real estate (App\Libraries\RealEstate): construction, rent on leased properties, fees on sold ones
+            $estate = $db->table('buildings')->where('user_id', $userId)->where('building_type', 'real_estate')->get()->getResultArray();
+            if ($estate) {
+                $conds = array_map(fn($sl) => (int) $sl['condition_pct'], $slopesForQuality);
+                $market = \App\Libraries\RealEstate::market((int) (resortRating($userId)['stars'] ?? 0), $openSlopes, $conds ? (int) round(array_sum($conds) / count($conds)) : 0)['value'];
+                $rent = 0; $fees = 0;
+                foreach ($estate as $re) {
+                    if ($re['status'] === 'upgrading') {
+                        $left = max(0, (int) $re['build_days_left'] - $buildStep);
+                        // A finished property is leased out straight away; the owner can sell it any time
+                        $db->table('buildings')->where('id', $re['id'])->update($left > 0 ? ['build_days_left' => $left] : ['build_days_left' => 0, 'status' => 'open']);
+                        if ($left === 0) notify($userId, 'real_estate', $re['name'] . ' is finished', 'It\'s leased out and earning rent. You can also sell it on the property market.', 'fa-solid fa-city', '/real-estate');
+                    } elseif ($re['tenure'] === 'sold') {
+                        $fees += \App\Libraries\RealEstate::managementFee((int) $re['sale_price']);
+                    } elseif ($re['status'] === 'open') {
+                        $rent += \App\Libraries\RealEstate::rent((int) $re['level'], $market, (int) $re['condition_pct'], $isWinter);
+                    }
+                }
+                $estateIncome = (int) round(($rent + $fees) * $revMult);
+                $dayIncome += $estateIncome;
+                $breakdown['real_estate'] = $estateIncome;
+                $breakdown['property_market'] = $market;
+            }
+
+            // Lifts and slopes cost money to run
+            $allItems = $db->table('player_items')->where('user_id', $userId)->get()->getResultArray();
+            $runningCost = (int) round(\App\Libraries\Economy::runningCost($allItems) * $costMult);
+            $dayExpenses += $runningCost;
+            $breakdown['lift_slope_running'] = $runningCost;
 
             // ==============================
             // SKI LESSONS / SKI SCHOOL REVENUE
@@ -807,7 +766,7 @@ class GameTick extends BaseCommand
                 // Higher rating = chance of rarer VIPs
                 $maxIndex = min(count($vipTypes) - 1, (int) floor($resortRating * 1.5));
                 $vip = $vipTypes[rand(0, $maxIndex)];
-                $vipCash = $v2 ? \App\Libraries\Economy::vipReward((int) round($ticketRevenue * $revMult), $vip['cash_max']) : rand($vip['cash_min'], $vip['cash_max']);
+                $vipCash = \App\Libraries\Economy::vipReward((int) round($ticketRevenue * $revMult), $vip['cash_max']);
                 $breakdown['vip'] = ($breakdown['vip'] ?? 0) + $vipCash;
 
                 $vipNames = ['Von Schneider', 'Beaumont', 'Larsson', 'Tanaka', 'De Rossi', 'Petrov', 'Ashworth', 'Magnusson', 'Dubois', 'Van den Berg'];
@@ -915,14 +874,12 @@ class GameTick extends BaseCommand
                 'daily_visitors' => $visitors,
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
-            if ($v2) {
-                $known = ($breakdown['tickets'] ?? 0) + ($breakdown['buildings'] ?? 0) + ($breakdown['vip'] ?? 0);
-                $knownCost = ($breakdown['salaries'] ?? 0) + ($breakdown['building_upkeep'] ?? 0) + ($breakdown['lift_slope_running'] ?? 0);
-                $financeUpdate['last_tick'] = json_encode($breakdown + [
-                    'game_day' => $gameDay, 'visitors' => $visitors, 'income' => $dayIncome, 'expenses' => $dayExpenses,
-                    'other_income' => $dayIncome - $known, 'other_costs' => $dayExpenses - $knownCost,
-                ]);
-            }
+            $known = ($breakdown['tickets'] ?? 0) + ($breakdown['buildings'] ?? 0) + ($breakdown['vip'] ?? 0);
+            $knownCost = ($breakdown['salaries'] ?? 0) + ($breakdown['building_upkeep'] ?? 0) + ($breakdown['lift_slope_running'] ?? 0);
+            $financeUpdate['last_tick'] = json_encode($breakdown + [
+                'game_day' => $gameDay, 'visitors' => $visitors, 'income' => $dayIncome, 'expenses' => $dayExpenses,
+                'other_income' => $dayIncome - $known, 'other_costs' => $dayExpenses - $knownCost,
+            ]);
             $db->table('player_finances')->where('user_id', $userId)
                 ->set('cash', 'cash + ' . ((int) $dayIncome - (int) $dayExpenses), false)
                 ->set('total_income', 'total_income + ' . (int) $dayIncome, false)

@@ -658,16 +658,14 @@ class Dashboard extends BaseController
         // Yesterday's real visitors only; no made-up fallback when there were none
         $ticketIncome = $ticketPrice * max(0, $dailyVisitors);
 
-        // Economy v2: tickets and buildings depend on demand and occupancy, so show what the last tick actually paid
-        if (featureEnabled('economy_v2')) {
-            $lastTick = $finance !== null ? ($finance['last_tick'] ?? null) : $db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick');
-            $last = json_decode((string) ($lastTick ?? ''), true);
-            $last = $last ?: (Demo::estimate((int) $userId)['tick'] ?? null);
-            if ($last) {
-                $ticketIncome = (int) ($last['tickets'] ?? 0);
-                $buildingIncome = (int) ($last['buildings'] ?? 0);
-                $buildingUpkeep += (int) ($last['lift_slope_running'] ?? 0); // shown with upkeep: lifts and slopes cost to run
-            }
+        // Tickets and buildings depend on demand and occupancy, so show what the last tick actually paid
+        $lastTick = $finance !== null ? ($finance['last_tick'] ?? null) : $db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick');
+        $last = json_decode((string) ($lastTick ?? ''), true);
+        $last = $last ?: (Demo::estimate((int) $userId)['tick'] ?? null);
+        if ($last) {
+            $ticketIncome = (int) ($last['tickets'] ?? 0);
+            $buildingIncome = (int) ($last['buildings'] ?? 0);
+            $buildingUpkeep += (int) ($last['lift_slope_running'] ?? 0); // shown with upkeep: lifts and slopes cost to run
         }
 
         $runningCosts = $buildingUpkeep + $equipCost + $marketingCost + $insuranceCost;

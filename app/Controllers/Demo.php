@@ -140,10 +140,10 @@ class Demo extends BaseController
         ];
     }
 
-    /** What the player would keep, in real numbers. Null unless this is a demo and demo_v2 is on */
+    /** What the player would keep, in real numbers. Null unless this is a demo */
     public static function summary(int $userId): ?array
     {
-        if (!featureEnabled('demo_v2') || !self::isDemoUser()) return null;
+        if (!self::isDemoUser()) return null;
         $db = db_connect();
         $count = fn(string $type) => $db->table('player_items')->where('user_id', $userId)->where('item_type', $type)->countAllResults();
         return [
@@ -261,7 +261,7 @@ class Demo extends BaseController
         ]);
 
         // 2. Lifts & Slopes (dynamically match map segments if available)
-        $starter = featureEnabled('demo_v2') ? self::starterSegments() : null;
+        $starter = self::starterSegments();
         $liftSegments = $starter['lifts'] ?? $db->table('map_segments')
             ->where('resort_map', 'ParkCity')
             ->where('type', 'lift')
@@ -416,9 +416,7 @@ class Demo extends BaseController
         $db->table('daily_bonus')->insert(['user_id' => $userId, 'last_claim_day' => 0, 'streak' => 1]);
 
         // 8. The mountain is already built, so the tutorial starts at the first thing left to do: ticket prices
-        if (featureEnabled('demo_v2')) {
-            $db->table('tutorial_progress')->insert(['user_id' => $userId, 'current_step' => self::TUTORIAL_START_STEP]);
-        }
+        $db->table('tutorial_progress')->insert(['user_id' => $userId, 'current_step' => self::TUTORIAL_START_STEP]);
     }
 
     /**
@@ -431,8 +429,6 @@ class Demo extends BaseController
     {
         static $cache = [];
         if (array_key_exists($userId, $cache)) return $cache[$userId];
-        if (!featureEnabled('demo_v2') || !featureEnabled('economy_v2')) return null;
-
         $db = db_connect();
         $finance = $db->table('player_finances')->where('user_id', $userId)->get()->getRowArray();
         if (!$finance || !empty($finance['last_tick']) || (int) ($finance['resort_open'] ?? 1) !== 1) return null;
@@ -642,7 +638,7 @@ class Demo extends BaseController
 
         self::bumpStat('claimed');
         session()->remove(['is_demo', 'demo_token', 'demo_created_at']);
-        if (featureEnabled('demo_v2')) session()->set('demo_saved_as', $username);
+        session()->set('demo_saved_as', $username);
         log_activity($userId, 'register', 'Claimed and saved Demo Mountain into permanent director account');
 
         // The email code page; the resort is already theirs if they come back to it later

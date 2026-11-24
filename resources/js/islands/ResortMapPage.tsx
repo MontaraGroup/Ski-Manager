@@ -1000,7 +1000,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                 isImperial={props.isImperial}
                 distUnit={props.distUnit}
                 sectorLabel={getSectorLabel(selectedSeg.sector)}
-                economyV2={props.economyV2}
+                economy={props.economy}
                 traffic={liveSkiers?.perSegment?.[String(selectedSeg.id)] ?? null}
                 onZoom={() =>
                   viewMode === '3d'
@@ -1024,7 +1024,7 @@ export default function ResortMapPage(props: ResortMapProps) {
                   cost={calculatedCost}
                   cash={userCash}
                   isImperial={props.isImperial}
-                  economyV2={props.economyV2}
+                  economy={props.economy}
                   liftType={liftType}
                   seats={seats}
                   isBuilding={isConstructing}

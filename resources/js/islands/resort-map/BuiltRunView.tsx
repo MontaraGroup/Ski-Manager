@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertDialog, Button, Chip, Label, Meter, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
-import type { BuiltItem, EconomyV2Config, MapSegment, SegmentTraffic } from './types';
+import type { BuiltItem, EconomyConfig, MapSegment, SegmentTraffic } from './types';
 import { LIFT_TYPES, SLOPE_TYPES, TrailSign, formatCurrency, runKind } from './shared';
 import { LiftSwapDialog, type LiftSwapOption } from './LiftSwapDialog';
 
@@ -38,7 +38,7 @@ export function BuiltRunView({
   isImperial,
   distUnit,
   sectorLabel,
-  economyV2,
+  economy,
   traffic,
   onZoom,
   onDemolish,
@@ -50,7 +50,7 @@ export function BuiltRunView({
   isImperial: boolean;
   distUnit: string;
   sectorLabel: string;
-  economyV2: EconomyV2Config | null;
+  economy: EconomyConfig;
   traffic?: SegmentTraffic | null;
   onZoom: () => void;
   onDemolish: (done: (ok: boolean) => void) => void;
@@ -66,11 +66,9 @@ export function BuiltRunView({
   const system = isLift
     ? LIFT_TYPES.find((l) => l.id === item.subtype)?.name
     : SLOPE_TYPES.find((s) => s.id === item.subtype)?.name;
-  const runCost = economyV2
-    ? isLift
-      ? len * (economyV2.liftRun[item.subtype || 'chair_fixed'] || 0.8)
-      : len * economyV2.slopeRun
-    : null;
+  const runCost = isLift
+    ? len * (economy.liftRun[item.subtype || 'chair_fixed'] || 0.8)
+    : len * economy.slopeRun;
   const salvage = Number(item.salvage || 0);
   const name = seg.name || (isLift ? 'this lift' : 'this slope');
   const hasCondition = typeof item.condition_pct === 'number';
@@ -244,12 +242,10 @@ export function BuiltRunView({
             </dd>
           </div>
         )}
-        {runCost !== null && (
-          <div>
-            <dt className="text-muted">{isLift ? 'Running cost' : 'Upkeep'}</dt>
-            <dd className="tabular-nums font-semibold text-foreground">{formatCurrency(runCost, isImperial)}/day</dd>
-          </div>
-        )}
+        <div>
+          <dt className="text-muted">{isLift ? 'Running cost' : 'Upkeep'}</dt>
+          <dd className="tabular-nums font-semibold text-foreground">{formatCurrency(runCost, isImperial)}/day</dd>
+        </div>
         <div className="min-w-0">
           <dt className="text-muted">Sector</dt>
           <dd className="truncate font-semibold text-foreground">{sectorLabel}</dd>

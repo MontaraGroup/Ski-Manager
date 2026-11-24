@@ -20,7 +20,6 @@ export type TicketItem = {
 };
 
 export type TicketsPageProps = {
-  v2: boolean;
   stats: {
     todayRevenueText: string;
     todayCountText: string;
@@ -41,7 +40,6 @@ export type TicketsPageProps = {
 };
 
 export default function TicketsPage({
-  v2,
   stats,
   tickets,
   lastTick,
@@ -75,7 +73,6 @@ export default function TicketsPage({
             <TicketRow
               key={ticket.id}
               ticket={ticket}
-              v2={v2}
               currencySymbol={currencySymbol}
               rules={rules}
             />
@@ -84,97 +81,45 @@ export default function TicketsPage({
       </Panel>
 
       {/* How pricing works explanation */}
-      {v2 ? (
-        <Panel
-          title={
-            <span className="flex items-center gap-2">
-              <Icon name="fa-lightbulb" className="text-warning" />
-              How pricing works
-            </span>
-          }
-        >
-          <ul className="text-sm text-muted space-y-1.5 list-disc pl-5">
+      <Panel
+        title={
+          <span className="flex items-center gap-2">
+            <Icon name="fa-lightbulb" className="text-warning" />
+            How pricing works
+          </span>
+        }
+      >
+        <ul className="text-sm text-muted space-y-1.5 list-disc pl-5">
+          <li>
+            Each skier buys one ticket. Charging more than the normal price scares some away: at double the price, about
+            4 in 10 still come. Charging less brings more, up to 1.5×.
+          </li>
+          <li>Revenue usually peaks close to the normal price. Watch the demand figure next to each ticket.</li>
+          <li>Multi-day passes earn per day used: a weekly pass covers 6 ski days, a season pass about 25.</li>
+          <li>Taking a ticket off sale loses skiers: only half of those who wanted it buy a different one.</li>
+          <li>
+            Skiers cannot exceed what your open lifts carry each day. When they do, extra demand is lost: build more or
+            bigger lifts.
+          </li>
+          {lastTick && (
             <li>
-              Each skier buys one ticket. Charging more than the normal price scares some away: at double the price, about
-              4 in 10 still come. Charging less brings more, up to 1.5×.
+              Last tick: {lastTick.visitorsText} skiers, {lastTick.perVisitText} per skier, prices kept{' '}
+              {lastTick.priceDemandPct}% of demand
+              {lastTick.turnedAwayText ? `, ${lastTick.turnedAwayText} turned away by lift capacity` : ''}.
             </li>
-            <li>Revenue usually peaks close to the normal price. Watch the demand figure next to each ticket.</li>
-            <li>Multi-day passes earn per day used: a weekly pass covers 6 ski days, a season pass about 25.</li>
-            <li>Taking a ticket off sale loses skiers: only half of those who wanted it buy a different one.</li>
-            <li>
-              Skiers cannot exceed what your open lifts carry each day. When they do, extra demand is lost: build more or
-              bigger lifts.
-            </li>
-            {lastTick && (
-              <li>
-                Last tick: {lastTick.visitorsText} skiers, {lastTick.perVisitText} per skier, prices kept{' '}
-                {lastTick.priceDemandPct}% of demand
-                {lastTick.turnedAwayText ? `, ${lastTick.turnedAwayText} turned away by lift capacity` : ''}.
-              </li>
-            )}
-          </ul>
-        </Panel>
-      ) : (
-        <Panel
-          title={
-            <span className="flex items-center gap-2">
-              <Icon name="fa-lightbulb" className="text-warning" />
-              Pricing guide
-            </span>
-          }
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border text-xs text-muted">
-                <tr>
-                  <th className="pb-2 font-medium">Price range</th>
-                  <th className="pb-2 font-medium">Visitor impact</th>
-                  <th className="pb-2 font-medium">Revenue per visitor</th>
-                  <th className="pb-2 font-medium">Best for</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                <tr>
-                  <td className="py-2.5 font-semibold text-success">Low (&lt; 30 €)</td>
-                  <td className="py-2.5 text-success">+++ visitors</td>
-                  <td className="py-2.5 text-danger">Low</td>
-                  <td className="py-2.5 text-muted">New resorts, building reputation</td>
-                </tr>
-                <tr>
-                  <td className="py-2.5 font-semibold text-accent">Medium (30–60 €)</td>
-                  <td className="py-2.5 text-accent">++ visitors</td>
-                  <td className="py-2.5 text-accent">Balanced</td>
-                  <td className="py-2.5 text-muted">Growing resorts, steady income</td>
-                </tr>
-                <tr>
-                  <td className="py-2.5 font-semibold text-warning">High (60–100 €)</td>
-                  <td className="py-2.5 text-warning">+ visitors</td>
-                  <td className="py-2.5 text-success">High</td>
-                  <td className="py-2.5 text-muted">Popular resorts with many slopes</td>
-                </tr>
-                <tr>
-                  <td className="py-2.5 font-semibold text-danger">Premium (100 €+)</td>
-                  <td className="py-2.5 text-danger">Fewer visitors</td>
-                  <td className="py-2.5 text-success">Very High</td>
-                  <td className="py-2.5 text-muted">Luxury 5-star resorts only</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-      )}
+          )}
+        </ul>
+      </Panel>
     </Page>
   );
 }
 
 function TicketRow({
   ticket,
-  v2,
   currencySymbol,
   rules,
 }: {
   ticket: TicketItem;
-  v2: boolean;
   currencySymbol: string;
   rules: TicketsPageProps['rules'];
 }) {
@@ -206,7 +151,7 @@ function TicketRow({
         <div className="min-w-0">
           <div className="font-semibold text-sm text-foreground">{ticket.name}</div>
           <div className="text-xs text-muted">{ticket.desc}</div>
-          {v2 && ticket.refPrice && (
+          {ticket.refPrice && (
             <div className="text-xs text-muted mt-0.5">
               Normal price {ticket.refPriceText} · {ticket.mixPct}% of skiers want this · demand at your price{' '}
               <span

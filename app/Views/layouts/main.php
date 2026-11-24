@@ -558,31 +558,6 @@ body { font-family: var(--sign); }
             return $html;
         };
     ?>
-    <?php if (session()->get('is_demo') && !featureEnabled('demo_v2')) : ?>
-    <div class="bg-primary text-primary-foreground px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-md sticky top-0 z-[10000]">
-        <div class="flex items-center gap-2">
-            <span class="inline-flex items-center rounded-md bg-amber-400 px-2 py-0.5 text-xs font-bold font-mono text-neutral-900">DEMO SANDBOX</span>
-            <span class="font-medium">Park City Mountain Base &bull; 4 Lifts &bull; 8 Slopes &bull; 250,000 € Capital</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <form action="/demo/reset" method="post" onsubmit="return confirm('Your demo resort goes back to its starting setup. Your progress is lost.')">
-                <?= csrf_field() ?>
-                <button type="submit" class="inline-flex min-h-8 items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-white/10">
-                    <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset
-                </button>
-            </form>
-            <a href="/demo/save" class="inline-flex min-h-8 items-center gap-1 rounded-lg bg-amber-400 px-3 py-1 text-xs font-bold shadow-sm text-neutral-900 hover:bg-amber-300">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Save My Resort & Claim Capital
-            </a>
-            <form action="/demo/exit" method="post">
-                <?= csrf_field() ?>
-                <button type="submit" class="inline-flex size-8 items-center justify-center rounded-lg text-primary-foreground/80 hover:text-white hover:bg-white/10" title="Exit Demo" aria-label="Exit Demo">
-                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                </button>
-            </form>
-        </div>
-    </div>
-    <?php endif ?>
     <?php if ($__isAdmin && function_exists('isMaintenanceMode') && isMaintenanceMode()) : ?>
     <div class="bg-amber-600 text-white px-4 py-2 text-xs sm:text-sm font-semibold flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
@@ -1098,7 +1073,7 @@ const tutCsrfName = '<?= csrf_token() ?>';
 const tutCurrentPage = window.location.pathname;
 let tutTimer = null;
 let tutConfirming = false;
-<?php if (session()->get('is_demo') && featureEnabled('demo_v2')) : ?>
+<?php if (session()->get('is_demo')) : ?>
 // A new demo player has the cookie banner to answer first: start as the small pill so the two don't stack
 if (localStorage.getItem('tut_collapsed') === null && !localStorage.getItem('cookie_consent')) { window.tutStartCollapsed = true; }
 <?php endif ?>
@@ -1250,7 +1225,7 @@ function skipTutorial() {
 }
 
 <?php // Nothing covers the demo save form or the first-visit profile form
-      if (!($__currentPath === '/demo/save' && featureEnabled('demo_v2')) && $__currentPath !== '/complete-profile') : ?>
+      if ($__currentPath !== '/demo/save' && $__currentPath !== '/complete-profile') : ?>
 loadTutorial();
 tutTimer = setInterval(loadTutorial, 10000);
 <?php endif ?>

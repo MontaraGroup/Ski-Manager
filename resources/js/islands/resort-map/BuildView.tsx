@@ -1,6 +1,6 @@
 import { Button, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
-import type { BuildCosts, EconomyV2Config, MapSegment } from './types';
+import type { BuildCosts, EconomyConfig, MapSegment } from './types';
 import { LIFT_TYPES, SLOPE_TYPES, TrailSign, buildCost, formatCurrency, runKind } from './shared';
 
 /** Choices for an unbuilt run: lift system and carrier size, or the slope's discipline */
@@ -150,7 +150,7 @@ export function BuildFooter({
   cost,
   cash,
   isImperial,
-  economyV2,
+  economy,
   liftType,
   seats,
   isBuilding,
@@ -160,7 +160,7 @@ export function BuildFooter({
   cost: number;
   cash: number;
   isImperial: boolean;
-  economyV2: EconomyV2Config | null;
+  economy: EconomyConfig;
   liftType: string;
   seats: number;
   isBuilding: boolean;
@@ -169,22 +169,20 @@ export function BuildFooter({
   const canAfford = cash >= cost;
   const m = Number(seg.length_meters) || 0;
 
-  let perDay: string | null = null;
-  if (economyV2) {
-    if (seg.type === 'lift') {
-      const cap = economyV2.capacity[liftType] || 2400;
-      const maxS = economyV2.maxSeats[liftType] || 4;
-      const daily = Math.round(Math.round(cap * Math.min(1, seats / maxS)) * economyV2.perDay);
-      const run = m * (economyV2.liftRun[liftType] || 0.8);
-      perDay = `Carries about ${daily.toLocaleString()} skiers a day and costs ${formatCurrency(run, isImperial)} a day to run.`;
-    } else {
-      perDay = `Draws about ${Math.round(30 + m / 40)} skiers a day and costs ${formatCurrency(m * economyV2.slopeRun, isImperial)} a day to keep up.`;
-    }
+  let perDay: string;
+  if (seg.type === 'lift') {
+    const cap = economy.capacity[liftType] || 2400;
+    const maxS = economy.maxSeats[liftType] || 4;
+    const daily = Math.round(Math.round(cap * Math.min(1, seats / maxS)) * economy.perDay);
+    const run = m * (economy.liftRun[liftType] || 0.8);
+    perDay = `Carries about ${daily.toLocaleString()} skiers a day and costs ${formatCurrency(run, isImperial)} a day to run.`;
+  } else {
+    perDay = `Draws about ${Math.round(30 + m / 40)} skiers a day and costs ${formatCurrency(m * economy.slopeRun, isImperial)} a day to keep up.`;
   }
 
   return (
     <div className="space-y-2">
-      {perDay && <p className="text-sm text-muted">{perDay}</p>}
+      <p className="text-sm text-muted">{perDay}</p>
       <p className={`text-sm tabular-nums ${canAfford ? 'text-muted' : 'text-danger'}`}>
         {canAfford
           ? `You'll have ${formatCurrency(cash - cost, isImperial)} left.`
