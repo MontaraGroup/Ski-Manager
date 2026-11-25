@@ -62,7 +62,10 @@ class Analytics
     private static function viewerId(): ?int
     {
         try {
-            return function_exists('auth') && auth()->loggedIn() ? (int) auth()->id() : null;
+            // Only a session the request already opened: starting one at shutdown, after the
+            // response was sent, raises "headers already sent"
+            if (session_status() !== PHP_SESSION_ACTIVE || !function_exists('auth')) return null;
+            return auth()->loggedIn() ? (int) auth()->id() : null;
         } catch (\Throwable) {
             return null;
         }
@@ -82,7 +85,11 @@ class Analytics
         $id = self::distinctId($userId);
         try {
             if (self::level($key) !== 3) {
-                return PostHog::isFeatureEnabled($key, $id, [], self::personProps($isAdmin), [], true, false);
+                // isFeatureEnabled() is deprecated in posthog-php 4.27 (it still works in 4.x). Its
+                // replacement, evaluateFlags()->isEnabled(), always sends a $feature_flag_called event,
+                // a billed event for every flag check on every page. The @ keeps the deprecation
+                // notice out of Sentry and the log.
+                return @PostHog::isFeatureEnabled($key, $id, [], self::personProps($isAdmin), [], true, false);
             }
             // Early access flags depend on the player's opt-in, which only PostHog's servers know
             // (local evaluation always says no), so ask PostHog's /flags for all of this
@@ -122,7 +129,8 @@ class Analytics
     {
         if (!self::ready()) return null;
         try {
-            return PostHog::getFeatureFlag($key, self::distinctId($userId), [], self::personProps($isAdmin));
+            // Deprecated in posthog-php 4.27 like isFeatureEnabled() above; this one records the exposure
+            return @PostHog::getFeatureFlag($key, self::distinctId($userId), [], self::personProps($isAdmin));
         } catch (\Throwable $e) {
             log_message('warning', "PostHog variant {$key} failed: " . $e->getMessage());
             return null;

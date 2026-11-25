@@ -108,7 +108,11 @@ class Tracing
                     self::$root->setAttribute('http.route', $route);
                     self::$root->updateName(strtoupper(service('request')->getMethod()) . ' /' . ltrim($route, '/'));
                 }
-                if (function_exists('auth') && auth()->loggedIn()) self::$root->setAttribute('user.id', (string) auth()->id());
+                // Runs after the response was sent: read the player only from a session the request
+                // already opened, since starting one now raises "headers already sent"
+                if (session_status() === PHP_SESSION_ACTIVE && function_exists('auth') && auth()->loggedIn()) {
+                    self::$root->setAttribute('user.id', (string) auth()->id());
+                }
                 if ($status >= 500) self::$root->setStatus(StatusCode::STATUS_ERROR);
                 self::$root->end();
             }
