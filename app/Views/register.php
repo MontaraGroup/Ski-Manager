@@ -50,6 +50,6 @@ $page = [
     'playerCount' => (int) $players,
 ];
 ?>
-<?php if (\App\Libraries\Cap::enabled()) : ?><script src="<?= esc(\App\Libraries\Cap::widgetUrl(), 'attr') ?>" async></script><?php endif ?>
+<?= \App\Libraries\Cap::scriptTag() ?>
 <?= island('RegisterPage', $page, '<p class="max-w-md mx-auto p-4 lg:p-8 text-sm">Loading registration…</p>') ?>
 <?= $this->endSection() ?>

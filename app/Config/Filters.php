@@ -130,7 +130,7 @@ class Filters extends BaseFilters
         // Hidden-field bot check on the forms that create accounts, sign in or send email
         'bottrap' => ['before' => ['register', 'login', 'login/magic-link']],
         // Cap CAPTCHA on the same forms (App\Filters\CapVerify), after the cheaper bot-field check
-        'cap'     => ['before' => ['register', 'login', 'login/magic-link']],
+        'cap'     => ['before' => ['register', 'login', 'login/magic-link', 'demo/claim']],
         'admin' => ['before' => ['admin*']],
         'seasongate' => ['before' => ['dashboard*', 'resort*', 'map*', 'staff*', 'finances*', 'bank*', 'tickets*', 'weather*', 'grooming*', 'snowmaking*', 'night-skiing*', 'hotels*', 'restaurants*', 'rentals*', 'buildings*', 'equipment*', 'insurance*', 'marketing*', 'achievements*', 'leaderboard*', 'resort-analysis*', 'vip-guests*', 'genepis*', 'daily-bonus*', 'settings*', 'account*', 'activity*', 'notifications*', 'terrain-parks*', 'parking*', 'energy*', 'water*', 'admin*', 'tour*', 'emergency*', 'environment*', 'government*', 'ski-lessons*', 'ski-patrol*', 'real-estate*', 'off-season*', 'scenic*', 'tournaments*', 'compliance*', 'vote*', 'support*', 'alliances*', 'tutorial*', 'beta*']],
         // Pages behind a testing flag (App\Filters\FeatureGate::ROUTE_FLAGS); none right now

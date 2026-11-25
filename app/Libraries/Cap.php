@@ -33,6 +33,20 @@ class Cap
     }
 
     /**
+     * The widget script tag, for the head of a page with a widget. The widget downloads its solver
+     * (WebAssembly) from cdn.jsdelivr.net unless told otherwise, and the site's CSP blocks that host,
+     * so the widget could never finish ("Error. Try again."). capd serves the same files under /assets.
+     */
+    public static function scriptTag(): string
+    {
+        if (!self::enabled() || self::widgetUrl() === '') return '';
+        $assets = substr(self::widgetUrl(), 0, -strlen('widget.js'));
+        return '<script>window.CAP_CUSTOM_WASM_URL=' . json_encode($assets . 'cap_wasm_bg.wasm', JSON_UNESCAPED_SLASHES)
+            . ';window.CAP_CUSTOM_HASHWX_URL=' . json_encode($assets . 'hashwx.wasm', JSON_UNESCAPED_SLASHES) . ';</script>'
+            . '<script src="' . esc(self::widgetUrl(), 'attr') . '" async></script>';
+    }
+
+    /**
      * Checks a widget token with capd, exactly once (tokens are single use). Fails closed: a missing
      * token, a timeout or an error all count as not verified.
      */
