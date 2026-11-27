@@ -178,8 +178,12 @@ float isSel=step(abs(aMeta.x-uSelectedSegIdx),0.25);
 float isHov=step(abs(aMeta.x-uHoveredSegIdx),0.25)*(1.0-isSel);
 float distScale=clamp(pow(max(1.0,length(uCameraPos-aPos))/165.0,0.40),0.74,1.80);
 float stateBoost=mix(1.0+isHov*0.22+isSel*0.42,1.0,step(5.5,aUvStyle.w));
-float halfW=aColorWidth.a*distScale*stateBoost;
-float yExtra=max(0.0,distScale-1.0)*0.045+isSel*0.025+isHov*0.012;
+float isUnbuilt=step(abs(aUvStyle.w-1.0),0.25)+step(abs(aUvStyle.w-4.0),0.25);
+float farT=smoothstep(140.0,420.0,length(uCameraPos-aPos));
+float farBoost=mix(1.0,1.7,isUnbuilt*farT);
+float halfW=aColorWidth.a*distScale*stateBoost*farBoost;
+// Unbuilt runs sit lower than built ones; far away the depth buffer can't tell them from the snow, so lift them
+float yExtra=max(0.0,distScale-1.0)*0.045+isSel*0.025+isHov*0.012+isUnbuilt*farT*0.35;
 vec3 worldPos=aPos+aSide*halfW+vec3(0.0,yExtra,0.0);
 vWorldPos=worldPos;
 vColor=aColorWidth.rgb;
@@ -244,16 +248,26 @@ caseR=0.80;
 outerCol=shadowCol;
 outerMax=0.45;
 }else if(st==1&&vSelected<0.5){
-edge=computePillEdge(vAlong,vHalfW,vCap,3.6,0.32,capXAa,alongAa,aa);
-coreR=0.62;
-caseR=0.86;
+float pillAa;
+float pillEdge=computePillEdge(vAlong,vHalfW,vCap,3.6,0.32,capXAa,alongAa,pillAa);
+// Far away the dots get smaller than a pixel and vanish: blend them into a plain thin line
+float farDots=smoothstep(0.35,0.8,alongAa);
+edge=mix(pillEdge,radialEdge,farDots);
+aa=mix(pillAa,radialAa,farDots);
+// As a far line, most of the width is the run's colour so difficulty still reads
+coreR=mix(0.62,0.82,farDots);
+caseR=mix(0.86,0.94,farDots);
 outerCol=shadowCol;
 outerMax=0.35;
-opacity=mix(0.74,1.0,vHovered);
+opacity=mix(mix(0.74,0.92,farDots),1.0,vHovered);
 }else if((st==3||st==4)&&vSelected<0.5){
 float period=st==3?4.6:4.0;
 float flatHalf=st==3?1.25:0.95;
-edge=computePillEdge(vAlong,vHalfW,vCap,period,flatHalf,capXAa,alongAa,aa);
+float pillAa;
+float pillEdge=computePillEdge(vAlong,vHalfW,vCap,period,flatHalf,capXAa,alongAa,pillAa);
+float farDash=smoothstep(0.45,1.0,alongAa);
+edge=mix(pillEdge,radialEdge,farDash);
+aa=mix(pillAa,radialAa,farDash);
 coreR=0.60;
 caseR=0.84;
 outerCol=shadowCol;
