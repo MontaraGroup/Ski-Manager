@@ -69,12 +69,66 @@ final class WinterSportsTest extends CIUnitTestCase
             'level' => 1,
             'status' => 'open',
             'condition_pct' => 100,
+            'ice_quality' => 100,
             'ticket_price' => 22,
         ], 600, true);
 
         $this->assertGreaterThan(0, $res['guests']);
-        $this->assertSame($res['guests'] * 22, $res['revenue']);
+        $this->assertSame($res['guests'] * 22, $res['ticketRevenue']);
+        $this->assertSame(0, $res['rentalRevenue']);
         $this->assertSame(850, $res['upkeep']);
         $this->assertSame(65, $res['visitorBoost']);
+    }
+
+    public function testAddonsAndExtendedModeIncreaseRevenueAndCapacity(): void
+    {
+        $base = WinterSports::settleDay([
+            'facility_type' => 'ice_rink',
+            'level' => 1,
+            'status' => 'open',
+            'condition_pct' => 100,
+            'ice_quality' => 100,
+            'ticket_price' => 18,
+        ], 1000, true);
+
+        $upgraded = WinterSports::settleDay([
+            'facility_type' => 'ice_rink',
+            'level' => 1,
+            'status' => 'open',
+            'condition_pct' => 100,
+            'ice_quality' => 100,
+            'upgrades' => 'floodlights,rental_booth,concessions',
+            'session_mode' => 'extended',
+            'ticket_price' => 18,
+        ], 1000, true);
+
+        $this->assertGreaterThan($base['guests'], $upgraded['guests']);
+        $this->assertGreaterThan(0, $upgraded['rentalRevenue']);
+        $this->assertGreaterThan(0, $upgraded['concessionRevenue']);
+        $this->assertGreaterThan($base['revenue'], $upgraded['revenue']);
+    }
+
+    public function testHighWindReducesSkiJumpAttendance(): void
+    {
+        $calm = WinterSports::settleDay([
+            'facility_type' => 'ski_jump',
+            'level' => 1,
+            'status' => 'open',
+            'condition_pct' => 100,
+            'ice_quality' => 100,
+            'ticket_price' => 32,
+        ], 800, true, -4, 15);
+
+        $windy = WinterSports::settleDay([
+            'facility_type' => 'ski_jump',
+            'level' => 1,
+            'status' => 'open',
+            'condition_pct' => 100,
+            'ice_quality' => 100,
+            'ticket_price' => 32,
+        ], 800, true, -4, 55);
+
+        $this->assertLessThan($calm['guests'], $windy['guests']);
+        $this->assertNotNull($windy['weatherNote']);
     }
 }
