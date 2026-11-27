@@ -166,7 +166,7 @@ export function BrowseView({
               variant={tab === t ? 'primary' : 'ghost'}
               aria-pressed={tab === t}
               onPress={() => onTab(t)}
-              className="flex min-h-11 items-center justify-center gap-2 md:min-h-9"
+              className="flex min-h-11 w-full items-center justify-center gap-2 md:min-h-9"
             >
               <Icon name={t === 'lift' ? 'fa-elevator' : 'fa-person-skiing'} />
               {t === 'lift' ? 'Lifts' : 'Slopes'}

@@ -7,11 +7,15 @@ import type { MapLens, MapViewMode } from './types';
 
 const RUNS: Difficulty[] = ['green', 'blue', 'black', 'double_black'];
 
-/** A short stroke in the colour and dash the map draws, so a line on the map can be matched to its row */
-function Stroke({ color, dash, width = 4 }: { color: string; dash?: string; width?: number }) {
+/**
+ * A short stroke in the colour and dash the map draws, so a line on the map can be matched to its row.
+ * `onSnow` lays it on a light strip like the snowy map, or the dark Advanced line vanishes on a dark panel.
+ */
+function Stroke({ color, dash, width = 4, onSnow = false }: { color: string; dash?: string; width?: number; onSnow?: boolean }) {
   return (
-    <svg width="22" height="6" viewBox="0 0 22 6" aria-hidden="true" className="shrink-0">
-      <line x1="2" y1="3" x2="20" y2="3" stroke={color} strokeWidth={width} strokeLinecap="round" strokeDasharray={dash} />
+    <svg width="26" height="10" viewBox="0 0 26 10" aria-hidden="true" className="shrink-0">
+      {onSnow && <rect x="0" y="0" width="26" height="10" rx="3" fill="#eef2f6" />}
+      <line x1="4" y1="5" x2="22" y2="5" stroke={color} strokeWidth={width} strokeLinecap="round" strokeDasharray={dash} />
     </svg>
   );
 }
@@ -77,7 +81,7 @@ export function MapKey({
                     <span className="flex w-7 justify-center">
                       <TrailSign difficulty={d} />
                     </span>
-                    <Stroke color={LINE_COLORS[d]} />
+                    <Stroke color={LINE_COLORS[d]} onSnow />
                   </dt>
                   <dd>{DIFFICULTY_LABEL[d]}</dd>
                 </div>
@@ -86,7 +90,7 @@ export function MapKey({
                 <span className="flex w-7 justify-center text-warning">
                   <Icon name="fa-elevator" />
                 </span>
-                <Stroke color={LINE_COLORS.lift} dash="6 3" />
+                <Stroke color={LINE_COLORS.lift} dash="6 3" onSnow />
               </dt>
               <dd>Lift</dd>
             </>

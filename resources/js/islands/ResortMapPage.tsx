@@ -128,6 +128,8 @@ export default function ResortMapPage(props: ResortMapProps) {
   const [seats, setSeats] = useState<number>(props.costs.seatOptions.chair_fixed?.[0] ?? 2);
   const [slopeType, setSlopeType] = useState<string>('downhill');
   const [isConstructing, setIsConstructing] = useState<boolean>(false);
+  const liftChoiceRef = useRef({ liftType, seats });
+  liftChoiceRef.current = { liftType, seats };
 
   // Build list search / sort
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -374,6 +376,7 @@ export default function ResortMapPage(props: ResortMapProps) {
             setSelectedSeg(seg);
             if (seg) {
               setNotice(null);
+              fitLiftChoice(seg);
               if (seg.type !== 'lift') {
                 setSlopeType(seg.type && seg.type !== 'slope' ? seg.type : 'downhill');
               }
@@ -646,7 +649,31 @@ export default function ResortMapPage(props: ResortMapProps) {
     setPlacingFacility(null);
   }
 
+  /**
+   * The run list prices a lift at its cheapest system ("from ..."). If the system picked last time costs
+   * more than the player has, open on the cheapest one they can afford, so the panel doesn't start on
+   * "Not enough cash" for a lift the list showed as buildable.
+   */
+  function fitLiftChoice(seg: MapSegment) {
+    if (seg.type !== 'lift') return;
+    const cash = stateRef.current.userCash;
+    const { liftType: t, seats: n } = liftChoiceRef.current;
+    if (buildCost(seg, props.costs, t, n) <= cash) return;
+    let best: { t: string; n: number; cost: number } | null = null;
+    for (const [type, seatList] of Object.entries(props.costs.seatOptions)) {
+      for (const sn of seatList) {
+        const cost = buildCost(seg, props.costs, type, sn);
+        if (cost <= cash && (!best || cost < best.cost)) best = { t: type, n: sn, cost };
+      }
+    }
+    if (best) {
+      setLiftType(best.t);
+      setSeats(best.n);
+    }
+  }
+
   function handleSelectSeg(seg: MapSegment) {
+    fitLiftChoice(seg);
     setSelectedFacilityKey(null);
     setPlacingFacility(null);
     setSelectedSeg(seg);
@@ -1030,9 +1057,6 @@ export default function ResortMapPage(props: ResortMapProps) {
                   cost={calculatedCost}
                   cash={userCash}
                   isImperial={props.isImperial}
-                  economy={props.economy}
-                  liftType={liftType}
-                  seats={seats}
                   isBuilding={isConstructing}
                   onBuild={handleConstruct}
                 />
