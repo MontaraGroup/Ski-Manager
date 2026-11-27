@@ -10,19 +10,7 @@ import type {
   Sector,
 } from './types';
 
-// Palette mapping
-const COLORS: Record<string, string> = {
-  lift: '#f59e0b',
-  green: '#22c55e',
-  blue: '#3b82f6',
-  black: '#1e293b',
-  double_black: '#dc2626',
-  snowpark: '#a855f7',
-  terrain_park: '#a855f7',
-  crosscountry: '#14b8a6',
-  luge: '#ec4899',
-  default: '#94a3b8',
-};
+import { DIFFICULTY_LABEL, LINE_COLORS as COLORS } from './shared';
 
 export interface MapEngineCallbacks {
   onSelectSegment: (seg: MapSegment | null) => void;
@@ -786,23 +774,24 @@ export function createMapEngine(props: ResortMapProps, callbacks: MapEngineCallb
       }).addTo(map);
 
       const secName = getSectorName(seg.sector);
-      const diffLabel = seg.difficulty ? ' • ' + seg.difficulty.replace('_', ' ').toUpperCase() : '';
+      const kindLabel = seg.type === 'lift' ? 'Lift' : DIFFICULTY_LABEL[seg.difficulty || ''] || '';
       const tooltipHtml =
-        '<div style="text-align:center;padding:2px 6px">' +
+        '<div class="map-run-tip">' +
         '<b>' +
-        escHtml(seg.name || seg.type) +
+        escHtml(seg.name || (seg.type === 'lift' ? 'Lift' : 'Slope')) +
         '</b>' +
-        '<br><span style="font-family:monospace">' +
-        Math.round(seg.length_meters || 0) +
+        '<span class="map-run-tip-meta">' +
+        (kindLabel ? escHtml(kindLabel) + ' · ' : '') +
+        '<span class="tabular-nums">' +
+        Math.round(seg.length_meters || 0).toLocaleString('en-US') +
         ' ' +
-        distUnit +
-        '</span>' +
-        diffLabel +
+        escHtml(distUnit) +
+        '</span></span>' +
         (isAdmin
-          ? '<br><span style="opacity:.75;font-size:10px">' + escHtml(secName) + ' • Click to edit</span>'
+          ? '<span class="map-run-tip-meta">' + escHtml(secName) + ' · click to edit</span>'
           : !built
-            ? '<br><span style="font-size:11px;font-weight:600">Not built · click for the price</span>'
-            : '<br><span style="font-size:11px;font-weight:600">Yours · click for details</span>') +
+            ? '<span class="map-run-tip-action">Not built · click for the price</span>'
+            : '<span class="map-run-tip-action">Yours · click for details</span>') +
         '</div>';
 
       hitLine.bindTooltip(tooltipHtml, { sticky: true });

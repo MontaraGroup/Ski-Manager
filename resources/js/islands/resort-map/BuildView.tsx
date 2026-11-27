@@ -3,6 +3,23 @@ import { Icon } from '@/components/Icon';
 import type { BuildCosts, EconomyConfig, MapSegment } from './types';
 import { LIFT_TYPES, SLOPE_TYPES, TrailSign, buildCost, formatCurrency, runKind } from './shared';
 
+/** What the run does each day once built, from the Economy rates in the page props */
+function perDayText(seg: MapSegment, economy: EconomyConfig, liftType: string, seats: number, isImperial: boolean): string {
+  const m = Number(seg.length_meters) || 0;
+  let perDay: string;
+  if (seg.type === 'lift') {
+    const cap = economy.capacity[liftType] || 2400;
+    const maxS = economy.maxSeats[liftType] || 4;
+    const daily = Math.round(Math.round(cap * Math.min(1, seats / maxS)) * economy.perDay);
+    const run = m * (economy.liftRun[liftType] || 0.8);
+    perDay = `Carries about ${daily.toLocaleString()} skiers a day and costs ${formatCurrency(run, isImperial)} a day to run.`;
+  } else {
+    perDay = `Draws about ${Math.round(30 + m / 40)} skiers a day and costs ${formatCurrency(m * economy.slopeRun, isImperial)} a day to keep up.`;
+  }
+
+  return perDay;
+}
+
 /** Choices for an unbuilt run: lift system and carrier size, or the slope's discipline */
 export function BuildView({
   seg,
@@ -17,9 +34,11 @@ export function BuildView({
   slopeType,
   onSlopeType,
   onZoom,
+  economy,
 }: {
   seg: MapSegment;
   costs: BuildCosts;
+  economy: EconomyConfig;
   isImperial: boolean;
   distUnit: string;
   sectorLabel: string;
@@ -32,7 +51,6 @@ export function BuildView({
   onZoom: () => void;
 }) {
   const len = Number(seg.length_meters) || 0;
-  const days = len < 200 ? 1 : len < 500 ? 2 : 3;
 
   return (
     <div className="space-y-4">
@@ -49,17 +67,11 @@ export function BuildView({
         </Button>
       </div>
 
-      <dl className="grid grid-cols-3 gap-2 rounded-lg bg-surface-secondary p-3 text-sm">
+      <dl className="grid grid-cols-2 gap-2 rounded-lg bg-surface-secondary p-3 text-sm">
         <div>
           <dt className="text-muted">Length</dt>
           <dd className="tabular-nums font-semibold text-foreground">
             {Math.round(len).toLocaleString()} {distUnit}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted">Build time</dt>
-          <dd className="font-semibold text-foreground">
-            {days} {days === 1 ? 'day' : 'days'}
           </dd>
         </div>
         <div className="min-w-0">
@@ -67,6 +79,8 @@ export function BuildView({
           <dd className="truncate font-semibold text-foreground">{sectorLabel}</dd>
         </div>
       </dl>
+
+      <p className="text-sm text-muted">{perDayText(seg, economy, liftType, seats, isImperial)}</p>
 
       {seg.type === 'lift' ? (
         <>
@@ -93,7 +107,12 @@ export function BuildView({
                         from {formatCurrency(buildCost(seg, costs, l.id, firstSeats), isImperial)}
                       </span>
                     </span>
-                    <span className="shrink-0 tabular-nums text-muted">{l.cap}</span>
+                    {economy.capacity[l.id] ? (
+                      <span className="shrink-0 text-right text-muted">
+                        <span className="block text-xs">up to</span>
+                        <span className="tabular-nums">{economy.capacity[l.id].toLocaleString('en-US')}/hr</span>
+                      </span>
+                    ) : null}
                   </Button>
                 );
               })}
@@ -144,15 +163,12 @@ export function BuildView({
   );
 }
 
-/** Price, what's left after, what it will do each day, and the Build button. Sits in the panel footer. */
+/** Price, cash left after it, and the Build button. Sits in the panel footer, so it stays in view. */
 export function BuildFooter({
   seg,
   cost,
   cash,
   isImperial,
-  economy,
-  liftType,
-  seats,
   isBuilding,
   onBuild,
 }: {
@@ -160,34 +176,25 @@ export function BuildFooter({
   cost: number;
   cash: number;
   isImperial: boolean;
-  economy: EconomyConfig;
-  liftType: string;
-  seats: number;
   isBuilding: boolean;
   onBuild: () => void;
 }) {
   const canAfford = cash >= cost;
-  const m = Number(seg.length_meters) || 0;
-
-  let perDay: string;
-  if (seg.type === 'lift') {
-    const cap = economy.capacity[liftType] || 2400;
-    const maxS = economy.maxSeats[liftType] || 4;
-    const daily = Math.round(Math.round(cap * Math.min(1, seats / maxS)) * economy.perDay);
-    const run = m * (economy.liftRun[liftType] || 0.8);
-    perDay = `Carries about ${daily.toLocaleString()} skiers a day and costs ${formatCurrency(run, isImperial)} a day to run.`;
-  } else {
-    perDay = `Draws about ${Math.round(30 + m / 40)} skiers a day and costs ${formatCurrency(m * economy.slopeRun, isImperial)} a day to keep up.`;
-  }
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted">{perDay}</p>
-      <p className={`text-sm tabular-nums ${canAfford ? 'text-muted' : 'text-danger'}`}>
-        {canAfford
-          ? `You'll have ${formatCurrency(cash - cost, isImperial)} left.`
-          : `You need ${formatCurrency(cost - cash, isImperial)} more.`}
-      </p>
+    <div className="space-y-2.5">
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-muted">Price</dt>
+          <dd className="text-lg font-semibold tabular-nums text-foreground md:text-xl">{formatCurrency(cost, isImperial)}</dd>
+        </div>
+        <div className="text-right">
+          <dt className="text-muted">{canAfford ? 'Cash after' : 'You need'}</dt>
+          <dd className={`text-lg font-semibold tabular-nums md:text-xl ${canAfford ? 'text-foreground' : 'text-danger'}`}>
+            {canAfford ? formatCurrency(cash - cost, isImperial) : `${formatCurrency(cost - cash, isImperial)} more`}
+          </dd>
+        </div>
+      </dl>
       <Button
         variant="primary"
         isDisabled={!canAfford || isBuilding}
@@ -198,10 +205,14 @@ export function BuildFooter({
           <>
             <Spinner size="sm" /> Building…
           </>
-        ) : (
+        ) : canAfford ? (
           <>
-            <Icon name="fa-hammer" /> Build for {formatCurrency(cost, isImperial)}
+            <Icon name="fa-hammer" />
+            <span className="min-w-0 truncate">Build {seg.name || (seg.type === 'lift' ? 'lift' : 'slope')}</span>
+            <span className="shrink-0 tabular-nums">for {formatCurrency(cost, isImperial)}</span>
           </>
+        ) : (
+          <>Not enough cash</>
         )}
       </Button>
     </div>

@@ -90,6 +90,20 @@ export function MapHeader({
   onOpenMapStudio?: () => void;
 }) {
   const phaseLabel = liveSkiers ? PHASE_LABELS[liveSkiers.operatingPhase] || 'Open' : 'Closed';
+  const viewProps = {
+    isAdmin,
+    map3dEnabled,
+    filter,
+    onFilter,
+    lens,
+    onLens,
+    showBuildings,
+    onShowBuildings,
+    showSkiers,
+    onShowSkiers,
+    showAvailable,
+    onShowAvailable,
+  };
 
   return (
     <header className="border-b border-border bg-surface px-4 py-2">
@@ -190,9 +204,7 @@ export function MapHeader({
                     </div>
                     <div>
                       <dt className="text-xs text-muted">Lift load</dt>
-                      <dd className="tabular-nums font-semibold text-foreground">
-                        {liveSkiers.liftUtilizationPct}%
-                      </dd>
+                      <dd className="tabular-nums font-semibold text-foreground">{liveSkiers.liftUtilizationPct}%</dd>
                     </div>
                     {weather && (
                       <div>
@@ -241,12 +253,7 @@ export function MapHeader({
           )}
 
           {isAdmin && map3dEnabled && viewMode === '3d' && onOpenMapStudio && (
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={onOpenMapStudio}
-              className="min-h-11 gap-1.5 md:min-h-9"
-            >
+            <Button size="sm" variant="outline" onPress={onOpenMapStudio} className="min-h-11 gap-1.5 md:min-h-9">
               <Icon name="fa-pen-ruler" />
               <span className="hidden sm:inline">Map Studio (2D)</span>
             </Button>
@@ -254,32 +261,108 @@ export function MapHeader({
 
           {adminActions}
 
-          <Button variant="primary" onPress={onBuild} className="min-h-11 gap-1.5 font-semibold md:min-h-9">
+          <Button
+            size="sm"
+            variant="outline"
+            isIconOnly
+            onPress={onFit}
+            className="size-11 shrink-0 text-foreground md:size-9"
+            aria-label="Show the whole mountain (F)"
+          >
+            <Icon name="fa-expand" />
+          </Button>
+
+          <Popover>
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-h-11 gap-1.5 font-semibold text-foreground md:hidden"
+              aria-label="Map view options"
+            >
+              <Icon name="fa-layer-group" />
+              View
+            </Button>
+            <Popover.Content placement="bottom end" className="w-[min(22rem,calc(100vw-1rem))]">
+              <Popover.Dialog aria-label="Map view options" className="flex flex-col gap-3 p-3 text-sm">
+                <Popover.Heading className="text-sm font-semibold text-foreground">What the map shows</Popover.Heading>
+                <ViewControls {...viewProps} stacked />
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+
+          {/* Phones build from the round button on the map, within thumb reach */}
+          <Button variant="primary" onPress={onBuild} className="hidden min-h-9 gap-1.5 font-semibold md:inline-flex">
             <Icon name="fa-hammer" />
             Build
           </Button>
         </div>
       </div>
 
-      {/* Filters, data lenses, and layers wrap cleanly on phones */}
-      <div className="mt-2 flex flex-wrap items-center gap-2 pb-0.5">
-        <div role="group" aria-label="Show on the map" className="flex flex-wrap shrink-0 rounded-lg border border-border bg-surface-secondary p-0.5">
-          {FILTERS.filter((f) => (!f.adminOnly || isAdmin) && (!f.requires3d || map3dEnabled)).map((f) => (
-            <Button
-              key={f.id}
-              size="sm"
-              variant={filter === f.id ? 'primary' : 'ghost'}
-              aria-pressed={filter === f.id}
-              onPress={() => onFilter(f.id)}
-              className="min-h-10 md:min-h-8"
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
+      {/* Desktop: the view controls sit in their own row. Phones get them from the View button above. */}
+      <div className="mt-2 hidden flex-wrap items-center gap-2 pb-0.5 md:flex">
+        <ViewControls {...viewProps} />
+      </div>
+    </header>
+  );
+}
 
-        {map3dEnabled && onLens && (
-          <div role="group" aria-label="Data lens" className="flex flex-wrap shrink-0 rounded-lg border border-border bg-surface-secondary p-0.5">
+/** Filters, data lenses, layers and the buildable-runs switch: a row on desktop, a stacked list in the phone popover */
+function ViewControls({
+  isAdmin,
+  map3dEnabled,
+  filter,
+  onFilter,
+  lens,
+  onLens,
+  showBuildings,
+  onShowBuildings,
+  showSkiers,
+  onShowSkiers,
+  showAvailable,
+  onShowAvailable,
+  stacked = false,
+}: {
+  isAdmin: boolean;
+  map3dEnabled: boolean;
+  filter: string;
+  onFilter: (f: string) => void;
+  lens: MapLens;
+  onLens?: (l: MapLens) => void;
+  showBuildings: boolean;
+  onShowBuildings?: (v: boolean) => void;
+  showSkiers: boolean;
+  onShowSkiers?: (v: boolean) => void;
+  showAvailable: boolean;
+  onShowAvailable: (v: boolean) => void;
+  stacked?: boolean;
+}) {
+  const group = stacked
+    ? 'flex flex-wrap rounded-lg border border-border bg-surface-secondary p-0.5'
+    : 'flex shrink-0 flex-wrap rounded-lg border border-border bg-surface-secondary p-0.5';
+  const btn = stacked ? 'min-h-11 flex-1 px-2' : 'min-h-10 md:min-h-8';
+  const label = (text: string) => (stacked ? <p className="-mb-1.5 text-xs font-medium text-muted">{text}</p> : null);
+  return (
+    <>
+      {label('Runs')}
+      <div role="group" aria-label="Show on the map" className={group}>
+        {FILTERS.filter((f) => (!f.adminOnly || isAdmin) && (!f.requires3d || map3dEnabled)).map((f) => (
+          <Button
+            key={f.id}
+            size="sm"
+            variant={filter === f.id ? 'primary' : 'ghost'}
+            aria-pressed={filter === f.id}
+            onPress={() => onFilter(f.id)}
+            className={btn}
+          >
+            {f.label}
+          </Button>
+        ))}
+      </div>
+
+      {map3dEnabled && onLens && (
+        <>
+          {label('Colour runs by')}
+          <div role="group" aria-label="Data lens" className={group}>
             {LENSES.map((l) => (
               <Button
                 key={l.id}
@@ -287,61 +370,53 @@ export function MapHeader({
                 variant={lens === l.id ? 'primary' : 'ghost'}
                 aria-pressed={lens === l.id}
                 onPress={() => onLens(l.id)}
-                className="min-h-10 md:min-h-8"
+                className={btn}
               >
                 {l.label}
               </Button>
             ))}
           </div>
-        )}
+        </>
+      )}
 
-        {map3dEnabled && onShowBuildings && onShowSkiers && (
-          <div role="group" aria-label="Map layers" className="flex shrink-0 rounded-lg border border-border bg-surface-secondary p-0.5">
+      {map3dEnabled && onShowBuildings && onShowSkiers && (
+        <>
+          {label('Layers')}
+          <div role="group" aria-label="Map layers" className={group}>
             <Button
               size="sm"
               variant={showBuildings ? 'secondary' : 'ghost'}
               aria-pressed={showBuildings}
               onPress={() => onShowBuildings(!showBuildings)}
-              className="min-h-10 gap-1.5 md:min-h-8"
+              className={`${btn} gap-1.5`}
             >
               <Icon name="fa-building" />
-              <span className="hidden sm:inline">Buildings</span>
+              <span className={stacked ? '' : 'hidden sm:inline'}>Buildings</span>
             </Button>
             <Button
               size="sm"
               variant={showSkiers ? 'secondary' : 'ghost'}
               aria-pressed={showSkiers}
               onPress={() => onShowSkiers(!showSkiers)}
-              className="min-h-10 gap-1.5 md:min-h-8"
+              className={`${btn} gap-1.5`}
             >
               <Icon name="fa-person-skiing" />
-              <span className="hidden sm:inline">Skiers</span>
+              <span className={stacked ? '' : 'hidden sm:inline'}>Skiers</span>
             </Button>
           </div>
-        )}
+        </>
+      )}
 
-        {!isAdmin && (
-          <Switch
-            isSelected={showAvailable}
-            onChange={onShowAvailable}
-            size="sm"
-            className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-2 text-sm text-foreground md:min-h-8"
-          >
-            Show runs you can build
-          </Switch>
-        )}
-
-        <Button
+      {!isAdmin && (
+        <Switch
+          isSelected={showAvailable}
+          onChange={onShowAvailable}
           size="sm"
-          variant="outline"
-          isIconOnly
-          onPress={onFit}
-          className="ml-auto size-10 shrink-0 text-foreground md:size-8"
-          aria-label="Show the whole mountain (F)"
+          className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-2 text-sm text-foreground md:min-h-8"
         >
-          <Icon name="fa-expand" />
-        </Button>
-      </div>
-    </header>
+          Show runs you can build
+        </Switch>
+      )}
+    </>
   );
 }

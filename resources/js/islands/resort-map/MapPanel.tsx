@@ -29,7 +29,8 @@ export function MapPanel({
   return (
     <aside
       aria-labelledby={labelId}
-      className="absolute inset-x-0 bottom-0 z-[950] flex max-h-[50%] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-border bg-surface text-foreground shadow-2xl md:inset-x-auto md:top-3 md:right-3 md:bottom-3 md:max-h-none md:w-96 md:rounded-xl md:border-b"
+      // A sheet with a Build footer gets more room on phones, or the choices above the footer vanish
+      className={`absolute inset-x-0 bottom-0 z-[950] flex ${footer ? 'max-h-[62%]' : 'max-h-[50%]'} flex-col overflow-hidden rounded-t-2xl border border-b-0 border-border bg-surface text-foreground shadow-2xl md:inset-x-auto md:top-3 md:right-3 md:bottom-3 md:max-h-none md:w-96 md:rounded-xl md:border-b`}
     >
       {/* Grab handle: a visual cue on phones that this is a sheet */}
       <div className="flex justify-center pt-2 md:hidden" aria-hidden="true">

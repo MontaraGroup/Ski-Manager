@@ -1,7 +1,24 @@
 import { useState } from 'react';
 import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { TrailSign, type Difficulty } from '@/components/TrailSign';
+import { DIFFICULTY_LABEL, LINE_COLORS } from './shared';
 import type { MapLens, MapViewMode } from './types';
+
+const RUNS: Difficulty[] = ['green', 'blue', 'black', 'double_black'];
+
+/**
+ * A short stroke in the colour and dash the map draws, so a line on the map can be matched to its row.
+ * `onSnow` lays it on a light strip like the snowy map, or the dark Advanced line vanishes on a dark panel.
+ */
+function Stroke({ color, dash, width = 4, onSnow = false }: { color: string; dash?: string; width?: number; onSnow?: boolean }) {
+  return (
+    <svg width="26" height="10" viewBox="0 0 26 10" aria-hidden="true" className="shrink-0">
+      {onSnow && <rect x="0" y="0" width="26" height="10" rx="3" fill="#eef2f6" />}
+      <line x1="4" y1="5" x2="22" y2="5" stroke={color} strokeWidth={width} strokeLinecap="round" strokeDasharray={dash} />
+    </svg>
+  );
+}
 
 function readOpen(): boolean {
   try {
@@ -55,81 +72,87 @@ export function MapKey({
         <Icon name={open ? 'fa-chevron-up' : 'fa-chevron-down'} className="text-muted" />
       </Button>
       {open && (
-        <dl id="map-key" className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1.5 rounded-lg border border-border bg-surface p-3 shadow-sm">
+        <dl id="map-key" className="mt-2 grid max-h-[min(60vh,24rem)] grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1.5 overflow-y-auto rounded-xl border border-border bg-surface p-3 shadow-md">
           {(!map3dEnabled || lens === 'trails') && (
             <>
-              <dt className="flex w-6 justify-center"><span className="tsign green" /></dt>
-              <dd>Easiest</dd>
-              <dt className="flex w-6 justify-center"><span className="tsign blue" /></dt>
-              <dd>More difficult</dd>
-              <dt className="flex w-6 justify-center"><span className="tsign black" /></dt>
-              <dd>Most difficult</dd>
-              <dt className="flex w-6 justify-center">
-                <span className="tsign-pair"><span className="tsign black" /><span className="tsign black" /></span>
+              {RUNS.map((d) => (
+                <div key={d} className="contents">
+                  <dt className="flex items-center gap-1.5">
+                    <span className="flex w-7 justify-center">
+                      <TrailSign difficulty={d} />
+                    </span>
+                    <Stroke color={LINE_COLORS[d]} onSnow />
+                  </dt>
+                  <dd>{DIFFICULTY_LABEL[d]}</dd>
+                </div>
+              ))}
+              <dt className="flex items-center gap-1.5">
+                <span className="flex w-7 justify-center text-warning">
+                  <Icon name="fa-elevator" />
+                </span>
+                <Stroke color={LINE_COLORS.lift} dash="6 3" onSnow />
               </dt>
-              <dd>Experts only</dd>
-              <dt className="flex w-6 justify-center text-warning"><Icon name="fa-elevator" /></dt>
               <dd>Lift</dd>
             </>
           )}
 
           {map3dEnabled && lens === 'traffic' && (
             <>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-success" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-success" /></dt>
               <dd>Quiet flow (&lt;50%)</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-warning" /></dt>
-              <dd>Moderate (50-80%)</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-danger" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-warning" /></dt>
+              <dd>Moderate (50 to 80%)</dd>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-danger" /></dt>
               <dd>Busy (&gt;80%)</dd>
             </>
           )}
 
           {map3dEnabled && lens === 'snow' && (
             <>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-sky-500" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-sky-500" /></dt>
               <dd>Powder / Packed</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-emerald-500" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-emerald-500" /></dt>
               <dd>Groomed</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-amber-400" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-amber-400" /></dt>
               <dd>Icy</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-danger" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-danger" /></dt>
               <dd>Bare</dd>
             </>
           )}
 
           {map3dEnabled && lens === 'steepness' && (
             <>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-emerald-500" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-emerald-500" /></dt>
               <dd>Gentle grade</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-amber-500" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-amber-500" /></dt>
               <dd>Mid pitch</dd>
-              <dt className="flex w-6 justify-center"><span className="inline-block size-3 rounded-full bg-rose-600" /></dt>
+              <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-rose-600" /></dt>
               <dd>Steep fall line</dd>
             </>
           )}
 
-          <dt className="flex w-6 justify-center" aria-hidden="true">
-            <svg width="22" height="6" viewBox="0 0 22 6"><line x1="1" y1="3" x2="21" y2="3" stroke="currentColor" strokeWidth="4" strokeLinecap="round" /></svg>
+          <dt className="flex items-center justify-end">
+            <Stroke color="currentColor" />
           </dt>
-          <dd>{isAdmin ? 'Built by you' : 'Yours'}</dd>
+          <dd>{isAdmin ? 'Built by you' : 'Yours (solid line)'}</dd>
           {!isAdmin && (
             <>
-              <dt className="flex w-6 justify-center" aria-hidden="true">
-                <svg width="22" height="6" viewBox="0 0 22 6"><line x1="1" y1="3" x2="21" y2="3" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 5" /></svg>
+              <dt className="flex items-center justify-end">
+                <Stroke color="currentColor" dash="1 5" width={3} />
               </dt>
-              <dd>You can build it</dd>
+              <dd>You can build it (dotted)</dd>
             </>
           )}
 
           {map3dEnabled && showBuildings && (
             <>
-              <dt className="flex w-6 justify-center text-link"><Icon name="fa-building" /></dt>
-              <dd>Village facility / park</dd>
+              <dt className="flex justify-end pr-2 text-link"><Icon name="fa-building" /></dt>
+              <dd>Building, parking or park</dd>
             </>
           )}
           {map3dEnabled && showSkiers && (
             <>
-              <dt className="flex w-6 justify-center text-warning"><Icon name="fa-person-skiing" /></dt>
+              <dt className="flex justify-end pr-2 text-warning"><Icon name="fa-person-skiing" /></dt>
               <dd>Live skier</dd>
             </>
           )}
