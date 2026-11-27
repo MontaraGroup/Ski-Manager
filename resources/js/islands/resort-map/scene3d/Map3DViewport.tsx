@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Spinner } from '@heroui/react';
 import { Icon } from '@/components/Icon';
+import { Select } from '@/components/Select';
 import { TrailSign, formatCurrency, sameId } from '../shared';
 import type {
   BuiltItem,
@@ -13,6 +14,13 @@ import type {
   PlacedFacility,
 } from '../types';
 import { createMap3DRenderer, type PickResult } from './renderer';
+
+const LIGHTING_OPTIONS: { id: MapLighting; label: string }[] = [
+  { id: 'live', label: 'Resort clock' },
+  { id: 'day', label: 'Daylight' },
+  { id: 'sunset', label: 'Sunset' },
+  { id: 'night', label: 'Night' },
+];
 
 export interface Map3DViewportHandle {
   fit: () => void;
@@ -200,16 +208,25 @@ export default function Map3DViewport({
     placingFacility,
   ]);
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase() || '';
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (e.key === 'f' || e.key === 'F') rendererRef.current?.fit();
-      if (e.key === 'Escape' && placingFacility) onCancelPlacing();
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [placingFacility, onCancelPlacing]);
+  /** Arrow keys move, Shift+arrows turn and tilt, + and - zoom. F (fit) and Escape live on the page. */
+  function onCanvasKey(e: React.KeyboardEvent<HTMLCanvasElement>) {
+    const r = rendererRef.current;
+    if (!r) return;
+    const step = 60;
+    let handled = true;
+    if (e.shiftKey && e.key === 'ArrowLeft') r.orbitBy(0.15, 0);
+    else if (e.shiftKey && e.key === 'ArrowRight') r.orbitBy(-0.15, 0);
+    else if (e.shiftKey && e.key === 'ArrowUp') r.orbitBy(0, 0.08);
+    else if (e.shiftKey && e.key === 'ArrowDown') r.orbitBy(0, -0.08);
+    else if (e.key === 'ArrowLeft') r.panBy(-step, 0);
+    else if (e.key === 'ArrowRight') r.panBy(step, 0);
+    else if (e.key === 'ArrowUp') r.panBy(0, -step);
+    else if (e.key === 'ArrowDown') r.panBy(0, step);
+    else if (e.key === '+' || e.key === '=') r.zoomBy(0.78);
+    else if (e.key === '-' || e.key === '_') r.zoomBy(1.28);
+    else handled = false;
+    if (handled) e.preventDefault();
+  }
 
   const hoverContent = (() => {
     if (!hoverInfo) return null;
@@ -252,7 +269,7 @@ export default function Map3DViewport({
                 {item.condition_pct != null && ` · ${item.condition_pct}%`}
               </>
             ) : (
-              ' · Click to build'
+              ' · not built, click for the price'
             )}
           </div>
           {built && traffic && traffic.skiers > 0 && (
@@ -272,8 +289,10 @@ export default function Map3DViewport({
       <canvas
         ref={canvasRef}
         role="application"
-        aria-label={`Interactive 3D trail map of ${mapConfig.name}. Drag to pan, right-drag or two-finger twist to orbit, scroll or pinch to zoom.`}
-        className={`block h-full w-full touch-none ${
+        tabIndex={0}
+        onKeyDown={onCanvasKey}
+        aria-label={`3D trail map of ${mapConfig.name}. Arrow keys move, Shift and arrows turn, plus and minus zoom. With a mouse: drag to move, right-drag to turn, scroll to zoom. On touch: drag, pinch and twist.`}
+        className={`block h-full w-full touch-none outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset ${
           placingFacility ? 'cursor-crosshair' : hoverInfo ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
         }`}
       />
@@ -309,44 +328,32 @@ export default function Map3DViewport({
         </div>
       )}
 
-      {/* Bottom-left 3D Camera & Atmosphere Controls */}
-      <div className="absolute bottom-4 left-3 z-[800] flex flex-wrap items-center gap-1.5">
+      {/* Camera and light controls. On phones they stop short of the round Build button on the right. */}
+      <div className="absolute bottom-4 left-3 z-[800] flex max-w-[calc(100%-6rem)] flex-wrap items-center gap-1.5 md:max-w-[calc(100%-1.5rem)]">
         <div className="flex rounded-lg border border-border bg-surface p-0.5 shadow-sm" role="group" aria-label="Camera angle">
-          <Button
-            size="sm"
-            variant={tilt === '3d' ? 'primary' : 'ghost'}
-            onPress={() => {
-              setTilt('3d');
-              rendererRef.current?.setTilt('3d');
-            }}
-            className="min-h-10 px-2.5 text-xs font-semibold md:min-h-8"
-          >
-            3D
-          </Button>
-          <Button
-            size="sm"
-            variant={tilt === 'top' ? 'primary' : 'ghost'}
-            onPress={() => {
-              setTilt('top');
-              rendererRef.current?.setTilt('top');
-            }}
-            className="min-h-10 px-2.5 text-xs font-semibold md:min-h-8"
-          >
-            Top
-          </Button>
+          {(
+            [
+              ['3d', 'Angled'],
+              ['top', 'Top down'],
+            ] as const
+          ).map(([id, label]) => (
+            <Button
+              key={id}
+              size="sm"
+              variant={tilt === id ? 'primary' : 'ghost'}
+              aria-pressed={tilt === id}
+              onPress={() => {
+                setTilt(id);
+                rendererRef.current?.setTilt(id);
+              }}
+              className="min-h-10 px-2.5 text-xs font-semibold md:min-h-8"
+            >
+              {label}
+            </Button>
+          ))}
         </div>
 
-        <div className="flex rounded-lg border border-border bg-surface p-0.5 shadow-sm">
-          <Button
-            size="sm"
-            variant="ghost"
-            isIconOnly
-            onPress={() => rendererRef.current?.zoomBy(0.78)}
-            aria-label="Zoom in"
-            className="size-10 md:size-8"
-          >
-            <Icon name="fa-plus" />
-          </Button>
+        <div className="flex rounded-lg border border-border bg-surface p-0.5 shadow-sm" role="group" aria-label="Zoom">
           <Button
             size="sm"
             variant="ghost"
@@ -357,35 +364,39 @@ export default function Map3DViewport({
           >
             <Icon name="fa-minus" />
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            isIconOnly
+            onPress={() => rendererRef.current?.zoomBy(0.78)}
+            aria-label="Zoom in"
+            className="size-10 md:size-8"
+          >
+            <Icon name="fa-plus" />
+          </Button>
         </div>
 
-        <div className="flex rounded-lg border border-border bg-surface p-0.5 shadow-sm" role="group" aria-label="Alpine lighting">
-          {(['day', 'sunset', 'night', 'live'] as MapLighting[]).map((mode) => (
-            <Button
-              key={mode}
-              size="sm"
-              variant={lighting === mode ? 'primary' : 'ghost'}
-              onPress={() => onLightingChange(mode)}
-              className="min-h-10 px-2 text-xs capitalize md:min-h-8"
-            >
-              {mode}
-            </Button>
-          ))}
-        </div>
+        <Select
+          value={lighting}
+          onChange={(v) => onLightingChange(v as MapLighting)}
+          aria-label="Light on the mountain"
+          options={LIGHTING_OPTIONS}
+          className="w-36 shadow-sm"
+        />
 
         <Button
           size="sm"
           variant="outline"
-          isIconOnly
           onPress={() => setPaused((p) => !p)}
-          aria-label={paused ? 'Play live skiers animation' : 'Pause live skiers animation'}
-          className="size-10 bg-surface shadow-sm md:size-8"
+          aria-pressed={!paused}
+          className="min-h-10 gap-1.5 bg-surface px-2.5 text-xs font-semibold shadow-sm md:min-h-8"
         >
           <Icon name={paused ? 'fa-play' : 'fa-pause'} />
+          {paused ? 'Play skiers' : 'Pause skiers'}
         </Button>
 
-        <span className="pointer-events-none hidden h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-xs text-muted shadow-sm lg:inline-flex">
-          Drag pan · Right-drag orbit · Scroll zoom
+        <span className="pointer-events-none hidden h-8 items-center rounded-lg border border-border bg-surface px-2.5 text-xs text-muted shadow-sm xl:inline-flex">
+          Drag to move · right-drag to turn · scroll to zoom
         </span>
       </div>
     </div>

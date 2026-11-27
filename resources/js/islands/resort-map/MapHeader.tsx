@@ -4,12 +4,12 @@ import { Icon } from '@/components/Icon';
 import { Switch } from '@/components/Switch';
 import type { LiveSkiersSnapshot, MapLens, MapViewMode, MapWeather } from './types';
 
-const FILTERS: { id: string; label: string; adminOnly?: boolean; requires3d?: boolean }[] = [
+const FILTERS: { id: string; label: string; adminOnly?: boolean }[] = [
   { id: 'all', label: 'All' },
   { id: 'lift', label: 'Lifts' },
   { id: 'slope', label: 'Slopes' },
   { id: 'built', label: 'Built' },
-  { id: 'buildings', label: 'Buildings', requires3d: true },
+  { id: 'buildings', label: 'Buildings' },
   { id: 'unassigned', label: 'Unassigned', adminOnly: true },
 ];
 
@@ -48,7 +48,6 @@ export function MapHeader({
   onBuild,
   isAdmin,
   adminActions,
-  map3dEnabled = false,
   viewMode = '2d',
   onViewMode,
   webglSupported = true,
@@ -75,7 +74,6 @@ export function MapHeader({
   onBuild: () => void;
   isAdmin: boolean;
   adminActions?: ReactNode;
-  map3dEnabled?: boolean;
   viewMode?: MapViewMode;
   onViewMode?: (m: MapViewMode) => void;
   webglSupported?: boolean;
@@ -92,7 +90,7 @@ export function MapHeader({
   const phaseLabel = liveSkiers ? PHASE_LABELS[liveSkiers.operatingPhase] || 'Open' : 'Closed';
   const viewProps = {
     isAdmin,
-    map3dEnabled,
+    viewMode,
     filter,
     onFilter,
     lens,
@@ -123,7 +121,7 @@ export function MapHeader({
               {builtSlopes === 1 ? 'slope' : 'slopes'} ·{' '}
               <span className="tabular-nums font-semibold text-foreground">{builtLifts}</span>{' '}
               {builtLifts === 1 ? 'lift' : 'lifts'} built
-              {map3dEnabled && builtBuildingsCount > 0 && (
+              {builtBuildingsCount > 0 && (
                 <>
                   {' · '}
                   <span className="tabular-nums font-semibold text-foreground">{builtBuildingsCount}</span>{' '}
@@ -140,7 +138,7 @@ export function MapHeader({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {map3dEnabled && liveSkiers && (
+          {liveSkiers && (
             <Popover>
               <Button
                 size="sm"
@@ -217,14 +215,14 @@ export function MapHeader({
                   </dl>
 
                   <p className="text-xs text-muted">
-                    Syncs with Economy demand and weather every 30s and whenever you build or modify runs.
+                    Updates every 30 seconds and after each build.
                   </p>
                 </Popover.Dialog>
               </Popover.Content>
             </Popover>
           )}
 
-          {map3dEnabled && onViewMode && (
+          {onViewMode && (
             <div
               role="group"
               aria-label="Map view mode"
@@ -252,7 +250,7 @@ export function MapHeader({
             </div>
           )}
 
-          {isAdmin && map3dEnabled && viewMode === '3d' && onOpenMapStudio && (
+          {isAdmin && viewMode === '3d' && onOpenMapStudio && (
             <Button size="sm" variant="outline" onPress={onOpenMapStudio} className="min-h-11 gap-1.5 md:min-h-9">
               <Icon name="fa-pen-ruler" />
               <span className="hidden sm:inline">Map Studio (2D)</span>
@@ -309,7 +307,7 @@ export function MapHeader({
 /** Filters, data lenses, layers and the buildable-runs switch: a row on desktop, a stacked list in the phone popover */
 function ViewControls({
   isAdmin,
-  map3dEnabled,
+  viewMode,
   filter,
   onFilter,
   lens,
@@ -323,7 +321,7 @@ function ViewControls({
   stacked = false,
 }: {
   isAdmin: boolean;
-  map3dEnabled: boolean;
+  viewMode: MapViewMode;
   filter: string;
   onFilter: (f: string) => void;
   lens: MapLens;
@@ -345,7 +343,7 @@ function ViewControls({
     <>
       {label('Runs')}
       <div role="group" aria-label="Show on the map" className={group}>
-        {FILTERS.filter((f) => (!f.adminOnly || isAdmin) && (!f.requires3d || map3dEnabled)).map((f) => (
+        {FILTERS.filter((f) => !f.adminOnly || isAdmin).map((f) => (
           <Button
             key={f.id}
             size="sm"
@@ -359,7 +357,7 @@ function ViewControls({
         ))}
       </div>
 
-      {map3dEnabled && onLens && (
+      {viewMode === '3d' && onLens && (
         <>
           {label('Colour runs by')}
           <div role="group" aria-label="Data lens" className={group}>
@@ -379,7 +377,7 @@ function ViewControls({
         </>
       )}
 
-      {map3dEnabled && onShowBuildings && onShowSkiers && (
+      {onShowBuildings && onShowSkiers && (
         <>
           {label('Layers')}
           <div role="group" aria-label="Map layers" className={group}>
