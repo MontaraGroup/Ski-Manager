@@ -58,6 +58,12 @@ export default function BetaPage(props: BetaState) {
                     {f.since && <p className="text-sm text-muted">In beta since {f.since}</p>}
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-3">
+                    {f.testers ? (
+                      <p className="flex min-h-11 items-center gap-2 text-sm text-foreground md:min-h-9">
+                        <Icon name={f.on ? 'fa-circle-check' : 'fa-circle-half-stroke'} className={f.on ? 'text-success' : 'text-muted'} />
+                        {testerStatus(f, state.member)}
+                      </p>
+                    ) : (
                     <label
                       className={`flex min-h-11 items-center gap-2 text-sm text-foreground md:min-h-9 ${state.member ? 'cursor-pointer' : 'opacity-60'}`}
                     >
@@ -71,6 +77,7 @@ export default function BetaPage(props: BetaState) {
                       />
                       On for me
                     </label>
+                    )}
                     {state.eligible && (
                       <Button variant="secondary" onPress={() => setFeedbackFor(f)} className="min-h-11 md:min-h-9">
                         {f.feedback ? 'Edit feedback' : 'Give feedback'}
@@ -204,4 +211,12 @@ function FeedbackDialog({
       </Modal.Container>
     </Modal.Backdrop>
   );
+}
+
+/** What a beta tester flag's row says instead of a switch */
+function testerStatus(f: BetaFeature, member: boolean): string {
+  const share = f.rollout != null && f.rollout < 100 ? `${f.rollout}% of beta testers` : 'all beta testers';
+  if (!member) return `On for ${share}`;
+  if (f.on) return f.rollout != null && f.rollout < 100 ? `On for you (rolling out to ${share})` : `On for ${share}`;
+  return `Not on for you yet: rolling out to ${share}`;
 }
