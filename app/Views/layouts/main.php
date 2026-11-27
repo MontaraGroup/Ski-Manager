@@ -1012,7 +1012,10 @@ if ("serviceWorker" in navigator && location.hostname === "ski-manager.net") {
       // get the card bottom-left. On the Trail Map it also stops short of the hammer (Build) button on a phone, and
       // hides while the Build drawer is open there, because the drawer fills the screen with Construct at the bottom. ?>
 <?php $__tutLeft = in_array($__currentPath, ['/map', '/restaurants'], true); ?>
-<div id="tutorialWidgetContainer" hidden class="fixed z-[9980] bottom-[4.5rem] md:bottom-6 <?= $__tutLeft ? 'left-4 md:left-6' : 'right-4 md:right-6' ?> <?= $__tutOnMap ? 'max-md:in-[.map-drawer-open]:invisible' : '' ?>">
+<?php // The PostHog Support launcher is a 50px button fixed 20px from the bottom-right corner (top edge 70px up)
+      // and drawn above everything, so a card under it can't be clicked. Keep the card 88px up wherever it reaches
+      // that corner: on a phone always (the card is nearly full width), on desktop when it sits on the right. ?>
+<div id="tutorialWidgetContainer" hidden class="fixed z-[9980] bottom-[5.5rem] <?= $__tutLeft ? 'md:bottom-6 left-4 md:left-6' : 'right-4 md:right-6' ?> <?= $__tutOnMap ? 'max-md:in-[.map-drawer-open]:invisible' : '' ?>">
     <button type="button" id="tutPill" hidden onclick="toggleTutCollapse(false)" class="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-3.5 py-2.5 text-xs font-semibold text-white shadow-2xl" aria-label="Open the tutorial">
         <i class="fa-solid fa-graduation-cap text-sm" aria-hidden="true"></i>
         <span id="tutPillText">Tutorial</span>
