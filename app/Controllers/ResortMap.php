@@ -799,6 +799,8 @@ class ResortMap extends BaseController
         }
 
         log_activity($userId, 'Construction', 'Constructed ' . ($itemData['item_type'] === 'lift' ? 'lift' : 'slope') . ' ' . $itemData['name'] . ' for ' . currency($cost), 'fa-solid fa-person-skiing');
+        // Primary metric of the live-forecast experiment (Libraries/Forecast)
+        \App\Libraries\Analytics::capture((int) $userId, 'item_built', ['item_type' => $itemData['item_type'], 'subtype' => $itemData['subtype'], 'cost' => $cost]);
 
         $newFin  = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
         $newCash = (int) ($newFin['cash'] ?? 0);

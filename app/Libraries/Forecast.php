@@ -16,7 +16,19 @@ class Forecast
     /** The nightly game:tick runs at 00:05 in the app's timezone (systemd ski-gametick.timer) */
     public const SETTLE_TIME = '00:05';
 
+    /** PostHog experiment: players in "test" see the forecast; "control", no answer or no flag keep the last tick */
+    public const EXPERIMENT_FLAG = 'live-forecast';
+
     private static array $cache = [];
+
+    /** Whether this player sees the forecast. Records the experiment exposure. */
+    public static function shownTo(int $userId): bool
+    {
+        $isAdmin = function_exists('featureViewerIsAdmin') && featureViewerIsAdmin();
+        $variant = Analytics::variant(self::EXPERIMENT_FLAG, $userId, $isAdmin);
+        // true once the experiment is shipped as a plain flag
+        return $variant === 'test' || $variant === true;
+    }
 
     /** Next nightly settle as ISO 8601, so the browser can show it in the player's own timezone */
     public static function nextSettleAt(): string

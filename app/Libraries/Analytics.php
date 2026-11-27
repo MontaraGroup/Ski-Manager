@@ -208,6 +208,17 @@ class Analytics
         return is_array($features) ? $features : [];
     }
 
+    /** Queue a server-side event for a player; it goes out with the others at shutdown */
+    public static function capture(int $userId, string $event, array $properties = []): void
+    {
+        if ($userId <= 0 || !self::ready()) return;
+        try {
+            PostHog::capture(['distinctId' => self::distinctId($userId), 'event' => $event, 'properties' => $properties]);
+        } catch (\Throwable $e) {
+            log_message('warning', "PostHog capture {$event} failed: " . $e->getMessage());
+        }
+    }
+
     /** Sends queued events; the shutdown function in Config\Events calls it after the response */
     public static function flush(): void
     {

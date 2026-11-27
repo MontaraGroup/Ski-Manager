@@ -118,7 +118,8 @@ class Dashboard extends BaseController
         // After the first tick, show what the next tick will pay for the resort as it is now, so builds and
         // price changes show at once; before it, the demo estimate (it also covers imported energy and water)
         $settledVisitors = (int) ($finance['daily_visitors'] ?? 0);
-        $forecast = !empty($finance['last_tick']) ? \App\Libraries\Forecast::nextSettle((int) $userId, $finance) : null;
+        $forecast = !empty($finance['last_tick']) && \App\Libraries\Forecast::shownTo((int) $userId)
+            ? \App\Libraries\Forecast::nextSettle((int) $userId, $finance) : null;
         $dailyVisitors = (int) ($forecast['visitors'] ?? Demo::estimate((int) $userId)['visitors'] ?? $settledVisitors);
         $netProfit = ($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0);
 
@@ -300,7 +301,7 @@ class Dashboard extends BaseController
                 'expensesText'              => currency($totalExpenses),
                 'dailyVisitors'             => $dailyVisitors,
                 'dailyVisitorsFormatted'    => number_format($dailyVisitors),
-                'visitorsSettledFormatted'  => number_format($settledVisitors),
+                'visitorsSettledFormatted'  => $forecast ? number_format($settledVisitors) : '',
                 'visitorsTurnedAway'        => (int) ($forecast['turned_away'] ?? 0),
                 'ticketPriceText'           => (int) ($cashflow['ticket_price'] ?? 0) > 0 ? currency((int) $cashflow['ticket_price']) : 'Not set',
                 'totalLiftCapacityFormatted'=> number_format($totalLiftCapacity),

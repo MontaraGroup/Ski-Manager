@@ -1146,13 +1146,14 @@ export default function DashboardPage({
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs text-muted">
             <Icon name="fa-person-skiing" className="text-accent" />
-            <span>Visitors Per Day</span>
+            <span>{kpis.visitorsSettledFormatted ? 'Visitors Per Day' : 'Visitors Today'}</span>
           </div>
           <div className="font-mono text-2xl font-bold tracking-tight text-foreground">
             {kpis.dailyVisitorsFormatted}
           </div>
           <div className="truncate text-[11px] text-muted">
-            Today {kpis.visitorsSettledFormatted} &middot; ticket {kpis.ticketPriceText}
+            {kpis.visitorsSettledFormatted ? <>Today {kpis.visitorsSettledFormatted} &middot; ticket {kpis.ticketPriceText}</>
+              : <>Ticket {kpis.ticketPriceText} &middot; lifts {kpis.totalLiftCapacityFormatted}/hr</>}
             {kpis.visitorsTurnedAway > 0 && <> &middot; <span className="text-warning">{kpis.visitorsTurnedAway.toLocaleString()} turned away by lifts</span></>}
           </div>
         </div>

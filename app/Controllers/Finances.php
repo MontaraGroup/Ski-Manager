@@ -76,7 +76,7 @@ class Finances extends BaseController
         // lift/slope running are swapped for what the next tick will pay (Libraries/Forecast), so builds and
         // price changes show at once; the rest of the day stays as the last tick recorded it
         $lastTick = json_decode((string) ($visitors['last_tick'] ?? ''), true);
-        $forecast = $lastTick ? \App\Libraries\Forecast::nextSettle((int) $userId, $visitors) : null;
+        $forecast = $lastTick && \App\Libraries\Forecast::shownTo((int) $userId) ? \App\Libraries\Forecast::nextSettle((int) $userId, $visitors) : null;
         if ($lastTick && $forecast) {
             $lastTick['income'] = (int) $lastTick['income'] - (int) ($lastTick['tickets'] ?? 0) - (int) ($lastTick['buildings'] ?? 0)
                 + $forecast['tickets'] + $forecast['buildings'];
