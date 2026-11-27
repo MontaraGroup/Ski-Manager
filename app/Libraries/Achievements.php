@@ -11,7 +11,7 @@ class Achievements
 {
     /** Page groups, matched by key prefix in order */
     public const CATEGORIES = [
-        'Resort' => ['lifts_', 'slopes_', 'first_park', 'parks_', 'rating_', 'first_parking', 'parking_'],
+        'Resort' => ['lifts_', 'slopes_', 'first_park', 'parks_', 'rating_', 'first_parking', 'parking_', 'ws_'],
         'Guests' => ['visitors_', 'first_vip', 'vip_'],
         'Staff' => ['first_staff', 'staff_', 'all_roles', 'high_morale'],
         'Buildings' => ['first_building', 'buildings_', 'hotels_', 'restaurants_'],
@@ -123,11 +123,16 @@ class Achievements
         $energy = $db->table('energy_management')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
         $renewable = array_sum(array_map(fn($e) => in_array($e['source_type'], ['solar', 'wind'], true) ? (int) $e['output_kwh'] : 0, $energy));
         $fossil = count(array_filter($energy, fn($e) => !in_array($e['source_type'], ['solar', 'wind'], true)));
+        $wsRows = $db->tableExists('winter_sport_facilities')
+            ? $db->table('winter_sport_facilities')->where('user_id', $userId)->get()->getResultArray()
+            : [];
+        $wsKwh = WinterSports::enabledFor($userId) ? WinterSports::totalEnergyDraw($wsRows) : 0;
         $demand = Utilities::energyDemand(
             $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->where('status', 'active')->get()->getResultArray(),
             $count('night_skiing', ['status' => 'active']),
             $db->table('player_items')->select('subtype, length_meters')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray(),
             $db->table('buildings')->select('level')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray(),
+            $wsKwh,
         )['total'];
 
         // Days since the last inspection fine, counted from when the player first faced regulations
@@ -169,6 +174,9 @@ class Achievements
             'lifts_5' => $count('player_items', ['item_type' => 'lift']), 'lifts_10' => $count('player_items', ['item_type' => 'lift']),
             'slopes_10' => $count('player_items', ['item_type' => 'slope']), 'slopes_25' => $count('player_items', ['item_type' => 'slope']),
             'first_park' => $count('terrain_parks'), 'parks_5' => $count('terrain_parks'),
+            'ws_first_venue' => count($wsRows),
+            'ws_all_five' => count(array_unique(array_column($wsRows, 'facility_type'))),
+            'ws_revenue_100k' => array_sum(array_map(fn($w) => (int) ($w['total_revenue'] ?? 0), $wsRows)),
             'rating_5' => (int) (resortRating($userId)['stars'] ?? 0),
             'first_parking' => $parkingCap > 0 ? 1 : 0, 'parking_1000' => $parkingCap,
             'visitors_500' => $visitors, 'visitors_1000' => $visitors, 'visitors_5000' => $visitors,

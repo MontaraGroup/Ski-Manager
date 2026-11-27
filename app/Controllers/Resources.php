@@ -45,11 +45,15 @@ class Resources extends BaseController
         // Only the hours snow guns actually run today count (App\Libraries\Snowmaking)
         $snowmakers = \App\Libraries\Snowmaking::today($userId)['running'];
         if ($category === 'energy') {
+            $wsKwh = (\App\Libraries\WinterSports::enabledFor((int) $userId) && $db->tableExists('winter_sport_facilities'))
+                ? \App\Libraries\WinterSports::totalEnergyDraw($db->table('winter_sport_facilities')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray())
+                : 0;
             $demand = Utilities::energyDemand(
                 $snowmakers,
                 $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults(),
                 $db->table('player_items')->select('subtype, length_meters')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray(),
                 $db->table('buildings')->select('level')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray(),
+                $wsKwh,
             );
         } else {
             $demand = ['snowmaking' => Utilities::waterDemand($snowmakers)];
@@ -91,6 +95,7 @@ class Resources extends BaseController
             'night_skiing' => ['label' => 'Night skiing', 'icon' => 'moon'],
             'lifts' => ['label' => 'Lifts', 'icon' => 'cable-car'],
             'buildings' => ['label' => 'Buildings', 'icon' => 'building'],
+            'winter_sports' => ['label' => 'Winter activities', 'icon' => 'hockey-puck'],
         ];
 
         $demandParts = [];

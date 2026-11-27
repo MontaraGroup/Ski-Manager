@@ -1145,6 +1145,33 @@ export function buildOverlayStaticMesh(
         continue;
       }
 
+      if (fac.kind === 'winter_sport') {
+        if (fac.subType === 'ice_rink') {
+          mb.box(wx, wy - 0.10, wz, 2.8, 0.22, 2.0, [0.85, 0.88, 0.92, 0.08]);
+          mb.box(wx, wy + 0.12, wz, 2.45, 0.06, 1.65, [0.68, 0.88, 0.98, 0.32]);
+          mb.box(wx - 1.25, wy + 0.12, wz, 0.12, 0.55, 0.12, winCol);
+          mb.box(wx + 1.25, wy + 0.12, wz, 0.12, 0.55, 0.12, winCol);
+        } else if (fac.subType === 'hockey_arena') {
+          mb.box(wx, wy - 0.20, wz, 3.0, 1.25, 2.3, [0.78, 0.82, 0.88, 0.10]);
+          mb.gableRoof(wx, wy + 1.05, wz, 3.15, 0.65, 2.45, [0.22, 0.42, 0.68, 0.16]);
+          mb.box(wx, wy + 0.45, wz + 1.16, 1.8, 0.38, 0.08, winCol);
+        } else if (fac.subType === 'cross_country') {
+          mb.box(wx, wy - 0.20, wz, 1.9, 0.95, 1.6, [0.54, 0.38, 0.24, 0.08]);
+          mb.gableRoof(wx, wy + 0.75, wz, 2.15, 0.65, 1.85, [0.16, 0.52, 0.48, 0.16]);
+          mb.box(wx, wy + 0.35, wz + 0.81, 0.95, 0.35, 0.08, winCol);
+        } else if (fac.subType === 'ski_jump') {
+          mb.box(wx, wy - 0.10, wz - 0.75, 0.75, 2.1, 0.75, [0.72, 0.76, 0.84, 0.12]);
+          mb.beam(wx, wy + 1.95, wz - 0.65, wx, wy + 0.25, wz + 0.95, 0.42, [0.88, 0.94, 1.0, 0.20]);
+          mb.box(wx, wy - 0.05, wz + 1.35, 1.6, 0.12, 1.4, [0.92, 0.96, 1.0, 0.14]);
+        } else {
+          // bobsleigh_track
+          mb.box(wx, wy - 0.15, wz - 0.85, 1.4, 0.95, 1.1, [0.36, 0.42, 0.52, 0.12]);
+          mb.beam(wx, wy + 0.55, wz - 0.5, wx + 0.45, wy + 0.10, wz + 1.15, 0.48, [0.64, 0.86, 0.98, 0.28]);
+          mb.box(wx, wy + 0.35, wz - 0.85, 0.7, 0.32, 1.15, winCol);
+        }
+        continue;
+      }
+
       if (fac.kind === 'parking') {
         const isGarage = fac.subType === 'garage' || fac.subType === 'village_gondola';
         const lotW = (isGarage ? 2.4 : 2.7) * scale;

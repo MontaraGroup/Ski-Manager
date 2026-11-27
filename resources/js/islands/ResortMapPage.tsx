@@ -183,9 +183,10 @@ export default function ResortMapPage(props: ResortMapProps) {
         builtItems,
         buildings,
         parking,
-        terrainParks
+        terrainParks,
+        props.winterSports ?? []
       ),
-    [props.resortMap, props.mapConfig, segments, builtIds, builtItems, buildings, parking, terrainParks]
+    [props.resortMap, props.mapConfig, segments, builtIds, builtItems, buildings, parking, terrainParks, props.winterSports]
   );
 
   const selectedFacility = useMemo(() => {

@@ -6,6 +6,7 @@ import type {
   MapParking,
   MapSegment,
   MapTerrainPark,
+  MapWinterSport,
   PlacedFacility,
 } from './types';
 
@@ -73,7 +74,8 @@ export function computePlacedFacilities(
   builtItems: Record<string, BuiltItem>,
   buildings: MapBuilding[],
   parking: MapParking[],
-  terrainParks: MapTerrainPark[]
+  terrainParks: MapTerrainPark[],
+  winterSports: MapWinterSport[] = []
 ): PlacedFacility[] {
   const w = mapConfig.width || 600;
   const h = mapConfig.height || 340;
@@ -285,6 +287,60 @@ export function computePlacedFacilities(
     });
   }
 
+  for (let i = 0; i < winterSports.length; i++) {
+    const ws = winterSports[i];
+    const custom =
+      ws.map_x != null &&
+      ws.map_y != null &&
+      (!ws.resort_map || ws.resort_map === resortMap);
+
+    let my: number;
+    let mx: number;
+    if (custom) {
+      my = clampY(ws.map_y!, h);
+      mx = clampX(ws.map_x!, w);
+      taken.push([my, mx]);
+    } else {
+      const anchor = villageAnchors[i % villageAnchors.length];
+      let ay = anchor[0];
+      let ax = anchor[1];
+      if (ws.facility_type === 'ski_jump' || ws.facility_type === 'bobsleigh_track') {
+        ay = Math.max(24, anchor[0] - h * 0.14);
+        ax = anchor[1] + (ws.facility_type === 'ski_jump' ? -22 : 22);
+      } else if (ws.facility_type === 'cross_country') {
+        ay = Math.min(h - 16, anchor[0] + 10);
+        ax = anchor[1] - 24;
+      } else {
+        ay = anchor[0] - 4;
+        ax = anchor[1] + (ws.facility_type === 'hockey_arena' ? 18 : -10);
+      }
+      [my, mx] = nudgeNoOverlap(ay, ax, taken, 10, w, h);
+    }
+
+    rawList.push({
+      key: `ws_${ws.id}`,
+      kind: 'winter_sport',
+      id: ws.id,
+      subType: ws.facility_type,
+      label: ws.name,
+      typeLabel: ws.typeLabel,
+      icon: ws.icon,
+      route: ws.route,
+      status: ws.status,
+      level: ws.level,
+      conditionPct: Math.round(ws.condition_pct),
+      occupancyPct: ws.occupancyPct,
+      capacity: ws.capacity,
+      currentCount: ws.guests,
+      dailyRevenue: ws.daily_revenue,
+      dailyUpkeep: ws.daily_upkeep,
+      mapX: mx,
+      mapY: my,
+      customPlaced: custom,
+      clusterCount: 1,
+    });
+  }
+
   // Cluster auto-placed buildings when a veteran resort has > 60 structures so the map stays clean & 60 FPS
   if (rawList.length <= 60) {
     return rawList;
@@ -294,7 +350,7 @@ export function computePlacedFacilities(
   const groups = new Map<string, PlacedFacility[]>();
 
   for (const fac of rawList) {
-    if (fac.customPlaced || fac.kind === 'terrain_park') {
+    if (fac.customPlaced || fac.kind === 'terrain_park' || fac.kind === 'winter_sport') {
       keepIndividual.push(fac);
     } else {
       const gKey = `${fac.kind}:${fac.subType}`;

@@ -116,9 +116,29 @@ export interface MapTerrainPark {
   slope_id: number | null;
 }
 
+export interface MapWinterSport {
+  id: number;
+  facility_type: string;
+  typeLabel: string;
+  icon: string;
+  route: string;
+  name: string;
+  level: number;
+  capacity: number;
+  guests: number;
+  occupancyPct: number;
+  daily_revenue: number;
+  daily_upkeep: number;
+  condition_pct: number;
+  status: string;
+  map_x: number | null;
+  map_y: number | null;
+  resort_map: string | null;
+}
+
 export interface PlacedFacility {
   key: string;
-  kind: 'building' | 'parking' | 'terrain_park';
+  kind: 'building' | 'parking' | 'terrain_park' | 'winter_sport';
   id: number;
   subType: string;
   label: string;
@@ -222,6 +242,7 @@ export interface ResortMapProps {
   buildings?: MapBuilding[];
   parking?: MapParking[];
   terrainParks?: MapTerrainPark[];
+  winterSports?: MapWinterSport[];
   groomerFleet?: { active: number; total: number };
   nightLighting?: { activeCount: number; totalCoverage: number };
   weather?: MapWeather | null;
