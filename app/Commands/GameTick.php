@@ -590,6 +590,41 @@ class GameTick extends BaseCommand
             }
 
             // ==============================
+            // WINTER SPORT FACILITIES
+            // ==============================
+            if ($resortOpen && \App\Libraries\WinterSports::enabledFor($userId) && $db->tableExists('winter_sport_facilities')) {
+                $wsRows = $db->table('winter_sport_facilities')->where('user_id', $userId)->get()->getResultArray();
+                $wsIncome = 0;
+                foreach ($wsRows as $ws) {
+                    if ($ws['status'] !== 'open') continue;
+                    $settle = \App\Libraries\WinterSports::settleDay($ws, $visitors, $isWinter);
+                    $rev = (int) round($settle['revenue'] * $revMult);
+                    $upkeep = (int) round($settle['upkeep'] * $costMult);
+                    $dayIncome += $rev;
+                    $dayExpenses += $upkeep;
+                    $wsIncome += $rev;
+
+                    $wear = (float) (\App\Libraries\WinterSports::CATALOG[$ws['facility_type']]['wear_per_day'] ?? 2.0);
+                    $newCond = max(0, (int) round((int) $ws['condition_pct'] - $wear));
+                    $newStatus = $newCond < 25 ? 'maintenance' : 'open';
+                    $db->table('winter_sport_facilities')->where('id', $ws['id'])->update([
+                        'condition_pct' => $newCond,
+                        'status' => $newStatus,
+                        'daily_revenue' => $rev,
+                        'daily_upkeep' => $upkeep,
+                        'total_revenue' => (int) $ws['total_revenue'] + $rev,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                    if ($newStatus === 'maintenance') {
+                        notify($userId, 'winter_sports', $ws['name'] . ' needs repairs', 'Condition dropped below 25%. Repair it on Winter Sports to reopen.', 'fa-solid fa-wrench', '/winter-sports');
+                    }
+                }
+                if ($wsIncome > 0) {
+                    $breakdown['winter_sports'] = $wsIncome;
+                }
+            }
+
+            // ==============================
             // TERRAIN PARKS
             // ==============================
             $terrainParkModel = new \App\Models\TerrainParkModel();

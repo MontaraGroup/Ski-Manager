@@ -83,6 +83,7 @@ const ISLANDS: Record<string, () => Promise<{ default: ComponentType<any> }>> = 
   VipGuestsPage: () => import('./islands/VipGuestsPage'),
   DailyBonusPage: () => import('./islands/DailyBonusPage'),
   TerrainParksPage: () => import('./islands/TerrainParksPage'),
+  WinterSportsPage: () => import('./islands/WinterSportsPage'),
   ResourcesPage: () => import('./islands/ResourcesPage'),
   OffSeasonPage: () => import('./islands/OffSeasonPage'),
   EmergencyPage: () => import('./islands/EmergencyPage'),

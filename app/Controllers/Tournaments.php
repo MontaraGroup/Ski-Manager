@@ -46,6 +46,15 @@ class Tournaments extends BaseController
             'kids_cup' => ['name' => "Kids' Cup", 'icon' => 'fa-solid fa-child', 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1, 'desc' => 'Youth skiing competition'],
         ];
 
+        if (\App\Libraries\WinterSports::enabledFor((int) $userId)) {
+            $tournamentTypes += [
+                'ice_gala' => ['name' => 'Winter Ice Gala', 'icon' => 'fa-solid fa-snowflake', 'visitors' => 650, 'reputation' => 160, 'cost' => 30000, 'duration' => 1, 'desc' => 'Evening skating showcase. Needs an open Ice Rink.'],
+                'hockey_classic' => ['name' => 'Ice Hockey Classic', 'icon' => 'fa-solid fa-hockey-puck', 'visitors' => 1100, 'reputation' => 280, 'cost' => 55000, 'duration' => 2, 'desc' => 'Weekend tournament. Needs an open Ice Hockey Venue.'],
+                'ski_jump_cup' => ['name' => 'Ski Jumping Cup', 'icon' => 'fa-solid fa-person-skiing', 'visitors' => 1350, 'reputation' => 360, 'cost' => 75000, 'duration' => 2, 'desc' => 'Spectator aerial meet. Needs an open Ski Jump Ramp.'],
+                'bobsleigh_gp' => ['name' => 'Bobsleigh Grand Prix', 'icon' => 'fa-solid fa-sleigh', 'visitors' => 1700, 'reputation' => 450, 'cost' => 110000, 'duration' => 2, 'desc' => 'World-class chute race. Needs an open Bobsleigh Track.'],
+            ];
+        }
+
         $formattedTournaments = array_map(function($t) use ($gameDay) {
             $start = (int)($t['start_day'] ?? 0);
             $end = (int)($t['end_day'] ?? 0);
@@ -152,6 +161,22 @@ class Tournaments extends BaseController
             'kids_cup' => ['name' => "Kids' Cup", 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1],
         ];
 
+        $facilityRequirements = [
+            'ice_gala' => ['type' => 'ice_rink', 'label' => 'Ice Rink'],
+            'hockey_classic' => ['type' => 'hockey_arena', 'label' => 'Ice Hockey Venue'],
+            'ski_jump_cup' => ['type' => 'ski_jump', 'label' => 'Ski Jump Ramp'],
+            'bobsleigh_gp' => ['type' => 'bobsleigh_track', 'label' => 'Bobsleigh Track'],
+        ];
+
+        if (\App\Libraries\WinterSports::enabledFor((int) $userId)) {
+            $types += [
+                'ice_gala' => ['name' => 'Winter Ice Gala', 'visitors' => 650, 'reputation' => 160, 'cost' => 30000, 'duration' => 1],
+                'hockey_classic' => ['name' => 'Ice Hockey Classic', 'visitors' => 1100, 'reputation' => 280, 'cost' => 55000, 'duration' => 2],
+                'ski_jump_cup' => ['name' => 'Ski Jumping Cup', 'visitors' => 1350, 'reputation' => 360, 'cost' => 75000, 'duration' => 2],
+                'bobsleigh_gp' => ['name' => 'Bobsleigh Grand Prix', 'visitors' => 1700, 'reputation' => 450, 'cost' => 110000, 'duration' => 2],
+            ];
+        }
+
         if (!isset($types[$type])) {
             return redirect()->back()->with('error', 'Invalid tournament type.');
         }
@@ -172,6 +197,18 @@ class Tournaments extends BaseController
             $activeLights = $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults();
             if ($activeLights <= 0) {
                 return redirect()->back()->with('error', 'Night Race requires at least one active floodlight in Night Skiing.');
+            }
+        }
+
+        if (isset($facilityRequirements[$type])) {
+            $req = $facilityRequirements[$type];
+            $hasVenue = $db->tableExists('winter_sport_facilities') && $db->table('winter_sport_facilities')
+                ->where('user_id', $userId)
+                ->where('facility_type', $req['type'])
+                ->where('status', 'open')
+                ->countAllResults() > 0;
+            if (!$hasVenue) {
+                return redirect()->back()->with('error', $t['name'] . ' requires an open ' . $req['label'] . ' on Winter Sports.');
             }
         }
 
