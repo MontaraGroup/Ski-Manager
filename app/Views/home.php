@@ -9,93 +9,71 @@ $isLoggedIn = !empty($page['isLoggedIn']);
 $season = $page['season'] ?? ['current' => 1, 'day' => 1, 'length' => 120, 'daysRemaining' => 120];
 $weather = $page['weather'] ?? null;
 ?>
-<div class="flex flex-col min-h-screen">
-  <section class="relative isolate overflow-hidden bg-[#141b24] text-white py-14 sm:py-20 lg:py-24 border-b border-border min-h-[560px]">
-    <div class="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-75 transform scale-105 transition-transform duration-1000"></div>
-    <div class="absolute inset-0 -z-10 bg-gradient-to-t lg:bg-gradient-to-r from-[#0a0e14]/95 via-[#0a0e14]/80 to-[#0a0e14]/40"></div>
-
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-      <div class="lg:col-span-7 space-y-6">
-        <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/90 backdrop-blur-md border border-white/20">
-          <span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-          <span>Season <?= (int)$season['current'] ?> · Day <?= (int)$season['day'] ?> of <?= (int)$season['length'] ?> (<?= (int)$season['daysRemaining'] ?> days left)</span>
+<?php
+$left = $season['daysRemaining'] > 0
+    ? $season['daysRemaining'] . ' ' . ($season['daysRemaining'] === 1 ? 'day' : 'days') . ' left in Season ' . (int) $season['current']
+    : 'Season ' . (int) $season['current'] . ' ends today';
+$btn = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-6 text-base font-semibold';
+?>
+<section class="relative isolate overflow-hidden bg-[#141b24] text-white">
+  <div aria-hidden="true" class="absolute inset-0 -z-20 bg-parkcity-map bg-cover bg-center opacity-75"></div>
+  <div aria-hidden="true" class="absolute inset-0 -z-10 bg-gradient-to-t lg:bg-gradient-to-r from-[#0a0e14]/95 via-[#0a0e14]/80 to-[#0a0e14]/45"></div>
+  <div class="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-12 lg:px-8 lg:py-24">
+    <div class="flex flex-col gap-5 lg:col-span-7">
+      <?php if ($isLoggedIn) : ?>
+        <h1 class="text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl">Welcome back<?= !empty($page['username']) ? ', ' . esc($page['username']) : '' ?>.</h1>
+        <p class="max-w-lg text-base leading-relaxed text-white/85 sm:text-lg"><?= esc($left) ?>. Check last night's numbers on the dashboard, or open the map and keep building.</p>
+        <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
+          <a href="/dashboard" class="<?= $btn ?> bg-accent text-accent-foreground">Open dashboard</a>
+          <a href="/map" class="<?= $btn ?> border border-white/30 bg-white/10 text-white">Trail map</a>
         </div>
-
-        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight max-w-xl text-white">
-          Run a ski resort on a <span class="text-[#7fb4ff]">real mountain.</span>
-        </h1>
-
-        <p class="text-base sm:text-lg text-white/85 leading-relaxed max-w-lg">
-          Ski Manager is a free, browser-native simulation game. You start with the authentic Park City trail map, starting capital for your first lift lines, and a full season to make your resort thrive.
-        </p>
-
-        <div class="flex flex-wrap items-center gap-3 pt-2">
-          <?php if (!$isLoggedIn) : ?>
-            <a href="/register" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
-              <i class="fa-solid fa-play text-xs"></i>
-              <span>Play Free</span>
-            </a>
-            <form action="/demo" method="post" class="contents">
-              <button type="submit" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all backdrop-blur-sm cursor-pointer">Try Demo Mountain</button>
-            </form>
-            <a href="/login" class="inline-flex min-h-11 items-center justify-center text-sm font-medium text-white/80 hover:text-white underline underline-offset-4 px-3">Sign in →</a>
-          <?php else : ?>
-            <a href="/dashboard" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-lg">
-              <i class="fa-solid fa-mountain text-xs"></i>
-              <span>Go to Dashboard</span>
-            </a>
-            <a href="/map" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-all backdrop-blur-sm">
-              <i class="fa-solid fa-map text-xs"></i>
-              <span>Open Trail Map</span>
-            </a>
-          <?php endif; ?>
+      <?php else : ?>
+        <h1 class="max-w-xl text-balance text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">Run a ski resort on a real mountain.</h1>
+        <p class="max-w-lg text-base leading-relaxed text-white/85 sm:text-lg">Build lifts and cut runs on the Park City trail map. Hire patrol and groomers, set ticket prices, and get through the weather, one game day at a time. Free, in your browser.</p>
+        <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
+          <a href="/register" class="<?= $btn ?> w-full bg-accent text-accent-foreground sm:w-auto">Play free</a>
+          <form action="/demo" method="post" class="contents">
+            <?= csrf_field() ?>
+            <button type="submit" class="<?= $btn ?> w-full cursor-pointer border border-white/30 bg-white/10 px-5 text-white sm:w-auto">Try a demo resort</button>
+          </form>
+          <a href="/login" class="inline-flex min-h-11 items-center justify-center px-2 text-sm font-medium text-white/85 underline underline-offset-4">Log in</a>
         </div>
-
-        <p class="text-xs text-white/60">
-          <strong class="text-white font-semibold"><?= esc($page['playerCountFormatted'] ?? '0') ?></strong> managers registered ·
-          <strong class="text-white font-semibold"><?= esc($page['totalSlopesFormatted'] ?? '0') ?></strong> runs built across mountains
-        </p>
-      </div>
-
-      <div class="lg:col-span-5">
-        <div class="rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl p-5 sm:p-6 text-white shadow-2xl space-y-4">
-          <div class="flex items-center justify-between border-b border-white/15 pb-3">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-snowflake text-[#7fb4ff]"></i>
-              <h2 class="text-sm font-bold uppercase tracking-wider text-white">Live Snow Report</h2>
-            </div>
-            <span class="text-xs text-white/60">Park City · Today</span>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-              <span class="text-[11px] font-medium uppercase text-white/60">Summit Temp</span>
-              <div class="text-2xl font-bold mt-1 text-white tabular-nums"><?= esc($weather['temp'] ?? '–') ?></div>
-              <div class="text-xs text-[#7fb4ff] mt-0.5 font-medium"><?= esc($weather['conditionName'] ?? 'Clear') ?></div>
-            </div>
-
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10">
-              <span class="text-[11px] font-medium uppercase text-white/60">Base Depth</span>
-              <div class="text-2xl font-bold mt-1 text-white tabular-nums"><?= esc($weather['snowBase'] ?? '–') ?></div>
-              <div class="text-xs text-white/70 mt-0.5"><?= esc($weather['snowfallText'] ?? 'No new snow') ?></div>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-white/15 flex items-center justify-between text-xs text-white/70">
-            <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-wind text-white/50"></i>
-              <span>Wind: <strong><?= esc($weather['windText'] ?? '–') ?></strong></span>
-            </span>
-            <span class="flex items-center gap-1 text-[#7fb4ff] font-medium">
-              <i class="fa-regular fa-clock"></i>
-              <span>Updates hourly</span>
-            </span>
-          </div>
-        </div>
-      </div>
+        <p class="text-sm text-white/70">The demo needs no account: you get a resort with lifts and runs already built.</p>
+      <?php endif; ?>
+      <p class="flex flex-wrap gap-x-4 gap-y-1 border-t border-white/15 pt-4 text-sm text-white/75">
+        <span><strong class="font-semibold tabular-nums text-white"><?= esc($page['playerCountFormatted'] ?? '0') ?></strong> players signed up</span>
+        <span><strong class="font-semibold tabular-nums text-white"><?= esc($page['totalSlopesFormatted'] ?? '0') ?></strong> runs built</span>
+      </p>
     </div>
-  </section>
-</div>
+    <div class="lg:col-span-5">
+      <section aria-labelledby="home-snow" class="overflow-hidden rounded-xl bg-[oklch(97%_0.006_250)] text-[oklch(26%_0.04_260)] shadow-xl">
+        <div class="flex items-center justify-between gap-3 bg-[oklch(24%_0.03_260)] px-4 py-3 text-white sm:px-5">
+          <h2 id="home-snow" class="text-sm font-bold uppercase tracking-wider">Park City snow report</h2>
+          <span class="text-xs text-white/75">In game, now</span>
+        </div>
+        <?php if ($weather) : ?>
+          <dl class="grid grid-cols-2 gap-px bg-[oklch(88%_0.01_250)]">
+            <?php foreach ([
+                ['Temperature', $weather['temp'], $weather['conditionName']],
+                ['Base depth', $weather['snowBase'], $weather['snowfallText']],
+                ['Wind', $weather['windText'], ''],
+                ['Season', 'Day ' . (int) $season['day'], 'of ' . (int) $season['length']],
+            ] as [$label, $value, $note]) : ?>
+              <div class="bg-[oklch(97%_0.006_250)] px-4 py-3 sm:px-5 sm:py-4">
+                <dt class="text-xs font-medium text-[oklch(42%_0.03_260)]"><?= esc($label) ?></dt>
+                <dd class="mt-0.5 text-2xl font-bold tabular-nums sm:text-[1.75rem]"><?= esc($value) ?></dd>
+                <?php if ($note !== '') : ?><dd class="text-xs text-[oklch(42%_0.03_260)]"><?= esc($note) ?></dd><?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          </dl>
+        <?php else : ?>
+          <p class="px-5 py-6 text-sm">Today's report isn't ready yet. It's written when the game day starts.</p>
+        <?php endif; ?>
+        <p class="px-4 py-3 text-xs text-[oklch(42%_0.03_260)] sm:px-5"><?= esc($left) ?></p>
+      </section>
+    </div>
+  </div>
+</section>
 <?php
 $fallback = ob_get_clean();
 ?>
