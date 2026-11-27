@@ -13,7 +13,9 @@ class FeatureGate implements FilterInterface
      * Also used to hide nav links and to add the "Beta" chip. Released pages aren't listed:
      * they are always on. Add the same URL pattern to the featuregate entry in Config\Filters.
      */
-    public const ROUTE_FLAGS = [];
+    public const ROUTE_FLAGS = [
+        'winter-sports' => 'winter-sports',
+    ];
 
     /** The flag that gates a URL path, or null if none does */
     public static function flagForPath(string $path): ?string
