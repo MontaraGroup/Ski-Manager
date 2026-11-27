@@ -1,156 +1,146 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
-import { Button } from '@heroui/react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AlertDialog, Button, Chip, Drawer, Meter, ProgressBar, buttonVariants, toast } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { csrf } from '@/components/Page';
+import { TrailSign, type Difficulty } from '@/components/TrailSign';
 
 export type WidgetCategory = 'operations' | 'financial' | 'activity';
+type WidgetSize = 'small' | 'medium' | 'large';
 
 export interface WidgetMeta {
+  /** Title shown on the widget and in the library */
   name: string;
   category: WidgetCategory;
-  categoryLabel: string;
   icon: string;
   description: string;
-  defaultSize: 'small' | 'medium' | 'large';
+  /** Where the widget's link goes, and what it says */
+  link?: { href: string; label: string };
 }
 
 export const WIDGET_META: Record<string, WidgetMeta> = {
-  overview: {
-    name: 'Mountain Overview',
-    category: 'operations',
-    categoryLabel: 'Operations',
-    icon: 'fa-mountain-sun',
-    description: 'Slopes, lifts, trail status, buildings, and grooming condition breakdown.',
-    defaultSize: 'large',
+  stats: {
+    name: 'Daily cash flow',
+    category: 'financial',
+    icon: 'fa-chart-bar',
+    description: 'Tickets, shops, staff pay, running costs and loan payments for one game day.',
+    link: { href: '/finances', label: 'Finances' },
   },
   season: {
-    name: 'Season Progress',
+    name: 'Season',
     category: 'operations',
-    categoryLabel: 'Operations',
     icon: 'fa-calendar',
-    description: 'Current season progress calendar with winter vs summer days breakdown.',
-    defaultSize: 'large',
+    description: 'Season day, days left, and the winter and summer split.',
   },
   weather_mini: {
-    name: 'Live Weather',
+    name: 'Weather',
     category: 'operations',
-    categoryLabel: 'Operations',
     icon: 'fa-cloud-sun',
-    description: 'Real-time temperature, snow base, wind velocity, and 4-day forecast.',
-    defaultSize: 'medium',
-  },
-  actions: {
-    name: 'Quick Actions',
-    category: 'operations',
-    categoryLabel: 'Operations',
-    icon: 'fa-bolt',
-    description: 'Fast shortcuts for grooming, ticket pricing, snowmaking, and lifts.',
-    defaultSize: 'medium',
-  },
-  parking_mini: {
-    name: 'Parking Capacity',
-    category: 'operations',
-    categoryLabel: 'Operations',
-    icon: 'fa-square-parking',
-    description: 'Real-time lot occupancy, total vehicle stalls, and fill percentage.',
-    defaultSize: 'small',
-  },
-  terrain_parks_mini: {
-    name: 'Terrain Parks',
-    category: 'operations',
-    categoryLabel: 'Operations',
-    icon: 'fa-person-snowboarding',
-    description: 'Open park count, freestyle feature structures, and daily rider attendance.',
-    defaultSize: 'small',
-  },
-  equipment_mini: {
-    name: 'Fleet & Equipment',
-    category: 'operations',
-    categoryLabel: 'Operations',
-    icon: 'fa-toolbox',
-    description: 'Grooming snowcats, service snowmobiles, and maintenance fleet status.',
-    defaultSize: 'small',
-  },
-  stats: {
-    name: 'Financial Ledger',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-chart-bar',
-    description: 'Comprehensive breakdown of revenue, tickets, payroll, loans, and profit.',
-    defaultSize: 'large',
-  },
-  finances_mini: {
-    name: 'Finances Summary',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-coins',
-    description: 'Snapshot of day revenue, operating expenditures, and net balance.',
-    defaultSize: 'medium',
-  },
-  staff_mini: {
-    name: 'Staff & Morale',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-users',
-    description: 'Workforce headcount, key department distribution, and morale health.',
-    defaultSize: 'medium',
-  },
-  insurance_mini: {
-    name: 'Insurance Policies',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-shield-halved',
-    description: 'Active liability policies and casualty insurance coverage status.',
-    defaultSize: 'small',
-  },
-  loans_mini: {
-    name: 'Bank Loans & Debt',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-landmark',
-    description: 'Active commercial debt obligations, principal balances, and interest.',
-    defaultSize: 'small',
-  },
-  marketing_mini: {
-    name: 'Marketing Campaigns',
-    category: 'financial',
-    categoryLabel: 'Finances',
-    icon: 'fa-bullhorn',
-    description: 'Active promotional campaigns driving daily resort visitor turnout.',
-    defaultSize: 'small',
+    description: 'Weather now and the next five days.',
+    link: { href: '/weather', label: 'Full forecast' },
   },
   achievements_mini: {
-    name: 'Achievement Alerts',
+    name: 'Achievement rewards',
     category: 'activity',
-    categoryLabel: 'Achievements',
-    icon: 'fa-bell',
-    description: 'Pending milestones, claimable Genepi rewards, and status alerts.',
-    defaultSize: 'large',
+    icon: 'fa-award',
+    description: 'Rewards ready to claim and achievements completed.',
+    link: { href: '/achievements', label: 'Achievements' },
+  },
+  actions: {
+    name: 'Shortcuts',
+    category: 'operations',
+    icon: 'fa-compass',
+    description: 'Links to the pages you run the resort from.',
+  },
+  overview: {
+    name: 'Mountain',
+    category: 'operations',
+    icon: 'fa-mountain-sun',
+    description: 'Runs and lifts open, staff, buildings and run condition.',
+    link: { href: '/map', label: 'Trail map' },
   },
   achievements: {
-    name: 'Featured Achievements',
+    name: 'Achievements in progress',
     category: 'activity',
-    categoryLabel: 'Achievements',
-    icon: 'fa-award',
-    description: 'Top priority achievements tracked with active progress meters.',
-    defaultSize: 'medium',
+    icon: 'fa-list-check',
+    description: 'The achievements you are closest to.',
+    link: { href: '/achievements', label: 'All' },
+  },
+  activity: {
+    name: 'Recent activity',
+    category: 'activity',
+    icon: 'fa-clock-rotate-left',
+    description: 'Builds, hires and nightly results, newest first.',
+    link: { href: '/activity', label: 'Full log' },
+  },
+  parking_mini: {
+    name: 'Parking',
+    category: 'operations',
+    icon: 'fa-square-parking',
+    description: 'Parking lots, spaces and how full they were.',
+    link: { href: '/parking', label: 'Parking' },
+  },
+  terrain_parks_mini: {
+    name: 'Terrain parks',
+    category: 'operations',
+    icon: 'fa-person-snowboarding',
+    description: 'Parks open, parks being built and riders.',
+    link: { href: '/terrain-parks', label: 'Parks' },
+  },
+  finances_mini: {
+    name: 'Lifetime finances',
+    category: 'financial',
+    icon: 'fa-coins',
+    description: 'Everything earned and spent since the resort opened.',
+    link: { href: '/finances', label: 'Finances' },
+  },
+  staff_mini: {
+    name: 'Staff',
+    category: 'financial',
+    icon: 'fa-users',
+    description: 'Headcount by role and average morale.',
+    link: { href: '/staff', label: 'Staff' },
+  },
+  equipment_mini: {
+    name: 'Equipment',
+    category: 'operations',
+    icon: 'fa-toolbox',
+    description: 'Snowcats, snowmobiles and other machines you own.',
+    link: { href: '/equipment', label: 'Equipment' },
+  },
+  insurance_mini: {
+    name: 'Insurance',
+    category: 'financial',
+    icon: 'fa-shield-halved',
+    description: 'Policies active and policies you could take out.',
+    link: { href: '/insurance', label: 'Insurance' },
+  },
+  loans_mini: {
+    name: 'Loans',
+    category: 'financial',
+    icon: 'fa-landmark',
+    description: 'Loans you are paying off and what is left to pay.',
+    link: { href: '/bank', label: 'Bank' },
+  },
+  marketing_mini: {
+    name: 'Marketing',
+    category: 'financial',
+    icon: 'fa-bullhorn',
+    description: 'Campaigns running now.',
+    link: { href: '/marketing', label: 'Marketing' },
   },
   roadmap_mini: {
     name: 'Roadmap',
     category: 'activity',
-    categoryLabel: 'Community',
     icon: 'fa-map-location-dot',
-    description: 'The most-voted ideas for the game. Vote without leaving the dashboard.',
-    defaultSize: 'medium',
+    description: 'The most-voted ideas for the game. Vote from here.',
+    link: { href: '/roadmap', label: 'All ideas' },
   },
-  activity: {
-    name: 'Live Activity Log',
-    category: 'activity',
-    categoryLabel: 'Activity',
-    icon: 'fa-clock-rotate-left',
-    description: 'Chronological telemetry of resort events, guest feedback, and incidents.',
-    defaultSize: 'medium',
-  },
+};
+
+const CATEGORY_LABEL: Record<WidgetCategory, string> = {
+  operations: 'Mountain',
+  financial: 'Money',
+  activity: 'Activity',
 };
 
 export type PresetKey = 'default' | 'operations' | 'financial' | 'compact';
@@ -158,78 +148,60 @@ export type PresetKey = 'default' | 'operations' | 'financial' | 'compact';
 export interface LayoutPreset {
   id: PresetKey;
   name: string;
-  badge: string;
-  icon: string;
-  desc: string;
-  widgets: {
-    key: string;
-    size: 'small' | 'medium' | 'large';
-  }[];
+  widgets: { key: string; size: WidgetSize }[];
 }
 
 export const PRESETS: LayoutPreset[] = [
   {
     id: 'default',
     name: 'Balanced',
-    badge: 'Default',
-    icon: 'fa-table-cells-large',
-    desc: 'Standard operations, stats, calendar, weather, actions, and recent activity.',
     widgets: [
-      { key: 'stats', size: 'large' },
-      { key: 'season', size: 'large' },
+      { key: 'stats', size: 'medium' },
       { key: 'weather_mini', size: 'medium' },
-      { key: 'achievements_mini', size: 'large' },
-      { key: 'actions', size: 'medium' },
       { key: 'overview', size: 'large' },
+      { key: 'season', size: 'medium' },
+      { key: 'achievements_mini', size: 'medium' },
       { key: 'achievements', size: 'medium' },
       { key: 'activity', size: 'medium' },
+      { key: 'actions', size: 'large' },
     ],
   },
   {
     id: 'operations',
-    name: 'Operations',
-    badge: 'Mountain',
-    icon: 'fa-mountain-sun',
-    desc: 'Focus on trails, snow, weather, grooming fleet, lifts, and park status.',
+    name: 'Mountain',
     widgets: [
       { key: 'overview', size: 'large' },
       { key: 'weather_mini', size: 'medium' },
       { key: 'season', size: 'medium' },
-      { key: 'actions', size: 'medium' },
       { key: 'equipment_mini', size: 'small' },
       { key: 'terrain_parks_mini', size: 'small' },
       { key: 'parking_mini', size: 'small' },
+      { key: 'staff_mini', size: 'small' },
       { key: 'activity', size: 'medium' },
+      { key: 'actions', size: 'medium' },
     ],
   },
   {
     id: 'financial',
-    name: 'Financial',
-    badge: 'Executive',
-    icon: 'fa-chart-line',
-    desc: 'Cash flow, payroll, loans, insurance, marketing campaigns, and resort ledger.',
+    name: 'Money',
     widgets: [
-      { key: 'stats', size: 'large' },
+      { key: 'stats', size: 'medium' },
       { key: 'finances_mini', size: 'medium' },
       { key: 'staff_mini', size: 'medium' },
       { key: 'loans_mini', size: 'small' },
       { key: 'insurance_mini', size: 'small' },
       { key: 'marketing_mini', size: 'small' },
+      { key: 'parking_mini', size: 'small' },
       { key: 'overview', size: 'large' },
-      { key: 'actions', size: 'medium' },
     ],
   },
   {
     id: 'compact',
     name: 'Compact',
-    badge: 'Minimal',
-    icon: 'fa-compress',
-    desc: 'Minimal high-speed layout with mountain overview, weather, stats, and quick actions.',
     widgets: [
-      { key: 'overview', size: 'medium' },
-      { key: 'weather_mini', size: 'medium' },
       { key: 'stats', size: 'medium' },
-      { key: 'actions', size: 'medium' },
+      { key: 'weather_mini', size: 'medium' },
+      { key: 'overview', size: 'large' },
     ],
   },
 ];
@@ -291,7 +263,7 @@ export type DashboardWidgetItem = {
   widget_key: string;
   name: string;
   icon: string;
-  size: 'small' | 'medium' | 'large';
+  size: WidgetSize;
   visible: boolean;
   sort_order: number;
 };
@@ -315,6 +287,8 @@ export type DashboardData = {
     loanPayments: string;
     dailyProfit: string;
     isProfit: boolean;
+    /** Plain amounts behind the texts above, for the bars */
+    amounts?: { tickets: number; buildings: number; payroll: number; running: number; loans: number };
   };
   overview: {
     slopeCount: number;
@@ -415,61 +389,6 @@ export type DashboardData = {
 
 export type RoadmapTopItem = { id: number; title: string; status: string; upvotes: number; voted: boolean };
 
-/** Top roadmap ideas with a vote button; same endpoint and reward as /roadmap */
-function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
-  const [items, setItems] = useState(initial);
-  const [busy, setBusy] = useState<number | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-
-  const vote = async (id: number) => {
-    if (busy !== null) return;
-    setBusy(id);
-    try {
-      const { field, token } = csrf();
-      const fd = new FormData();
-      fd.append(field, token);
-      const res = await fetch(`/roadmap/vote/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
-      const data = await res.json().catch(() => null);
-      if (res.ok && data?.success) {
-        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, voted: Boolean(data.voted), upvotes: data.upvotes } : it)));
-        setNote(data.message ?? null);
-      } else {
-        setNote(data?.message ?? 'Your vote did not go through. Try again.');
-      }
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  if (items.length === 0) {
-    return <p className="text-muted">No open ideas yet. <a href="/roadmap" className="text-accent hover:underline">Suggest one</a>.</p>;
-  }
-  return (
-    <div className="space-y-2">
-      <ul className="space-y-1.5">
-        {items.map((it) => (
-          <li key={it.id} className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant={it.voted ? 'primary' : 'outline'}
-              onPress={() => vote(it.id)}
-              isDisabled={busy !== null}
-              aria-pressed={it.voted}
-              aria-label={`${it.voted ? 'Remove your vote for' : 'Vote for'} ${it.title}, ${it.upvotes} votes`}
-              className="min-h-11 min-w-14 shrink-0 tabular-nums"
-            >
-              <Icon name="fa-chevron-up" className="text-[10px]" />
-              {it.upvotes}
-            </Button>
-            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 py-3.5 text-foreground hover:underline sm:py-0">{it.title}</a>
-          </li>
-        ))}
-      </ul>
-      {note && <p role="status" className="text-success">{note}</p>}
-    </div>
-  );
-}
-
 export type LaunchChecklistStep = {
   id: string;
   title: string;
@@ -499,7 +418,616 @@ export type DashboardPageProps = {
   data: DashboardData;
   demoEstimate?: { skiers: string; income: string; costs: string } | null;
   launchChecklist?: LaunchChecklist | null;
+  /** Server time the nightly tick settles the day (Forecast::SETTLE_TIME) */
+  settleTime?: string;
 };
+
+const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
+
+/** A link that reads as a quiet button; 44px tall on touch screens */
+const quietLink = 'inline-flex items-center gap-1.5 rounded-md text-sm text-link underline-offset-4 hover:underline pointer-coarse:min-h-11';
+
+/** What each alert link asks the player to do */
+const ALERT_ACTION: Record<string, string> = {
+  '/bank': 'Open the bank',
+  '/equipment': 'Repair',
+  '/grooming': 'Groom runs',
+  '/staff/hire': 'Hire staff',
+};
+
+/** Top roadmap ideas with a vote button; same endpoint and reward as /roadmap */
+function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
+  const [items, setItems] = useState(initial);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const vote = async (id: number) => {
+    if (busy !== null) return;
+    setBusy(id);
+    try {
+      const { field, token } = csrf();
+      const fd = new FormData();
+      fd.append(field, token);
+      const res = await fetch(`/roadmap/vote/${id}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        setItems((prev) => prev.map((it) => (it.id === id ? { ...it, voted: Boolean(data.voted), upvotes: data.upvotes } : it)));
+        setNote(data.message ? { text: data.message, ok: true } : null);
+      } else {
+        setNote({ text: data?.message ?? 'Your vote did not go through. Try again.', ok: false });
+      }
+    } catch {
+      setNote({ text: 'Your vote did not go through. Check your connection and try again.', ok: false });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (items.length === 0) {
+    return (
+      <p className="text-muted">
+        No open ideas yet. <a href="/roadmap" className="text-link underline-offset-4 hover:underline">Suggest one</a>.
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <ul className="space-y-1.5">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant={it.voted ? 'primary' : 'secondary'}
+              onPress={() => vote(it.id)}
+              isDisabled={busy !== null}
+              aria-pressed={it.voted}
+              aria-label={`${it.voted ? 'Remove your vote for' : 'Vote for'} ${it.title}, ${it.upvotes} votes`}
+              className="min-w-14 shrink-0 tabular-nums"
+            >
+              <Icon name="fa-chevron-up" className="text-xs" />
+              {it.upvotes}
+            </Button>
+            <a href={`/roadmap#item-${it.id}`} className="line-clamp-2 text-foreground underline-offset-4 hover:underline">
+              {it.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {note && (
+        <p role="status" className={note.ok ? 'text-success' : 'text-danger'}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** One figure: label, big tabular number, optional note */
+function Stat({ label, value, tone = 'text-foreground', note, big = false, className = '' }: { label: string; value: ReactNode; tone?: string; note?: ReactNode; big?: boolean; className?: string }) {
+  return (
+    <div className={`min-w-0 ${className}`}>
+      <dt className="text-sm text-muted">{label}</dt>
+      <dd className={`font-semibold tabular-nums whitespace-nowrap ${big ? 'text-3xl' : 'text-xl'} ${tone}`}>{value}</dd>
+      {note && <dd className="text-xs text-muted">{note}</dd>}
+    </div>
+  );
+}
+
+/** Small figures inside widgets */
+function MiniStat({ label, value, tone = 'text-foreground' }: { label: string; value: ReactNode; tone?: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="truncate text-xs text-muted">{label}</dt>
+      <dd className={`text-lg font-semibold tabular-nums ${tone}`}>{value}</dd>
+    </div>
+  );
+}
+
+/** Empty widget: why it's empty and the one action that fills it */
+function WidgetEmpty({ children, href, action }: { children: ReactNode; href: string; action: string }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-muted">{children}</p>
+      <a href={href} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+        {action}
+      </a>
+    </div>
+  );
+}
+
+/** "Tmrw" / "+3d" from the server, spelled out where there's room */
+function forecastLabel(label: string): { short: string; long: string } {
+  if (label === 'Tmrw') return { short: 'Tmrw', long: 'Tomorrow' };
+  const n = /^\+(\d+)d$/.exec(label)?.[1];
+  return n ? { short: `+${n}d`, long: `In ${n} days` } : { short: label, long: label };
+}
+
+/** The resort snow board (DESIGN.md): dark header strip, light paper panel, big numbers. Same look in both themes */
+function WeatherBoard({ w }: { w: DashboardData['weather_mini'] }) {
+  const ink = 'text-[oklch(26%_0.04_260)]';
+  const soft = 'text-[oklch(42%_0.03_260)]';
+  const hasEstimate = w.forecast.some((fc) => fc.tempFormatted.startsWith('~'));
+  return (
+    <div className={`overflow-hidden rounded-lg bg-[oklch(97%_0.006_250)] ${ink}`}>
+      <div className="flex items-center justify-between gap-3 bg-[oklch(24%_0.03_260)] px-3 py-2 text-white">
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <Icon name={w.icon} />
+          {w.condition_name}
+        </span>
+        <span className="text-xs text-white/80">Now</span>
+      </div>
+      <dl className="grid grid-cols-3 gap-px bg-[oklch(88%_0.01_250)]">
+        {[
+          { label: 'Temp', value: w.tempFormatted },
+          { label: 'Base', value: w.snowBaseFormatted },
+          { label: 'Wind', value: w.windFormatted },
+        ].map((s) => (
+          <div key={s.label} className="min-w-0 bg-[oklch(97%_0.006_250)] px-2 py-2 @xs:px-3">
+            <dt className={`text-xs ${soft}`}>{s.label}</dt>
+            <dd className="text-base font-bold tabular-nums @xs:text-xl @md:text-2xl">{s.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {w.forecast.length > 0 && (
+        <div className="border-t border-[oklch(88%_0.01_250)] px-3 py-2">
+          <ol aria-label="Next days" className="grid grid-cols-5 gap-1 text-center">
+            {w.forecast.map((fc) => {
+              const l = forecastLabel(fc.label);
+              return (
+                <li key={fc.label} className="min-w-0">
+                  <span className={`block text-xs ${soft}`}>
+                    <span className="@md:hidden" aria-hidden="true">{l.short}</span>
+                    <span className="sr-only @md:not-sr-only">{l.long}</span>
+                  </span>
+                  <Icon name={fc.icon} className="my-1 text-[oklch(45%_0.2_260)]" />
+                  <span className="sr-only">{fc.condition}, </span>
+                  <span className="block text-sm font-semibold tabular-nums">{fc.tempFormatted}</span>
+                </li>
+              );
+            })}
+          </ol>
+          {hasEstimate && <p className={`mt-1 text-xs ${soft}`}>~ is the middle of the forecast range.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A line of the cash flow ledger with a bar sized against the biggest line */
+function LedgerRow({ label, text, amount, max, sign }: { label: string; text: string; amount?: number; max: number; sign: '+' | '-' }) {
+  const zero = amount === 0;
+  const pct = amount !== undefined && amount > 0 && max > 0 ? Math.round((amount / max) * 100) : null;
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+      <span className="truncate text-muted">{label}</span>
+      <span className={`text-right font-semibold tabular-nums ${zero ? 'text-muted' : sign === '+' ? 'text-success' : 'text-danger'}`}>
+        {zero ? '' : sign === '+' ? '+' : '−'}
+        {text}
+      </span>
+      {pct !== null && (
+        <span aria-hidden="true" className="col-span-2 h-1.5 overflow-hidden rounded-full bg-default">
+          <span className={`block h-full rounded-full ${sign === '+' ? 'bg-success' : 'bg-danger'}`} style={{ width: `${pct}%` }} />
+        </span>
+      )}
+    </li>
+  );
+}
+
+/** Widgets whose empty state already links to their page, so the header link would repeat it */
+function isEmptyWidget(key: string, d: DashboardData): boolean {
+  switch (key) {
+    case 'overview':
+      return d.overview.totalSlopes === 0 && d.overview.totalLifts === 0;
+    case 'parking_mini':
+      return d.parking_mini.lotsCount === 0;
+    case 'terrain_parks_mini':
+      return d.terrain_parks_mini.openCount === 0 && d.terrain_parks_mini.buildingCount === 0;
+    case 'staff_mini':
+      return d.staff_mini.staffCount === 0;
+    case 'equipment_mini':
+      return d.equipment_mini.unitsCount === 0;
+    case 'insurance_mini':
+      return d.insurance_mini.activeCount === 0;
+    case 'marketing_mini':
+      return d.marketing_mini.campaignsCount === 0;
+    default:
+      return false;
+  }
+}
+
+function WidgetBody({
+  widgetKey,
+  data,
+  activity,
+  tonightLabel,
+}: {
+  widgetKey: string;
+  data: DashboardData;
+  activity: DashboardData['activity'];
+  tonightLabel: string;
+}) {
+  switch (widgetKey) {
+    case 'stats': {
+      const a = data.stats.amounts;
+      const max = a ? Math.max(a.tickets, a.buildings, a.payroll, a.running, a.loans) : 0;
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-muted">{tonightLabel}</p>
+          <ul className="grid gap-x-6 gap-y-2.5 @xl:grid-cols-2">
+            <LedgerRow label="Lift tickets" text={data.stats.tickets} amount={a?.tickets} max={max} sign="+" />
+            <LedgerRow label="Shops, food and lodging" text={data.stats.buildingsFood} amount={a?.buildings} max={max} sign="+" />
+            <LedgerRow label="Staff pay" text={data.stats.payroll} amount={a?.payroll} max={max} sign="-" />
+            <LedgerRow label="Running costs" text={data.stats.runningCosts} amount={a?.running} max={max} sign="-" />
+            <LedgerRow label="Loan payments" text={data.stats.loanPayments} amount={a?.loans} max={max} sign="-" />
+          </ul>
+          <div className="flex items-baseline justify-between border-t border-border pt-2">
+            <span className="font-semibold">Net for the day</span>
+            <span className={`text-lg font-semibold tabular-nums ${data.stats.isProfit ? 'text-success' : 'text-danger'}`}>
+              {data.stats.isProfit ? '+' : ''}
+              {data.stats.dailyProfit}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    case 'overview': {
+      const o = data.overview;
+      if (o.totalSlopes === 0 && o.totalLifts === 0) {
+        return (
+          <WidgetEmpty href="/map" action="Open the trail map">
+            No runs or lifts yet. Draw your first run on the trail map.
+          </WidgetEmpty>
+        );
+      }
+      const diffs: Difficulty[] = ['green', 'blue', 'black', 'double_black'];
+      return (
+        <div className="space-y-3">
+          <dl className="grid grid-cols-2 gap-3 @md:grid-cols-4">
+            <div className="min-w-0">
+              <dt className="text-xs text-muted">Runs open</dt>
+              <dd className="text-lg font-semibold tabular-nums">
+                {o.slopeCount} <span className="text-sm font-normal text-muted">of {o.totalSlopes}</span>
+              </dd>
+              <dd className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm">
+                {diffs
+                  .filter((d) => (o.slopesByDiff[d] ?? 0) > 0)
+                  .map((d) => (
+                    <span key={d} className="inline-flex items-center gap-1 tabular-nums">
+                      <TrailSign difficulty={d} />
+                      {o.slopesByDiff[d]}
+                    </span>
+                  ))}
+              </dd>
+            </div>
+            <MiniStat label="Lifts open" value={<>{o.liftCount} <span className="text-sm font-normal text-muted">of {o.totalLifts}</span></>} />
+            <MiniStat label="Staff" value={o.staffCount} />
+            <MiniStat label="Buildings" value={o.buildingCount} />
+          </dl>
+          <Meter
+            value={o.avgSlopeCondition}
+            maxValue={100}
+            size="sm"
+            color={o.avgSlopeCondition >= 70 ? 'success' : o.avgSlopeCondition >= 40 ? 'warning' : 'danger'}
+            className="gap-1"
+          >
+            <div className="flex w-full items-baseline justify-between gap-2 text-sm">
+              <span className="text-muted">Average run condition</span>
+              <span className="tabular-nums">
+                <span className="font-semibold">{o.avgSlopeCondition}%</span>
+                <span className={o.ungroomedCount > 0 ? 'text-warning' : 'text-muted'}> · {o.trailConditionNote}</span>
+              </span>
+            </div>
+            <Meter.Track>
+              <Meter.Fill />
+            </Meter.Track>
+          </Meter>
+        </div>
+      );
+    }
+
+    case 'season': {
+      const s = data.season;
+      const left = Math.max(0, s.seasonLength - s.seasonProgress);
+      return (
+        <div className="space-y-2">
+          <ProgressBar value={s.seasonPct} maxValue={100} size="sm" aria-label={`Season ${s.seasonNum}: day ${s.seasonProgress} of ${s.seasonLength}`} className="gap-1.5">
+            <div className="flex w-full items-baseline justify-between gap-2">
+              <span className="text-lg font-semibold tabular-nums">
+                Day {s.seasonProgress} <span className="text-sm font-normal text-muted">of {s.seasonLength}</span>
+              </span>
+              <span className="text-sm tabular-nums text-muted">{left === 0 ? 'Last day' : plural(left, 'day', 'days') + ' left'}</span>
+            </div>
+            <ProgressBar.Track>
+              <ProgressBar.Fill className="bg-gradient-to-r from-[oklch(60%_0.15_245)] to-[oklch(45%_0.2_260)]" />
+            </ProgressBar.Track>
+          </ProgressBar>
+          <p className="flex flex-wrap justify-between gap-x-4 text-sm text-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="fa-snowflake" className="text-link" />
+              Winter: days 1 to {s.winterDays}
+            </span>
+            {s.summerDays > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name="fa-sun" className="text-warning" />
+                Summer: {plural(s.summerDays, 'day', 'days')}
+              </span>
+            )}
+          </p>
+        </div>
+      );
+    }
+
+    case 'weather_mini':
+      return <WeatherBoard w={data.weather_mini} />;
+
+    case 'actions': {
+      const links: [string, string, string][] = [
+        ['/map', 'fa-map', 'Trail map'],
+        ['/resort', 'fa-sliders', 'Resort'],
+        ['/tickets', 'fa-ticket', 'Tickets'],
+        ['/finances', 'fa-coins', 'Finances'],
+        ['/staff', 'fa-users', 'Staff'],
+        ['/grooming', 'fa-tractor', 'Grooming'],
+        ['/snowmaking', 'fa-snowflake', 'Snowmaking'],
+        ['/buildings', 'fa-hotel', 'Buildings'],
+        ['/parking', 'fa-square-parking', 'Parking'],
+        ['/equipment', 'fa-toolbox', 'Equipment'],
+        ['/marketing', 'fa-bullhorn', 'Marketing'],
+        ['/alliances', 'fa-handshake', 'Alliances'],
+      ];
+      return (
+        <ul className="grid grid-cols-2 gap-1 @md:grid-cols-3 @3xl:grid-cols-6">
+          {links.map(([href, icon, label]) => (
+            <li key={href}>
+              <a href={href} className="flex min-h-10 items-center gap-2 rounded-md px-2 text-foreground hover:bg-default pointer-coarse:min-h-11">
+                <Icon name={icon} className="w-4 text-muted" />
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    case 'achievements_mini': {
+      const a = data.achievements_mini;
+      if (a.unclaimed > 0) {
+        return (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-lg font-semibold text-warning">{plural(a.unclaimed, 'reward', 'rewards')} to claim</p>
+              <p className="text-muted">{plural(a.completed, 'achievement', 'achievements')} completed</p>
+            </div>
+            <a href="/achievements" className={buttonVariants({ variant: 'primary', size: 'sm' })}>
+              Claim rewards
+            </a>
+          </div>
+        );
+      }
+      return (
+        <div>
+          <p className="text-lg font-semibold tabular-nums">{plural(a.completed, 'achievement', 'achievements')} completed</p>
+          <p className="text-muted">No rewards waiting.</p>
+        </div>
+      );
+    }
+
+    case 'achievements':
+      return data.achievements.length === 0 ? (
+        <p className="text-muted">Every achievement is complete.</p>
+      ) : (
+        <ul className="space-y-3">
+          {data.achievements.map((ach) => (
+            <li key={ach.id}>
+              <Meter value={ach.progressPct} maxValue={100} size="sm" color="accent" className="gap-1">
+                <div className="flex w-full items-baseline justify-between gap-2">
+                  <span className="truncate">{ach.name}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted">
+                    {ach.progressFormatted} of {ach.targetFormatted}
+                  </span>
+                </div>
+                <Meter.Track>
+                  <Meter.Fill />
+                </Meter.Track>
+              </Meter>
+            </li>
+          ))}
+        </ul>
+      );
+
+    case 'activity':
+      return activity.length === 0 ? (
+        <p className="text-muted">Nothing yet. Builds, hires and each night's results show up here.</p>
+      ) : (
+        <ol className="divide-y divide-border">
+          {activity.map((log, i) => (
+            <li key={log.id || i} className="flex items-start gap-2.5 py-1.5 first:pt-0 last:pb-0">
+              <Icon name={log.icon} className="mt-0.5 w-4 text-muted" />
+              <span className="min-w-0 flex-1">{log.message}</span>
+              <span className="shrink-0 text-xs tabular-nums text-muted">Day {log.game_day}</span>
+            </li>
+          ))}
+        </ol>
+      );
+
+    case 'parking_mini': {
+      const p = data.parking_mini;
+      if (p.lotsCount === 0) {
+        return (
+          <WidgetEmpty href="/parking" action="Build a parking lot">
+            No parking yet. Skiers who drive need somewhere to park.
+          </WidgetEmpty>
+        );
+      }
+      return (
+        <div className="space-y-2">
+          <dl className="grid grid-cols-2 gap-3">
+            <MiniStat label="Lots" value={p.lotsCount} />
+            <MiniStat label="Spaces" value={p.spacesFormatted} />
+          </dl>
+          <Meter value={Math.min(100, p.pct)} maxValue={100} size="sm" color={p.pct > 90 ? 'danger' : p.pct > 70 ? 'warning' : 'accent'} className="gap-1">
+            <div className="flex w-full justify-between text-sm">
+              <span className="text-muted">Full</span>
+              <span className="font-semibold tabular-nums">{p.pct}%</span>
+            </div>
+            <Meter.Track>
+              <Meter.Fill />
+            </Meter.Track>
+          </Meter>
+        </div>
+      );
+    }
+
+    case 'terrain_parks_mini': {
+      const t = data.terrain_parks_mini;
+      if (t.openCount === 0 && t.buildingCount === 0) {
+        return (
+          <WidgetEmpty href="/terrain-parks" action="Build a park">
+            No terrain parks yet.
+          </WidgetEmpty>
+        );
+      }
+      return (
+        <dl className="grid grid-cols-3 gap-3">
+          <MiniStat label="Open" value={t.openCount} />
+          <MiniStat label="Building" value={t.buildingCount} />
+          <MiniStat label="Riders" value={t.ridersFormatted} />
+        </dl>
+      );
+    }
+
+    case 'finances_mini': {
+      const f = data.finances_mini;
+      return (
+        <dl className="space-y-1.5">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted">Earned</dt>
+            <dd className="tabular-nums">{f.incomeText}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted">Spent</dt>
+            <dd className="tabular-nums">{f.expensesText}</dd>
+          </div>
+          <div className="flex justify-between gap-3 border-t border-border pt-1.5 font-semibold">
+            <dt>Net since opening</dt>
+            <dd className={`tabular-nums ${f.isNetPositive ? 'text-success' : 'text-danger'}`}>{f.netProfitText}</dd>
+          </div>
+        </dl>
+      );
+    }
+
+    case 'staff_mini': {
+      const s = data.staff_mini;
+      if (s.staffCount === 0) {
+        return (
+          <WidgetEmpty href="/staff/hire" action="Hire staff">
+            No one hired yet. Lifts and runs need staff to open.
+          </WidgetEmpty>
+        );
+      }
+      return (
+        <div className="space-y-3">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 @md:grid-cols-3">
+            {s.roles.map((r) => (
+              <div key={r.role} className="flex justify-between gap-2">
+                <dt className="truncate text-muted">{r.roleName}</dt>
+                <dd className="font-semibold tabular-nums">{r.count}</dd>
+              </div>
+            ))}
+          </dl>
+          <Meter value={s.avgMorale} maxValue={100} size="sm" color={s.moraleTone} className="gap-1">
+            <div className="flex w-full justify-between text-sm">
+              <span className="text-muted">Average morale</span>
+              <span className="font-semibold tabular-nums">{s.avgMorale}%</span>
+            </div>
+            <Meter.Track>
+              <Meter.Fill />
+            </Meter.Track>
+          </Meter>
+        </div>
+      );
+    }
+
+    case 'equipment_mini':
+      return data.equipment_mini.unitsCount === 0 ? (
+        <WidgetEmpty href="/equipment" action="Buy equipment">
+          No machines yet. Snowcats groom your runs overnight.
+        </WidgetEmpty>
+      ) : (
+        <dl>
+          <MiniStat label="Machines" value={data.equipment_mini.unitsCount} />
+        </dl>
+      );
+
+    case 'insurance_mini':
+      return data.insurance_mini.activeCount === 0 ? (
+        <WidgetEmpty href="/insurance" action="See policies">
+          No active policy.
+        </WidgetEmpty>
+      ) : (
+        <dl className="grid grid-cols-2 gap-3">
+          <MiniStat label="Active" value={data.insurance_mini.activeCount} tone="text-success" />
+          <MiniStat label="Not taken" value={data.insurance_mini.availableCount} />
+        </dl>
+      );
+
+    case 'loans_mini':
+      return data.loans_mini.activeCount === 0 ? (
+        <p className="text-muted">No loans to pay off.</p>
+      ) : (
+        <dl>
+          <MiniStat label={`Left to pay on ${plural(data.loans_mini.activeCount, 'loan', 'loans')}`} value={data.loans_mini.totalDebtText} tone="text-danger" />
+        </dl>
+      );
+
+    case 'marketing_mini':
+      return data.marketing_mini.campaignsCount === 0 ? (
+        <WidgetEmpty href="/marketing" action="Start a campaign">
+          No campaign running.
+        </WidgetEmpty>
+      ) : (
+        <dl>
+          <MiniStat label="Campaigns running" value={data.marketing_mini.campaignsCount} />
+        </dl>
+      );
+
+    case 'roadmap_mini':
+      return <RoadmapMini initial={data.roadmap_mini?.items ?? []} />;
+
+    default:
+      return null;
+  }
+}
+
+const SIZE_LABEL: Record<WidgetSize, string> = { small: 'Small', medium: 'Medium', large: 'Wide' };
+
+/**
+ * Column spans for a row-filling grid: each widget takes its size's width (capped at the column count),
+ * and the last widget of a row that the next one doesn't fit in stretches to fill it, so saved layouts
+ * that mix medium and wide widgets don't leave holes. Saved sizes stay as they are.
+ */
+function packSpans(sizes: WidgetSize[], cols: number, stretch = true): number[] {
+  const unit: Record<WidgetSize, number> = { small: 1, medium: 2, large: cols };
+  if (!stretch) return sizes.map((size) => Math.min(cols, unit[size]));
+  const spans: number[] = [];
+  let used = 0;
+  sizes.forEach((size, i) => {
+    const w = Math.min(cols, unit[size]);
+    if (used > 0 && used + w > cols) {
+      spans[i - 1] += cols - used;
+      used = 0;
+    }
+    spans.push(w);
+    used = (used + w) % cols;
+  });
+  if (used > 0 && spans.length > 0) spans[spans.length - 1] += cols - used;
+  return spans;
+}
+
+// Full class names so Tailwind keeps them
+const SM_SPAN = ['', 'sm:col-span-1', 'sm:col-span-2'];
+const LG_SPAN = ['', 'lg:col-span-1', 'lg:col-span-2', 'lg:col-span-3', 'lg:col-span-4'];
 
 export default function DashboardPage({
   hero,
@@ -511,6 +1039,7 @@ export default function DashboardPage({
   data,
   demoEstimate,
   launchChecklist,
+  settleTime = '00:05',
 }: DashboardPageProps) {
   const [widgets, setWidgets] = useState<DashboardWidgetItem[]>(initialWidgets);
   const [editMode, setEditMode] = useState(false);
@@ -518,1694 +1047,665 @@ export default function DashboardPage({
   const [draggingKey, setDraggingKey] = useState<string | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [librarySearch, setLibrarySearch] = useState('');
-  const [libraryCategory, setLibraryCategory] = useState<'all' | 'operations' | 'financial' | 'activity'>('all');
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'info' | 'warning' | 'error' } | null>(null);
+  const [libraryCategory, setLibraryCategory] = useState<'all' | WidgetCategory>('all');
+  const [announcement, setAnnouncement] = useState('');
   const dragItem = useRef<string | null>(null);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editHeading = useRef<HTMLHeadingElement>(null);
 
-  const showToast = (msg: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToast({ msg, type });
-    toastTimeoutRef.current = setTimeout(() => {
-      setToast(null);
-    }, 3200);
-  };
-
-  // Poll recent activity every 30 seconds
+  // Refresh recent activity every 30 seconds while the tab is visible
   useEffect(() => {
     const poll = async () => {
       if (document.hidden) return;
       try {
-        const res = await fetch('/dashboard/activity', {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        if (res.ok) {
-          const fresh = await res.json();
-          if (Array.isArray(fresh) && fresh.length > 0) {
-            setActivityLogs(
-              fresh.slice(0, 6).map((log: any) => ({
-                id: Number(log.id || 0),
-                message: String(log.message || ''),
-                icon: String(log.icon || 'circle-dot').replace(/^fa-(solid|regular|brands)\s+/, ''),
-                game_day: Number(log.game_day || hero.gameDay),
-              })),
-            );
-          }
+        const res = await fetch('/dashboard/activity', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) return;
+        const fresh = await res.json();
+        if (Array.isArray(fresh) && fresh.length > 0) {
+          setActivityLogs(
+            fresh.slice(0, 6).map((log: { id?: number; message?: string; icon?: string; game_day?: number }) => ({
+              id: Number(log.id || 0),
+              message: String(log.message || ''),
+              icon: String(log.icon || 'fa-circle-dot').replace(/^fa-(solid|regular|brands)\s+/, ''),
+              game_day: Number(log.game_day || hero.gameDay),
+            })),
+          );
         }
-      } catch (err) {
-        console.error('Failed to poll dashboard activity', err);
+      } catch {
+        // Offline or signed out: keep the list we have
       }
     };
-
     const interval = setInterval(poll, 30000);
     return () => clearInterval(interval);
   }, [hero.gameDay]);
 
-  const sendPost = async (url: string, payload: Record<string, any>) => {
+  useEffect(() => {
+    if (editMode) editHeading.current?.focus();
+  }, [editMode]);
+
+  const nameOf = (key: string) => WIDGET_META[key]?.name ?? widgets.find((w) => w.widget_key === key)?.name ?? key;
+
+  /** Posts a layout change; on failure puts the layout back and says so */
+  const save = async (url: string, payload: Record<string, unknown>, rollback: DashboardWidgetItem[]): Promise<boolean> => {
     const { field, token } = csrf();
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': token,
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token },
         body: JSON.stringify({ ...payload, [field]: token }),
       });
-      return await res.json();
-    } catch (err) {
-      console.error(`POST ${url} failed`, err);
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) return true;
+    } catch {
+      // handled below
     }
+    setWidgets(rollback);
+    toast.danger('Your layout change was not saved. Reload the page and try again.');
+    return false;
   };
-
-  const handleResize = async (key: string, size: 'small' | 'medium' | 'large') => {
-    setWidgets((prev) =>
-      prev.map((w) => (w.widget_key === key ? { ...w, size } : w)),
-    );
-    showToast(`Resized '${WIDGET_META[key]?.name || key}' to ${size}`, 'info');
-    await sendPost('/dashboard/resize-widget', { widget_key: key, size });
-  };
-
-  const handleToggle = async (key: string, visible: boolean) => {
-    setWidgets((prev) =>
-      prev.map((w) => (w.widget_key === key ? { ...w, visible } : w)),
-    );
-    showToast(
-      visible
-        ? `Added '${WIDGET_META[key]?.name || key}' to dashboard`
-        : `Hidden '${WIDGET_META[key]?.name || key}'`,
-      'info',
-    );
-    await sendPost('/dashboard/toggle-widget', { widget_key: key });
-  };
-
-  const handleMove = async (key: string, direction: 'up' | 'down') => {
-    const visibleWidgets = widgets.filter((w) => w.visible);
-    const index = visibleWidgets.findIndex((w) => w.widget_key === key);
-    if (index === -1) return;
-
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= visibleWidgets.length) return;
-
-    const reordered = [...visibleWidgets];
-    const temp = reordered[index];
-    reordered[index] = reordered[swapIndex];
-    reordered[swapIndex] = temp;
-
-    const newOrderKeys = reordered.map((w) => w.widget_key);
-
-    setWidgets((prev) => {
-      const hiddenOnes = prev.filter((w) => !w.visible);
-      return [...reordered, ...hiddenOnes].map((w, idx) => ({ ...w, sort_order: idx }));
-    });
-
-    await sendPost('/dashboard/reorder-widgets', { order: newOrderKeys });
-  };
-
-  const handleDragStart = (key: string) => {
-    dragItem.current = key;
-    setDraggingKey(key);
-  };
-
-  const handleDragEnd = () => {
-    dragItem.current = null;
-    setDraggingKey(null);
-    setDragOverKey(null);
-  };
-
-  const handleDrop = async (targetKey: string) => {
-    const sourceKey = dragItem.current;
-    setDraggingKey(null);
-    setDragOverKey(null);
-    dragItem.current = null;
-
-    if (!sourceKey || sourceKey === targetKey) return;
-
-    const visibleWidgets = widgets.filter((w) => w.visible);
-    const sourceIdx = visibleWidgets.findIndex((w) => w.widget_key === sourceKey);
-    const targetIdx = visibleWidgets.findIndex((w) => w.widget_key === targetKey);
-    if (sourceIdx === -1 || targetIdx === -1) return;
-
-    const reordered = [...visibleWidgets];
-    const [moved] = reordered.splice(sourceIdx, 1);
-    reordered.splice(targetIdx, 0, moved);
-
-    const newOrderKeys = reordered.map((w) => w.widget_key);
-
-    setWidgets((prev) => {
-      const hiddenOnes = prev.filter((w) => !w.visible);
-      return [...reordered, ...hiddenOnes].map((w, idx) => ({ ...w, sort_order: idx }));
-    });
-
-    showToast(`Moved ${WIDGET_META[sourceKey]?.name || sourceKey}`, 'info');
-    await sendPost('/dashboard/reorder-widgets', { order: newOrderKeys });
-  };
-
-  const handleApplyPreset = async (preset: LayoutPreset) => {
-    const presetMap = new Map(preset.widgets.map((p, idx) => [p.key, { size: p.size, order: idx }]));
-
-    const newWidgets: DashboardWidgetItem[] = [];
-
-    // Add preset widgets in exact preset order
-    for (const p of preset.widgets) {
-      const existing = widgets.find((w) => w.widget_key === p.key);
-      const aw = availableWidgets.find((a) => a.key === p.key);
-      if (existing) {
-        newWidgets.push({
-          ...existing,
-          visible: true,
-          size: p.size,
-          sort_order: newWidgets.length,
-        });
-      } else if (aw) {
-        newWidgets.push({
-          widget_key: aw.key,
-          name: aw.name,
-          icon: aw.icon,
-          size: p.size,
-          visible: true,
-          sort_order: newWidgets.length,
-        });
-      }
-    }
-
-    // Add remaining widgets marked hidden
-    for (const w of widgets) {
-      if (!presetMap.has(w.widget_key)) {
-        newWidgets.push({
-          ...w,
-          visible: false,
-          sort_order: newWidgets.length,
-        });
-      }
-    }
-
-    setWidgets(newWidgets);
-    showToast(`Applied "${preset.name}" preset layout`, 'success');
-
-    await sendPost('/dashboard/batch-update-widgets', {
-      widgets: newWidgets.map((w) => ({
-        widget_key: w.widget_key,
-        visible: w.visible ? 1 : 0,
-        size: w.size,
-        sort_order: w.sort_order,
-      })),
-    });
-  };
-
-  const handleResetLayout = async () => {
-    const res = await sendPost('/dashboard/reset-widgets', {});
-    if (res?.success || res?.csrf_hash) {
-      const resetWidgets: DashboardWidgetItem[] = availableWidgets.map((aw, idx) => ({
-        widget_key: aw.key,
-        name: aw.name,
-        icon: aw.icon,
-        size: (aw.size as 'small' | 'medium' | 'large') || 'medium',
-        visible: Boolean(aw.default),
-        sort_order: idx,
-      }));
-      setWidgets(resetWidgets);
-      showToast('Dashboard reset to default layout', 'success');
-    } else {
-      showToast('Failed to reset dashboard', 'error');
-    }
-  };
-
-  const handleRestoreAll = async () => {
-    const allVisible = widgets.map((w, idx) => ({
-      ...w,
-      visible: true,
-      sort_order: idx,
-    }));
-    setWidgets(allVisible);
-    showToast('All widgets added to dashboard', 'success');
-
-    await sendPost('/dashboard/batch-update-widgets', {
-      widgets: allVisible.map((w) => ({
-        widget_key: w.widget_key,
-        visible: 1,
-        size: w.size,
-        sort_order: w.sort_order,
-      })),
-    });
-  };
-
-  const filteredLibraryWidgets = useMemo(() => {
-    return widgets.filter((w) => {
-      const meta = WIDGET_META[w.widget_key];
-      if (libraryCategory !== 'all') {
-        if (!meta || meta.category !== libraryCategory) {
-          return false;
-        }
-      }
-      if (librarySearch.trim()) {
-        const query = librarySearch.toLowerCase().trim();
-        const nameMatch = w.name.toLowerCase().includes(query);
-        const descMatch = meta?.description.toLowerCase().includes(query) ?? false;
-        const catMatch = meta?.categoryLabel.toLowerCase().includes(query) ?? false;
-        return nameMatch || descMatch || catMatch;
-      }
-      return true;
-    });
-  }, [widgets, libraryCategory, librarySearch]);
 
   const visibleWidgets = widgets.filter((w) => w.visible);
   const hiddenWidgets = widgets.filter((w) => !w.visible);
+  // While customizing, widgets show their chosen width; otherwise rows are filled
+  const smSpans = packSpans(visibleWidgets.map((w) => w.size), 2, !editMode);
+  const lgSpans = packSpans(visibleWidgets.map((w) => w.size), 4, !editMode);
+
+  const reorder = (keys: string[], prev: DashboardWidgetItem[]) => {
+    const byKey = new Map(prev.map((w) => [w.widget_key, w]));
+    const shown = keys.map((k) => byKey.get(k)!).filter(Boolean);
+    const hidden = prev.filter((w) => !w.visible);
+    return [...shown, ...hidden].map((w, idx) => ({ ...w, sort_order: idx }));
+  };
+
+  const handleResize = (key: string, size: WidgetSize) => {
+    const prev = widgets;
+    setWidgets(prev.map((w) => (w.widget_key === key ? { ...w, size } : w)));
+    setAnnouncement(`${nameOf(key)} is now ${SIZE_LABEL[size].toLowerCase()}.`);
+    void save('/dashboard/resize-widget', { widget_key: key, size }, prev);
+  };
+
+  const handleToggle = (key: string, visible: boolean) => {
+    const prev = widgets;
+    setWidgets(prev.map((w) => (w.widget_key === key ? { ...w, visible } : w)));
+    setAnnouncement(visible ? `${nameOf(key)} added to the dashboard.` : `${nameOf(key)} hidden.`);
+    // The server flips the stored value, so only send when it really changes
+    if (prev.find((w) => w.widget_key === key)?.visible !== visible) {
+      void save('/dashboard/toggle-widget', { widget_key: key }, prev);
+    }
+  };
+
+  const moveTo = (key: string, to: number) => {
+    const keys = visibleWidgets.map((w) => w.widget_key);
+    const from = keys.indexOf(key);
+    if (from === -1 || to < 0 || to >= keys.length || from === to) return;
+    keys.splice(from, 1);
+    keys.splice(to, 0, key);
+    const prev = widgets;
+    setWidgets(reorder(keys, prev));
+    setAnnouncement(`${nameOf(key)} moved to position ${to + 1} of ${keys.length}.`);
+    void save('/dashboard/reorder-widgets', { order: keys }, prev);
+  };
+
+  const handleDrop = (targetKey: string) => {
+    const sourceKey = dragItem.current;
+    dragItem.current = null;
+    setDraggingKey(null);
+    setDragOverKey(null);
+    if (!sourceKey || sourceKey === targetKey) return;
+    moveTo(sourceKey, visibleWidgets.findIndex((w) => w.widget_key === targetKey));
+  };
+
+  const handleApplyPreset = async (preset: LayoutPreset) => {
+    const prev = widgets;
+    const inPreset = new Set(preset.widgets.map((p) => p.key));
+    const next: DashboardWidgetItem[] = [];
+    for (const p of preset.widgets) {
+      const existing = prev.find((w) => w.widget_key === p.key);
+      const aw = availableWidgets.find((a) => a.key === p.key);
+      if (existing) next.push({ ...existing, visible: true, size: p.size, sort_order: next.length });
+      else if (aw) next.push({ widget_key: aw.key, name: aw.name, icon: aw.icon, size: p.size, visible: true, sort_order: next.length });
+    }
+    for (const w of prev) {
+      if (!inPreset.has(w.widget_key)) next.push({ ...w, visible: false, sort_order: next.length });
+    }
+    setWidgets(next);
+    const ok = await save(
+      '/dashboard/batch-update-widgets',
+      { widgets: next.map((w) => ({ widget_key: w.widget_key, visible: w.visible ? 1 : 0, size: w.size, sort_order: w.sort_order })) },
+      prev,
+    );
+    if (ok) toast.success(`Switched to the ${preset.name} layout.`);
+  };
+
+  const handleResetLayout = async () => {
+    setResetOpen(false);
+    const prev = widgets;
+    const ok = await save('/dashboard/reset-widgets', {}, prev);
+    if (!ok) return;
+    setWidgets(
+      availableWidgets.map((aw, idx) => ({
+        widget_key: aw.key,
+        name: aw.name,
+        icon: aw.icon,
+        size: (aw.size as WidgetSize) || 'medium',
+        visible: Boolean(aw.default),
+        sort_order: idx,
+      })),
+    );
+    toast.success('Dashboard back to the default layout.');
+  };
+
+  const handleShowAll = async () => {
+    const prev = widgets;
+    const next = prev.map((w, idx) => ({ ...w, visible: true, sort_order: idx }));
+    setWidgets(next);
+    const ok = await save(
+      '/dashboard/batch-update-widgets',
+      { widgets: next.map((w) => ({ widget_key: w.widget_key, visible: 1, size: w.size, sort_order: w.sort_order })) },
+      prev,
+    );
+    if (ok) setAnnouncement('Every widget is on the dashboard.');
+  };
+
+  const filteredLibraryWidgets = useMemo(() => {
+    const q = librarySearch.toLowerCase().trim();
+    return widgets.filter((w) => {
+      const meta = WIDGET_META[w.widget_key];
+      if (libraryCategory !== 'all' && meta?.category !== libraryCategory) return false;
+      if (!q) return true;
+      return [meta?.name ?? w.name, meta?.description ?? '', meta ? CATEGORY_LABEL[meta.category] : ''].some((s) => s.toLowerCase().includes(q));
+    });
+  }, [widgets, libraryCategory, librarySearch]);
+
+  // Where tonight's numbers come from: the live forecast, the first-night estimate, or the last settle
+  const mode: 'forecast' | 'estimate' | 'last' = kpis.visitorsSettledFormatted ? 'forecast' : demoEstimate ? 'estimate' : 'last';
+  const tonightTitle = mode === 'last' ? 'Last night' : 'Tonight';
+  const tonightNote =
+    mode === 'forecast'
+      ? `Forecast for the ${settleTime} settle, from your resort as it is now. Builds and price changes show here at once.`
+      : mode === 'estimate'
+        ? `Estimate for your first night. Skiers come and money moves at ${settleTime} server time.`
+        : `Skiers and income from the last settle at ${settleTime}, with today's costs.`;
+  const ledgerNote = mode === 'forecast' ? 'Forecast for tonight' : mode === 'estimate' ? 'Estimate for your first night' : "Last night's income, today's costs";
+
+  // Things the player should act on, most urgent first
+  const todo: { key: string; tone: 'danger' | 'warning' | 'accent'; icon: string; msg: string; href: string; action: string }[] = [
+    ...alerts
+      .slice()
+      .sort((a, b) => (a.type === b.type ? 0 : a.type === 'danger' ? -1 : 1))
+      .map((a, i) => ({ key: `alert-${i}`, tone: a.type, icon: a.icon, msg: a.msg, href: a.link, action: ALERT_ACTION[a.link] ?? 'Fix' })),
+    ...(unclaimedAchievements > 0
+      ? [{ key: 'ach', tone: 'warning' as const, icon: 'fa-award', msg: `${plural(unclaimedAchievements, 'achievement reward', 'achievement rewards')} to claim.`, href: '/achievements', action: 'Claim' }]
+      : []),
+    ...(hero.bonusAvailable && !launchChecklist?.show
+      ? [{ key: 'bonus', tone: 'accent' as const, icon: 'fa-gift', msg: "Today's daily bonus is waiting.", href: '/daily-bonus', action: 'Claim bonus' }]
+      : []),
+  ];
+  const toneText = { danger: 'text-danger', warning: 'text-warning', accent: 'text-link' } as const;
+
+  const checklist = launchChecklist?.show ? launchChecklist : null;
+  const nextStep = checklist?.steps.find((s) => !s.done);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-4 text-foreground lg:p-8">
-      {demoEstimate && (
-        <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="flex items-center gap-2 font-semibold">
-              <Icon name="fa-moon" className="text-accent" />
-              Tonight's estimate
-            </h2>
-            <p className="text-sm text-muted">
-              About {demoEstimate.skiers} skiers, {demoEstimate.income} income, {demoEstimate.costs} costs. Your first day is settled at 00:05 server time.
-            </p>
-          </div>
-          <a href="/tickets" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-4 text-sm font-medium text-accent-foreground">
-            Check your ticket prices
+    // Links styled as buttons don't get HeroUI's focus ring (it keys off react-aria's data-focus-visible), so give every link one
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 text-foreground lg:p-8 [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-[var(--focus)] [&_a:focus-visible]:ring-offset-2 [&_a:focus-visible]:ring-offset-[var(--background)]">
+      {/* Title row */}
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{hero.resortMapName}</h1>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+            <Chip size="sm" variant="soft" color={hero.resortOpen ? 'success' : 'danger'}>
+              <Icon name={hero.resortOpen ? 'fa-circle-check' : 'fa-circle-xmark'} />
+              {hero.resortOpen ? 'Open' : 'Closed'}
+            </Chip>
+            <span className="tabular-nums">
+              Season {hero.seasonNum}, day {hero.gameDay}
+            </span>
+            <span className="tabular-nums">
+              {hero.totalLifts + hero.totalSlopes === 0
+                ? 'No lifts or runs built yet'
+                : `${hero.liftCount} of ${plural(hero.totalLifts, 'lift', 'lifts')} and ${hero.slopeCount} of ${plural(hero.totalSlopes, 'run', 'runs')} open`}
+            </span>
+            <span className="tabular-nums">Reputation {hero.repScoreFormatted}</span>
+          </p>
+        </div>
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button variant="secondary" onPress={() => setEditMode((v) => !v)} aria-pressed={editMode} className="flex-1 sm:flex-none">
+            <Icon name={editMode ? 'fa-check' : 'fa-sliders'} />
+            {editMode ? 'Done' : 'Customize'}
+          </Button>
+          <a href="/map" className={buttonVariants({ variant: 'primary', className: 'flex-1 sm:flex-none' })}>
+            <Icon name="fa-map" />
+            Trail map
           </a>
-        </section>
-      )}
-      {/* Mountain Hero Header */}
-      <header
-        className="map-hero-bg relative overflow-hidden rounded-2xl border border-border bg-slate-900 p-5 text-white shadow-sm lg:p-6"
-        data-webp={hero.resortMapWebpLow ? '' : undefined}
-        style={
-          {
-            '--hero-jpg': `url('/img/${hero.resortMapKey}_low.jpg')`,
-            '--hero-webp': `url('/img/${hero.resortMapKey}_low.webp')`,
-          } as React.CSSProperties
-        }
-      >
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/80">
-              <span
-                className={`rounded px-2 py-0.5 font-mono text-[11px] font-bold ${
-                  hero.resortOpen ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-                }`}
-              >
-                {hero.resortOpen ? 'Open' : 'Closed'}
-              </span>
-              <span>
-                Season {hero.seasonNum} &middot; Day {hero.gameDay}
-              </span>
-            </div>
-            <h1 className="text-2xl font-black text-white drop-shadow sm:text-3xl">
-              {hero.resortMapName}
-            </h1>
-            <p className="text-xs text-white/80">
-              <strong className="text-white">{hero.liftCount}</strong> of{' '}
-              {hero.totalLifts} lifts &middot;{' '}
-              <strong className="text-white">{hero.slopeCount}</strong> of{' '}
-              {hero.totalSlopes} slopes &middot;{' '}
-              <strong className="font-mono text-white">{hero.repScoreFormatted}</strong> reputation
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {hero.bonusAvailable && (
-              <a
-                href="/daily-bonus"
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-warning/40 bg-warning px-3 text-xs font-bold text-black shadow hover:opacity-90"
-              >
-                <Icon name="fa-gift" />
-                Daily Bonus
-              </a>
-            )}
-            <a
-              href="/map"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-white/20 bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-90"
-            >
-              <Icon name="fa-map" />
-              Trail Map
-            </a>
-            <a
-              href="/resort"
-              className="inline-flex min-h-11 items-center rounded-lg border border-white/25 bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/20"
-            >
-              Resort Settings
-            </a>
-            <Button
-              variant={editMode ? 'primary' : 'secondary'}
-              size="sm"
-              onPress={() => setEditMode(!editMode)}
-              className="min-h-11 font-bold"
-            >
-              <Icon name={editMode ? 'fa-check' : 'fa-sliders'} className="mr-1.5" />
-              {editMode ? 'Done Customizing' : 'Customize'}
-            </Button>
-          </div>
         </div>
       </header>
 
-      {/* Sticky Floating Command Bar */}
-      {editMode && (
-        <div className="sticky top-3 z-30 mb-2 rounded-2xl border border-accent/40 bg-surface/95 p-3.5 shadow-xl backdrop-blur-md">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            {/* Status chip & widget counter */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-bold text-accent">
-                <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                Customize Mode
-              </span>
-              <span className="text-xs text-muted">
-                <strong className="font-mono text-foreground">{visibleWidgets.length}</strong> active &middot;{' '}
-                <strong className="font-mono text-foreground">{hiddenWidgets.length}</strong> hidden
-              </span>
+      {/* First days: the steps that open the resort */}
+      {checklist && (
+        <section aria-labelledby="launch-title" className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="launch-title" className="text-lg font-semibold">
+                {checklist.isComplete ? 'Your resort is ready' : 'Open your resort'}
+              </h2>
+              <p className="text-sm text-muted">
+                {checklist.isComplete
+                  ? `Every first step is done. Your first skiers arrive at ${settleTime} server time.`
+                  : `Finish these and your first skiers arrive at ${settleTime} server time.`}
+              </p>
             </div>
-
-            {/* Presets */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-semibold text-muted mr-1 hidden sm:inline">Presets:</span>
-              {PRESETS.map((p) => (
-                <Button
-                  key={p.id}
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onPress={() => handleApplyPreset(p)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium"
+            <ProgressBar
+              value={checklist.completed}
+              maxValue={Math.max(1, checklist.total)}
+              size="sm"
+              color={checklist.isComplete ? 'success' : 'accent'}
+              aria-label="Steps done"
+              className="w-full gap-1 sm:w-48"
+            >
+              <span className="w-full text-right text-sm tabular-nums text-muted">
+                {checklist.completed} of {checklist.total} done
+              </span>
+              <ProgressBar.Track>
+                <ProgressBar.Fill />
+              </ProgressBar.Track>
+            </ProgressBar>
+          </div>
+          <ol className="mt-4 divide-y divide-border">
+            {checklist.steps.map((step, idx) => (
+              <li key={step.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
+                <span
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                    step.done ? 'bg-success text-success-foreground' : 'bg-default text-foreground'
+                  }`}
                 >
-                  <Icon name={p.icon} className="text-accent text-[11px]" />
-                  <span>{p.name}</span>
+                  {step.done ? <Icon name="fa-check" /> : <span aria-hidden="true">{idx + 1}</span>}
+                  <span className="sr-only">{step.done ? 'Done:' : `Step ${idx + 1}:`}</span>
+                </span>
+                <div className="min-w-0 flex-1 basis-48">
+                  <h3 className={`font-semibold ${step.done ? 'text-muted line-through decoration-1' : ''}`}>{step.title}</h3>
+                  {!step.done && <p className="text-sm text-muted">{step.description}</p>}
+                </div>
+                {!step.done && (
+                  <a
+                    href={step.link}
+                    className={buttonVariants({
+                      variant: step === nextStep ? 'primary' : 'secondary',
+                      size: 'sm',
+                      className: 'ml-11 sm:ml-0',
+                    })}
+                  >
+                    {step.cta}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {/* Tonight + what needs doing */}
+      <div className={`grid gap-4 ${todo.length > 0 ? 'lg:grid-cols-3' : ''}`}>
+        <section aria-labelledby="tonight-title" className={`@container rounded-xl border border-border bg-surface p-4 sm:p-5 ${todo.length > 0 ? 'lg:col-span-2' : ''}`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="tonight-title" className="text-lg font-semibold">
+              {tonightTitle}
+            </h2>
+            {mode !== 'last' && (
+              <Chip size="sm" variant="soft" color="default">
+                {mode === 'forecast' ? 'Forecast' : 'Estimate'}
+              </Chip>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-muted">{tonightNote}</p>
+
+          {!hero.resortOpen && (
+            <p className="mt-3 flex flex-wrap items-center gap-x-2 text-sm text-danger">
+              <Icon name="fa-circle-xmark" />
+              Your resort is closed, so no skiers come.
+              <a href="/resort" className={quietLink}>
+                Open the resort
+              </a>
+            </p>
+          )}
+
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 @2xl:grid-cols-4">
+            {/* Net gets its own row on narrow panels so big amounts never wrap */}
+            <Stat label="Net" value={kpis.dailyProfitText} tone={kpis.dailyProfitPositive ? 'text-success' : 'text-danger'} big className="col-span-2 @md:col-span-1" />
+            <Stat
+              label="Skiers"
+              value={kpis.dailyVisitorsFormatted}
+              big
+              className="col-span-2 @md:col-span-1"
+              note={mode === 'forecast' ? `Last night ${kpis.visitorsSettledFormatted}` : undefined}
+            />
+            <Stat
+              label="Income"
+              value={kpis.incomeText}
+              note={
+                kpis.ticketPriceText === 'Not set' ? (
+                  <a href="/tickets" className="text-link underline-offset-4 hover:underline">
+                    Set a day pass price
+                  </a>
+                ) : (
+                  `Day pass ${kpis.ticketPriceText}`
+                )
+              }
+            />
+            <Stat
+              label="Costs"
+              value={kpis.expensesText}
+              note={kpis.totalLiftCapacityFormatted !== '0' ? `Lifts carry ${kpis.totalLiftCapacityFormatted} an hour` : undefined}
+            />
+          </dl>
+
+          {kpis.visitorsTurnedAway > 0 && (
+            <p className="mt-4 flex flex-wrap items-center gap-x-2 border-t border-border pt-3 text-sm">
+              <Icon name="fa-triangle-exclamation" className="text-warning" />
+              <span>
+                <strong className="font-semibold tabular-nums text-warning">{plural(kpis.visitorsTurnedAway, 'skier', 'skiers')}</strong> turned away: your lifts are full.
+              </span>
+              <a href="/map" className={quietLink}>
+                Add lift capacity
+              </a>
+            </p>
+          )}
+        </section>
+
+        {todo.length > 0 && (
+          <section aria-labelledby="todo-title" className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+            <h2 id="todo-title" className="text-lg font-semibold">
+              Needs you
+            </h2>
+            <ul className="mt-2 divide-y divide-border">
+              {todo.map((t) => (
+                <li key={t.key} className="flex items-start gap-3 py-2.5 last:pb-0">
+                  <Icon name={t.icon} className={`mt-0.5 w-4 ${toneText[t.tone]}`} />
+                  <span className="min-w-0 flex-1 text-sm">{t.msg}</span>
+                  <a href={t.href} className={buttonVariants({ variant: t.tone === 'danger' ? 'primary' : 'secondary', size: 'sm', className: 'shrink-0' })}>
+                    {t.action}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      {/* Customize bar */}
+      {editMode && (
+        <section aria-labelledby="customize-title" className="rounded-xl border border-accent bg-surface p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="customize-title" ref={editHeading} tabIndex={-1} className="text-lg font-semibold outline-none">
+                Customize your dashboard
+              </h2>
+              <p className="text-sm text-muted">
+                Drag widgets, or use the arrows, to change the order. Changes save as you go. When you are done, a widget next to a gap widens to fill it. {visibleWidgets.length} shown, {hiddenWidgets.length} hidden.
+              </p>
+            </div>
+            <Button variant="primary" onPress={() => setEditMode(false)}>
+              <Icon name="fa-check" />
+              Done
+            </Button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span id="preset-label" className="text-sm text-muted">
+              Layouts:
+            </span>
+            <div role="group" aria-labelledby="preset-label" className="flex flex-wrap gap-2">
+              {PRESETS.map((p) => (
+                <Button key={p.id} size="sm" variant="tertiary" onPress={() => handleApplyPreset(p)}>
+                  {p.name}
                 </Button>
               ))}
             </div>
-
-            {/* Actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onPress={() => setLibraryOpen(true)}
-                className="font-semibold text-xs"
-              >
-                <Icon name="fa-plus" className="mr-1 text-accent text-xs" />
-                Add Widgets
-                {hiddenWidgets.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-accent/20 px-1.5 py-0.2 font-mono text-[10px] font-bold text-accent">
-                    {hiddenWidgets.length}
-                  </span>
-                )}
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                onPress={handleResetLayout}
-                className="font-semibold text-xs"
-              >
-                <Icon name="fa-rotate-left" className="mr-1 text-muted text-xs" />
-                Reset Defaults
-              </Button>
-
-              <Button
-                size="sm"
-                variant="primary"
-                onPress={() => setEditMode(false)}
-                className="font-bold text-xs"
-              >
-                <Icon name="fa-check" className="mr-1 text-xs" />
-                Done
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Resort Launch Checklist */}
-      {launchChecklist?.show && (
-        <section
-          aria-labelledby="launch-checklist-title"
-          className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5"
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent text-xs">
-                  <Icon name="fa-flag-checkered" />
-                </span>
-                <h2 id="launch-checklist-title" className="text-base font-bold text-foreground">
-                  Resort Launch Checklist
-                </h2>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    launchChecklist.isComplete ? 'bg-success/15 text-success' : 'bg-accent/15 text-accent'
-                  }`}
-                >
-                  {launchChecklist.isComplete
-                    ? 'Ready for opening'
-                    : `${launchChecklist.completed} of ${launchChecklist.total} complete`}
-                </span>
-              </div>
-              <p className="text-xs text-muted">
-                {launchChecklist.isComplete
-                  ? 'All starter milestones complete. Your mountain operations are running and visitors arrive tonight at 00:05.'
-                  : 'Complete these essential milestones to open your slopes and welcome your first skiers tonight at 00:05.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-36 sm:w-44 space-y-1">
-                <div className="flex justify-between text-[11px] font-mono text-muted">
-                  <span>Launch readiness</span>
-                  <span className="font-semibold text-foreground">{launchChecklist.progressPct}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-surface-secondary border border-border">
-                  <div
-                    className={`h-full transition-all duration-200 ${
-                      launchChecklist.isComplete ? 'bg-success' : 'bg-accent'
-                    }`}
-                    style={{ width: `${Math.max(5, launchChecklist.progressPct)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            {launchChecklist.steps.map((step, idx) => (
-              <div
-                key={step.id}
-                className={`flex flex-col justify-between rounded-xl border p-3.5 transition-colors ${
-                  step.done
-                    ? 'border-success/30 bg-success/5'
-                    : 'border-border bg-surface-secondary/40 hover:bg-surface-secondary'
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm ${
-                        step.done ? 'bg-success/20 text-success' : 'bg-default text-muted'
-                      }`}
-                    >
-                      <Icon name={step.done ? 'fa-check' : step.icon} />
-                    </span>
-                    {step.done ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
-                        <Icon name="fa-circle-check" />
-                        Done
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-medium text-muted">Step {idx + 1}</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {step.title}
-                    </h3>
-                    <p className="mt-1 text-xs text-muted leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-2">
-                  {step.done ? (
-                    <a
-                      href={step.link}
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-surface px-3 text-xs font-medium text-muted hover:text-foreground transition-colors"
-                    >
-                      View on {step.id === 'bonus' ? 'Town Hall' : (step.id === 'tickets' ? 'Tickets' : 'Trail Map')}
-                    </a>
-                  ) : (
-                    <a
-                      href={step.link}
-                      className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 text-xs font-bold text-accent-foreground shadow hover:opacity-95 transition-opacity"
-                    >
-                      <span>{step.cta}</span>
-                      <Icon name="fa-arrow-right" className="text-[11px]" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+            <span className="hidden h-6 w-px bg-border sm:block" aria-hidden="true" />
+            <Button size="sm" variant="secondary" onPress={() => setLibraryOpen(true)}>
+              <Icon name="fa-plus" />
+              Add widgets{hiddenWidgets.length > 0 ? ` (${hiddenWidgets.length})` : ''}
+            </Button>
+            <Button size="sm" variant="ghost" onPress={() => setResetOpen(true)}>
+              <Icon name="fa-rotate-left" />
+              Reset
+            </Button>
           </div>
         </section>
       )}
 
-      {/* Alerts */}
-      {(alerts.length > 0 || unclaimedAchievements > 0) && (
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {alerts.map((alert, idx) => (
-            <a
-              key={idx}
-              href={alert.link}
-              className={`flex items-center justify-between rounded-xl border p-3 text-xs font-medium transition-colors hover:bg-surface-raised ${
-                alert.type === 'danger'
-                  ? 'border-danger/40 bg-danger/10 text-danger'
-                  : 'border-warning/40 bg-warning/10 text-warning'
-              }`}
-            >
-              <div className="flex items-center gap-2 truncate">
-                <Icon name={alert.icon} />
-                <span className="truncate">{alert.msg}</span>
-              </div>
-              <span className="underline shrink-0 ml-2">Fix &rarr;</span>
-            </a>
-          ))}
-          {unclaimedAchievements > 0 && (
-            <a
-              href="/achievements"
-              className="flex min-h-11 items-center justify-between rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs font-medium text-warning hover:bg-surface-raised"
-            >
-              <div className="flex items-center gap-2">
-                <Icon name="fa-award" />
-                <span>
-                  {unclaimedAchievements} achievement reward
-                  {unclaimedAchievements > 1 ? 's' : ''} ready to claim
-                </span>
-              </div>
-              <span className="underline shrink-0 ml-2">Claim &rarr;</span>
-            </a>
-          )}
-        </div>
-      )}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
-      {/* 4 Core KPIs */}
-      <section className="grid grid-cols-2 gap-3 rounded-2xl border border-border bg-surface p-4 shadow-sm lg:grid-cols-4 lg:p-5">
-        {/* Cash */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Icon name="fa-sack-dollar" className="text-accent" />
-            <span>Cash</span>
-          </div>
-          <div
-            className={`font-mono text-2xl font-bold tracking-tight ${
-              kpis.cashNegative ? 'text-danger' : 'text-foreground'
-            }`}
-          >
-            {kpis.cashBalanceText}
-          </div>
-          <div className="truncate text-[11px] text-muted">
-            Lifetime{' '}
-            <span
-              className={`font-mono font-semibold ${
-                kpis.netProfitPositive ? 'text-success' : 'text-danger'
-              }`}
-            >
-              {kpis.netProfitText}
-            </span>{' '}
-            &middot; {kpis.genepisBalFormatted} genepis
-          </div>
-        </div>
-
-        {/* Net Per Day */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Icon name="fa-chart-line" className="text-accent" />
-            <span>Net Per Day</span>
-          </div>
-          <div
-            className={`font-mono text-2xl font-bold tracking-tight ${
-              kpis.dailyProfitPositive ? 'text-success' : 'text-danger'
-            }`}
-          >
-            {kpis.dailyProfitText}
-          </div>
-          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-border">
-            <div
-              className="bg-success"
-              style={{ width: `${Math.max(5, Math.min(95, kpis.incomePercent))}%` }}
-            />
-            <div className="flex-1 bg-danger/80" />
-          </div>
-          <div className="truncate font-mono text-[11px] text-muted">
-            {kpis.incomeText} in &middot; {kpis.expensesText} out
-          </div>
-        </div>
-
-        {/* Visitors per day: what the next tick will bring with the resort as it is now */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Icon name="fa-person-skiing" className="text-accent" />
-            <span>{kpis.visitorsSettledFormatted ? 'Visitors Per Day' : 'Visitors Today'}</span>
-          </div>
-          <div className="font-mono text-2xl font-bold tracking-tight text-foreground">
-            {kpis.dailyVisitorsFormatted}
-          </div>
-          <div className="truncate text-[11px] text-muted">
-            {kpis.visitorsSettledFormatted ? <>Today {kpis.visitorsSettledFormatted} &middot; ticket {kpis.ticketPriceText}</>
-              : <>Ticket {kpis.ticketPriceText} &middot; lifts {kpis.totalLiftCapacityFormatted}/hr</>}
-            {kpis.visitorsTurnedAway > 0 && <> &middot; <span className="text-warning">{kpis.visitorsTurnedAway.toLocaleString()} turned away by lifts</span></>}
-          </div>
-        </div>
-
-        {/* Weather */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <Icon name={kpis.weather.icon} className="text-accent" />
-            <span>Weather</span>
-          </div>
-          <div className="font-mono text-2xl font-bold tracking-tight text-foreground">
-            {kpis.weather.tempFormatted}
-          </div>
-          <div className="truncate text-[11px] text-muted">
-            {kpis.weather.condition_name} &middot; {kpis.weather.snowBaseFormatted} base
-          </div>
-        </div>
-      </section>
-
-      {/* Empty State */}
+      {/* No widgets */}
       {visibleWidgets.length === 0 && (
-        <div className="rounded-2xl border-2 border-dashed border-border bg-surface p-10 text-center shadow-xs">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-            <Icon name="fa-table-cells" className="text-2xl" />
-          </div>
-          <h3 className="mt-4 text-base font-bold text-foreground">
-            No Widgets Currently Visible
-          </h3>
-          <p className="mx-auto mt-1 max-w-md text-xs text-muted">
-            All widgets are hidden. Choose a preset layout above, reset to default, or open the widget library to choose which ones to display.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border px-4 py-10 text-center">
+          <Icon name="fa-table-cells" className="text-3xl text-muted" />
+          <p className="font-semibold">Every widget is hidden</p>
+          <p className="max-w-sm text-sm text-muted">Add the ones you want, or go back to the default layout.</p>
+          <div className="flex flex-wrap justify-center gap-2">
             <Button
               variant="primary"
-              size="sm"
-              onPress={handleResetLayout}
-              className="font-bold text-xs"
-            >
-              <Icon name="fa-rotate-left" className="mr-1 text-xs" />
-              Restore Default Layout
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onPress={() => {
                 setEditMode(true);
                 setLibraryOpen(true);
               }}
-              className="font-semibold text-xs"
             >
-              <Icon name="fa-plus" className="mr-1 text-accent text-xs" />
-              Browse Widget Library
+              <Icon name="fa-plus" />
+              Add widgets
+            </Button>
+            <Button variant="secondary" onPress={handleResetLayout}>
+              Default layout
             </Button>
           </div>
         </div>
       )}
 
-      {/* Widget Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {visibleWidgets.map((w, idx) => {
-          const colSpan =
-            w.size === 'large'
-              ? 'sm:col-span-2 lg:col-span-4'
-              : w.size === 'medium'
-                ? 'sm:col-span-2'
-                : 'sm:col-span-1';
-
-          const isDropTarget = dragOverKey === w.widget_key && draggingKey !== w.widget_key;
-          const isDragging = draggingKey === w.widget_key;
-
-          return (
-            <div
-              key={w.widget_key}
-              draggable={editMode}
-              onDragStart={() => handleDragStart(w.widget_key)}
-              onDragEnter={() => setDragOverKey(w.widget_key)}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (dragOverKey !== w.widget_key) setDragOverKey(w.widget_key);
-              }}
-              onDragEnd={handleDragEnd}
-              onDrop={() => handleDrop(w.widget_key)}
-              className={`flex flex-col justify-between rounded-2xl border bg-surface p-4 shadow-sm transition-all duration-150 ${colSpan} ${
-                isDropTarget
-                  ? 'ring-2 ring-accent border-accent bg-accent/5 scale-[1.01]'
-                  : isDragging
-                    ? 'opacity-40 border-dashed border-accent scale-[0.99]'
-                    : editMode
-                      ? 'border-dashed border-accent/40 hover:border-accent'
-                      : 'border-border'
-              }`}
-            >
-              {/* Header */}
-              <div className="mb-3 border-b border-border pb-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 font-semibold text-foreground">
-                    {editMode && (
-                      <span
-                        className="cursor-grab active:cursor-grabbing text-muted hover:text-foreground flex items-center gap-1.5"
-                        title="Drag to reorder"
-                      >
-                        <Icon name="fa-grip-vertical" className="text-xs" />
-                        <span className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted">
-                          #{idx + 1}
-                        </span>
-                      </span>
-                    )}
-                    <Icon name={w.icon} className="text-accent text-xs" />
-                    <span className="text-sm">{w.name}</span>
-                  </div>
-
-                  {/* Normal mode shortcut link or customize controls */}
-                  {editMode ? (
-                    <div className="flex items-center gap-1.5">
-                      {/* Move Up/Down buttons for accessible mobile reorder */}
-                      <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface-raised p-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          isIconOnly
-                          onPress={() => handleMove(w.widget_key, 'up')}
-                          isDisabled={idx === 0}
-                          aria-label={`Move ${w.name} up`}
-                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
-                        >
-                          <Icon name="fa-chevron-up" className="text-[10px]" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          isIconOnly
-                          onPress={() => handleMove(w.widget_key, 'down')}
-                          isDisabled={idx === visibleWidgets.length - 1}
-                          aria-label={`Move ${w.name} down`}
-                          className="size-7 min-h-7 min-w-7 rounded text-muted hover:text-foreground"
-                        >
-                          <Icon name="fa-chevron-down" className="text-[10px]" />
-                        </Button>
-                      </div>
-
-                      {/* Size buttons */}
-                      <div className="inline-flex items-center rounded-lg border border-border bg-surface-raised p-0.5 text-[10px]">
-                        {(['small', 'medium', 'large'] as const).map((sz) => (
-                          <Button
-                            key={sz}
-                            type="button"
-                            size="sm"
-                            variant={w.size === sz ? 'primary' : 'ghost'}
-                            onPress={() => handleResize(w.widget_key, sz)}
-                            aria-label={`Resize ${w.name} to ${sz}`}
-                            className="rounded px-1.5 py-0.5 min-h-6 min-w-6 text-[10px] font-bold uppercase"
-                          >
-                            {sz[0]}
-                          </Button>
-                        ))}
-                      </div>
-
-                      {/* Hide button */}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        isIconOnly
-                        onPress={() => handleToggle(w.widget_key, false)}
-                        aria-label={`Hide ${w.name} widget`}
-                        className="size-7 min-h-7 min-w-7 rounded-lg text-muted hover:text-danger"
-                      >
-                        <Icon name="fa-eye-slash" className="text-xs" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      {w.widget_key === 'stats' && (
-                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Ledger &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'overview' && (
-                        <a href="/map" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Trail Map &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'weather_mini' && (
-                        <a href="/weather" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Forecast &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'achievements_mini' && (
-                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          All &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'achievements' && (
-                        <a href="/achievements" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          All &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'activity' && (
-                        <a href="/activity" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Full log &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'parking_mini' && (
-                        <a href="/parking" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Manage &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'terrain_parks_mini' && (
-                        <a href="/terrain-parks" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Manage &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'finances_mini' && (
-                        <a href="/finances" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Details &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'staff_mini' && (
-                        <a href="/staff" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Manage &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'equipment_mini' && (
-                        <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Fleet &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'insurance_mini' && (
-                        <a href="/insurance" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Policies &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'loans_mini' && (
-                        <a href="/bank" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Bank &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'marketing_mini' && (
-                        <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          Campaigns &rarr;
-                        </a>
-                      )}
-                      {w.widget_key === 'roadmap_mini' && (
-                        <a href="/roadmap" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                          All ideas &rarr;
-                        </a>
-                      )}
-                    </div>
+      {/* Widgets: 1 column on phones, 2 on tablets, 4 on desktops; each widget lays itself out by its own width */}
+      {visibleWidgets.length > 0 && (
+        <ul aria-label="Widgets" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleWidgets.map((w, idx) => {
+            const meta = WIDGET_META[w.widget_key];
+            const name = meta?.name ?? w.name;
+            const span = `${SM_SPAN[smSpans[idx]]} ${LG_SPAN[lgSpans[idx]]}`;
+            const isDropTarget = dragOverKey === w.widget_key && draggingKey !== w.widget_key;
+            const isDragging = draggingKey === w.widget_key;
+            const titleId = `widget-${w.widget_key}`;
+            return (
+              <li
+                key={w.widget_key}
+                aria-labelledby={titleId}
+                draggable={editMode}
+                onDragStart={(e) => {
+                  dragItem.current = w.widget_key;
+                  setDraggingKey(w.widget_key);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnter={() => editMode && setDragOverKey(w.widget_key)}
+                onDragOver={(e) => {
+                  if (!editMode) return;
+                  e.preventDefault();
+                  if (dragOverKey !== w.widget_key) setDragOverKey(w.widget_key);
+                }}
+                onDragEnd={() => {
+                  dragItem.current = null;
+                  setDraggingKey(null);
+                  setDragOverKey(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(w.widget_key);
+                }}
+                className={`@container flex flex-col rounded-xl border bg-surface p-4 text-sm transition-colors duration-150 ${span} ${
+                  isDropTarget
+                    ? 'border-accent ring-2 ring-accent'
+                    : isDragging
+                      ? 'border-dashed border-accent opacity-50'
+                      : editMode
+                        ? 'cursor-grab border-dashed border-border'
+                        : 'border-border'
+                }`}
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <h2 id={titleId} className="flex min-w-0 items-center gap-2 text-base font-semibold">
+                    {editMode && <Icon name="fa-grip-vertical" className="text-muted" />}
+                    <Icon name={meta?.icon ?? w.icon} className="w-4 text-muted" />
+                    <span className="truncate">{name}</span>
+                  </h2>
+                  {!editMode && meta?.link && !isEmptyWidget(w.widget_key, data) && (
+                    <a href={meta.link.href} className={quietLink}>
+                      {meta.link.label}
+                    </a>
                   )}
                 </div>
-              </div>
 
-              {/* Widget Body Content */}
-              <div className="flex-1 text-xs">
-                {/* Stats Widget */}
-                {w.widget_key === 'stats' && (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                    <div>
-                      <div className="text-muted">Tickets</div>
-                      <div className="font-mono text-sm font-semibold text-success">
-                        +{data.stats.tickets}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Buildings &amp; Food</div>
-                      <div className="font-mono text-sm font-semibold text-success">
-                        +{data.stats.buildingsFood}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Payroll</div>
-                      <div className="font-mono text-sm font-semibold text-danger">
-                        -{data.stats.payroll}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Upkeep &amp; Running</div>
-                      <div className="font-mono text-sm font-semibold text-danger">
-                        -{data.stats.runningCosts}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Loan Payments</div>
-                      <div className="font-mono text-sm font-semibold text-danger">
-                        -{data.stats.loanPayments}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Net Daily</div>
-                      <div
-                        className={`font-mono text-sm font-bold ${
-                          data.stats.isProfit ? 'text-success' : 'text-danger'
-                        }`}
+                {editMode && (
+                  <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border pb-3">
+                    <div role="group" aria-label={`Order of ${name}`} className="flex gap-1">
+                      <Button size="sm" variant="tertiary" isIconOnly onPress={() => moveTo(w.widget_key, idx - 1)} isDisabled={idx === 0} aria-label={`Move ${name} earlier`}>
+                        <Icon name="fa-arrow-up" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        isIconOnly
+                        onPress={() => moveTo(w.widget_key, idx + 1)}
+                        isDisabled={idx === visibleWidgets.length - 1}
+                        aria-label={`Move ${name} later`}
                       >
-                        {data.stats.dailyProfit}
-                      </div>
+                        <Icon name="fa-arrow-down" />
+                      </Button>
                     </div>
-                  </div>
-                )}
-
-                {/* Overview Mountain Widget */}
-                {w.widget_key === 'overview' && (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-                    <div>
-                      <div className="text-muted">Slopes Open</div>
-                      <div className="font-mono text-sm font-bold text-foreground">
-                        {data.overview.slopeCount}{' '}
-                        <span className="text-xs font-normal text-muted">
-                          / {data.overview.totalSlopes}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5 text-[10px]">
-                        <span className="flex items-center gap-0.5 text-emerald-600 font-mono">
-                          &bull; {data.overview.slopesByDiff.green || 0}
-                        </span>
-                        <span className="flex items-center gap-0.5 text-blue-600 font-mono">
-                          &bull; {data.overview.slopesByDiff.blue || 0}
-                        </span>
-                        <span className="flex items-center gap-0.5 text-foreground font-mono">
-                          &bull; {data.overview.slopesByDiff.black || 0}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Lifts Open</div>
-                      <div className="font-mono text-sm font-bold text-foreground">
-                        {data.overview.liftCount}{' '}
-                        <span className="text-xs font-normal text-muted">
-                          / {data.overview.totalLifts}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Staff</div>
-                      <div className="font-mono text-sm font-bold text-foreground">
-                        {data.overview.staffCount}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Buildings</div>
-                      <div className="font-mono text-sm font-bold text-foreground">
-                        {data.overview.buildingCount}
-                      </div>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <div className="text-muted">Trail Condition</div>
-                      <div
-                        className={`font-mono text-sm font-bold ${
-                          data.overview.avgSlopeCondition >= 70 ? 'text-foreground' : 'text-warning'
-                        }`}
-                      >
-                        {data.overview.avgSlopeCondition}%
-                      </div>
-                      <div className="text-[10px] text-muted">
-                        {data.overview.trailConditionNote}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Season Progress Widget */}
-                {w.widget_key === 'season' && (
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span>
-                        Season {data.season.seasonNum} &middot; Day {data.season.seasonProgress} of{' '}
-                        {data.season.seasonLength}
-                      </span>
-                      <span className="font-mono font-bold text-accent">
-                        {data.season.seasonPct}% Complete
-                      </span>
-                    </div>
-                    <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full bg-accent"
-                        style={{ width: `${data.season.seasonPct}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-muted">
-                      <span>
-                        <Icon name="fa-snowflake" className="text-info mr-1" />
-                        Winter &middot; {data.season.winterDays} days
-                      </span>
-                      {data.season.summerDays > 0 && (
-                        <span>
-                          Summer &middot; {data.season.summerDays} days
-                          <Icon name="fa-sun" className="text-warning ml-1" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Weather Mini Widget */}
-                {w.widget_key === 'weather_mini' && (
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        name={data.weather_mini.icon}
-                        className="text-2xl text-accent"
-                      />
-                      <div>
-                        <div className="font-mono text-xl font-bold text-foreground">
-                          {data.weather_mini.tempFormatted}
-                        </div>
-                        <div className="text-[11px] text-muted">
-                          {data.weather_mini.condition_name} &middot; Wind{' '}
-                          {data.weather_mini.windFormatted}
-                        </div>
-                      </div>
-                    </div>
-                    {data.weather_mini.forecast.length > 0 && (
-                      <div className="flex items-center divide-x divide-border font-mono text-[11px]">
-                        {data.weather_mini.forecast.map((fc, i) => (
-                          <div key={i} className="px-2 text-center first:pl-0">
-                            <div className="text-[10px] text-muted">{fc.label}</div>
-                            <Icon name={fc.icon} className="my-0.5 text-accent" />
-                            <div className="font-semibold">{fc.tempFormatted}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Manage Quick Actions Widget */}
-                {w.widget_key === 'actions' && (
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-6">
-                    <a
-                      href="/map"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-map" className="text-accent" />
-                      <span>Trail Map</span>
-                    </a>
-                    <a
-                      href="/resort"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-sliders" className="text-accent" />
-                      <span>Resort</span>
-                    </a>
-                    <a
-                      href="/finances"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-coins" className="text-accent" />
-                      <span>Finances</span>
-                    </a>
-                    <a
-                      href="/staff"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-users" className="text-accent" />
-                      <span>Staff</span>
-                    </a>
-                    <a
-                      href="/grooming"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-tractor" className="text-accent" />
-                      <span>Grooming</span>
-                    </a>
-                    <a
-                      href="/snowmaking"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-snowflake" className="text-accent" />
-                      <span>Snowmaking</span>
-                    </a>
-                    <a
-                      href="/buildings"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-hotel" className="text-accent" />
-                      <span>Buildings</span>
-                    </a>
-                    <a
-                      href="/parking"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-square-parking" className="text-accent" />
-                      <span>Parking</span>
-                    </a>
-                    <a
-                      href="/equipment"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-toolbox" className="text-accent" />
-                      <span>Equipment</span>
-                    </a>
-                    <a
-                      href="/marketing"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-bullhorn" className="text-accent" />
-                      <span>Marketing</span>
-                    </a>
-                    <a
-                      href="/alliances"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-handshake" className="text-accent" />
-                      <span>Alliances</span>
-                    </a>
-                    <a
-                      href="/vote"
-                      className="flex min-h-11 items-center gap-2 rounded-lg p-2 text-foreground hover:bg-default sm:min-h-0"
-                    >
-                      <Icon name="fa-check-to-slot" className="text-accent" />
-                      <span>Vote</span>
-                    </a>
-                  </div>
-                )}
-
-                {/* Achievements Alerts Widget */}
-                {w.widget_key === 'achievements_mini' && (
-                  <div>
-                    {data.achievements_mini.unclaimed > 0 ? (
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-semibold text-foreground">
-                            {data.achievements_mini.unclaimed} reward
-                            {data.achievements_mini.unclaimed > 1 ? 's' : ''} ready to claim
-                          </div>
-                          <div className="text-[11px] text-muted">
-                            {data.achievements_mini.completed} achievements unlocked so far
-                          </div>
-                        </div>
-                        <a
-                          href="/achievements"
-                          className="inline-flex min-h-11 items-center rounded-lg bg-warning px-3 font-bold text-black hover:opacity-90 sm:min-h-9"
+                    <div role="group" aria-label={`Width of ${name}`} className="flex gap-1">
+                      {(['small', 'medium', 'large'] as const).map((sz) => (
+                        <Button
+                          key={sz}
+                          size="sm"
+                          variant={w.size === sz ? 'primary' : 'tertiary'}
+                          aria-pressed={w.size === sz}
+                          onPress={() => w.size !== sz && handleResize(w.widget_key, sz)}
                         >
-                          Claim Rewards
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <div className="text-muted">Completed</div>
-                          <div className="font-mono text-base font-bold text-foreground">
-                            {data.achievements_mini.completed}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-muted">In Progress</div>
-                          <div className="font-mono text-base font-bold text-foreground">
-                            {data.achievements_mini.inProgressCount}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-muted">Unclaimed</div>
-                          <div className="font-mono text-base font-bold text-muted">0</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Achievements in Progress Widget */}
-                {w.widget_key === 'achievements' && (
-                  <div>
-                    {data.achievements.length === 0 ? (
-                      <p className="text-muted">All achievements completed.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {data.achievements.map((ach) => (
-                          <div key={ach.id} className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="truncate font-medium text-foreground">
-                                {ach.name}
-                              </span>
-                              <span className="font-mono text-[11px] text-muted">
-                                {ach.progressFormatted} / {ach.targetFormatted}
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
-                              <div
-                                className="h-full bg-accent"
-                                style={{ width: `${ach.progressPct}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Activity Feed Widget */}
-                {w.widget_key === 'activity' && (
-                  <div className="space-y-1.5">
-                    {activityLogs.length === 0 ? (
-                      <p className="text-muted">No recent activity recorded.</p>
-                    ) : (
-                      activityLogs.map((log, i) => (
-                        <div
-                          key={log.id || i}
-                          className="flex items-center justify-between gap-2 border-b border-border/40 pb-1 last:border-b-0"
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <Icon name={log.icon} className="text-xs text-accent shrink-0" />
-                            <span className="truncate text-foreground">{log.message}</span>
-                          </div>
-                          <span className="font-mono text-[10px] text-muted shrink-0">
-                            Day {log.game_day}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Parking Mini Widget */}
-                {w.widget_key === 'parking_mini' && (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <div className="text-muted">Lots</div>
-                        <div className="font-mono font-bold text-foreground">
-                          {data.parking_mini.lotsCount}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-muted">Spaces</div>
-                        <div className="font-mono font-bold text-foreground">
-                          {data.parking_mini.spacesFormatted}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-muted">Fullness</div>
-                        <div
-                          className={`font-mono font-bold ${
-                            data.parking_mini.pct > 90
-                              ? 'text-danger'
-                              : data.parking_mini.pct > 70
-                                ? 'text-warning'
-                                : 'text-foreground'
-                          }`}
-                        >
-                          {data.parking_mini.pct}%
-                        </div>
-                      </div>
+                          {SIZE_LABEL[sz]}
+                        </Button>
+                      ))}
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full bg-accent"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            Math.round(
-                              (data.parking_mini.totalOccupied / data.parking_mini.totalCap) * 100,
-                            ),
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Terrain Parks Mini Widget */}
-                {w.widget_key === 'terrain_parks_mini' && (
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <div className="text-muted">Open</div>
-                      <div className="font-mono font-bold text-foreground">
-                        {data.terrain_parks_mini.openCount}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Building</div>
-                      <div className="font-mono font-bold text-foreground">
-                        {data.terrain_parks_mini.buildingCount}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Riders</div>
-                      <div className="font-mono font-bold text-foreground">
-                        {data.terrain_parks_mini.ridersFormatted}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Finances Mini Widget */}
-                {w.widget_key === 'finances_mini' && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-muted">Income</span>
-                      <span className="font-mono font-medium">{data.finances_mini.incomeText}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted">Expenses</span>
-                      <span className="font-mono font-medium">
-                        {data.finances_mini.expensesText}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t border-border pt-1 font-semibold">
-                      <span>Net Lifetime</span>
-                      <span
-                        className={`font-mono ${
-                          data.finances_mini.isNetPositive ? 'text-success' : 'text-danger'
-                        }`}
-                      >
-                        {data.finances_mini.netProfitText}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Staff Mini Widget */}
-                {w.widget_key === 'staff_mini' && (
-                  <div>
-                    {data.staff_mini.staffCount === 0 ? (
-                      <div className="text-center py-2">
-                        <p className="text-muted">No one hired yet.</p>
-                        <a
-                          href="/staff/hire"
-                          className="mt-2 inline-flex min-h-[32px] items-center rounded-lg bg-accent px-2.5 font-bold text-accent-foreground"
-                        >
-                          Hire Staff
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                          {data.staff_mini.roles.map((r) => (
-                            <div key={r.role} className="flex justify-between text-[11px]">
-                              <span className="text-muted truncate">{r.roleName}</span>
-                              <span className="font-mono font-semibold">{r.count}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-2 border-t border-border pt-2 text-[11px]">
-                          <span className="text-muted">Morale</span>
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-                            <div
-                              className={`h-full ${
-                                data.staff_mini.moraleTone === 'success'
-                                  ? 'bg-success'
-                                  : data.staff_mini.moraleTone === 'warning'
-                                    ? 'bg-warning'
-                                    : 'bg-danger'
-                              }`}
-                              style={{ width: `${data.staff_mini.avgMorale}%` }}
-                            />
-                          </div>
-                          <span className="font-mono font-bold">{data.staff_mini.avgMorale}%</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Equipment Mini Widget */}
-                {w.widget_key === 'equipment_mini' && (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-muted">Fleet Units</div>
-                      <div className="font-mono text-xl font-bold text-foreground">
-                        {data.equipment_mini.unitsCount}
-                      </div>
-                    </div>
-                    <a href="/equipment" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                      View Fleet &rarr;
-                    </a>
-                  </div>
-                )}
-
-                {/* Insurance Mini Widget */}
-                {w.widget_key === 'insurance_mini' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-muted">Active Policies</div>
-                      <div className="font-mono text-base font-bold text-success">
-                        {data.insurance_mini.activeCount}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted">Available</div>
-                      <div className="font-mono text-base font-bold text-muted">
-                        {data.insurance_mini.availableCount}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Loans Mini Widget */}
-                {w.widget_key === 'loans_mini' && (
-                  <div>
-                    {data.loans_mini.activeCount === 0 ? (
-                      <div className="text-muted">No active loans outstanding.</div>
-                    ) : (
-                      <div>
-                        <div className="text-muted">
-                          {data.loans_mini.activeCount} loan
-                          {data.loans_mini.activeCount > 1 ? 's' : ''} outstanding
-                        </div>
-                        <div className="font-mono text-base font-bold text-danger">
-                          {data.loans_mini.totalDebtText}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {w.widget_key === 'roadmap_mini' && <RoadmapMini initial={data.roadmap_mini?.items ?? []} />}
-
-                {/* Marketing Mini Widget */}
-                {w.widget_key === 'marketing_mini' && (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-muted">Running Campaigns</div>
-                      <div className="font-mono text-xl font-bold text-foreground">
-                        {data.marketing_mini.campaignsCount}
-                      </div>
-                    </div>
-                    <a href="/marketing" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline sm:min-h-0">
-                      Campaigns &rarr;
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Hidden Widgets Tray (visible in Edit Mode) */}
-      {editMode && hiddenWidgets.length > 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-              <Icon name="fa-eye-slash" className="text-muted" />
-              <span>Hidden Widgets ({hiddenWidgets.length}) &middot; Click to Restore</span>
-            </h2>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setLibraryOpen(true)}
-              className="h-7 text-xs font-semibold"
-            >
-              <Icon name="fa-table-cells" className="mr-1 text-accent text-xs" />
-              Browse Full Library
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {hiddenWidgets.map((w) => (
-              <Button
-                key={w.widget_key}
-                size="sm"
-                variant="secondary"
-                onPress={() => handleToggle(w.widget_key, true)}
-                className="text-xs"
-              >
-                <Icon name="fa-plus" className="mr-1.5 text-accent" />
-                {w.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Slide-Over Widget Library Drawer */}
-      {libraryOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setLibraryOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Slide-over panel */}
-          <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
-            <div className="w-screen max-w-md border-l border-border bg-surface shadow-2xl flex flex-col">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-border p-4 sm:p-5">
-                <div className="space-y-0.5">
-                  <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-                    <Icon name="fa-table-cells" className="text-accent" />
-                    Widget Library
-                  </h2>
-                  <p className="text-xs text-muted">
-                    Toggle widgets and configure your command dashboard.
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
-                  onPress={() => setLibraryOpen(false)}
-                  aria-label="Close widget library"
-                  className="rounded-lg p-2 text-muted hover:text-foreground"
-                >
-                  <Icon name="fa-xmark" className="text-base" />
-                </Button>
-              </div>
-
-              {/* Search & Category Filter */}
-              <div className="border-b border-border bg-surface-raised/40 p-4 space-y-3">
-                <div className="relative">
-                  <Icon
-                    name="fa-magnifying-glass"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted"
-                  />
-                  <input
-                    type="text"
-                    value={librarySearch}
-                    onChange={(e) => setLibrarySearch(e.target.value)}
-                    placeholder="Search widgets by name or topic..."
-                    className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted focus:border-accent focus:outline-hidden"
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {(
-                    [
-                      { id: 'all', label: 'All' },
-                      { id: 'operations', label: 'Operations' },
-                      { id: 'financial', label: 'Finances' },
-                      { id: 'activity', label: 'Activity' },
-                    ] as const
-                  ).map((cat) => (
-                    <Button
-                      key={cat.id}
-                      type="button"
-                      size="sm"
-                      variant={libraryCategory === cat.id ? 'primary' : 'ghost'}
-                      onPress={() => setLibraryCategory(cat.id)}
-                      className="rounded-lg px-2.5 py-1 text-xs font-semibold"
-                    >
-                      {cat.label}
+                    <Button size="sm" variant="ghost" onPress={() => handleToggle(w.widget_key, false)} aria-label={`Hide ${name}`} className="ml-auto">
+                      <Icon name="fa-eye-slash" />
+                      Hide
                     </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Scrollable Widget Cards */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {filteredLibraryWidgets.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted">
-                    No widgets match "{librarySearch}".
                   </div>
-                ) : (
-                  filteredLibraryWidgets.map((w) => {
-                    const meta = WIDGET_META[w.widget_key];
-                    return (
-                      <div
-                        key={w.widget_key}
-                        className="flex flex-col justify-between rounded-xl border border-border bg-surface p-3.5 space-y-2.5 shadow-xs transition-colors hover:border-accent/40"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-2.5">
-                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                              <Icon name={w.icon} className="text-sm" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-foreground">{w.name}</span>
-                                <span className="rounded bg-surface-raised px-1.5 py-0.5 text-[10px] font-semibold text-muted uppercase">
-                                  {meta?.categoryLabel || 'Widget'}
-                                </span>
-                              </div>
-                              <p className="mt-0.5 text-[11px] text-muted leading-tight">
-                                {meta?.description || 'Mountain management widget.'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1 border-t border-border/50 text-[11px]">
-                          <div className="flex items-center gap-1 text-muted">
-                            <span>Size:</span>
-                            <span className="font-mono font-bold uppercase text-foreground">
-                              {w.size}
-                            </span>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            variant={w.visible ? 'outline' : 'primary'}
-                            onPress={() => handleToggle(w.widget_key, !w.visible)}
-                            className="h-7 text-xs font-semibold"
-                          >
-                            <Icon
-                              name={w.visible ? 'fa-eye-slash' : 'fa-plus'}
-                              className="mr-1 text-[11px]"
-                            />
-                            {w.visible ? 'Hide from Board' : 'Add to Board'}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })
                 )}
-              </div>
 
-              {/* Drawer Footer */}
-              <div className="border-t border-border p-4 bg-surface-raised/40 flex items-center justify-between gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onPress={handleRestoreAll}
-                  className="text-xs font-semibold"
-                >
-                  <Icon name="fa-arrows-rotate" className="mr-1 text-accent" />
-                  Add All ({widgets.length})
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onPress={() => setLibraryOpen(false)}
-                  className="text-xs font-bold"
-                >
-                  Done
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+                <div className="flex-1">
+                  <WidgetBody widgetKey={w.widget_key} data={data} activity={activityLogs} tonightLabel={ledgerNote} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div
-          role="status"
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 shadow-2xl text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-150 ${
-            toast.type === 'success'
-              ? 'border-emerald-600/40 bg-emerald-950/95 text-emerald-200'
-              : toast.type === 'error'
-                ? 'border-red-600/40 bg-red-950/95 text-red-200'
-                : 'border-accent/40 bg-slate-900/95 text-white'
-          }`}
-        >
-          <Icon
-            name={
-              toast.type === 'success'
-                ? 'fa-circle-check'
-                : toast.type === 'error'
-                  ? 'fa-triangle-exclamation'
-                  : 'fa-circle-info'
-            }
-            className="text-sm shrink-0"
-          />
-          <span>{toast.msg}</span>
-        </div>
-      )}
+      {/* Widget library */}
+      <Drawer.Backdrop isOpen={libraryOpen} onOpenChange={setLibraryOpen}>
+        <Drawer.Content placement="right">
+          <Drawer.Dialog aria-labelledby="library-title" className="flex w-[28rem] max-w-[92vw] flex-col">
+            <Drawer.Header className="flex-row items-start justify-between gap-3">
+              <div>
+                <Drawer.Heading id="library-title" className="text-lg font-semibold">
+                  Widgets
+                </Drawer.Heading>
+                <p className="text-sm text-muted">Choose what your dashboard shows.</p>
+              </div>
+              <Drawer.CloseTrigger aria-label="Close widgets" />
+            </Drawer.Header>
+            <Drawer.Body className="flex-1 space-y-4 overflow-y-auto">
+              <div className="space-y-1.5">
+                <label htmlFor="widget-search" className="text-sm font-medium">
+                  Search
+                </label>
+                <input
+                  id="widget-search"
+                  type="search"
+                  value={librarySearch}
+                  onChange={(e) => setLibrarySearch(e.target.value)}
+                  placeholder="Weather, staff, loans…"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-base text-foreground placeholder:text-muted focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-accent sm:text-sm"
+                />
+              </div>
+              <div role="group" aria-label="Show widgets about" className="flex flex-wrap gap-1.5">
+                {(['all', 'operations', 'financial', 'activity'] as const).map((cat) => (
+                  <Button
+                    key={cat}
+                    size="sm"
+                    variant={libraryCategory === cat ? 'primary' : 'tertiary'}
+                    aria-pressed={libraryCategory === cat}
+                    onPress={() => setLibraryCategory(cat)}
+                  >
+                    {cat === 'all' ? 'All' : CATEGORY_LABEL[cat]}
+                  </Button>
+                ))}
+              </div>
+              {filteredLibraryWidgets.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted">No widget matches "{librarySearch}".</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {filteredLibraryWidgets.map((w) => {
+                    const meta = WIDGET_META[w.widget_key];
+                    const name = meta?.name ?? w.name;
+                    return (
+                      <li key={w.widget_key} className="flex items-start gap-3 py-3">
+                        <Icon name={meta?.icon ?? w.icon} className="mt-1 w-4 text-muted" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold">{name}</p>
+                          <p className="text-sm text-muted">{meta?.description}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={w.visible ? 'tertiary' : 'secondary'}
+                          onPress={() => handleToggle(w.widget_key, !w.visible)}
+                          aria-label={w.visible ? `Hide ${name}` : `Add ${name}`}
+                          className="shrink-0"
+                        >
+                          {w.visible ? 'Hide' : 'Add'}
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Drawer.Body>
+            <Drawer.Footer className="flex justify-between gap-2">
+              <Button variant="tertiary" onPress={handleShowAll} isDisabled={hiddenWidgets.length === 0}>
+                Show all {widgets.length}
+              </Button>
+              <Button variant="primary" onPress={() => setLibraryOpen(false)}>
+                Done
+              </Button>
+            </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+
+      {/* Reset confirmation; Escape cancels (DESIGN.md) */}
+      <AlertDialog.Backdrop isOpen={resetOpen} onOpenChange={setResetOpen} isKeyboardDismissDisabled={false}>
+        <AlertDialog.Container>
+          <AlertDialog.Dialog>
+            <AlertDialog.Header>
+              <AlertDialog.Heading>Go back to the default layout?</AlertDialog.Heading>
+            </AlertDialog.Header>
+            <AlertDialog.Body>Your widget order, sizes and hidden widgets are replaced by the default layout.</AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button variant="tertiary" onPress={() => setResetOpen(false)}>
+                Keep my layout
+              </Button>
+              <Button variant="danger" onPress={handleResetLayout}>
+                Reset layout
+              </Button>
+            </AlertDialog.Footer>
+          </AlertDialog.Dialog>
+        </AlertDialog.Container>
+      </AlertDialog.Backdrop>
     </div>
   );
 }
