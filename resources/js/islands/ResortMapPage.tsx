@@ -16,6 +16,7 @@ import { createMapApi } from './resort-map/mapApi';
 import { computePlacedFacilities } from './resort-map/placement';
 import type { Map3DViewportHandle } from './resort-map/scene3d/Map3DViewport';
 import { buildCost, cheapestCost, endDistance, formatCurrency, sameId, settleText } from './resort-map/shared';
+import { emitCashChanged } from '@/lib/cash';
 import type {
   BuiltItem,
   EditorState,
@@ -398,7 +399,10 @@ export default function ResortMapPage(props: ResortMapProps) {
             setBuiltIds(ids);
             setBuiltItems(items);
           },
-          onCashUpdate: (cash) => setUserCash(cash),
+          onCashUpdate: (cash) => {
+            setUserCash(cash);
+            emitCashChanged(cash);
+          },
           onLiveSkiersUpdate: (live) => applyLiveSnapshot(live),
           onCsrfRotate: (h) => mapApi.setCsrfHash(h),
           onToast: triggerToast,
@@ -715,7 +719,10 @@ export default function ResortMapPage(props: ResortMapProps) {
       setBuiltIds(nextBuiltIds);
       setBuiltItems(nextBuiltItems);
       const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
-      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (typeof res.new_cash === 'number') {
+        setUserCash(res.new_cash);
+        emitCashChanged(res.new_cash);
+      }
       if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
       engineRef.current?.syncBuiltState(nextBuiltIds, nextBuiltItems, nextCash);
       engineRef.current?.deselectSegment();
@@ -750,7 +757,10 @@ export default function ResortMapPage(props: ResortMapProps) {
       setBuiltIds(nextBuiltIds);
       setBuiltItems(nextBuiltItems);
       const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
-      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (typeof res.new_cash === 'number') {
+        setUserCash(res.new_cash);
+        emitCashChanged(res.new_cash);
+      }
       if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
       engineRef.current?.syncBuiltState(nextBuiltIds, nextBuiltItems, nextCash);
       engineRef.current?.deselectSegment();
@@ -782,7 +792,10 @@ export default function ResortMapPage(props: ResortMapProps) {
       };
       setBuiltItems(nextBuiltItems);
       const nextCash = typeof res.new_cash === 'number' ? res.new_cash : userCash;
-      if (typeof res.new_cash === 'number') setUserCash(res.new_cash);
+      if (typeof res.new_cash === 'number') {
+        setUserCash(res.new_cash);
+        emitCashChanged(res.new_cash);
+      }
       if (res.liveSkiers) applyLiveSnapshot(res.liveSkiers);
       engineRef.current?.syncBuiltState(builtIds, nextBuiltItems, nextCash);
       triggerToast(res.message || `${name} replaced.`, 'success');
