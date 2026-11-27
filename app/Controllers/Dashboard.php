@@ -325,6 +325,14 @@ class Dashboard extends BaseController
                     'loanPayments'  => currency((int) ($cashflow['loan_payments'] ?? 0)),
                     'dailyProfit'   => currency($dailyProfit),
                     'isProfit'      => $dailyProfit >= 0,
+                    // Plain amounts for the ledger bars (web only: the app API sends hero, alerts and kpis)
+                    'amounts'       => [
+                        'tickets'   => (int) ($cashflow['ticket_income'] ?? 0),
+                        'buildings' => (int) ($cashflow['building_income'] ?? 0),
+                        'payroll'   => (int) ($cashflow['salaries'] ?? 0),
+                        'running'   => (int) ($cashflow['running_costs'] ?? 0),
+                        'loans'     => (int) ($cashflow['loan_payments'] ?? 0),
+                    ],
                 ],
                 'overview' => [
                     'slopeCount'        => $slopeCount,
@@ -461,6 +469,8 @@ class Dashboard extends BaseController
             'progressPct' => (int) round(($completedSteps / $totalChecklistSteps) * 100),
             'steps' => $checklistSteps,
         ];
+
+        $page['settleTime'] = \App\Libraries\Forecast::SETTLE_TIME;
 
         $estimate = Demo::estimate((int) $userId);
         $page['demoEstimate'] = $estimate ? array_intersect_key($estimate, array_flip(['skiers', 'income', 'costs'])) : null;
