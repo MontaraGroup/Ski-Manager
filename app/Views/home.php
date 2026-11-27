@@ -28,7 +28,7 @@ $btn = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-6 t
           <a href="/map" class="<?= $btn ?> border border-white/30 bg-white/10 text-white">Trail map</a>
         </div>
       <?php else : ?>
-        <h1 class="max-w-xl text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">Run a ski resort on a real mountain.</h1>
+        <h1 class="max-w-xl text-balance text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">Run a ski resort on a real mountain.</h1>
         <p class="max-w-lg text-base leading-relaxed text-white/85 sm:text-lg">Build lifts and cut runs on the Park City trail map. Hire patrol and groomers, set ticket prices, and get through the weather, one game day at a time. Free, in your browser.</p>
         <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap sm:items-center">
           <a href="/register" class="<?= $btn ?> w-full bg-accent text-accent-foreground sm:w-auto">Play free</a>

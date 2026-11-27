@@ -131,7 +131,7 @@ export default function HomePage({
               </>
             ) : (
               <>
-                <h1 className="max-w-xl text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
+                <h1 className="max-w-xl text-balance text-[2rem] font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
                   Run a ski resort on a real mountain.
                 </h1>
                 <p className="max-w-lg text-base leading-relaxed text-white/85 sm:text-lg">
@@ -271,9 +271,9 @@ export default function HomePage({
                 Season 2: the upper mountain
               </h2>
               <p className="max-w-xl text-base leading-relaxed text-muted">
-                The upper reaches of Park City add {plural(s2.runs, 'run', 'runs')} and {plural(s2.lifts, 'lift', 'lifts')}, {s2.steep} of
-                them steep black or double-black descents. Everything built in Season 1 carries over, and so does your
-                money.
+                {s2.runs + s2.lifts > 0 &&
+                  `The upper reaches of Park City add ${plural(s2.runs, 'run', 'runs')} and ${plural(s2.lifts, 'lift', 'lifts')}, ${s2.steep} of them steep black or double-black descents. `}
+                Everything built in Season 1 carries over, and so does your money.
               </p>
               <a
                 href={isLoggedIn ? '/map' : '/register'}
