@@ -7,6 +7,7 @@ use App\Libraries\Grooming as G;
 use App\Libraries\Snowmaking as SM;
 use App\Libraries\Utilities;
 use App\Libraries\Weather as W;
+use App\Libraries\WeatherPro;
 
 /**
  * /snowmaking: snow guns, the snow they make on each slope, targets, the next five days and what it
@@ -29,7 +30,6 @@ class Snowmaking extends BaseController
         helper('weather');
 
         $today = SM::today($userId);
-        $weather = getCurrentWeather();
         $baseTemp = $today['weather']['temp'];
         $humidity = $today['weather']['humidity'];
         $natural = $today['weather']['snow_base'];
@@ -185,23 +185,24 @@ class Snowmaking extends BaseController
             $limits['std'] = ['label' => temp(W::SNOWMAKING_MAX_TEMP) . ' or colder', 'hours' => array_map(fn($e) => $e > 0, SM::hourly($standard, $baseTemp, $humidity)), 'guns' => []];
         }
 
-        // Next five days (deterministic forecast): hours, and how much snow switched-on guns could make
+        // The days after tonight (Weather::outlook; Weather Pro sees 14 days): hours, and how much
+        // snow switched-on guns could make. Far days use the middle of the forecast range.
         $outlook = [];
-        $season = function_exists('getSeasonNumber') ? (int) getSeasonNumber() : 1;
+        $pro = WeatherPro::active((int) $userId);
         $on = array_filter($today['all_guns'], fn($g) => $g['status'] === 'active' && (int) $g['condition_pct'] > 0);
-        foreach (is_array($weather['forecast']) ? $weather['forecast'] : [] as $f) {
-            $day = getSeasonDay() + (int) $f['day'];
-            $t = (int) $f['temp'];
-            $h = (int) ($f['humidity'] ?? W::day($season, $day, getWinterDays())['humidity']);
+        foreach (array_slice(W::outlook($pro), 1) as $f) {
+            $day = W::seasonDayOf($f['gameDay']);
+            $t = $f['tempMid'];
+            $h = $f['humidity'];
             $hours = SM::hours($standard, $t, $h);
             $cm = array_sum(array_map(fn($g) => SM::potential($g, $t, $h, $crewLevels[$g['name']] ?? null), $on));
             $gunsCan = count(array_filter($on, fn($g) => SM::hours($g, $t, $h) > 0));
             $outlook[] = [
                 'day' => $day,
                 'icon' => weatherIcon($f['condition']),
-                'tempText' => temp($t),
+                'tempText' => $f['exact'] ? temp($t) : '~' . temp($t),
                 'humidityText' => $h . '%',
-                'snowfallText' => (int) $f['snowfall'] > 0 ? '+' . snow((int) $f['snowfall']) : null,
+                'snowfallText' => $f['snowHigh'] > 0 ? '+' . ($f['snowLow'] === $f['snowHigh'] ? snow($f['snowHigh']) : snow($f['snowLow']) . '–' . snow($f['snowHigh'])) : null,
                 'hours' => $hours,
                 'hoursText' => $hours ? $hours . ' h guns' : 'Too warm',
                 'gunsCanRunText' => !$hours && $gunsCan ? $gunsCan . ' of yours can run' : null,

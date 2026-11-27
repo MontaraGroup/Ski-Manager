@@ -63,10 +63,9 @@ class Forecast
         $boosts = array_column($db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', $settleAt)->get()->getResultArray(), 'boost_type');
         if (in_array('revenue_boost', $boosts, true)) $revMult *= 1.25;
 
-        $weather = $db->table('weather')->where('game_day', $settleDay)->get()->getRowArray() ?: getCurrentWeather();
-        if (in_array('skip_weather', $boosts, true)) {
-            $weather = array_merge($weather, ['condition_name' => 'Sunny', 'wind' => min((int) ($weather['wind'] ?? 0), 10)]);
-        }
+        $weather = Weather::withBoosts($db->table('weather')->where('game_day', $settleDay)->get()->getRowArray() ?: getCurrentWeather(), $boosts);
+        $windRule = Weather::windRule($userId);
+        $wind = (int) ($weather['wind'] ?? 0);
 
         $items  = $db->table('player_items')->where('user_id', $userId)->get()->getResultArray();
         $slopes = array_values(array_filter($items, fn($i) => $i['item_type'] === 'slope' && $i['status'] === 'open'));
@@ -77,7 +76,7 @@ class Forecast
         $boostPct = (float) ($last['boost_pct'] ?? 0);
 
         $demand = Economy::slopeDemand($slopes) * (1 + $boostPct / 100) * $visMult
-            * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+            * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), $wind, $windRule);
         if (in_array('visitor_boost', $boosts, true)) $demand *= 1.5;
         $demand = Economy::marketCap($demand);
 
@@ -89,7 +88,7 @@ class Forecast
             ->get()->getRow('visitors_boost') ?? 0);
 
         $visitors = (int) round($demand * $terms['demand'] * ($isWinter ? 1 : 0.15)) + $eventVisitors;
-        $liftCapacity = Economy::liftDailyCapacity($lifts);
+        $liftCapacity = Economy::liftDailyCapacity($lifts, $windRule ? Weather::exposedLiftShare($wind) : 1.0);
         $turnedAway = max(0, $visitors - $liftCapacity);
         $visitors = min($visitors, $liftCapacity);
         if (!$resortOpen) { $visitors = 0; $tourists = 0; $turnedAway = 0; }

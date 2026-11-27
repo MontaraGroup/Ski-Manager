@@ -25,9 +25,10 @@ class Grooming extends BaseController
         $db = db_connect();
 
         $sectorNames = array_column($db->table('resort_sectors')->select('id, name')->get()->getResultArray(), 'name', 'id');
-        $weather = getCurrentWeather();
-        $weatherRow = ['temp' => $weather['base_temp'] ?? $weather['temp'], 'snowfall' => $weather['snowfall'] ?? 0,
-            'snow_base' => $weather['snow_base'] ?? 0, 'condition_name' => $weather['condition_name'] ?? ''];
+        // Wear is worked out with the weather tonight's tick settles
+        $weather = \App\Libraries\Weather::forSettle((int) $userId);
+        $weatherRow = ['temp' => (int) ($weather['temp'] ?? 0), 'snowfall' => (int) ($weather['snowfall'] ?? 0),
+            'snow_base' => (int) ($weather['snow_base'] ?? 0), 'condition_name' => (string) ($weather['condition_name'] ?? '')];
 
         $slopes = [];
         foreach ($state['slopes'] as $s) {

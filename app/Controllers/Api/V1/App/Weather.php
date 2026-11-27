@@ -2,14 +2,11 @@
 
 namespace App\Controllers\Api\V1\App;
 
-use CodeIgniter\HTTP\ResponseInterface;
-
 class Weather extends \App\Controllers\Weather
 {
-    use AppResponses;
+    use AppPage;
 
-    public function show(): ResponseInterface
-    {
-        return $this->ok($this->pageData());
-    }
+    protected const ACTIONS = ['subscribe', 'renew'];
+    protected const UNLOCK = null;
+    protected const HIDDEN = null;
 }

@@ -245,7 +245,7 @@ export default function SnowmakingPage({
             {guns.length === 0
               ? 'Buy snow guns to build them up.'
               : overview.standardHours === 0 && overview.runningGunsCount === 0
-                ? 'Too warm for your guns today: check the next five days.'
+                ? 'Too warm for your guns tonight: check the next days.'
                 : overview.runningGunsCount === 0
                   ? 'Switch guns on to build them up.'
                   : null}
@@ -253,7 +253,7 @@ export default function SnowmakingPage({
         </div>
       )}
 
-      <Panel title="Today, hour by hour">
+      <Panel title="Tonight's settle, hour by hour">
         <HourStrip hourly={hourly} limits={limits} />
         <p className="mt-2 text-xs text-muted">
           Wet-bulb {overview.wetBulbRangeText}. Guns work off the wet-bulb temperature: dry air lets them make snow on
@@ -262,7 +262,7 @@ export default function SnowmakingPage({
       </Panel>
 
       {outlook.length > 0 && (
-        <Panel title="Next 5 days">
+        <Panel title={`Next ${outlook.length} days`}>
           <div className="grid grid-cols-5 gap-2">
             {outlook.map((o) => (
               <div key={o.day} className="rounded-lg bg-default p-2 text-center">
@@ -278,7 +278,8 @@ export default function SnowmakingPage({
             ))}
           </div>
           <p className="mt-2 text-xs text-muted">
-            Hours a standard gun can run, and the most snow your switched-on guns could make that day.
+            Hours a standard gun can run, and the most snow your switched-on guns could make that day. Days marked ~ are
+            forecasts: the middle of the range.
           </p>
         </Panel>
       )}

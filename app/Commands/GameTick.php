@@ -109,11 +109,7 @@ class GameTick extends BaseCommand
             $activeBoostRows = $db->table('player_boosts')->where('user_id', $userId)->where('expires_at >', date('Y-m-d H:i:s'))->get()->getResultArray();
             $activeBoostTypes = array_column($activeBoostRows, 'boost_type');
             // Weather Control (Génépis): this resort skis in clear, cold, calm weather while it lasts
-            if (in_array('skip_weather', $activeBoostTypes, true)) {
-                $weather = array_merge($weather, [
-                    'condition_name' => 'Sunny', 'wind' => min((int) ($weather['wind'] ?? 0), 10), 'temp' => min((int) ($weather['temp'] ?? -5), -3),
-                ]);
-            }
+            $weather = \App\Libraries\Weather::withBoosts($weather, $activeBoostTypes);
             // Speed Boost (Génépis): construction counts down two days per night instead of one
             $buildStep = in_array('speed_boost', $activeBoostTypes, true) ? 2 : 1;
             if (in_array('revenue_boost', $activeBoostTypes)) {
@@ -472,7 +468,9 @@ class GameTick extends BaseCommand
             $totalBoost = $marketingBoost + $managerBoost + $instructorBoost + $patrolBoost + $snowQualityBonus + $allianceBonus + $ecoBonus;
             // Demand comes from the slopes, is damped by ticket prices and the regional market,
             // and can't exceed what the open lifts carry
-            $weatherFactor = \App\Libraries\Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+            // Wind rule (flag): wind stops exposed lifts hour by hour instead of scaring skiers off
+            $windRule = \App\Libraries\Weather::windRule($userId);
+            $weatherFactor = \App\Libraries\Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0), $windRule);
             $demand = \App\Libraries\Economy::slopeDemand($slopesForQuality) * (1 + $totalBoost / 100) * $visMult * $weatherFactor;
             if (in_array('visitor_boost', $activeBoostTypes)) $demand *= 1.5;
             $demand = \App\Libraries\Economy::marketCap($demand);
@@ -481,7 +479,11 @@ class GameTick extends BaseCommand
             $summerTourists = $isWinter ? 0 : (int) round($demand * \App\Libraries\Economy::SUMMER_TOURIST_SHARE);
             $visitors = (int) round($demand * $ticketTerms['demand'] * ($isWinter ? 1 : 0.15)) + $tournamentVisitors;
             $liftRows = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray();
-            $liftCapacity = \App\Libraries\Economy::liftDailyCapacity($liftRows);
+            $windHoldHours = $windRule ? \App\Libraries\Weather::windHoldHours((int) ($weather['wind'] ?? 0)) : 0;
+            $liftCapacity = \App\Libraries\Economy::liftDailyCapacity($liftRows, $windRule ? \App\Libraries\Weather::exposedLiftShare((int) ($weather['wind'] ?? 0)) : 1.0);
+            if ($windHoldHours > 0 && $resortOpen && array_filter($liftRows, fn($l) => !in_array($l['subtype'] ?? '', \App\Libraries\Weather::WIND_PROOF_LIFTS, true))) {
+                log_activity($userId, 'wind_hold', 'Wind hold: chairlifts and gondolas stopped for ' . $windHoldHours . ' of ' . count(\App\Libraries\Weather::LIFT_DAY) . ' hours (gusts to ' . speed((int) round((int) $weather['wind'] * 1.3)) . ').', 'fa-solid fa-wind');
+            }
             $turnedAwayByLifts = max(0, $visitors - $liftCapacity);
             $visitors = min($visitors, $liftCapacity);
             if (!$resortOpen) { $visitors = 0; $summerTourists = 0; }
@@ -492,7 +494,7 @@ class GameTick extends BaseCommand
             $ticketRevenue = (int) round($visitors * $ticketTerms['per_visit']);
             $dayIncome += (int) round($ticketRevenue * $revMult);
             $breakdown += ['tickets' => (int) round($ticketRevenue * $revMult), 'demand' => (int) round($demand), 'weather_factor' => $weatherFactor, 'price_demand' => round($ticketTerms['demand'], 3),
-                'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts,
+                'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts, 'wind_hold_hours' => $windHoldHours,
                 // Libraries/Forecast uses this to forecast the next tick between ticks
                 'boost_pct' => $totalBoost];
             if ($visitors > 0) {
@@ -913,6 +915,9 @@ class GameTick extends BaseCommand
             log_activity($userId, 'Daily Report', "Day {$gameDay}{$dormantTag}: +" . number_format($dayIncome) . '€ income, -' . number_format($dayExpenses) . '€ expenses, ' . number_format($visitors) . ' visitors', 'fa-solid fa-chart-line');
 
             CLI::write("  Income: {$dayIncome} | Expenses: {$dayExpenses}{$dormantTag} | Visitors: {$visitors} | Cash: {$newCash}", "white");
+
+            // Weather Pro: auto-renew, the notice before it ends, storm alerts
+            \App\Libraries\WeatherPro::tick($userId, $gameDay);
 
             // Achievements: progress and feature unlocks shouldn't wait for a visit to /achievements
             if (($user['status'] ?? '') !== 'demo') \App\Libraries\Achievements::sync($userId);
