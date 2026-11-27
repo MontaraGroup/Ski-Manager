@@ -98,4 +98,19 @@ final class DailyBonusStreakTest extends CIUnitTestCase
         $this->assertFalse($state['saveProtected']);
         $this->assertSame(0, $state['streak']);
     }
+
+    public function testDisabledFlagNeverProtectsMissedDay(): void
+    {
+        $state = DailyBonus::streakState([
+            'last_claim_date' => '2026-11-25',
+            'streak' => 14,
+            'save_used_season' => 0,
+        ], 1, self::TODAY, false);
+
+        $this->assertFalse($state['onStreak']);
+        $this->assertFalse($state['saveProtected']);
+        $this->assertFalse($state['saveAvailable']);
+        $this->assertSame(0, $state['streak']);
+        $this->assertSame(14, $state['lostStreak']);
+    }
 }

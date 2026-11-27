@@ -108,7 +108,8 @@ class Achievements
         $parkingCap = (int) ($db->table('parking')->selectSum('capacity')->where('user_id', $userId)->where('status', 'open')->get()->getRow('capacity') ?? 0);
         $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
         $seasonNumber = function_exists('getSeasonNumber') ? getSeasonNumber() : 1;
-        $streak = $bonus ? \App\Controllers\DailyBonus::streakState($bonus, $seasonNumber)['streak'] : 0;
+        $saveEnabled = \App\Controllers\DailyBonus::saveEnabledFor($userId);
+        $streak = $bonus ? \App\Controllers\DailyBonus::streakState($bonus, $seasonNumber, null, $saveEnabled)['streak'] : 0;
         $eco = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
 
         // Safety, the same way the nightly tick scores it for accidents
