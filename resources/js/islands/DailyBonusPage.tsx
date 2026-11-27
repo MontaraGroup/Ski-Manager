@@ -222,16 +222,24 @@ export default function DailyBonusPage({
           )}
         </p>
 
-        <dl className="grid grid-cols-2 border-t border-border sm:grid-cols-4">
+        <dl className={`grid grid-cols-2 border-t border-border ${streakSave ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
           {[
             { label: 'Streak', value: plural(streak, 'day', 'days'), className: 'border-r' },
             { label: 'Best streak', value: plural(bestStreak, 'day', 'days'), className: 'sm:border-r' },
+            ...(streakSave
+              ? [
+                  {
+                    label: 'Season save',
+                    value: streakSave.protected ? 'Active today' : streakSave.usedThisSeason ? 'Used' : '1 left',
+                    className: 'border-r border-t sm:border-t-0',
+                  },
+                ]
+              : []),
             {
-              label: 'Season save',
-              value: streakSave?.protected ? 'Active today' : streakSave?.usedThisSeason ? 'Used' : '1 left',
-              className: 'border-r border-t sm:border-t-0',
+              label: 'Total claimed',
+              value: totalClaimedFormatted,
+              className: streakSave ? 'border-t sm:border-t-0' : 'col-span-2 border-t sm:col-span-1 sm:border-t-0',
             },
-            { label: 'Total claimed', value: totalClaimedFormatted, className: 'border-t sm:border-t-0' },
           ].map((s) => (
             <div key={s.label} className={`min-w-0 border-border px-5 py-3 ${s.className}`}>
               <dt className="text-sm text-muted">{s.label}</dt>
@@ -379,8 +387,14 @@ export default function DailyBonusPage({
         </summary>
         <ul className="flex list-disc flex-col gap-2 border-t border-border py-3 pr-4 pl-9 text-sm text-muted">
           <li>One claim per day. The day turns over at midnight server time.</li>
-          <li>Claim on back-to-back days to grow the streak. It has no cap.</li>
-          <li>One missed day is forgiven once per season with your season streak save. Miss a second day, or miss a day after using your save, and it restarts at day 1.</li>
+          {streakSave ? (
+            <>
+              <li>Claim on back-to-back days to grow the streak. It has no cap.</li>
+              <li>One missed day is forgiven once per season with your season streak save. Miss a second day, or miss a day after using your save, and it restarts at day 1.</li>
+            </>
+          ) : (
+            <li>Claim on back-to-back days to grow the streak. It has no cap. Miss a day and it restarts at day 1.</li>
+          )}
           {cycleAmounts.length > 0 && (
             <li>
               Base rewards for days 1 to {cycleAmounts.length}: <span className="tabular-nums">{cycleAmounts.join(', ')}</span>.
@@ -389,7 +403,7 @@ export default function DailyBonusPage({
           <li>
             Day {cycleAmounts.length || 7} of every week also pays {weeklyGenepis} Génépis.
           </li>
-          <li>Streaks of 7, 30, and 100 days unlock milestone badges on Achievements.</li>
+          <li>{streakSave ? 'Streaks of 7, 30, and 100 days unlock milestone badges on Achievements.' : 'Streaks of 7 and 30 days unlock achievements.'}</li>
         </ul>
       </details>
     </Page>
