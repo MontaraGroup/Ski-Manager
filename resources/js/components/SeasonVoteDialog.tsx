@@ -4,6 +4,9 @@ import { Icon } from './Icon';
 import { SeasonChoiceFields } from './SeasonChoiceFields';
 import { ApiError } from '@/lib/api';
 import { sendSnooze, sendVote, type SeasonChoice, type SeasonVoteState } from '@/lib/seasonVote';
+import { featureInteraction, featureView } from '@/lib/featureTracking';
+
+const FLAG = 'season_mode_vote';
 
 const DELAY_MS = 2000;
 
@@ -50,6 +53,7 @@ export default function SeasonVoteDialog({ state }: { state: SeasonVoteState }) 
       if (shown.current) return;
       shown.current = true;
       setOpen(true);
+      featureView(FLAG);
     }, DELAY_MS);
     return () => window.clearTimeout(t);
   }, []);
@@ -63,6 +67,7 @@ export default function SeasonVoteDialog({ state }: { state: SeasonVoteState }) 
 
   const vote = async () => {
     if (!choice) return;
+    featureInteraction(FLAG);
     setBusy(true);
     setError(undefined);
     try {

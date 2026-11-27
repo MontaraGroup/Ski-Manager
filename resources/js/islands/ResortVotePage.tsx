@@ -57,7 +57,7 @@ export default function ResortVotePage(props: ResortVotePageProps) {
       icon="fa-check-to-slot"
       subtitle={open ? `Pick the real North American resort we add next. Voting for ${round.label} runs until ${round.closesLabel}.` : `Voting for ${round.label} is closed. The winner is picked by hand from the results.`}
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" data-ph-feature="resort_vote">
         <Panel title="Your vote">
           <div className="flex flex-col gap-4">
             {myPick ? (

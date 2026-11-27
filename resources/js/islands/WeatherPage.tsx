@@ -184,7 +184,7 @@ export default function WeatherPage({ subtitle, now, settle, effects, hourly, ho
         </Panel>
       )}
 
-      {pro.available && <ProPanel pro={pro} />}
+      {pro.available && <div data-ph-feature="weather-pro"><ProPanel pro={pro} /></div>}
 
       <Disclosure className="rounded-xl border border-border bg-surface">
         <Disclosure.Heading>
