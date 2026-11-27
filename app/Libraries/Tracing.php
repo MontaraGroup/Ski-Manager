@@ -65,6 +65,9 @@ class Tracing
                 ->setAttribute('http.request.method', $method)
                 ->setAttribute('url.path', $path)
                 ->startSpan();
+            // Links the trace to the browser's session replay in PostHog
+            $sessionId = Analytics::sessionId();
+            if ($sessionId !== null) self::$root->setAttribute('sessionId', $sessionId);
             self::$scope = self::$root->activate();
         } catch (\Throwable $e) {
             log_message('warning', 'Tracing start failed: ' . $e->getMessage());
@@ -112,6 +115,7 @@ class Tracing
                 // already opened, since starting one now raises "headers already sent"
                 if (session_status() === PHP_SESSION_ACTIVE && function_exists('auth') && auth()->loggedIn()) {
                     self::$root->setAttribute('user.id', (string) auth()->id());
+                    self::$root->setAttribute('posthogDistinctId', (string) auth()->id());
                 }
                 if ($status >= 500) self::$root->setStatus(StatusCode::STATUS_ERROR);
                 self::$root->end();

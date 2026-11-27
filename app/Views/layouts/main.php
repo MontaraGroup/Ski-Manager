@@ -217,6 +217,8 @@
         disable_session_recording: !consented,
         session_recording: { maskAllInputs: true },
         capture_exceptions: true,
+        // Adds X-PostHog-Session-Id to this site's own requests, so server errors and traces link to the replay
+        tracing_headers: [location.hostname],
         enable_heatmaps: true,
         opt_in_site_apps: true,
         // Support chat for signed-in players only; it follows the site's light/dark preference
