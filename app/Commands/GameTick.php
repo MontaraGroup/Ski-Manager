@@ -492,7 +492,9 @@ class GameTick extends BaseCommand
             $ticketRevenue = (int) round($visitors * $ticketTerms['per_visit']);
             $dayIncome += (int) round($ticketRevenue * $revMult);
             $breakdown += ['tickets' => (int) round($ticketRevenue * $revMult), 'demand' => (int) round($demand), 'weather_factor' => $weatherFactor, 'price_demand' => round($ticketTerms['demand'], 3),
-                'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts];
+                'per_visit' => round($ticketTerms['per_visit'], 2), 'lift_capacity' => $liftCapacity, 'turned_away' => $turnedAwayByLifts,
+                // Libraries/Forecast uses this to forecast the next tick between ticks
+                'boost_pct' => $totalBoost];
             if ($visitors > 0) {
                 $prices = array_column($allTickets, 'price', 'ticket_type') ?: \App\Libraries\Economy::TICKET_REFERENCE;
                 $sales = [];

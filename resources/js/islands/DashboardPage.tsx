@@ -275,6 +275,8 @@ export type DashboardKpis = {
   expensesText: string;
   dailyVisitors: number;
   dailyVisitorsFormatted: string;
+  visitorsSettledFormatted: string;
+  visitorsTurnedAway: number;
   ticketPriceText: string;
   totalLiftCapacityFormatted: string;
   weather: {
@@ -1140,17 +1142,18 @@ export default function DashboardPage({
           </div>
         </div>
 
-        {/* Visitors Today */}
+        {/* Visitors per day: what the next tick will bring with the resort as it is now */}
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs text-muted">
             <Icon name="fa-person-skiing" className="text-accent" />
-            <span>Visitors Today</span>
+            <span>Visitors Per Day</span>
           </div>
           <div className="font-mono text-2xl font-bold tracking-tight text-foreground">
             {kpis.dailyVisitorsFormatted}
           </div>
           <div className="truncate text-[11px] text-muted">
-            Ticket {kpis.ticketPriceText} &middot; lifts {kpis.totalLiftCapacityFormatted}/hr
+            Today {kpis.visitorsSettledFormatted} &middot; ticket {kpis.ticketPriceText}
+            {kpis.visitorsTurnedAway > 0 && <> &middot; <span className="text-warning">{kpis.visitorsTurnedAway.toLocaleString()} turned away by lifts</span></>}
           </div>
         </div>
 

@@ -72,8 +72,17 @@ class Finances extends BaseController
         $restaurantIncome = $buildingIncome['restaurant'];
         $rentalIncome = $buildingIncome['rental'];
 
-        // Last tick's real ticket revenue, and buildings earn by how full they were
+        // Last tick's real ticket revenue, and buildings earn by how full they were. Tickets, buildings and
+        // lift/slope running are swapped for what the next tick will pay (Libraries/Forecast), so builds and
+        // price changes show at once; the rest of the day stays as the last tick recorded it
         $lastTick = json_decode((string) ($visitors['last_tick'] ?? ''), true);
+        $forecast = $lastTick ? \App\Libraries\Forecast::nextSettle((int) $userId, $visitors) : null;
+        if ($lastTick && $forecast) {
+            $lastTick['income'] = (int) $lastTick['income'] - (int) ($lastTick['tickets'] ?? 0) - (int) ($lastTick['buildings'] ?? 0)
+                + $forecast['tickets'] + $forecast['buildings'];
+            $lastTick['expenses'] = (int) $lastTick['expenses'] - (int) ($lastTick['lift_slope_running'] ?? 0) + $forecast['lift_slope_running'];
+            $lastTick = array_merge($lastTick, array_intersect_key($forecast, array_flip(['tickets', 'buildings', 'lift_slope_running', 'occupancy'])));
+        }
         if ($lastTick) {
             $ticketIncome = (int) ($lastTick['tickets'] ?? 0);
             $occ = $lastTick['occupancy'] ?? [];
@@ -132,7 +141,7 @@ class Finances extends BaseController
         return [
             'gameDay' => $gameDay,
             'cash' => ['text' => currency($cash), 'negative' => $cash < 0],
-            'income' => ['source' => !empty($lastTick) ? 'last game day' : 'estimated', 'total' => currency($totalIncome),
+            'income' => ['source' => $forecast ? 'next game day' : (!empty($lastTick) ? 'last game day' : 'estimated'), 'total' => currency($totalIncome),
                 'rows' => array_map(fn($r) => ['label' => $r[0], 'amount' => currency((int) $r[1])], $income)],
             'expenses' => ['total' => currency($totalExpenses),
                 'rows' => array_map(fn($r) => ['label' => $r[0], 'amount' => currency((int) $r[1]), 'icon' => $r[2]], $expenses)],
