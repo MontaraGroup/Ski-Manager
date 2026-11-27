@@ -218,8 +218,11 @@ function runs(hours: Hour[], test: (h: Hour) => boolean): string[] {
   return out;
 }
 
-/** Only every third hour is labelled on phones; every hour from md up */
-const third = (h: Hour) => (h.hour % 3 === 0 ? '' : 'hidden md:block');
+/**
+ * Only every third hour is labelled on phones, every hour from md up. The cell stays (invisible,
+ * not hidden) so the 24-column grid keeps its places; labels may spill over their hidden neighbours.
+ */
+const third = (h: Hour) => (h.hour % 3 === 0 ? '' : 'invisible md:visible');
 const COLS = { gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' };
 
 /**
@@ -262,7 +265,7 @@ function HourlyPanel({ hours, info, proOffered }: { hours: Hour[]; info: Props['
         <div className="grid gap-px" style={COLS}>
           {hours.map((h) => (
             <div key={h.hour} className={`flex h-36 flex-col justify-end px-px pt-5 ${h.liftHour ? 'bg-default' : ''} ${h.hour === 10 ? 'rounded-tl-lg' : ''} ${h.hour === 15 ? 'rounded-tr-lg' : ''}`}>
-              <div className={`mb-1 text-center text-xs font-semibold tabular-nums ${third(h)} ${h.canMake ? 'text-link' : h.warm ? 'text-warning' : ''}`}>
+              <div className={`mb-1 flex justify-center whitespace-nowrap text-xs font-semibold tabular-nums ${third(h)} ${h.canMake ? 'text-link' : h.warm ? 'text-warning' : ''}`}>
                 {h.value}°
               </div>
               <div
@@ -275,7 +278,7 @@ function HourlyPanel({ hours, info, proOffered }: { hours: Hour[]; info: Props['
         </div>
         <div className="grid gap-px border-t border-border pt-1" style={COLS}>
           {hours.map((h) => (
-            <div key={h.hour} className={`text-center text-xs text-muted ${third(h)}`}>{h.label}</div>
+            <div key={h.hour} className={`flex justify-center whitespace-nowrap text-xs text-muted ${third(h)}`}>{h.label}</div>
           ))}
         </div>
 
@@ -286,9 +289,9 @@ function HourlyPanel({ hours, info, proOffered }: { hours: Hour[]; info: Props['
               {hours.map((h) => (
                 <div
                   key={h.hour}
-                  className={`rounded py-1 text-center text-xs tabular-nums ${h.liftHold ? 'bg-danger/15 font-semibold text-danger' : `text-muted ${third(h)}`} ${h.liftHour && !h.liftHold ? 'bg-default' : ''}`}
+                  className={`flex justify-center whitespace-nowrap rounded py-1 text-xs tabular-nums ${h.liftHold ? 'bg-danger/15 font-semibold text-danger' : h.liftHour ? 'bg-default text-muted' : 'text-muted'}`}
                 >
-                  {h.windValue}
+                  <span className={third(h)}>{h.windValue}</span>
                 </div>
               ))}
             </div>
