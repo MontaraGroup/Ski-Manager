@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Libraries\GenepisWallet;
 use App\Libraries\Ledger;
+use App\Libraries\WeatherPro;
 use App\Models\FinanceModel;
 
 class Genepis extends BaseController
@@ -39,7 +41,10 @@ class Genepis extends BaseController
             'extra_loan' => ['name' => 'Extra Loan Slot', 'desc' => 'Unlock a 4th active loan slot permanently', 'cost' => 200, 'icon' => 'fa-solid fa-landmark', 'color' => 'text-primary', 'duration' => null, 'category' => 'Permanent'],
             'auto_groom' => ['name' => 'Auto-Grooming', 'desc' => 'Slopes auto-groom when below 50% (permanent)', 'cost' => 300, 'icon' => 'fa-solid fa-robot', 'color' => 'text-info', 'duration' => null, 'category' => 'Permanent'],
             'premium_name' => ['name' => 'Custom Resort Badge', 'desc' => 'Gold badge next to your name on leaderboard', 'cost' => 500, 'icon' => 'fa-solid fa-certificate', 'color' => 'text-warning', 'duration' => null, 'category' => 'Permanent'],
-        ];
+        ] + (WeatherPro::enabledFor((int) auth()->id()) ? [
+            // Buying again while it runs adds 7 days (App\Libraries\WeatherPro)
+            WeatherPro::BOOST => ['name' => 'Weather Pro', 'desc' => '14-day forecast, storm alerts and snowmaking planner for ' . WeatherPro::DAYS . ' days', 'cost' => WeatherPro::PRICE, 'icon' => 'fa-solid fa-cloud-sun-rain', 'color' => 'text-info', 'duration' => WeatherPro::DAYS * 24, 'category' => 'Timed Boost'],
+        ] : []);
     }
 
     public function index(): string
@@ -122,6 +127,15 @@ class Genepis extends BaseController
         $cfg = $shopItems[$item];
         $cost = $cfg['cost'];
 
+        if ($item === WeatherPro::BOOST) {
+            $db->transStart();
+            $until = WeatherPro::subscribe($userId);
+            $db->transComplete();
+            if (!$until) return redirect()->back()->with('error', 'Not enough Génépis. Need ' . $cost . ', have ' . $genepis['balance'] . '.');
+            log_activity($userId, 'Génépis', 'Used ' . $cost . ' Génépis for Weather Pro', 'fa-solid fa-seedling');
+            return redirect()->back()->with('success', 'Weather Pro runs until ' . date('M j, H:i', strtotime($until)) . '. (-' . $cost . ' Génépis)');
+        }
+
         if ((int) $genepis['balance'] < $cost) {
             return redirect()->back()->with('error', 'Not enough Génépis. Need ' . $cost . ', have ' . $genepis['balance'] . '.');
         }
@@ -164,7 +178,10 @@ class Genepis extends BaseController
                 break;
 
             case 'snow_dump':
-                $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark', 'luge'])->set('snow_depth', 'LEAST(snow_depth + 30, 150)', false)->update();
+                // The 30 cm goes on each slope's made snow layer, which the tick counts and melts (App\Libraries\Snowmaking)
+                $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark', 'luge'])
+                    ->set('snow_depth', 'LEAST(snow_depth + 30, 150)', false)
+                    ->set('made_snow_cm', 'LEAST(made_snow_cm + 30, ' . \App\Libraries\Snowmaking::MAX_MADE . ')', false)->update();
                 $db->table('player_items')->where('user_id', $userId)->whereIn('item_type', ['slope', 'downhill', 'crosscountry', 'snowpark', 'luge'])->update(['snow_quality' => 'powder']);
                 break;
 
@@ -233,18 +250,8 @@ class Genepis extends BaseController
         return redirect()->back()->with('error', 'Invalid exchange.');
     }
 
-    /**
-     * Takes $amount Génépis in one statement, only if the balance covers it, and logs it. Reading the
-     * balance and writing back balance - cost let two quick requests both spend the same Génépis.
-     */
     private function spend(int $userId, int $amount, string $reason): bool
     {
-        $db = db_connect();
-        $db->table('genepis')->where('user_id', $userId)->where('balance >=', $amount)
-            ->set('balance', 'balance - ' . $amount, false)->set('total_spent', 'total_spent + ' . $amount, false)
-            ->set('updated_at', date('Y-m-d H:i:s'))->update();
-        if ($db->affectedRows() !== 1) return false;
-        $db->table('genepis_log')->insert(['user_id' => $userId, 'amount' => $amount, 'type' => 'spent', 'reason' => $reason, 'created_at' => date('Y-m-d H:i:s')]);
-        return true;
+        return GenepisWallet::spend($userId, $amount, $reason);
     }
 }

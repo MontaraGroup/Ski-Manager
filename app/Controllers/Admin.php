@@ -52,6 +52,7 @@ class Admin extends BaseController
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $weather = getCurrentWeather();
+        $settleWeather = \App\Libraries\Weather::forSettle();
         // The simulated day only advances when the tick runs; match the navbar rather than the calendar
         if (!empty($weather['game_day'])) $gameDay = (int) $weather['game_day'];
         $recentLogs = $db->query("SELECT al.*, u.username FROM activity_log al JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT 30")->getResultArray();
@@ -244,13 +245,15 @@ class Admin extends BaseController
             ],
             'players' => $playersFormatted,
             'recentLogs' => $recentLogsFormatted,
+            // The form edits the day tonight's tick settles (Admin::setWeather)
             'weather' => [
-                'condition_name' => $weather['condition_name'] ?? 'Light Snow',
-                'temp' => (int) ($weather['temp'] ?? -5),
-                'tempFormatted' => temp((int) ($weather['temp'] ?? -5)),
-                'wind' => (int) ($weather['wind'] ?? 15),
-                'snowfall' => (int) ($weather['snowfall'] ?? 0),
-                'snow_base' => (int) ($weather['snow_base'] ?? 50),
+                'day' => \App\Libraries\Weather::seasonDayOf(\App\Libraries\Weather::settleDay()),
+                'condition_name' => $settleWeather['condition_name'] ?? 'Light Snow',
+                'temp' => (int) ($settleWeather['temp'] ?? -5),
+                'tempFormatted' => temp((int) ($settleWeather['temp'] ?? -5)),
+                'wind' => (int) ($settleWeather['wind'] ?? 15),
+                'snowfall' => (int) ($settleWeather['snowfall'] ?? 0),
+                'snow_base' => (int) ($settleWeather['snow_base'] ?? 50),
                 'conditions' => array_keys(\App\Libraries\Weather::VISIBILITY),
             ],
             'server' => [
@@ -592,8 +595,8 @@ class Admin extends BaseController
     {
         if (!$this->checkAdmin()) return redirect()->to('/admin/settings');
         $db = db_connect();
-        $startDate = getSeasonStartDate();
-        $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
+        // Tonight's tick settles tomorrow's game day; today's already settled at 00:05
+        $gameDay = \App\Libraries\Weather::settleDay();
 
         $condition = $this->request->getPost('condition');
         $temp = (int) $this->request->getPost('temp');
@@ -603,7 +606,7 @@ class Admin extends BaseController
 
         $visMap = \App\Libraries\Weather::VISIBILITY;
         if (!isset($visMap[$condition])) return redirect()->to('/admin/settings')->with('error', 'Unknown weather condition.');
-        \App\Libraries\Weather::ensure($gameDay + 1);
+        \App\Libraries\Weather::ensure($gameDay);
 
         $db->table('weather')->where('game_day', $gameDay)->update([
             'condition_name' => $condition, 'temp' => $temp,
@@ -612,7 +615,7 @@ class Admin extends BaseController
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        return redirect()->to('/admin/settings')->with('success', "Weather updated for day {$gameDay}.");
+        return redirect()->to('/admin/settings')->with('success', "Weather updated for day {$gameDay}, which tonight's tick settles.");
     }
 
     public function grantAchievement()

@@ -185,6 +185,8 @@ $routes->group('api/v1/app', ['namespace' => 'App\Controllers\Api\V1\App'], stat
         $routes->get('dashboard', 'Dashboard::show');
         $routes->get('finances', 'Finances::show');
         $routes->get('weather', 'Weather::show');
+        $routes->post('weather/pro', 'Weather::act/subscribe');
+        $routes->post('weather/pro/renew', 'Weather::act/renew');
         $routes->get('leaderboard', 'Leaderboard::show');
         $routes->get('notifications', 'Notifications::show');
         $routes->post('notifications/read-all', 'Notifications::markAllRead');
@@ -279,6 +281,8 @@ $routes->post('/roadmap/comments/(:num)', 'Roadmap::addComment/$1');
 $routes->post('/roadmap/comment/(:num)/edit', 'Roadmap::editComment/$1');
 $routes->post('/roadmap/comment/(:num)/delete', 'Roadmap::deleteComment/$1');
 $routes->get('/weather', 'Weather::index');
+$routes->post('/weather/pro', 'Weather::subscribe');
+$routes->post('/weather/pro/renew', 'Weather::renew');
 $routes->match(['GET','POST'], '/resort/edit', 'Resort::edit');
 $routes->get("/tour/(:num)", "Tour::view/$1");
 $routes->post("/tour/(:num)/like", "Tour::like/$1");

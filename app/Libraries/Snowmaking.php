@@ -273,16 +273,16 @@ class Snowmaking
     }
 
     /**
-     * Today's plan for a player, for pages (the tick melts first and saves; this only reads).
+     * Tonight's plan for a player, for pages: the weather of the day the next tick settles
+     * (Weather::forSettle). The tick melts first and saves; this only reads.
      * @return array plan() plus weather (temp, humidity, snow_base), all guns, open slopes, crew,
      *   and running: the guns that run with their costs scaled
      */
     public static function today(int $userId): array
     {
-        helper('weather');
         $db = db_connect();
-        $w = getCurrentWeather();
-        $weather = ['temp' => (int) $w['base_temp'], 'humidity' => (int) $w['humidity'], 'snow_base' => (int) $w['snow_base']];
+        $w = Weather::forSettle($userId);
+        $weather = ['temp' => (int) ($w['temp'] ?? 0), 'humidity' => (int) ($w['humidity'] ?? 70), 'snow_base' => (int) ($w['snow_base'] ?? 0)];
         $guns = $db->table('equipment')->where('user_id', $userId)->where('equipment_type', 'snowmaker')->orderBy('id')->get()->getResultArray();
         $slopes = $db->table('player_items')->where('user_id', $userId)->where('item_type', 'slope')->where('status', 'open')->get()->getResultArray();
         $staff = $db->table('staff')->where('user_id', $userId)->where('role', 'snowmaker')->where('status', 'active')->get()->getResultArray();

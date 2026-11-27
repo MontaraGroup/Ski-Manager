@@ -126,12 +126,17 @@ class Economy
         return (int) round($base * min(1, max(1, $seats) / $max));
     }
 
-    /** Skiers per day the open lifts can carry; a resort without lifts gets walk-up skiers only */
-    public static function liftDailyCapacity(array $openLifts): int
+    /**
+     * Skiers per day the open lifts can carry; a resort without lifts gets walk-up skiers only.
+     * $exposedShare: share of the day chairlifts, gondolas and cable cars run (Weather::exposedLiftShare);
+     * surface lifts (Weather::WIND_PROOF_LIFTS) run all day.
+     */
+    public static function liftDailyCapacity(array $openLifts, float $exposedShare = 1.0): int
     {
         $perHour = 0;
         foreach ($openLifts as $l) {
-            $perHour += (int) ($l['capacity'] ?? 0) ?: (self::LIFT_CAPACITY[$l['subtype'] ?? ''] ?? 2400);
+            $share = in_array($l['subtype'] ?? '', Weather::WIND_PROOF_LIFTS, true) ? 1.0 : $exposedShare;
+            $perHour += ((int) ($l['capacity'] ?? 0) ?: (self::LIFT_CAPACITY[$l['subtype'] ?? ''] ?? 2400)) * $share;
         }
         return $perHour > 0 ? (int) round($perHour * self::LIFT_HOURS / self::RIDES_PER_SKIER) : self::WALK_UP_VISITORS;
     }

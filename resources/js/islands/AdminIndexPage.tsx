@@ -83,6 +83,8 @@ export type ActivityItem = {
 };
 
 export type WeatherInfo = {
+  /** day of the season tonight's tick settles */
+  day?: number;
   condition_name: string;
   temp: number;
   tempFormatted: string;
@@ -505,14 +507,14 @@ export default function AdminIndexPage(props: AdminIndexPageProps) {
             </div>
           </Section>
 
-          <Section title="Weather today">
+          <Section title={`Weather for tonight's settle${weather?.day ? ` (day ${weather.day})` : ''}`}>
             <ConfirmForm
               action="/admin/set-weather"
               className="flex flex-col gap-3"
               submitLabel="Set the weather"
-              title={`Change today's weather on ${envName}?`}
+              title={`Change tonight's weather on ${envName}?`}
               describe={(d) =>
-                `Today becomes ${d.get('condition')}, ${d.get('temp')} °C, wind ${d.get('wind')} km/h, ${d.get('snowfall')} cm of new snow on a ${d.get('snow_base')} cm base.`
+                `Tonight's tick settles ${d.get('condition')}, ${d.get('temp')} °C, wind ${d.get('wind')} km/h, ${d.get('snowfall')} cm of new snow on a ${d.get('snow_base')} cm base.`
               }
               confirmLabel="Set it"
             >

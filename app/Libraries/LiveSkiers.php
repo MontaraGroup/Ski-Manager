@@ -108,13 +108,15 @@ class LiveSkiers
             : true;
 
         $condName = (string) ($weather['condition_name'] ?? $weather['condition'] ?? 'Partly Cloudy');
-        $wind = (int) ($weather['wind'] ?? 12);
+        // The day's wind, as the tick uses it (getCurrentWeather()'s 'wind' is this hour's)
+        $wind = (int) ($weather['base_wind'] ?? $weather['wind'] ?? 12);
+        $windRule = Weather::windRule($userId);
 
         // Compute projected daily skiers from Economy + Weather so map builds change counts immediately
-        $rawDemand = Economy::slopeDemand($openSlopes) * $visMult * Weather::demandFactor($condName, $wind);
+        $rawDemand = Economy::slopeDemand($openSlopes) * $visMult * Weather::demandFactor($condName, $wind, $windRule);
         $demand = Economy::marketCap($rawDemand);
         $terms = Economy::ticketTerms($tickets);
-        $liftDailyCap = Economy::liftDailyCapacity($openLifts);
+        $liftDailyCap = Economy::liftDailyCapacity($openLifts, $windRule ? Weather::exposedLiftShare($wind) : 1.0);
         $seasonFactor = $isWinter ? 1.0 : 0.15;
         $computedDaily = min((int) round($demand * $terms['demand'] * $seasonFactor), $liftDailyCap);
 

@@ -444,11 +444,12 @@ class Demo extends BaseController
         $isWinter = getSeasonDay() <= getWinterDays();
 
         $demand = Economy::slopeDemand(array_values(array_filter($open, fn($i) => $i['item_type'] === 'slope')))
-            * $visMult * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['wind'] ?? 0));
+            * $visMult * Weather::demandFactor((string) ($weather['condition_name'] ?? ''), (int) ($weather['base_wind'] ?? 0), Weather::windRule($userId));
         $demand = Economy::marketCap($demand);
         $terms = Economy::ticketTerms($db->table('lift_tickets')->where('user_id', $userId)->get()->getResultArray());
         $tourists = $isWinter ? 0 : (int) round($demand * Economy::SUMMER_TOURIST_SHARE);
-        $liftCapacity = Economy::liftDailyCapacity(array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift')));
+        $liftCapacity = Economy::liftDailyCapacity(array_values(array_filter($open, fn($i) => $i['item_type'] === 'lift')),
+            Weather::windRule($userId) ? Weather::exposedLiftShare((int) ($weather['base_wind'] ?? 0)) : 1.0);
         $skiers = min((int) round($demand * $terms['demand'] * ($isWinter ? 1 : 0.15)), $liftCapacity);
 
         $buildings = $db->table('buildings')->where('user_id', $userId)->get()->getResultArray();
