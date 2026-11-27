@@ -107,6 +107,7 @@ class Weather extends BaseController
         $range = fn(int $lo, int $hi, callable $fmt) => $lo === $hi ? $fmt($lo) : preg_replace('/^(-?[\d.]+).*$/u', '$1', $fmt($lo)) . ' to ' . $fmt($hi);
 
         $hourly = getHourlyForecast($sTemp, $sWind, $condition);
+        $imperial = isImperial();
 
         return [
             'subtitle' => getSeasonName() . ' · day ' . $seasonDay . ' of ' . getSeasonLength() . ' · '
@@ -137,12 +138,23 @@ class Weather extends BaseController
                  'link' => ['/snowmaking', 'Snowmaking']],
             ],
             'hourly' => array_map(fn($h) => [
-                'label' => (string) $h['label'], 'isNow' => false,
-                'temp' => temp((int) $h['temp']), 'canMake' => $h['temp'] <= W::SNOWMAKING_MAX_TEMP, 'warm' => $h['temp'] > 0,
+                'hour' => (int) $h['hour'], 'label' => (string) $h['label'], 'isNow' => false,
+                // value: the number alone, in the player's units, for the chart
+                'temp' => temp((int) $h['temp']), 'value' => $imperial ? (int) round($h['temp'] * 9 / 5 + 32) : (int) $h['temp'],
+                'canMake' => $h['temp'] <= W::SNOWMAKING_MAX_TEMP, 'warm' => $h['temp'] > 0,
+                'liftHour' => in_array($h['hour'], W::LIFT_DAY, true),
                 // Weather Pro: wind each hour, and whether chairlifts stop then
                 'wind' => $isPro ? speed((int) $h['wind']) : null,
+                'windValue' => $isPro ? ($imperial ? (int) round($h['wind'] * 0.621371) : (int) $h['wind']) : null,
                 'liftHold' => $isPro && in_array($h['hour'], W::LIFT_DAY, true) && (int) $h['wind'] >= W::WIND_HOLD,
             ], $hourly),
+            'hourlyInfo' => [
+                'tempUnit' => $imperial ? '°F' : '°C', 'windUnit' => $imperial ? 'mph' : 'km/h',
+                'gunLimit' => temp(W::SNOWMAKING_MAX_TEMP),
+                // Lift hours on wind hold tonight: hour by hour with the wind rule, the whole day without it
+                'liftHoldHours' => $windRule ? $holdHours : ($sWind >= W::WIND_HOLD ? $liftDay : 0), 'liftHours' => $liftDay,
+                'windRule' => $windRule,
+            ],
             'forecast' => array_map(function ($f) use ($pct, $icon, $range, $windRule) {
                 $ff = W::demandFactor($f['condition'], $f['windLow'], $windRule);
                 return [

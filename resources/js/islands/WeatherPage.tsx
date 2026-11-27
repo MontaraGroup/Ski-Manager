@@ -3,6 +3,11 @@ import { Icon } from '@/components/Icon';
 import { Page, Panel, PostButton } from '@/components/Page';
 
 type Tone = 'success' | 'danger' | 'warning' | 'link';
+type Hour = {
+  hour: number; label: string; temp: string; value: number; canMake: boolean; warm: boolean; liftHour: boolean;
+  /** Weather Pro only */
+  wind: string | null; windValue: number | null; liftHold: boolean;
+};
 type BaseBar = { day: number; base: number; baseText: string; thin: boolean };
 
 type Props = {
@@ -18,7 +23,8 @@ type Props = {
     wind: string; windHold: boolean; boosted: boolean;
   };
   effects: { icon: string; tone: Tone; title: string; text: string; link?: [string, string] }[];
-  hourly: { label: string; isNow: boolean; temp: string; canMake: boolean; warm: boolean; wind: string | null; liftHold: boolean }[];
+  hourly: Hour[];
+  hourlyInfo: { tempUnit: string; windUnit: string; gunLimit: string; liftHoldHours: number; liftHours: number; windRule: boolean };
   forecast: {
     day: number; tonight: boolean; exact: boolean; confidence: number; icon: string; condition: string; temp: string;
     snowfall: string | null; precipChance: number | null; wind: string; windHold: 'yes' | 'likely' | 'possible' | 'no';
@@ -52,7 +58,7 @@ const date = (iso: string) => new Date(iso).toLocaleString([], { month: 'short',
  * /weather: the mountain now, the day tonight's tick settles and what it does to the resort, that
  * day hour by hour, the forecast (exact first, ranges after), the snow base and Weather Pro.
  */
-export default function WeatherPage({ subtitle, now, settle, effects, hourly, forecast, callouts, history, projection, maxBase, pro, help }: Props) {
+export default function WeatherPage({ subtitle, now, settle, effects, hourly, hourlyInfo, forecast, callouts, history, projection, maxBase, pro, help }: Props) {
   const isPro = pro.available && pro.active;
   const bars: (BaseBar & { future: boolean; fresh?: string | null })[] = [
     ...history.map((h) => ({ ...h, future: false })),
@@ -129,25 +135,7 @@ export default function WeatherPage({ subtitle, now, settle, effects, hourly, fo
         </Panel>
       )}
 
-      <Panel title="Tonight's settle, hour by hour">
-        <div className="overflow-x-auto">
-          <ol className="flex min-w-[720px] gap-1">
-            {hourly.map((h) => (
-              <li key={h.label} className={`flex-1 rounded-lg p-1.5 text-center ${h.liftHold ? 'bg-default ring-1 ring-danger' : ''}`}>
-                <div className="text-xs text-muted">{h.label}</div>
-                <div className={`text-sm font-semibold tabular-nums ${h.canMake ? 'text-link' : h.warm ? 'text-warning' : ''}`}>{h.temp}</div>
-                {h.wind && <div className={`text-xs tabular-nums ${h.liftHold ? 'font-semibold text-danger' : 'text-muted'}`}>{h.wind.replace(' ', ' ')}</div>}
-                <div className={`mt-1 h-1 rounded ${h.canMake ? 'bg-link' : 'bg-default'}`} aria-hidden="true" />
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p className="mt-2 flex flex-wrap gap-4 text-sm text-muted">
-          <span className="flex items-center gap-1"><span className="inline-block h-1 w-3 rounded bg-link" aria-hidden="true" />Cold enough for snow guns</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-1 w-3 rounded bg-default" aria-hidden="true" />Too warm</span>
-          {isPro && <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded ring-1 ring-danger" aria-hidden="true" />Chairlifts stop for wind</span>}
-        </p>
-      </Panel>
+      <HourlyPanel hours={hourly} info={hourlyInfo} proOffered={pro.available && !isPro} />
 
       <Panel title={`Next ${forecast.length} days`}>
         {forecast.length === 0 ? (
@@ -212,6 +200,129 @@ export default function WeatherPage({ subtitle, now, settle, effects, hourly, fo
         </Disclosure.Content>
       </Disclosure>
     </Page>
+  );
+}
+
+/** Runs of consecutive hours, as "12a to 8a" */
+function runs(hours: Hour[], test: (h: Hour) => boolean): string[] {
+  const out: string[] = [];
+  let start: Hour | null = null;
+  hours.forEach((h, i) => {
+    if (test(h) && !start) start = h;
+    const next = hours[i + 1];
+    if (start && test(h) && (!next || !test(next))) {
+      out.push(start === h ? h.label : `${start.label} to ${h.label}`);
+      start = null;
+    }
+  });
+  return out;
+}
+
+/**
+ * Only every third hour is labelled on phones, every hour from md up. The cell stays (invisible,
+ * not hidden) so the 24-column grid keeps its places; labels may spill over their hidden neighbours.
+ */
+const third = (h: Hour) => (h.hour % 3 === 0 ? '' : 'invisible md:visible');
+const COLS = { gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' };
+
+/**
+ * Tonight's settle day hour by hour: a summary first (what the hours mean for guns and lifts),
+ * then the temperature curve with lift hours marked, and the wind for Weather Pro.
+ */
+function HourlyPanel({ hours, info, proOffered }: { hours: Hour[]; info: Props['hourlyInfo']; proOffered: boolean }) {
+  if (hours.length === 0) return null;
+  const values = hours.map((h) => h.value);
+  const lo = Math.min(...values) - 2;
+  const hi = Math.max(...values) + 1;
+  const warmest = hours.reduce((a, b) => (b.value > a.value ? b : a));
+  const coldest = hours.reduce((a, b) => (b.value < a.value ? b : a));
+  const gunHours = hours.filter((h) => h.canMake).length;
+  const gunRuns = runs(hours, (h) => h.canMake);
+  const liftRun = runs(hours, (h) => h.liftHour)[0] ?? '';
+  const hasWind = hours.some((h) => h.windValue !== null);
+  const hold = info.liftHoldHours;
+
+  return (
+    <Panel title="Tonight's settle, hour by hour">
+      <dl className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Stat
+          label="Snow guns"
+          value={gunHours === 0 ? 'Too warm' : gunHours === 24 ? 'All day' : `${gunHours} h`}
+          tone={gunHours > 0 ? 'text-link' : 'text-danger'}
+          note={gunHours > 0 && gunHours < 24 ? gunRuns.join(', ') : `at ${info.gunLimit} or colder`}
+        />
+        <Stat label="Warmest" value={warmest.temp} tone={warmest.warm ? 'text-warning' : ''} note={`at ${warmest.label}`} />
+        <Stat label="Coldest" value={coldest.temp} note={`at ${coldest.label}`} />
+        <Stat
+          label={`Lifts, ${liftRun}`}
+          value={hold === 0 ? 'Running' : hold >= info.liftHours ? 'Wind hold' : `${hold} of ${info.liftHours} h on hold`}
+          tone={hold > 0 ? 'text-danger' : 'text-success'}
+          note={hold > 0 ? (info.windRule ? 'Chairlifts and gondolas stop; button lifts run' : 'Fewer skiers all day') : undefined}
+        />
+      </dl>
+
+      <div aria-hidden="true">
+        <div className="grid gap-px" style={COLS}>
+          {hours.map((h) => (
+            <div key={h.hour} className={`flex h-36 flex-col justify-end px-px pt-5 ${h.liftHour ? 'bg-default' : ''} ${h.hour === 10 ? 'rounded-tl-lg' : ''} ${h.hour === 15 ? 'rounded-tr-lg' : ''}`}>
+              <div className={`mb-1 flex justify-center whitespace-nowrap text-xs font-semibold tabular-nums ${third(h)} ${h.canMake ? 'text-link' : h.warm ? 'text-warning' : ''}`}>
+                {h.value}°
+              </div>
+              <div
+                className={`rounded-t ${h.canMake ? 'bg-link' : h.warm ? 'bg-warning' : 'bg-muted/40'}`}
+                style={{ height: `${Math.round(12 + (88 * (h.value - lo)) / Math.max(1, hi - lo))}%` }}
+                title={`${h.label}: ${h.temp}${h.wind ? `, wind ${h.wind}` : ''}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-px border-t border-border pt-1" style={COLS}>
+          {hours.map((h) => (
+            <div key={h.hour} className={`flex justify-center whitespace-nowrap text-xs text-muted ${third(h)}`}>{h.label}</div>
+          ))}
+        </div>
+
+        {hasWind && (
+          <>
+            <div className="mt-4 mb-1 text-sm font-semibold">Wind, {info.windUnit}</div>
+            <div className="grid gap-px" style={COLS}>
+              {hours.map((h) => (
+                <div
+                  key={h.hour}
+                  className={`flex justify-center whitespace-nowrap rounded py-1 text-xs tabular-nums ${h.liftHold ? 'bg-danger/15 font-semibold text-danger' : h.liftHour ? 'bg-default text-muted' : 'text-muted'}`}
+                >
+                  <span className={third(h)}>{h.windValue}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* The chart is hidden from screen readers; this table carries the same numbers */}
+      <table className="sr-only">
+        <caption>Tonight's settle, hour by hour</caption>
+        <thead>
+          <tr><th scope="col">Hour</th><th scope="col">Temperature</th>{hasWind && <th scope="col">Wind</th>}<th scope="col">Snow guns</th></tr>
+        </thead>
+        <tbody>
+          {hours.map((h) => (
+            <tr key={h.hour}>
+              <th scope="row">{h.label}</th><td>{h.temp}</td>{hasWind && <td>{h.wind}{h.liftHold ? ', chairlifts stop' : ''}</td>}<td>{h.canMake ? 'can run' : 'too warm'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+        <li className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-link" aria-hidden="true" />Cold enough for snow guns</li>
+        <li className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-muted/40" aria-hidden="true" />Too warm for guns</li>
+        {hours.some((h) => h.warm) && <li className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-warning" aria-hidden="true" />Above freezing</li>}
+        <li className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm border border-border bg-default" aria-hidden="true" />Lift hours ({liftRun})</li>
+        {hasWind && <li className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-danger/15" aria-hidden="true" />Chairlifts stop for wind</li>}
+      </ul>
+      {proOffered && <p className="mt-2 text-sm text-muted">Weather Pro adds the wind for each hour.</p>}
+    </Panel>
   );
 }
 
