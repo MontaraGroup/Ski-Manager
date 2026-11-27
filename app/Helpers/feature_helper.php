@@ -25,7 +25,7 @@ function featureViewerIsAdmin(): bool
 }
 
 /** Flags that stay off until they exist (they change game rules, so a missing flag mustn't switch them on) */
-const FEATURE_DEFAULT_OFF = ['season_mode_vote', 'winter-sports'];
+const FEATURE_DEFAULT_OFF = ['season_mode_vote', 'login-streak-save', 'winter-sports'];
 
 const FEATURE_LEVEL_BETA = 3;
 

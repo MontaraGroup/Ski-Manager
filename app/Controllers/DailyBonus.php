@@ -12,6 +12,51 @@ class DailyBonus extends BaseController
     public const WEEK_BONUS = 0.25;
     public const MAX_MULTIPLIER = 2.0;
     public const WEEKLY_GENEPIS = 5;
+    public const MILESTONE_DAYS = [30, 100];
+    /** PostHog flag: one missed day forgiven per season, plus 30/100-day milestone badges */
+    public const FLAG = 'login-streak-save';
+
+    /** Whether the login streak save and milestone badges feature is enabled for this player */
+    public static function saveEnabledFor(int $userId): bool
+    {
+        return function_exists('featureEnabledFor') && featureEnabledFor(self::FLAG, $userId);
+    }
+
+    /**
+     * Compute current streak and season-save status from a daily_bonus row.
+     * One missed day (last claim 2 days ago) is forgiven once per season when streak > 0.
+     */
+    public static function streakState(array $row, int $seasonNumber, ?string $today = null, bool $saveEnabled = true): array
+    {
+        $today ??= date('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime($today . ' -1 day'));
+        $twoDaysAgo = date('Y-m-d', strtotime($today . ' -2 days'));
+
+        $last = $row['last_claim_date'] ?? null;
+        $rawStreak = (int) ($row['streak'] ?? 0);
+        $saveUsedSeason = (int) ($row['save_used_season'] ?? 0);
+        $saveAvailable = $saveEnabled && $saveUsedSeason < $seasonNumber;
+
+        $claimedToday = $last === $today;
+        $consecutive = $claimedToday || $last === $yesterday;
+        $missedOneDay = !$consecutive && $last === $twoDaysAgo && $rawStreak > 0;
+        $saveProtected = $missedOneDay && $saveAvailable;
+
+        $onStreak = $consecutive || $saveProtected;
+        $streak = $onStreak ? $rawStreak : 0;
+        $lostStreak = !$onStreak && $rawStreak > 1 ? $rawStreak : 0;
+
+        return [
+            'claimedToday' => $claimedToday,
+            'onStreak' => $onStreak,
+            'streak' => $streak,
+            'lostStreak' => $lostStreak,
+            'saveAvailable' => $saveAvailable,
+            'saveProtected' => $saveProtected,
+            'saveUsedThisSeason' => $saveEnabled && !$saveAvailable,
+            'saveUsedDate' => $row['save_used_date'] ?? null,
+        ];
+    }
 
     private function cycle(): array
     {
@@ -56,10 +101,11 @@ class DailyBonus extends BaseController
         $row = $this->row($userId);
         $cycle = $this->cycle();
         $today = date('Y-m-d');
-        $last = $row['last_claim_date'];
-        $claimedToday = $last === $today;
-        $onStreak = $claimedToday || $last === date('Y-m-d', strtotime('-1 day'));
-        $streak = $onStreak ? (int) $row['streak'] : 0;
+        $seasonNumber = function_exists('getSeasonNumber') ? getSeasonNumber() : 1;
+        $flagOn = self::saveEnabledFor((int) $userId);
+        $state = self::streakState($row, $seasonNumber, $today, $flagOn);
+        $claimedToday = $state['claimedToday'];
+        $streak = $state['streak'];
         $next = self::rewardFor($streak + 1, $cycle); // today's claim, or tomorrow's once claimed
 
         // The 7 days of the week the streak is in (or would start), and what each pays
@@ -85,14 +131,35 @@ class DailyBonus extends BaseController
         }, $days);
 
         $nextMultPct = (int) round(($next['multiplier'] - 1) * 100);
+        $bestStreak = max((int) $row['best_streak'], $streak);
+
+        $achRows = db_connect()->table('achievements')
+            ->select('achievement_key, completed')
+            ->where('user_id', $userId)
+            ->whereIn('achievement_key', ['login_30', 'login_100'])
+            ->get()
+            ->getResultArray();
+        $achDone = array_column($achRows, 'completed', 'achievement_key');
+        $milestones = array_map(function (int $days) use ($streak, $bestStreak, $achDone) {
+            $key = 'login_' . $days;
+            $earned = ((int) ($achDone[$key] ?? 0) === 1) || $bestStreak >= $days;
+            return [
+                'days' => $days,
+                'key' => $key,
+                'name' => $days . '-Day Streak',
+                'earned' => $earned,
+                'current' => min($days, $streak),
+                'target' => $days,
+            ];
+        }, self::MILESTONE_DAYS);
 
         $page = [
             'streak' => $streak,
-            'bestStreak' => max((int) $row['best_streak'], $streak),
+            'bestStreak' => $bestStreak,
             'totalClaimed' => (int) $row['total_claimed'],
             'totalClaimedFormatted' => currency((int) $row['total_claimed']),
             'claimedToday' => $claimedToday,
-            'lostStreak' => !$onStreak && (int) $row['streak'] > 1 ? (int) $row['streak'] : 0,
+            'lostStreak' => $state['lostStreak'],
             'secondsToReset' => max(0, strtotime('tomorrow') - time()),
             'next' => [
                 'day' => (int) $next['day'],
@@ -111,6 +178,17 @@ class DailyBonus extends BaseController
             'weeklyGenepis' => self::WEEKLY_GENEPIS,
         ];
 
+        if ($flagOn) {
+            $page['streakSave'] = [
+                'season' => $seasonNumber,
+                'available' => $state['saveAvailable'],
+                'protected' => $state['saveProtected'],
+                'usedThisSeason' => $state['saveUsedThisSeason'],
+                'usedDate' => $state['saveUsedDate'],
+            ];
+            $page['milestones'] = $milestones;
+        }
+
         return $page;
     }
 
@@ -119,18 +197,25 @@ class DailyBonus extends BaseController
         $userId = auth()->id();
         $row = $this->row($userId);
         $today = date('Y-m-d');
-        $onStreak = $row['last_claim_date'] === date('Y-m-d', strtotime('-1 day'));
-        $streak = $onStreak ? (int) $row['streak'] + 1 : 1;
+        $seasonNumber = function_exists('getSeasonNumber') ? getSeasonNumber() : 1;
+        $flagOn = self::saveEnabledFor((int) $userId);
+        $state = self::streakState($row, $seasonNumber, $today, $flagOn);
+        $usedSave = $state['saveProtected'];
+        $streak = $state['onStreak'] ? (int) $row['streak'] + 1 : 1;
         $r = self::rewardFor($streak, $this->cycle());
 
         $db = db_connect();
         $db->transStart();
         // Only if not claimed today: two quick clicks can't both pay
-        $db->table('daily_bonus')->where('user_id', $userId)
+        $update = $db->table('daily_bonus')->where('user_id', $userId)
             ->groupStart()->where('last_claim_date IS NULL')->orWhere('last_claim_date <', $today)->groupEnd()
             ->set('last_claim_date', $today)->set('streak', $streak)
             ->set('best_streak', 'GREATEST(best_streak, ' . $streak . ')', false)
-            ->set('total_claimed', 'total_claimed + ' . $r['cash'], false)->update();
+            ->set('total_claimed', 'total_claimed + ' . $r['cash'], false);
+        if ($usedSave) {
+            $update->set('save_used_season', $seasonNumber)->set('save_used_date', $today);
+        }
+        $update->update();
         if ($db->affectedRows() !== 1) {
             $db->transRollback();
             return redirect()->to('/daily-bonus')->with('error', 'Already claimed today. The next bonus unlocks at midnight.');
@@ -149,8 +234,11 @@ class DailyBonus extends BaseController
         }
         $db->transComplete();
 
+        \App\Libraries\Achievements::sync($userId);
+
         $extra = $r['genepis'] > 0 ? ' and ' . $r['genepis'] . ' Génépis' : '';
-        log_activity($userId, 'Daily Bonus', 'Claimed day ' . $streak . ' bonus: ' . currency($r['cash']) . $extra, 'fa-solid fa-gift');
-        return redirect()->to('/daily-bonus')->with('success', 'Day ' . $streak . ' bonus: ' . currency($r['cash']) . $extra . '.');
+        $saveNote = $usedSave ? ' (season streak save used)' : '';
+        log_activity($userId, 'Daily Bonus', 'Claimed day ' . $streak . ' bonus: ' . currency($r['cash']) . $extra . $saveNote, 'fa-solid fa-gift');
+        return redirect()->to('/daily-bonus')->with('success', 'Day ' . $streak . ' bonus: ' . currency($r['cash']) . $extra . $saveNote . '.');
     }
 }

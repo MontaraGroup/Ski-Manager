@@ -206,7 +206,7 @@
       var consented = false;
       try { var c = localStorage.getItem('cookie_consent'); consented = c === 'all' || c === 'analytics'; } catch (e) {}
       var player = <?= (function_exists('auth') && auth()->loggedIn())
-          ? json_encode(['id' => (string) auth()->id(), 'username' => auth()->user()->username ?? '', 'is_admin' => function_exists('featureViewerIsAdmin') && featureViewerIsAdmin()], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
+          ? json_encode(['id' => (string) auth()->id(), 'username' => auth()->user()->username ?? '', 'is_admin' => function_exists('featureViewerIsAdmin') && featureViewerIsAdmin(), 'is_beta_tester' => \App\Libraries\Beta::isMember((int) auth()->id())], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
           : 'null' ?>;
       posthog.init(<?= json_encode($__phKey, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>, {
         api_host: <?= json_encode($__phHost, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
@@ -227,7 +227,7 @@
         loaded: function (ph) { identify(ph); }
       });
       function identify(ph) {
-        if (player) ph.identify(player.id, { username: player.username, is_admin: player.is_admin ? 'true' : 'false' });
+        if (player) ph.identify(player.id, { username: player.username, is_admin: player.is_admin ? 'true' : 'false', is_beta_tester: player.is_beta_tester ? 'true' : 'false' });
       }
       window.__posthogConsent = function (granted) {
         if (!window.posthog || granted === consented) return;

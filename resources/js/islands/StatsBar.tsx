@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
 import type { Stats } from '@/lib/shell';
+import { onCashChange } from '@/lib/cash';
 
 type ZoneParts = { year: number; month: number; day: number; hour: number; minute: number };
 
@@ -84,18 +85,33 @@ function useResortNow(serverNowMs: number): number {
   return now;
 }
 
+/** Format cash identically to Shell.php currency() */
+function formatCash(amount: number, sampleFormatted: string): string {
+  const isImperial = sampleFormatted.includes('$');
+  const formatted = Math.abs(Math.round(amount)).toLocaleString('en-US');
+  const sign = amount < 0 ? '-' : '';
+  return isImperial ? `${sign}$${formatted}` : `${sign}${formatted} €`;
+}
+
 /** The resort at a glance, under the navbar. Every figure is the player's own, from the server */
 export default function StatsBar(stats: Stats) {
+  const [cashText, setCashText] = useState(stats.cash);
   const now = useResortNow(stats.now * 1000);
   const time = resortTime(now, stats.timezone);
   const next = countdown(nextDayStart(now, stats.timezone) - now);
   const clockLabel = `Resort time ${time}, next day in ${next.long}`;
 
+  useEffect(() => {
+    return onCashChange((newCash) => {
+      setCashText(formatCash(newCash, stats.cash));
+    });
+  }, [stats.cash]);
+
   return (
     <div className="border-b border-border bg-background">
       <ul aria-label="Resort status" className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 py-1 text-sm [scrollbar-width:none] [mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] sm:px-4 sm:[mask-image:none]">
-        <Stat href="/finances" label={`Cash ${stats.cash}. Open Finances`} icon="fa-money-bill-wave" tone="text-success">
-          <span className="font-semibold tabular-nums">{stats.cash}</span>
+        <Stat href="/finances" label={`Cash ${cashText}. Open Finances`} icon="fa-money-bill-wave" tone="text-success">
+          <span className="font-semibold tabular-nums">{cashText}</span>
         </Stat>
         <Stat href="/weather" label={`${stats.weather || 'Weather'}, ${stats.temp}. Open the forecast`} icon={stats.tempIcon} tone="text-link">
           <span className="font-semibold tabular-nums">{stats.temp}</span>
