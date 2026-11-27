@@ -1,134 +1,251 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { Chip, Surface } from '@heroui/react';
+import { Page } from '@/components/Page';
 import { Icon } from '@/components/Icon';
-import { Figure, Page } from '@/components/Page';
-import { BobsleighTab } from './winter-sports/BobsleighTab';
-import { CrossCountryTab } from './winter-sports/CrossCountryTab';
-import { HockeyArenaTab } from './winter-sports/HockeyArenaTab';
-import { IceRinkTab } from './winter-sports/IceRinkTab';
-import { UnbuiltBlueprint } from './winter-sports/SharedParts';
-import { SkiJumpTab } from './winter-sports/SkiJumpTab';
+import { UnbuiltVenueFrame } from './winter-sports/SharedParts';
+import {
+  BobsleighBlueprintSvg,
+  CrossCountryBlueprintSvg,
+  HockeyArenaBlueprintSvg,
+  IceRinkBlueprintSvg,
+  SkiJumpBlueprintSvg,
+} from './winter-sports/Blueprints';
 import type { ActivityTab, WinterSportsPageProps } from './winter-sports/types';
 
-function renderTabBody(tab: ActivityTab, cash: number) {
-  if (!tab.built || !tab.venue) {
-    return <UnbuiltBlueprint tab={tab} />;
-  }
+const IceRinkTab = lazy(() =>
+  import('./winter-sports/IceRinkTab').then((m) => ({ default: m.IceRinkTab })),
+);
+const CrossCountryTab = lazy(() =>
+  import('./winter-sports/CrossCountryTab').then((m) => ({ default: m.CrossCountryTab })),
+);
+const HockeyArenaTab = lazy(() =>
+  import('./winter-sports/HockeyArenaTab').then((m) => ({ default: m.HockeyArenaTab })),
+);
+const SkiJumpTab = lazy(() =>
+  import('./winter-sports/SkiJumpTab').then((m) => ({ default: m.SkiJumpTab })),
+);
+const BobsleighTab = lazy(() =>
+  import('./winter-sports/BobsleighTab').then((m) => ({ default: m.BobsleighTab })),
+);
+
+function renderUnbuiltTab(tab: ActivityTab) {
   switch (tab.type) {
     case 'ice_rink':
-      return <IceRinkTab tab={tab} v={tab.venue} cash={cash} />;
+      return (
+        <UnbuiltVenueFrame
+          tab={tab}
+          blueprintTitle="Alpine Village Plaza Oval"
+          illustration={<IceRinkBlueprintSvg />}
+          highlightNote={`Hosts ${tab.eventName}. Schedule 3 daily skating blocks and sell skate rentals.`}
+          specs={[
+            { label: 'Build Cost', value: tab.buildCostText },
+            { label: 'Surface', value: tab.surface },
+            { label: 'Weather', value: tab.weather },
+          ]}
+        />
+      );
     case 'cross_country':
-      return <CrossCountryTab tab={tab} v={tab.venue} cash={cash} />;
+      return (
+        <UnbuiltVenueFrame
+          tab={tab}
+          blueprintTitle="Topographic Loop Network"
+          illustration={<CrossCountryBlueprintSvg />}
+          highlightNote={`Hosts ${tab.eventName}. Links directly with Nordic trails from your Ski Map.`}
+          specs={[
+            { label: 'Build Cost', value: tab.buildCostText },
+            { label: 'Surface', value: tab.surface },
+            { label: 'Weather', value: tab.weather },
+          ]}
+        />
+      );
     case 'hockey_arena':
-      return <HockeyArenaTab tab={tab} v={tab.venue} cash={cash} />;
+      return (
+        <UnbuiltVenueFrame
+          tab={tab}
+          blueprintTitle="Seated Rink & Jumbotron Bowl"
+          illustration={<HockeyArenaBlueprintSvg />}
+          highlightNote={`Hosts ${tab.eventName}. Book derby & tournament fixtures plus dasher board sponsors.`}
+          specs={[
+            { label: 'Build Cost', value: tab.buildCostText },
+            { label: 'Surface', value: tab.surface },
+            { label: 'Weather', value: tab.weather },
+          ]}
+        />
+      );
     case 'ski_jump':
-      return <SkiJumpTab tab={tab} v={tab.venue} cash={cash} />;
+      return (
+        <UnbuiltVenueFrame
+          tab={tab}
+          blueprintTitle="Inrun Tower & Flight Profile"
+          illustration={<SkiJumpBlueprintSvg />}
+          highlightNote={`Hosts ${tab.eventName}. Monitor ridge crosswinds and expand from K60 up to HS225.`}
+          specs={[
+            { label: 'Build Cost', value: tab.buildCostText },
+            { label: 'Surface', value: tab.surface },
+            { label: 'Weather', value: tab.weather },
+          ]}
+        />
+      );
     case 'bobsleigh_track':
-      return <BobsleighTab tab={tab} v={tab.venue} cash={cash} />;
+      return (
+        <UnbuiltVenueFrame
+          tab={tab}
+          blueprintTitle="Refrigerated S-Curve Sliding Chute"
+          illustration={<BobsleighBlueprintSvg />}
+          highlightNote={`Hosts ${tab.eventName}. Manage ammonia chiller throttle and public taxi-bob rides.`}
+          specs={[
+            { label: 'Build Cost', value: tab.buildCostText },
+            { label: 'Surface', value: tab.surface },
+            { label: 'Weather', value: tab.weather },
+          ]}
+        />
+      );
   }
 }
 
-export default function WinterSportsPage({ cash, cashText, activeTab, stats, tabs }: WinterSportsPageProps) {
-  const [selected, setSelected] = useState<string>(activeTab || tabs[0]?.type || 'ice_rink');
-  const currentTab = tabs.find((t) => t.type === selected) ?? tabs[0];
+function renderBuiltTab(tab: ActivityTab) {
+  if (!tab.venue) return null;
+  let content;
+  switch (tab.type) {
+    case 'ice_rink':
+      content = <IceRinkTab venue={tab.venue} />;
+      break;
+    case 'cross_country':
+      content = <CrossCountryTab venue={tab.venue} />;
+      break;
+    case 'hockey_arena':
+      content = <HockeyArenaTab venue={tab.venue} />;
+      break;
+    case 'ski_jump':
+      content = <SkiJumpTab venue={tab.venue} />;
+      break;
+    case 'bobsleigh_track':
+      content = <BobsleighTab venue={tab.venue} />;
+      break;
+  }
+  return (
+    <Suspense
+      fallback={
+        <Surface variant="secondary" className="rounded-2xl border border-[var(--border)] p-8 text-center text-xs text-[var(--muted)]">
+          Loading {tab.name}...
+        </Surface>
+      }
+    >
+      {content}
+    </Suspense>
+  );
+}
 
-  function chooseTab(type: string) {
-    setSelected(type);
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', type);
-    window.history.replaceState({}, '', url.toString());
+export default function WinterSportsPage(props: WinterSportsPageProps) {
+  const { cashText, activeTab: initialTab, weather, stats, tabs } = props;
+  const [selectedType, setSelectedType] = useState<ActivityTab['type']>(
+    tabs.find((t) => t.type === initialTab)?.type ?? tabs[0]?.type ?? 'ice_rink',
+  );
+  const currentTab = tabs.find((t) => t.type === selectedType) ?? tabs[0];
+
+  function selectTab(type: ActivityTab['type']) {
+    setSelectedType(type);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', type);
+      window.history.replaceState({}, '', url.toString());
+    }
   }
 
   return (
     <Page
       title="Winter Activities"
-      icon="fa-hockey-puck"
-      iconTone="text-link"
-      back="/resort"
+      icon="fa-medal"
+      subtitle="Operate distinct off-slope alpine venues: ice rinks, Nordic loops, hockey matchups, jump towers, and bobsleigh chutes."
       width="max-w-6xl"
-      subtitle="Five distinct non-alpine venues with their own schedules, trails, matchdays, hills, weather limits and tournaments."
       actions={
-        <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold tabular-nums text-success">
-          Cash {cashText}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip size="sm" variant="soft" color={weather.isWinter ? 'accent' : 'warning'}>
+            {weather.tempC}°C | {weather.windKmh} km/h | {weather.snowBaseCm} cm
+          </Chip>
+          <Chip size="sm" variant="soft" color="success">
+            Treasury {cashText}
+          </Chip>
+        </div>
       }
     >
-      {/* Top Resort Summary Bar */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Figure
-          label="Flagship venues"
-          value={`${stats.builtCount} / ${stats.totalTypes}`}
-          tone="text-foreground"
-          note={`${stats.openCount} open · +${stats.visitorBoost.toLocaleString('en-US')} visitors/day`}
-        />
-        <Figure
-          label="Est. daily income"
-          value={stats.estRevenueText}
-          tone="text-success"
-          note={`${stats.estTicketText} entry + ${stats.estAddonText} extras`}
-        />
-        <Figure
-          label="Est. guests/day"
-          value={stats.estGuests.toLocaleString('en-US')}
-          tone="text-link"
-          note="Across open activities"
-        />
-        <Figure
-          label="Est. daily net"
-          value={stats.estNetText}
-          tone="text-foreground"
-          note={`Upkeep ${stats.totalUpkeepText} · ${stats.totalKwh.toLocaleString('en-US')} kWh`}
-        />
-      </div>
-
-      {/* 5 Activity Tabs */}
-      <div
-        role="tablist"
-        aria-label="Winter activities"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-5"
+      {/* Compact Inline Activities KPI Bar */}
+      <Surface
+        variant="secondary"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] px-4 py-3 text-xs"
       >
-        {tabs.map((t) => {
-          const isSelected = currentTab?.type === t.type;
-          const dotColor = !t.built
-            ? 'bg-border'
-            : t.venue?.status === 'open'
-              ? 'bg-success'
-              : t.venue?.status === 'maintenance'
-                ? 'bg-warning'
-                : 'bg-muted';
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+          <div>
+            <span className="text-[var(--muted)]">Venues </span>
+            <strong className="font-bold tabular-nums text-[var(--foreground)]">
+              {stats.builtCount}/{stats.totalTypes} built
+            </strong>
+            <span className="text-[var(--muted)]"> ({stats.openCount} open)</span>
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Daily Guests </span>
+            <strong className="font-bold tabular-nums text-[var(--foreground)]">
+              {stats.estGuests.toLocaleString()}
+            </strong>
+            <span className="text-[var(--muted)]"> (+{stats.visitorBoost}% resort draw)</span>
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Projected Net </span>
+            <strong className="font-bold tabular-nums text-[var(--success)]">{stats.estNetText}/d</strong>
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Grid Load </span>
+            <strong className="font-bold tabular-nums text-[var(--foreground)]">
+              {stats.totalKwh.toLocaleString()} kWh
+            </strong>
+          </div>
+        </div>
+        <span className="text-[11px] font-medium text-[var(--muted)]">
+          {weather.condition || (weather.isWinter ? 'Winter Operations' : 'Off-Season')}
+        </span>
+      </Surface>
+
+      {/* Compact Single-Row 5-Tab Switcher */}
+      <nav
+        aria-label="Winter activity venues"
+        className="flex gap-2 overflow-x-auto pb-1"
+      >
+        {tabs.map((tab) => {
+          const active = tab.type === currentTab.type;
+          const isOpen = tab.venue?.status === 'open';
           return (
             <button
-              key={t.type}
+              key={tab.type}
               type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => chooseTab(t.type)}
-              className={`flex min-h-14 flex-col justify-between gap-1 rounded-xl border p-3 text-left transition-colors ${
-                isSelected
-                  ? 'border-link bg-link/10 text-foreground'
-                  : 'border-border bg-surface text-muted hover:bg-default/60 hover:text-foreground'
+              onClick={() => selectTab(tab.type)}
+              className={`flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors ${
+                active
+                  ? 'border-[var(--link)] bg-[var(--link)]/12 text-[var(--foreground)]'
+                  : 'border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--muted)] hover:text-[var(--foreground)]'
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <Icon name={t.icon} className={isSelected ? 'text-link' : 'text-muted'} />
-                <span className={`inline-block size-2 rounded-full ${dotColor}`} title={t.built ? t.venue?.status : 'Unbuilt'} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold leading-tight text-foreground">{t.name}</div>
-                <div className="mt-0.5 truncate text-xs text-muted">
-                  {t.built ? (t.venue?.status === 'open' ? `${t.venue.est.revenueText}/day` : t.venue?.status) : t.buildCostText}
-                </div>
-              </div>
+              <Icon
+                name={tab.icon}
+                className={`text-sm ${active ? 'text-[var(--link)]' : 'text-[var(--muted)]'}`}
+              />
+              <span>{tab.name}</span>
+              {tab.built ? (
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isOpen ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'
+                  }`}
+                  title={isOpen ? 'Open' : 'Closed'}
+                />
+              ) : (
+                <span className="text-[10px] font-normal text-[var(--muted)]">Blueprint</span>
+              )}
             </button>
           );
         })}
-      </div>
+      </nav>
 
-      {/* Active Workspace */}
-      {currentTab && (
-        <section role="tabpanel" aria-label={currentTab.name}>
-          {renderTabBody(currentTab, cash)}
-        </section>
-      )}
+      {/* Active Activity Workspace */}
+      <div>{currentTab.built ? renderBuiltTab(currentTab) : renderUnbuiltTab(currentTab)}</div>
     </Page>
   );
 }
