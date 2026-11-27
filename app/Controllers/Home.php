@@ -53,21 +53,38 @@ class Home extends BaseController
             }
         }
 
+        // Several rows per player read as one name repeated, so the home page shows one row per player
         $recent = [];
-        if (!empty($raw['recent'])) {
-            foreach ($raw['recent'] as $r) {
-                $recent[] = [
-                    'username' => $r['username'] ?? '',
-                    'name' => $r['name'] ?? '',
-                    'itemType' => $r['item_type'] ?? 'slope',
-                    'difficulty' => $r['difficulty'] ?? 'blue',
+        foreach ($raw['recent'] ?? [] as $r) {
+            $name = $r['username'] ?? '';
+            if ($name === '') {
+                continue;
+            }
+            if (!isset($recent[$name])) {
+                if (count($recent) >= 6) {
+                    continue;
+                }
+                $recent[$name] = [
+                    'username' => $name,
+                    'lifts' => 0,
+                    'runs' => ['green' => 0, 'blue' => 0, 'black' => 0, 'double_black' => 0],
                     'timeAgoText' => function_exists('timeAgo') ? timeAgo($r['created_at']) : '',
                 ];
             }
+            if (($r['item_type'] ?? '') === 'lift') {
+                $recent[$name]['lifts']++;
+            } else {
+                $d = $r['difficulty'] ?? 'blue';
+                $recent[$name]['runs'][isset($recent[$name]['runs'][$d]) ? $d : 'blue']++;
+            }
         }
+        $recent = array_values($recent);
+
+        $user = (function_exists('auth') && auth()->loggedIn()) ? auth()->user() : null;
 
         $page = [
-            'isLoggedIn' => (bool) (function_exists('auth') && auth()->loggedIn()),
+            'isLoggedIn' => $user !== null,
+            'username' => $user->username ?? '',
             'playerCount' => (int) $raw['playerCount'],
             'playerCountFormatted' => number_format((int) $raw['playerCount']),
             'totalSlopes' => (int) $raw['totalSlopes'],
@@ -165,8 +182,9 @@ class Home extends BaseController
             ->join('users u', 'u.id = pi.user_id')
             ->where('u.id !=', 1)
             ->groupStart()->where('u.status IS NULL')->orWhere('u.status !=', 'demo')->groupEnd()
+            ->where('pi.created_at >=', date('Y-m-d H:i:s', strtotime('-7 days')))
             ->orderBy('pi.id', 'DESC')
-            ->limit(6)
+            ->limit(60)
             ->get()
             ->getResultArray();
 

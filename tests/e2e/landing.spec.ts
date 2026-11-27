@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Public Landing Page', () => {
-  test('renders hero, snow conditions, timeline, and registration CTA', async ({ page }) => {
+  test('renders hero, snow report, and registration CTA', async ({ page }) => {
     await page.goto('/');
 
     // Check island mounting
@@ -13,8 +13,8 @@ test.describe('Public Landing Page', () => {
     await expect(heroHeading).toBeVisible({ timeout: 15_000 });
     await expect(heroHeading).toContainText(/Build, groom, and run|Run a ski resort/i);
 
-    // Live snow conditions panel
-    const snowBoard = page.getByText(/Live snow conditions|Live Snow Report|Park City base/i).first();
+    // Snow report board
+    const snowBoard = page.getByText(/Park City snow report/i).first();
     await expect(snowBoard).toBeVisible();
 
     // Registration CTA
