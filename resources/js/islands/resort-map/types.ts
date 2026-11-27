@@ -218,7 +218,6 @@ export interface ResortMapProps {
   userCash: number;
   userCashText: string;
   isAdmin: boolean;
-  map3dEnabled?: boolean;
   resortOpen?: boolean;
   buildings?: MapBuilding[];
   parking?: MapParking[];

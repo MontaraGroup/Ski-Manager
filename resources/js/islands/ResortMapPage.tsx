@@ -60,8 +60,8 @@ function readShowAvailable(): boolean {
   }
 }
 
-function readInitialViewMode(enabled: boolean, supported: boolean): MapViewMode {
-  if (!enabled || !supported) return '2d';
+function readInitialViewMode(supported: boolean): MapViewMode {
+  if (!supported) return '2d';
   try {
     if (localStorage.getItem('map_view_mode') === '2d') return '2d';
   } catch {}
@@ -75,11 +75,8 @@ export default function ResortMapPage(props: ResortMapProps) {
   const [engineApi, setEngineApi] = useState<MapEngineInstance | null>(null);
   const viewport3dRef = useRef<Map3DViewportHandle | null>(null);
 
-  const map3dEnabled = Boolean(props.map3dEnabled);
-  const [webglSupported, setWebglSupported] = useState<boolean>(() => (map3dEnabled ? detectWebGL2() : false));
-  const [viewMode, setViewMode] = useState<MapViewMode>(() =>
-    readInitialViewMode(map3dEnabled, map3dEnabled ? detectWebGL2() : false)
-  );
+  const [webglSupported, setWebglSupported] = useState<boolean>(detectWebGL2);
+  const [viewMode, setViewMode] = useState<MapViewMode>(() => readInitialViewMode(detectWebGL2()));
 
   // Core world & live states
   const [segments, setSegments] = useState<MapSegment[]>(props.segments);
@@ -449,9 +446,8 @@ export default function ResortMapPage(props: ResortMapProps) {
     engineRef.current.setPlacingMode(Boolean(placingFacility));
   }, [viewMode, placingFacility]);
 
-  // 30s live skier & weather polling when map3dEnabled is active
+  // Live skiers and weather every 30 s while the tab is visible
   useEffect(() => {
-    if (!map3dEnabled) return;
     let lastFetchAt = Date.now();
     const poll = async () => {
       if (document.hidden) return;
@@ -477,7 +473,7 @@ export default function ResortMapPage(props: ResortMapProps) {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [map3dEnabled, mapApi, applyLiveSnapshot]);
+  }, [mapApi, applyLiveSnapshot]);
 
   // Keyboard shortcuts (Escape cancels placement or closes panel; F fits mountain)
   useEffect(() => {
@@ -874,7 +870,6 @@ export default function ResortMapPage(props: ResortMapProps) {
         onBuild={() => handleOpenBuildDrawer(builtSlopes.length === 0 ? 'slope' : activeTab)}
         isAdmin={props.isAdmin}
         adminActions={adminActions}
-        map3dEnabled={map3dEnabled}
         viewMode={viewMode}
         onViewMode={handleViewMode}
         webglSupported={webglSupported}
@@ -966,7 +961,6 @@ export default function ResortMapPage(props: ResortMapProps) {
 
         <MapKey
           isAdmin={props.isAdmin}
-          map3dEnabled={map3dEnabled}
           viewMode={viewMode}
           lens={lens}
           showBuildings={showBuildings}
@@ -1012,7 +1006,7 @@ export default function ResortMapPage(props: ResortMapProps) {
               <BuildingInspectorView
                 facility={selectedFacility}
                 isImperial={props.isImperial}
-                canReposition={map3dEnabled}
+                canReposition
                 onStartMove={(f) => {
                   setShowBuildings(true);
                   setPlacingFacility(f);

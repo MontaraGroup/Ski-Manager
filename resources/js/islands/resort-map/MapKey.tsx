@@ -32,14 +32,12 @@ function readOpen(): boolean {
 /** The trail key, behind a "Key" button so it doesn't sit on the map all the time */
 export function MapKey({
   isAdmin,
-  map3dEnabled = false,
   viewMode = '2d',
   lens = 'trails',
   showBuildings = true,
   showSkiers = true,
 }: {
   isAdmin: boolean;
-  map3dEnabled?: boolean;
   viewMode?: MapViewMode;
   lens?: MapLens;
   showBuildings?: boolean;
@@ -55,7 +53,9 @@ export function MapKey({
     } catch {}
   }
 
-  const posClass = map3dEnabled && viewMode === '3d' ? 'left-3' : 'left-14';
+  const posClass = viewMode === '3d' ? 'left-3' : 'left-14';
+  // Lenses recolour runs in the 3D view only; the 2D map always draws trail colours
+  const activeLens = viewMode === '3d' ? lens : 'trails';
 
   return (
     <div className={`absolute top-3 ${posClass} z-[800] text-sm text-foreground`}>
@@ -73,7 +73,7 @@ export function MapKey({
       </Button>
       {open && (
         <dl id="map-key" className="mt-2 grid max-h-[min(60vh,24rem)] grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-1.5 overflow-y-auto rounded-xl border border-border bg-surface p-3 shadow-md">
-          {(!map3dEnabled || lens === 'trails') && (
+          {activeLens === 'trails' && (
             <>
               {RUNS.map((d) => (
                 <div key={d} className="contents">
@@ -96,7 +96,7 @@ export function MapKey({
             </>
           )}
 
-          {map3dEnabled && lens === 'traffic' && (
+          {activeLens === 'traffic' && (
             <>
               <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-success" /></dt>
               <dd>Quiet flow (&lt;50%)</dd>
@@ -107,7 +107,7 @@ export function MapKey({
             </>
           )}
 
-          {map3dEnabled && lens === 'snow' && (
+          {activeLens === 'snow' && (
             <>
               <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-sky-500" /></dt>
               <dd>Powder / Packed</dd>
@@ -120,7 +120,7 @@ export function MapKey({
             </>
           )}
 
-          {map3dEnabled && lens === 'steepness' && (
+          {activeLens === 'steepness' && (
             <>
               <dt className="flex justify-end pr-2"><span className="inline-block size-3 rounded-full bg-emerald-500" /></dt>
               <dd>Gentle grade</dd>
@@ -144,13 +144,13 @@ export function MapKey({
             </>
           )}
 
-          {map3dEnabled && showBuildings && (
+          {showBuildings && (
             <>
               <dt className="flex justify-end pr-2 text-link"><Icon name="fa-building" /></dt>
               <dd>Building, parking or park</dd>
             </>
           )}
-          {map3dEnabled && showSkiers && (
+          {showSkiers && (
             <>
               <dt className="flex justify-end pr-2 text-warning"><Icon name="fa-person-skiing" /></dt>
               <dd>Live skier</dd>

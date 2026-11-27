@@ -11,18 +11,37 @@ class LiveSkiers
 {
     private static array $requestCache = [];
 
-    public static function clearCache(): void
+    /** How long the stats bar's count may be reused across requests (the map itself always computes fresh) */
+    private const COUNT_TTL = 30;
+
+    /** Forget this request's snapshots, and the player's cached stats-bar count when $userId is given */
+    public static function clearCache(?int $userId = null): void
     {
         self::$requestCache = [];
+        if ($userId !== null && $userId > 0 && function_exists('cache')) {
+            cache()->delete('live_skiers_count_' . $userId);
+        }
     }
 
-    /** Fast total live skier count for global chrome (StatsBar). */
+    /**
+     * Live skier count for the stats bar on every page. Cached for COUNT_TTL seconds per player, so a page
+     * load doesn't run the full snapshot (five queries and the weather) for every player.
+     */
     public static function countOnly(int $userId): int
     {
         if ($userId <= 0) {
             return 0;
         }
-        return self::snapshot($userId)['liveTotal'];
+        $key = 'live_skiers_count_' . $userId;
+        $cached = function_exists('cache') ? cache()->get($key) : null;
+        if (is_int($cached)) {
+            return $cached;
+        }
+        $count = (int) self::snapshot($userId)['liveTotal'];
+        if (function_exists('cache')) {
+            cache()->save($key, $count, self::COUNT_TTL);
+        }
+        return $count;
     }
 
     /**

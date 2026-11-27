@@ -465,6 +465,12 @@ export function createMap3DRenderer(
   const maxAniso = anisoExt ? gl.getParameter(anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1;
 
   let destroyed = false;
+  // Draw only when something changed: the camera is moving, skiers are animating, or state/textures/size changed.
+  // An idle, paused map then costs no GPU time (phones, laptops on battery).
+  let needsDraw = true;
+  const invalidate = () => {
+    needsDraw = true;
+  };
   let loadedTexTier = 0; // 1=low, 2=med, 3=full
   let fullRequested = false;
 
@@ -489,6 +495,7 @@ export function createMap3DRenderer(
     if (anisoExt && maxAniso > 1) {
       gl!.texParameterf(gl!.TEXTURE_2D, anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, maxAniso));
     }
+    invalidate();
   }
 
   const texSource = mapConfig.cleanImage || mapConfig.image;
@@ -542,13 +549,16 @@ export function createMap3DRenderer(
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // Touch devices get 1.5x at most: the terrain shader is per-pixel, and phones have small GPUs
+    const dprCap = window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2;
+    const dpr = Math.min(dprCap, window.devicePixelRatio || 1);
     const nw = Math.max(1, Math.round(rect.width * dpr));
     const nh = Math.max(1, Math.round(rect.height * dpr));
     if (canvas.width !== nw || canvas.height !== nh) {
       canvas.width = nw;
       canvas.height = nh;
       gl!.viewport(0, 0, nw, nh);
+      invalidate();
     }
   }
 
@@ -712,13 +722,26 @@ export function createMap3DRenderer(
       }
       return;
     }
+    // Hover picking only over the map itself, not for every mouse move on the page (panels, header)
+    if (e.target !== canvas) {
+      if (hoveredSegIdx !== -1) {
+        hoveredSegIdx = -1;
+        invalidate();
+      }
+      return;
+    }
     const p = pickAt(e.clientX, e.clientY);
-    hoveredSegIdx = p && p.kind === 'segment' ? (segIdxMap.get(String(p.segment.id)) ?? -1) : -1;
+    const nextHover = p && p.kind === 'segment' ? (segIdxMap.get(String(p.segment.id)) ?? -1) : -1;
+    if (nextHover !== hoveredSegIdx) {
+      hoveredSegIdx = nextHover;
+      invalidate();
+    }
     callbacks.onHover(p, e.clientX, e.clientY);
   };
 
   const onPointerLeave = () => {
     hoveredSegIdx = -1;
+    invalidate();
     callbacks.onHover(null, 0, 0);
   };
 
@@ -745,6 +768,15 @@ export function createMap3DRenderer(
 
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
 
+  // Phones drop the GL context when memory runs low or the tab goes to the background; without this the
+  // map stays black. Hand over to the 2D map instead.
+  const onContextLost = (e: Event) => {
+    e.preventDefault();
+    destroyed = true;
+    cancelAnimationFrame(raf);
+    callbacks.onWebGLFailed('The 3D view ran out of graphics memory, so the 2D map is showing.');
+  };
+
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointerleave', onPointerLeave);
   window.addEventListener('pointermove', onPointerMove);
@@ -752,6 +784,7 @@ export function createMap3DRenderer(
   window.addEventListener('pointercancel', onPointerCancel);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('contextmenu', onContextMenu);
+  canvas.addEventListener('webglcontextlost', onContextLost);
 
   const ro = new ResizeObserver(resizeCanvas);
   ro.observe(canvas);
@@ -773,6 +806,15 @@ export function createMap3DRenderer(
     cam.pitch = lerp(cam.pitch, targetCam.pitch, damp);
     cam.dist = lerp(cam.dist, targetCam.dist, damp);
 
+    const camMoving =
+      Math.abs(cam.tx - targetCam.tx) > 0.01 ||
+      Math.abs(cam.ty - targetCam.ty) > 0.01 ||
+      Math.abs(cam.tz - targetCam.tz) > 0.01 ||
+      Math.abs(cam.yaw - targetCam.yaw) > 0.0005 ||
+      Math.abs(cam.pitch - targetCam.pitch) > 0.0005 ||
+      Math.abs(cam.dist - targetCam.dist) > 0.01;
+    if (!camMoving) Object.assign(cam, targetCam);
+
     maybeLoadFullTex();
 
     if (!state.paused) {
@@ -780,6 +822,12 @@ export function createMap3DRenderer(
       sim.step(dt);
       uploadSimInstances();
     }
+
+    if (!needsDraw && !camMoving && state.paused) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    needsDraw = false;
 
     updateMatrices();
 
@@ -892,6 +940,7 @@ export function createMap3DRenderer(
         next.groomerActive !== state.groomerActive ||
         next.weather !== state.weather;
       state = next;
+      invalidate();
       if (rebuildCaches) {
         rebuildSegmentCaches();
       }
@@ -923,6 +972,20 @@ export function createMap3DRenderer(
       targetCam.pitch = preset === 'top' ? 1.44 : DEFAULT_PITCH;
       targetCam.yaw = preset === 'top' ? 0 : DEFAULT_YAW;
     },
+    /** Keyboard pan: dx/dy in screen directions, scaled to the current zoom */
+    panBy(dx: number, dy: number) {
+      const panScale = targetCam.dist * 0.0017;
+      const cy = Math.cos(targetCam.yaw);
+      const sy = Math.sin(targetCam.yaw);
+      targetCam.tx = clamp(targetCam.tx + (dx * cy + dy * sy) * panScale, 0, W);
+      targetCam.tz = clamp(targetCam.tz + (-dx * sy + dy * cy) * panScale, 0, H);
+      targetCam.ty = hf.sampleHeight(targetCam.tx, clamp(H - targetCam.tz, 0, H)) * 0.85;
+    },
+    /** Keyboard orbit: turn around the target and tilt */
+    orbitBy(dyaw: number, dpitch: number) {
+      targetCam.yaw += dyaw;
+      targetCam.pitch = clamp(targetCam.pitch + dpitch, 0.24, 1.48);
+    },
     zoomBy(factor: number) {
       targetCam.dist = clamp(targetCam.dist * factor, 24, 580);
     },
@@ -949,6 +1012,7 @@ export function createMap3DRenderer(
       window.removeEventListener('pointercancel', onPointerCancel);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('contextmenu', onContextMenu);
+      canvas.removeEventListener('webglcontextlost', onContextLost);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     },
   };
