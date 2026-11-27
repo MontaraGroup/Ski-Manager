@@ -61,4 +61,20 @@ final class WinterSportsTest extends CIUnitTestCase
         $this->assertSame(140000, $invested);
         $this->assertSame(70000, WinterSports::salvageValue('ski_jump', 1));
     }
+
+    public function testCrossCountryFacilityGeneratesIncomeAndVisitorBoost(): void
+    {
+        $res = WinterSports::settleDay([
+            'facility_type' => 'cross_country',
+            'level' => 1,
+            'status' => 'open',
+            'condition_pct' => 100,
+            'ticket_price' => 22,
+        ], 600, true);
+
+        $this->assertGreaterThan(0, $res['guests']);
+        $this->assertSame($res['guests'] * 22, $res['revenue']);
+        $this->assertSame(850, $res['upkeep']);
+        $this->assertSame(65, $res['visitorBoost']);
+    }
 }
