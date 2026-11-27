@@ -503,11 +503,11 @@ function RoadmapMini({ initial }: { initial: RoadmapTopItem[] }) {
 }
 
 /** One figure: label, big tabular number, optional note */
-function Stat({ label, value, tone = 'text-foreground', note, big = false }: { label: string; value: ReactNode; tone?: string; note?: ReactNode; big?: boolean }) {
+function Stat({ label, value, tone = 'text-foreground', note, big = false, className = '' }: { label: string; value: ReactNode; tone?: string; note?: ReactNode; big?: boolean; className?: string }) {
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${className}`}>
       <dt className="text-sm text-muted">{label}</dt>
-      <dd className={`font-semibold tabular-nums ${big ? 'text-3xl' : 'text-xl'} ${tone}`}>{value}</dd>
+      <dd className={`font-semibold tabular-nums whitespace-nowrap ${big ? 'text-3xl' : 'text-xl'} ${tone}`}>{value}</dd>
       {note && <dd className="text-xs text-muted">{note}</dd>}
     </div>
   );
@@ -558,13 +558,13 @@ function WeatherBoard({ w }: { w: DashboardData['weather_mini'] }) {
       </div>
       <dl className="grid grid-cols-3 gap-px bg-[oklch(88%_0.01_250)]">
         {[
-          { label: 'Temperature', value: w.tempFormatted },
+          { label: 'Temp', value: w.tempFormatted },
           { label: 'Base', value: w.snowBaseFormatted },
           { label: 'Wind', value: w.windFormatted },
         ].map((s) => (
-          <div key={s.label} className="min-w-0 bg-[oklch(97%_0.006_250)] px-3 py-2">
-            <dt className={`truncate text-xs ${soft}`}>{s.label}</dt>
-            <dd className="truncate text-xl font-bold tabular-nums @md:text-2xl">{s.value}</dd>
+          <div key={s.label} className="min-w-0 bg-[oklch(97%_0.006_250)] px-2 py-2 @xs:px-3">
+            <dt className={`text-xs ${soft}`}>{s.label}</dt>
+            <dd className="text-base font-bold tabular-nums @xs:text-xl @md:text-2xl">{s.value}</dd>
           </div>
         ))}
       </dl>
@@ -595,12 +595,13 @@ function WeatherBoard({ w }: { w: DashboardData['weather_mini'] }) {
 
 /** A line of the cash flow ledger with a bar sized against the biggest line */
 function LedgerRow({ label, text, amount, max, sign }: { label: string; text: string; amount?: number; max: number; sign: '+' | '-' }) {
-  const pct = amount !== undefined && max > 0 ? Math.round((amount / max) * 100) : null;
+  const zero = amount === 0;
+  const pct = amount !== undefined && amount > 0 && max > 0 ? Math.round((amount / max) * 100) : null;
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
       <span className="truncate text-muted">{label}</span>
-      <span className={`text-right font-semibold tabular-nums ${sign === '+' ? 'text-success' : 'text-danger'}`}>
-        {sign === '+' ? '+' : '−'}
+      <span className={`text-right font-semibold tabular-nums ${zero ? 'text-muted' : sign === '+' ? 'text-success' : 'text-danger'}`}>
+        {zero ? '' : sign === '+' ? '+' : '−'}
         {text}
       </span>
       {pct !== null && (
@@ -610,6 +611,28 @@ function LedgerRow({ label, text, amount, max, sign }: { label: string; text: st
       )}
     </li>
   );
+}
+
+/** Widgets whose empty state already links to their page, so the header link would repeat it */
+function isEmptyWidget(key: string, d: DashboardData): boolean {
+  switch (key) {
+    case 'overview':
+      return d.overview.totalSlopes === 0 && d.overview.totalLifts === 0;
+    case 'parking_mini':
+      return d.parking_mini.lotsCount === 0;
+    case 'terrain_parks_mini':
+      return d.terrain_parks_mini.openCount === 0 && d.terrain_parks_mini.buildingCount === 0;
+    case 'staff_mini':
+      return d.staff_mini.staffCount === 0;
+    case 'equipment_mini':
+      return d.equipment_mini.unitsCount === 0;
+    case 'insurance_mini':
+      return d.insurance_mini.activeCount === 0;
+    case 'marketing_mini':
+      return d.marketing_mini.campaignsCount === 0;
+    default:
+      return false;
+  }
 }
 
 function WidgetBody({
@@ -783,11 +806,10 @@ function WidgetBody({
         );
       }
       return (
-        <dl className="grid grid-cols-2 gap-3">
-          <MiniStat label="Completed" value={a.completed} />
-          <MiniStat label="Closest to done" value={a.inProgressCount} />
-          <dd className="col-span-2 text-muted">No rewards waiting.</dd>
-        </dl>
+        <div>
+          <p className="text-lg font-semibold tabular-nums">{plural(a.completed, 'achievement', 'achievements')} completed</p>
+          <p className="text-muted">No rewards waiting.</p>
+        </div>
       );
     }
 
@@ -980,6 +1002,33 @@ function WidgetBody({
 
 const SIZE_LABEL: Record<WidgetSize, string> = { small: 'Small', medium: 'Medium', large: 'Wide' };
 
+/**
+ * Column spans for a row-filling grid: each widget takes its size's width (capped at the column count),
+ * and the last widget of a row that the next one doesn't fit in stretches to fill it, so saved layouts
+ * that mix medium and wide widgets don't leave holes. Saved sizes stay as they are.
+ */
+function packSpans(sizes: WidgetSize[], cols: number, stretch = true): number[] {
+  const unit: Record<WidgetSize, number> = { small: 1, medium: 2, large: cols };
+  if (!stretch) return sizes.map((size) => Math.min(cols, unit[size]));
+  const spans: number[] = [];
+  let used = 0;
+  sizes.forEach((size, i) => {
+    const w = Math.min(cols, unit[size]);
+    if (used > 0 && used + w > cols) {
+      spans[i - 1] += cols - used;
+      used = 0;
+    }
+    spans.push(w);
+    used = (used + w) % cols;
+  });
+  if (used > 0 && spans.length > 0) spans[spans.length - 1] += cols - used;
+  return spans;
+}
+
+// Full class names so Tailwind keeps them
+const SM_SPAN = ['', 'sm:col-span-1', 'sm:col-span-2'];
+const LG_SPAN = ['', 'lg:col-span-1', 'lg:col-span-2', 'lg:col-span-3', 'lg:col-span-4'];
+
 export default function DashboardPage({
   hero,
   alerts,
@@ -1058,6 +1107,9 @@ export default function DashboardPage({
 
   const visibleWidgets = widgets.filter((w) => w.visible);
   const hiddenWidgets = widgets.filter((w) => !w.visible);
+  // While customizing, widgets show their chosen width; otherwise rows are filled
+  const smSpans = packSpans(visibleWidgets.map((w) => w.size), 2, !editMode);
+  const lgSpans = packSpans(visibleWidgets.map((w) => w.size), 4, !editMode);
 
   const reorder = (keys: string[], prev: DashboardWidgetItem[]) => {
     const byKey = new Map(prev.map((w) => [w.widget_key, w]));
@@ -1196,7 +1248,8 @@ export default function DashboardPage({
   const nextStep = checklist?.steps.find((s) => !s.done);
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 text-foreground lg:p-8">
+    // Links styled as buttons don't get HeroUI's focus ring (it keys off react-aria's data-focus-visible), so give every link one
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4 text-foreground lg:p-8 [&_a:focus-visible]:ring-2 [&_a:focus-visible]:ring-[var(--focus)] [&_a:focus-visible]:ring-offset-2 [&_a:focus-visible]:ring-offset-[var(--background)]">
       {/* Title row */}
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0 space-y-1">
@@ -1210,7 +1263,9 @@ export default function DashboardPage({
               Season {hero.seasonNum}, day {hero.gameDay}
             </span>
             <span className="tabular-nums">
-              {hero.liftCount} of {plural(hero.totalLifts, 'lift', 'lifts')} and {hero.slopeCount} of {plural(hero.totalSlopes, 'run', 'runs')} open
+              {hero.totalLifts + hero.totalSlopes === 0
+                ? 'No lifts or runs built yet'
+                : `${hero.liftCount} of ${plural(hero.totalLifts, 'lift', 'lifts')} and ${hero.slopeCount} of ${plural(hero.totalSlopes, 'run', 'runs')} open`}
             </span>
             <span className="tabular-nums">Reputation {hero.repScoreFormatted}</span>
           </p>
@@ -1316,15 +1371,33 @@ export default function DashboardPage({
           )}
 
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 @2xl:grid-cols-4">
-            <Stat label="Net" value={kpis.dailyProfitText} tone={kpis.dailyProfitPositive ? 'text-success' : 'text-danger'} big />
+            {/* Net gets its own row on narrow panels so big amounts never wrap */}
+            <Stat label="Net" value={kpis.dailyProfitText} tone={kpis.dailyProfitPositive ? 'text-success' : 'text-danger'} big className="col-span-2 @md:col-span-1" />
             <Stat
               label="Skiers"
               value={kpis.dailyVisitorsFormatted}
               big
+              className="col-span-2 @md:col-span-1"
               note={mode === 'forecast' ? `Last night ${kpis.visitorsSettledFormatted}` : undefined}
             />
-            <Stat label="Income" value={kpis.incomeText} note={`Day pass ${kpis.ticketPriceText}`} />
-            <Stat label="Costs" value={kpis.expensesText} note={`Lifts carry ${kpis.totalLiftCapacityFormatted} an hour`} />
+            <Stat
+              label="Income"
+              value={kpis.incomeText}
+              note={
+                kpis.ticketPriceText === 'Not set' ? (
+                  <a href="/tickets" className="text-link underline-offset-4 hover:underline">
+                    Set a day pass price
+                  </a>
+                ) : (
+                  `Day pass ${kpis.ticketPriceText}`
+                )
+              }
+            />
+            <Stat
+              label="Costs"
+              value={kpis.expensesText}
+              note={kpis.totalLiftCapacityFormatted !== '0' ? `Lifts carry ${kpis.totalLiftCapacityFormatted} an hour` : undefined}
+            />
           </dl>
 
           {kpis.visitorsTurnedAway > 0 && (
@@ -1369,7 +1442,7 @@ export default function DashboardPage({
                 Customize your dashboard
               </h2>
               <p className="text-sm text-muted">
-                Drag widgets, or use the arrows, to change the order. Changes save as you go. {visibleWidgets.length} shown, {hiddenWidgets.length} hidden.
+                Drag widgets, or use the arrows, to change the order. Changes save as you go. When you are done, a widget next to a gap widens to fill it. {visibleWidgets.length} shown, {hiddenWidgets.length} hidden.
               </p>
             </div>
             <Button variant="primary" onPress={() => setEditMode(false)}>
@@ -1435,7 +1508,7 @@ export default function DashboardPage({
           {visibleWidgets.map((w, idx) => {
             const meta = WIDGET_META[w.widget_key];
             const name = meta?.name ?? w.name;
-            const span = w.size === 'large' ? 'sm:col-span-2 lg:col-span-4' : w.size === 'medium' ? 'sm:col-span-2' : '';
+            const span = `${SM_SPAN[smSpans[idx]]} ${LG_SPAN[lgSpans[idx]]}`;
             const isDropTarget = dragOverKey === w.widget_key && draggingKey !== w.widget_key;
             const isDragging = draggingKey === w.widget_key;
             const titleId = `widget-${w.widget_key}`;
@@ -1480,7 +1553,7 @@ export default function DashboardPage({
                     <Icon name={meta?.icon ?? w.icon} className="w-4 text-muted" />
                     <span className="truncate">{name}</span>
                   </h2>
-                  {!editMode && meta?.link && (
+                  {!editMode && meta?.link && !isEmptyWidget(w.widget_key, data) && (
                     <a href={meta.link.href} className={quietLink}>
                       {meta.link.label}
                     </a>
