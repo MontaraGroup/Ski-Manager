@@ -1,4 +1,5 @@
 import { Icon } from '@/components/Icon';
+import { DIFFICULTY_LABEL as SIGN_LABEL, TrailSign as Sign, type Difficulty } from '@/components/TrailSign';
 import type { BuildCosts, MapSegment } from './types';
 
 export function formatCurrency(n: number, isImperial: boolean): string {
@@ -8,12 +9,12 @@ export function formatCurrency(n: number, isImperial: boolean): string {
 }
 
 /** Lift systems in the order the panel lists them */
-export const LIFT_TYPES: { id: string; name: string; cap: string }[] = [
-  { id: 'button', name: 'Surface lift', cap: '1,000/hr' },
-  { id: 'chair_fixed', name: 'Fixed-grip chairlift', cap: '2,400/hr' },
-  { id: 'chair_detach', name: 'Detachable chairlift', cap: '3,400/hr' },
-  { id: 'gondola', name: 'Gondola', cap: '3,500/hr' },
-  { id: 'cable_car', name: 'Cable car', cap: '4,000/hr' },
+export const LIFT_TYPES: { id: string; name: string }[] = [
+  { id: 'button', name: 'Surface lift' },
+  { id: 'chair_fixed', name: 'Fixed-grip chairlift' },
+  { id: 'chair_detach', name: 'Detachable chairlift' },
+  { id: 'gondola', name: 'Gondola' },
+  { id: 'cable_car', name: 'Cable car' },
 ];
 
 export const SLOPE_TYPES: { id: string; name: string; icon: string }[] = [
@@ -23,12 +24,29 @@ export const SLOPE_TYPES: { id: string; name: string; icon: string }[] = [
   { id: 'luge', name: 'Alpine luge', icon: 'fa-sleigh' },
 ];
 
-export const DIFFICULTY_LABEL: Record<string, string> = {
-  green: 'Easiest',
-  blue: 'More difficult',
-  black: 'Most difficult',
-  double_black: 'Experts only',
+/** The site's difficulty names (components/TrailSign), so the map and the other pages agree */
+export const DIFFICULTY_LABEL: Record<string, string> = SIGN_LABEL;
+
+/**
+ * Line colours the 2D map draws each run in (mapEngine) and the 3D view matches (scene3d/geometry).
+ * The key shows these next to the trail sign, so what's on the map can be read off the key.
+ */
+export const LINE_COLORS: Record<string, string> = {
+  lift: '#f59e0b',
+  green: '#22c55e',
+  blue: '#3b82f6',
+  black: '#1e293b',
+  double_black: '#dc2626',
+  snowpark: '#a855f7',
+  terrain_park: '#a855f7',
+  crosscountry: '#14b8a6',
+  luge: '#ec4899',
+  default: '#94a3b8',
 };
+
+function asDifficulty(d: string | undefined | null): Difficulty {
+  return d === 'green' || d === 'black' || d === 'double_black' ? d : 'blue';
+}
 
 /**
  * What the server charges (ResortMap::calcCost, which truncates to whole units). The rates come
@@ -102,31 +120,20 @@ export function settleText(iso: string | undefined): string {
   return at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 }
 
-/** Trail-sign mark: shape and colour together, so colour is never the only signal */
+/** Trail-sign mark: shape and colour together, so colour is never the only signal. Lifts get the lift icon. */
 export function TrailSign({ seg }: { seg: MapSegment }) {
   if (seg.type === 'lift') {
     return (
-      <span className="inline-flex size-5 shrink-0 items-center justify-center text-warning" title="Lift">
+      <span role="img" aria-label="Lift" className="inline-flex size-5 shrink-0 items-center justify-center text-warning">
         <Icon name="fa-elevator" />
       </span>
     );
   }
-  const d = seg.difficulty || 'blue';
-  if (d === 'green') return <span className="tsign green" title={DIFFICULTY_LABEL.green} />;
-  if (d === 'black') return <span className="tsign black" title={DIFFICULTY_LABEL.black} />;
-  if (d === 'double_black') {
-    return (
-      <span className="tsign-pair" title={DIFFICULTY_LABEL.double_black}>
-        <span className="tsign black" />
-        <span className="tsign black" />
-      </span>
-    );
-  }
-  return <span className="tsign blue" title={DIFFICULTY_LABEL.blue} />;
+  return <Sign difficulty={asDifficulty(seg.difficulty)} />;
 }
 
 /** "Lift" or the difficulty, for one line under a run's name */
 export function runKind(seg: MapSegment): string {
   if (seg.type === 'lift') return 'Lift';
-  return DIFFICULTY_LABEL[seg.difficulty || 'blue'] ?? 'Slope';
+  return DIFFICULTY_LABEL[asDifficulty(seg.difficulty)];
 }

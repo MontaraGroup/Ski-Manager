@@ -2,7 +2,7 @@ import { Button } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { Select } from '@/components/Select';
 import type { BuildCosts, MapSegment } from './types';
-import { TrailSign, cheapestCost, formatCurrency, runKind } from './shared';
+import { DIFFICULTY_LABEL, TrailSign, cheapestCost, formatCurrency, runKind } from './shared';
 
 export type SortOrder = 'cost_asc' | 'cost_desc' | 'len_desc' | 'name_asc';
 
@@ -36,13 +36,14 @@ function RunRow({
 }) {
   const price = cheapestCost(seg, costs);
   const len = Math.round(Number(seg.length_meters) || 0);
+  const affordable = cash >= price;
   return (
     <li>
       <Button
         type="button"
         variant="ghost"
         onPress={() => onSelect(seg)}
-        className="flex min-h-14 w-full items-center justify-start gap-3 rounded-lg border border-border px-3 py-2 text-left"
+        className="flex h-auto min-h-14 w-full items-center justify-start gap-3 rounded-lg border border-border px-3 py-2 text-left hover:border-accent hover:bg-surface-secondary"
       >
         <span className="flex size-7 shrink-0 items-center justify-center">
           <TrailSign seg={seg} />
@@ -53,8 +54,12 @@ function RunRow({
             {note ?? runKind(seg)} · <span className="tabular-nums">{len.toLocaleString()} {distUnit}</span>
           </span>
         </span>
-        <span className={`shrink-0 text-right text-sm font-semibold tabular-nums ${cash >= price ? 'text-foreground' : 'text-danger'}`}>
-          {seg.type === 'lift' && <span className="block text-xs font-normal text-muted">from</span>}
+        <span className={`shrink-0 text-right text-sm font-semibold tabular-nums ${affordable ? 'text-foreground' : 'text-danger'}`}>
+          {!affordable ? (
+            <span className="block text-xs font-normal">Over budget</span>
+          ) : seg.type === 'lift' ? (
+            <span className="block text-xs font-normal text-muted">from</span>
+          ) : null}
           {formatCurrency(price, isImperial)}
         </span>
       </Button>
@@ -165,7 +170,7 @@ export function BrowseView({
             >
               <Icon name={t === 'lift' ? 'fa-elevator' : 'fa-person-skiing'} />
               {t === 'lift' ? 'Lifts' : 'Slopes'}
-              <span className="tabular-nums text-muted">{t === 'lift' ? liftCount : slopeCount}</span>
+              <span className="tabular-nums font-normal">{t === 'lift' ? liftCount : slopeCount}</span>
             </Button>
           ))}
         </div>
@@ -191,10 +196,10 @@ export function BrowseView({
                 aria-label="Difficulty"
                 options={[
                   { id: '', label: 'All difficulties' },
-                  { id: 'green', label: 'Easiest' },
-                  { id: 'blue', label: 'More difficult' },
-                  { id: 'black', label: 'Most difficult' },
-                  { id: 'double_black', label: 'Experts only' },
+                  { id: 'green', label: DIFFICULTY_LABEL.green },
+                  { id: 'blue', label: DIFFICULTY_LABEL.blue },
+                  { id: 'black', label: DIFFICULTY_LABEL.black },
+                  { id: 'double_black', label: DIFFICULTY_LABEL.double_black },
                 ]}
                 className="w-full"
               />

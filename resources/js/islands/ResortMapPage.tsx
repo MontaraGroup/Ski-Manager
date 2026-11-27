@@ -910,6 +910,12 @@ export default function ResortMapPage(props: ResortMapProps) {
         ) : (
           <>
             <div ref={mapContainerRef} id="map" />
+            {!engineApi && (
+              <div role="status" className="absolute inset-0 z-[700] flex items-center justify-center gap-2 bg-background text-sm text-muted">
+                <Spinner size="sm" />
+                <span>Loading the trail map…</span>
+              </div>
+            )}
             <div
               id="hdBadge"
               className="absolute top-3 right-3 z-[800] hidden items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-foreground shadow-sm"
@@ -959,7 +965,7 @@ export default function ResortMapPage(props: ResortMapProps) {
             variant="primary"
             isIconOnly
             onPress={() => handleOpenBuildDrawer(builtSlopes.length === 0 ? 'slope' : activeTab)}
-            className="absolute right-4 bottom-4 z-[900] size-14 rounded-full shadow-lg"
+            className="absolute right-4 bottom-4 z-[900] size-14 rounded-full shadow-lg md:hidden"
             aria-label="Build"
           >
             <Icon name="fa-hammer" className="text-xl" />
@@ -1035,6 +1041,7 @@ export default function ResortMapPage(props: ResortMapProps) {
               <BuildView
                 seg={selectedSeg}
                 costs={props.costs}
+                economy={props.economy}
                 isImperial={props.isImperial}
                 distUnit={props.distUnit}
                 sectorLabel={getSectorLabel(selectedSeg.sector)}
