@@ -107,8 +107,8 @@ class Achievements
         $openSlopes = $count('player_items', ['item_type' => 'slope', 'status' => 'open']);
         $parkingCap = (int) ($db->table('parking')->selectSum('capacity')->where('user_id', $userId)->where('status', 'open')->get()->getRow('capacity') ?? 0);
         $bonus = $db->table('daily_bonus')->where('user_id', $userId)->get()->getRowArray();
-        // A streak only counts while unbroken (claimed today or yesterday)
-        $streak = $bonus && ($bonus['last_claim_date'] ?? '') >= date('Y-m-d', strtotime('-1 day')) ? (int) $bonus['streak'] : 0;
+        $seasonNumber = function_exists('getSeasonNumber') ? getSeasonNumber() : 1;
+        $streak = $bonus ? \App\Controllers\DailyBonus::streakState($bonus, $seasonNumber)['streak'] : 0;
         $eco = $db->table('environmental')->where('user_id', $userId)->get()->getRowArray();
 
         // Safety, the same way the nightly tick scores it for accidents
@@ -179,7 +179,7 @@ class Achievements
             'all_insurance' => $count('insurance', ['active' => 1]),
             'full_compliance' => $count('regulations', ['compliant' => 1]),
             'zero_fines' => $firstReg ? (int) floor((time() - $cleanSince) / 86400) : 0,
-            'login_7' => $streak, 'login_30' => $streak,
+            'login_7' => $streak, 'login_30' => $streak, 'login_100' => $streak,
             'day_30' => $daysPlayed, 'day_100' => $daysPlayed, 'day_365' => $daysPlayed,
             'survive_summer' => $inSummer ? 1 : 0, 'summer_profit' => $summerProfit > 0 ? 1 : 0,
             // Roadmap: items ever voted on (unvoting doesn't take it back) and the player's own ideas

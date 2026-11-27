@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Chip, Surface } from '@heroui/react';
+import { Alert, Button, Chip, Meter, Surface } from '@heroui/react';
 import { Icon } from '@/components/Icon';
 import { CsrfInput, Page } from '@/components/Page';
 
@@ -15,6 +15,23 @@ export type BonusDay = {
   next: boolean;
 };
 
+export type StreakSave = {
+  season: number;
+  available: boolean;
+  protected: boolean;
+  usedThisSeason: boolean;
+  usedDate: string | null;
+};
+
+export type StreakMilestone = {
+  days: number;
+  key: string;
+  name: string;
+  earned: boolean;
+  current: number;
+  target: number;
+};
+
 export type DailyBonusPageProps = {
   streak: number;
   bestStreak: number;
@@ -23,6 +40,8 @@ export type DailyBonusPageProps = {
   claimedToday: boolean;
   lostStreak: number;
   secondsToReset: number;
+  streakSave?: StreakSave;
+  milestones?: StreakMilestone[];
   next: {
     day: number;
     week: number;
@@ -96,6 +115,8 @@ export default function DailyBonusPage({
   claimedToday = false,
   lostStreak = 0,
   secondsToReset = 86400,
+  streakSave,
+  milestones = [],
   next,
   currentWeek = 1,
   weekMultiplier = 1,
@@ -121,12 +142,28 @@ export default function DailyBonusPage({
       width="max-w-3xl"
       subtitle="One claim a day. Claim on back-to-back days to grow your streak and its rewards."
     >
+      {streakSave?.protected && !claimedToday && (
+        <Alert status="accent">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Season {streakSave.season} streak save active</Alert.Title>
+            <Alert.Description>
+              You missed yesterday, so your once-per-season streak save is holding your {streak}-day streak. Claim today to keep it going.
+            </Alert.Description>
+          </Alert.Content>
+        </Alert>
+      )}
+
       {lostStreak > 0 && !claimedToday && (
         <Alert status="warning">
           <Alert.Indicator />
           <Alert.Content>
             <Alert.Title>Your {lostStreak}-day streak ended</Alert.Title>
-            <Alert.Description>You missed a day. Today's claim starts a new streak at day 1.</Alert.Description>
+            <Alert.Description>
+              {streakSave?.usedThisSeason
+                ? 'You missed a day and your season streak save was already used. Today\'s claim starts a new streak at day 1.'
+                : 'You missed more than one day. Today\'s claim starts a new streak at day 1.'}
+            </Alert.Description>
           </Alert.Content>
         </Alert>
       )}
@@ -185,12 +222,16 @@ export default function DailyBonusPage({
           )}
         </p>
 
-        {/* Phones: the two streaks side by side, the total on its own row so long amounts fit */}
-        <dl className="grid grid-cols-2 border-t border-border sm:grid-cols-3">
+        <dl className="grid grid-cols-2 border-t border-border sm:grid-cols-4">
           {[
             { label: 'Streak', value: plural(streak, 'day', 'days'), className: 'border-r' },
             { label: 'Best streak', value: plural(bestStreak, 'day', 'days'), className: 'sm:border-r' },
-            { label: 'Total claimed', value: totalClaimedFormatted, className: 'col-span-2 border-t sm:col-span-1 sm:border-t-0' },
+            {
+              label: 'Season save',
+              value: streakSave?.protected ? 'Active today' : streakSave?.usedThisSeason ? 'Used' : '1 left',
+              className: 'border-r border-t sm:border-t-0',
+            },
+            { label: 'Total claimed', value: totalClaimedFormatted, className: 'border-t sm:border-t-0' },
           ].map((s) => (
             <div key={s.label} className={`min-w-0 border-border px-5 py-3 ${s.className}`}>
               <dt className="text-sm text-muted">{s.label}</dt>
@@ -274,6 +315,60 @@ export default function DailyBonusPage({
         </ol>
       </section>
 
+      {milestones.length > 0 && (
+        <section aria-labelledby="bonus-milestones" className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="bonus-milestones" className="text-base font-semibold">
+              Milestone badges
+            </h2>
+            <a href="/achievements" className="text-sm text-link hover:underline">
+              View all on Achievements
+            </a>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {milestones.map((m) => {
+              const pct = Math.min(100, Math.floor((m.current / Math.max(1, m.target)) * 100));
+              return (
+                <li
+                  key={m.key}
+                  className={`flex items-start gap-3 rounded-xl border bg-surface p-4 ${m.earned ? 'border-warning' : 'border-border'}`}
+                >
+                  <span
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
+                      m.earned ? 'bg-warning-soft text-warning' : 'bg-default text-muted'
+                    }`}
+                  >
+                    <Icon name="fa-medal" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold">{m.name}</span>
+                      {m.earned ? (
+                        <Chip size="sm" variant="soft" color="success">
+                          <Icon name="fa-check" /> Earned
+                        </Chip>
+                      ) : (
+                        <span className="text-xs font-medium tabular-nums text-muted">
+                          {m.current}/{m.target} days
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-sm text-muted">Reach a {m.days}-day login streak</p>
+                    {!m.earned && (
+                      <Meter value={pct} color="accent" size="sm" aria-label={`${m.name}: ${m.current} of ${m.target} days`} className="mt-2">
+                        <Meter.Track>
+                          <Meter.Fill />
+                        </Meter.Track>
+                      </Meter>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <details className="group rounded-xl border border-border bg-surface">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2">
@@ -284,7 +379,8 @@ export default function DailyBonusPage({
         </summary>
         <ul className="flex list-disc flex-col gap-2 border-t border-border py-3 pr-4 pl-9 text-sm text-muted">
           <li>One claim per day. The day turns over at midnight server time.</li>
-          <li>Claim on back-to-back days to grow the streak. It has no cap. Miss a day and it restarts at day 1.</li>
+          <li>Claim on back-to-back days to grow the streak. It has no cap.</li>
+          <li>One missed day is forgiven once per season with your season streak save. Miss a second day, or miss a day after using your save, and it restarts at day 1.</li>
           {cycleAmounts.length > 0 && (
             <li>
               Base rewards for days 1 to {cycleAmounts.length}: <span className="tabular-nums">{cycleAmounts.join(', ')}</span>.
@@ -293,7 +389,7 @@ export default function DailyBonusPage({
           <li>
             Day {cycleAmounts.length || 7} of every week also pays {weeklyGenepis} Génépis.
           </li>
-          <li>Streaks of 7 and 30 days unlock achievements.</li>
+          <li>Streaks of 7, 30, and 100 days unlock milestone badges on Achievements.</li>
         </ul>
       </details>
     </Page>
