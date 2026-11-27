@@ -44,7 +44,10 @@ class Analytics
                     'capture_errors' => false,
                     // 404s, bad URLs, CSRF failures and redirects are the visitor's request, not a bug
                     'excluded_exceptions' => [\CodeIgniter\Exceptions\HTTPExceptionInterface::class],
-                    'context_provider' => static fn() => ['distinctId' => self::distinctId(self::viewerId())],
+                    'context_provider' => static fn() => [
+                        'distinctId' => self::distinctId(self::viewerId()),
+                        'properties' => self::sessionProps(),
+                    ],
                 ],
             ], null, null, ((string) env('POSTHOG_FLAGS_KEY', '')) ?: null);
             return self::$ready = true;
@@ -69,6 +72,29 @@ class Analytics
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * The browser's PostHog session id, from the X-PostHog-Session-Id header posthog-js adds to
+     * this site's own requests (tracing_headers in layouts/main.php). Null in CLI or without it.
+     * It only links server events to the session replay; the player always comes from Shield.
+     */
+    public static function sessionId(): ?string
+    {
+        static $id = false;
+        if ($id !== false) return $id;
+        if (is_cli() || !class_exists(PostHog::class)) return $id = null;
+        try {
+            return $id = PostHog::contextFromHeaders($_SERVER)['sessionId'] ?? null;
+        } catch (\Throwable) {
+            return $id = null;
+        }
+    }
+
+    private static function sessionProps(): array
+    {
+        $sid = self::sessionId();
+        return $sid !== null ? ['$session_id' => $sid] : [];
     }
 
     /**
@@ -213,6 +239,8 @@ class Analytics
     {
         if ($userId <= 0 || !self::ready()) return;
         try {
+            // Only the viewer's own events belong to this browser session
+            if ($userId === self::viewerId()) $properties += self::sessionProps();
             PostHog::capture(['distinctId' => self::distinctId($userId), 'event' => $event, 'properties' => $properties]);
         } catch (\Throwable $e) {
             log_message('warning', "PostHog capture {$event} failed: " . $e->getMessage());
