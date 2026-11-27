@@ -103,7 +103,8 @@ class Weather extends BaseController
         foreach (W::DEMAND as $c => $f) $demandList[] = $c . ' ' . ($f == 1 ? '±0%' : $pct($f));
 
         $outlook = W::outlook($isPro);
-        $range = fn(int $lo, int $hi, callable $fmt) => $lo === $hi ? $fmt($lo) : $fmt($lo) . ' to ' . $fmt($hi);
+        // "-9 to -7°C": the unit once, after the second number
+        $range = fn(int $lo, int $hi, callable $fmt) => $lo === $hi ? $fmt($lo) : preg_replace('/^(-?[\d.]+).*$/u', '$1', $fmt($lo)) . ' to ' . $fmt($hi);
 
         $hourly = getHourlyForecast($sTemp, $sWind, $condition);
 
@@ -149,7 +150,7 @@ class Weather extends BaseController
                     'icon' => $icon($f['condition']), 'condition' => (string) $f['condition'],
                     'temp' => $range($f['tempLow'], $f['tempHigh'], 'temp'),
                     'snowfall' => $f['snowHigh'] > 0 ? '+' . $range($f['snowLow'], $f['snowHigh'], 'snow') : null,
-                    'precipChance' => $f['exact'] ? null : $f['precipChance'],
+                    'precipChance' => $f['exact'] || $f['precipChance'] === 0 ? null : $f['precipChance'],
                     'wind' => $range($f['windLow'], $f['windHigh'], 'speed'),
                     'windHold' => $f['windHold'],
                     'skiers' => $ff == 1 ? 'Skiers unchanged' : 'Skiers ' . $pct($ff), 'skiersUp' => $ff >= 1,

@@ -293,7 +293,7 @@ class Weather
                 mt_srand(crc32('skimanager-outlook-s' . $season . '-d' . $d . '-l' . $lead . ($pro ? '-pro' : '')));
                 $tSpread = $pro ? (int) ceil($far / 2) : $far;
                 $tLow = $t['temp'] - mt_rand(0, 2 * $tSpread);
-                $wSpread = ($pro ? 3 : 5) * $far;
+                $wSpread = (int) ceil(($pro ? 1.5 : 3) * $far);
                 $wLow = max(0, $t['wind'] - mt_rand(0, 2 * $wSpread));
                 $miss = mt_rand(0, min(60, ($pro ? 5 : 8) * $far));
                 $snowSpread = min(0.8, ($pro ? 0.08 : 0.15) * $far);
@@ -341,12 +341,11 @@ class Weather
                 $out[] = ['gameDay' => $f['gameDay'], 'kind' => 'storm', 'text' => ($f['condition'] === 'Blizzard' ? 'Blizzard' : 'Big snowfall') . ': '
                     . ($f['snowLow'] === $f['snowHigh'] ? snow($f['snowHigh']) : snow($f['snowLow']) . ' to ' . snow($f['snowHigh'])) . $sure . '. Powder after, fewer skiers during.'];
             }
-            if ($f['windHold'] !== 'no') {
-                $out[] = ['gameDay' => $f['gameDay'], 'kind' => 'wind', 'text' => match ($f['windHold']) {
-                    'yes' => 'Wind hold: chairlifts and gondolas stop for ' . self::windHoldHours($f['windLow']) . ' of ' . count(self::LIFT_DAY) . ' hours.',
-                    'likely' => 'Wind hold likely: gusts to ' . speed($f['windHigh']) . '.',
-                    default => 'Wind hold possible: gusts up to ' . speed($f['windHigh']) . '.',
-                }];
+            // 'possible' stays on the day's card: far out it would flag half the days
+            if (in_array($f['windHold'], ['yes', 'likely'], true)) {
+                $out[] = ['gameDay' => $f['gameDay'], 'kind' => 'wind', 'text' => $f['windHold'] === 'yes'
+                    ? 'Wind hold: chairlifts and gondolas stop for ' . self::windHoldHours($f['windLow']) . ' of ' . count(self::LIFT_DAY) . ' lift hours.'
+                    : 'Wind hold likely: ' . speed($f['windLow']) . ' to ' . speed($f['windHigh']) . '.'];
             }
             if (in_array($f['condition'], ['Rain', 'Freezing Rain'], true) || $f['tempLow'] > 0) {
                 $out[] = ['gameDay' => $f['gameDay'], 'kind' => 'thaw', 'text' => (in_array($f['condition'], ['Rain', 'Freezing Rain'], true) ? 'Rain' : 'Thaw')

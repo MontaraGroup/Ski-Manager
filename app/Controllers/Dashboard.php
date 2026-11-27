@@ -199,15 +199,15 @@ class Dashboard extends BaseController
         $avgMorale = count($staffAll) > 0 ? (int) round(array_sum(array_column($staffAll, 'morale')) / count($staffAll)) : 0;
         $activeIns = array_values(array_filter($insurance, fn($i) => ($i['active'] ?? 0) == 1));
 
-        $forecast = $weather ? (is_array($weather['forecast'] ?? null) ? $weather['forecast'] : (json_decode($weather['forecast'] ?? '[]', true) ?? [])) : [];
+        // Same forecast as /weather: exact for the first days, the middle of the range after (~)
         $formattedForecast = [];
-        foreach (array_slice($forecast, 0, 5) as $i => $fc) {
-            $cond = (string) ($fc['condition'] ?? 'Cloudy');
+        foreach (array_slice(\App\Libraries\Weather::outlook(\App\Libraries\WeatherPro::active((int) $userId)), 0, 5) as $i => $fc) {
+            $cond = (string) $fc['condition'];
             $formattedForecast[] = [
                 'label' => $i === 0 ? 'Tmrw' : '+' . ($i + 1) . 'd',
                 'condition' => $cond,
                 'icon' => $wIcons[$cond] ?? 'fa-cloud',
-                'tempFormatted' => temp((int) ($fc['temp'] ?? 0)),
+                'tempFormatted' => ($fc['exact'] ? '' : '~') . temp($fc['tempMid']),
             ];
         }
 
