@@ -349,6 +349,7 @@ class Buildings extends BaseController
         clearResortRatingCache($userId);
 
         log_activity($userId, 'Building', 'Constructed ' . $lvl['name'] . ' for ' . currency($cost), 'fa-solid fa-hotel');
+        \App\Libraries\Analytics::capture((int) $userId, 'item_built', ['item_type' => 'building', 'subtype' => $type, 'cost' => $cost]);
         return redirect()->to('/' . $def['route'])->with('success', $lvl['name'] . ' built!');
     }
 

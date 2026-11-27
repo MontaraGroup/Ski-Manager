@@ -799,6 +799,8 @@ class ResortMap extends BaseController
         }
 
         log_activity($userId, 'Construction', 'Constructed ' . ($itemData['item_type'] === 'lift' ? 'lift' : 'slope') . ' ' . $itemData['name'] . ' for ' . currency($cost), 'fa-solid fa-person-skiing');
+        // Primary metric of the live-forecast experiment (Libraries/Forecast)
+        \App\Libraries\Analytics::capture((int) $userId, 'item_built', ['item_type' => $itemData['item_type'], 'subtype' => $itemData['subtype'], 'cost' => $cost]);
 
         $newFin  = $db->table('player_finances')->select('cash')->where('user_id', $userId)->get()->getRowArray();
         $newCash = (int) ($newFin['cash'] ?? 0);
@@ -1205,15 +1207,10 @@ class ResortMap extends BaseController
 
     public const SLOPE_COST_PER_M = 50;
 
-    /** The nightly game:tick runs at 00:05 in the app's timezone (root crontab on the VPS) */
-    private const SETTLE_TIME = '00:05';
-
     /** Next nightly settle as ISO 8601, so the browser can show it in the player's own timezone */
     private static function nextSettleAt(): string
     {
-        $now = new \DateTimeImmutable('now', new \DateTimeZone(config('App')->appTimezone));
-        $at  = $now->modify('today ' . self::SETTLE_TIME);
-        return ($at <= $now ? $at->modify('+1 day') : $at)->format(DATE_ATOM);
+        return \App\Libraries\Forecast::nextSettleAt();
     }
 
     protected static function calcCost(string $type, ?string $liftType, int $seats, float $meters): int

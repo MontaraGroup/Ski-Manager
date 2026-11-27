@@ -115,10 +115,15 @@ class Dashboard extends BaseController
         $insurance = $db->table('insurance')->where('user_id', $userId)->get()->getResultArray();
         $loans = $db->table('loans')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
         $marketing = $db->table('marketing_campaigns')->where('user_id', $userId)->where('status', 'active')->get()->getResultArray();
-        $dailyVisitors = (int) (Demo::estimate((int) $userId)['visitors'] ?? $finance['daily_visitors'] ?? 0);
+        // After the first tick, show what the next tick will pay for the resort as it is now, so builds and
+        // price changes show at once; before it, the demo estimate (it also covers imported energy and water)
+        $settledVisitors = (int) ($finance['daily_visitors'] ?? 0);
+        $forecast = !empty($finance['last_tick']) && \App\Libraries\Forecast::shownTo((int) $userId)
+            ? \App\Libraries\Forecast::nextSettle((int) $userId, $finance) : null;
+        $dailyVisitors = (int) ($forecast['visitors'] ?? Demo::estimate((int) $userId)['visitors'] ?? $settledVisitors);
         $netProfit = ($finance['total_income'] ?? 0) - ($finance['total_expenses'] ?? 0);
 
-        $cashflow = $this->calcCashflowBreakdown($userId, $dailyVisitors, $staffAll, $equipment, $loans, $marketing, $buildingsAll, $insurance, $finance['difficulty'] ?? 'standard', $finance);
+        $cashflow = $this->calcCashflowBreakdown($userId, $dailyVisitors, $staffAll, $equipment, $loans, $marketing, $buildingsAll, $insurance, $finance['difficulty'] ?? 'standard', $finance, $forecast);
         $resortMapKey = $finance['resort_map'] ?? 'ParkCity';
         $resortNames = ResortMap::getResortMapNames();
         $resortMapName = $resortNames[$resortMapKey] ?? 'Park City';
@@ -296,6 +301,8 @@ class Dashboard extends BaseController
                 'expensesText'              => currency($totalExpenses),
                 'dailyVisitors'             => $dailyVisitors,
                 'dailyVisitorsFormatted'    => number_format($dailyVisitors),
+                'visitorsSettledFormatted'  => $forecast ? number_format($settledVisitors) : '',
+                'visitorsTurnedAway'        => (int) ($forecast['turned_away'] ?? 0),
                 'ticketPriceText'           => (int) ($cashflow['ticket_price'] ?? 0) > 0 ? currency((int) $cashflow['ticket_price']) : 'Not set',
                 'totalLiftCapacityFormatted'=> number_format($totalLiftCapacity),
                 'weather'                   => [
@@ -627,7 +634,8 @@ class Dashboard extends BaseController
         array $buildings,
         array $insurance = [],
         string $difficulty = 'standard',
-        ?array $finance = null
+        ?array $finance = null,
+        ?array $forecast = null
     ): array {
         $db = db_connect();
 
@@ -658,9 +666,10 @@ class Dashboard extends BaseController
         // Yesterday's real visitors only; no made-up fallback when there were none
         $ticketIncome = $ticketPrice * max(0, $dailyVisitors);
 
-        // Tickets and buildings depend on demand and occupancy, so show what the last tick actually paid
+        // Tickets and buildings depend on demand and occupancy: show what the next tick will pay (Libraries/Forecast),
+        // else what the last tick paid, else the demo estimate
         $lastTick = $finance !== null ? ($finance['last_tick'] ?? null) : $db->table('player_finances')->select('last_tick')->where('user_id', $userId)->get()->getRow('last_tick');
-        $last = json_decode((string) ($lastTick ?? ''), true);
+        $last = $forecast ?: json_decode((string) ($lastTick ?? ''), true);
         $last = $last ?: (Demo::estimate((int) $userId)['tick'] ?? null);
         if ($last) {
             $ticketIncome = (int) ($last['tickets'] ?? 0);
