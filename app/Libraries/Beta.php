@@ -50,6 +50,7 @@ class Beta
             $db->table('beta_members')->insert(['user_id' => $userId, 'joined_at' => date('Y-m-d H:i:s')]);
         }
         self::$members[$userId] = true;
+        Analytics::setPersonProps($userId, ['is_beta_tester' => 'true']);
         foreach (self::features() as $f) Analytics::setEnrollment($userId, $f['flag_key'], true);
     }
 
@@ -58,6 +59,7 @@ class Beta
     {
         db_connect()->table('beta_members')->where('user_id', $userId)->delete();
         self::$members[$userId] = false;
+        Analytics::setPersonProps($userId, ['is_beta_tester' => 'false']);
         foreach (self::features() as $f) Analytics::setEnrollment($userId, $f['flag_key'], false);
     }
 

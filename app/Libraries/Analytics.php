@@ -115,7 +115,7 @@ class Analytics
                 // replacement, evaluateFlags()->isEnabled(), always sends a $feature_flag_called event,
                 // a billed event for every flag check on every page. The @ keeps the deprecation
                 // notice out of Sentry and the log.
-                return @PostHog::isFeatureEnabled($key, $id, [], self::personProps($isAdmin), [], true, false);
+                return @PostHog::isFeatureEnabled($key, $id, [], self::personProps($isAdmin, $userId), [], true, false);
             }
             // Early access flags depend on the player's opt-in, which only PostHog's servers know
             // (local evaluation always says no), so ask PostHog's /flags for all of this
@@ -156,7 +156,7 @@ class Analytics
         if (!self::ready()) return null;
         try {
             // Deprecated in posthog-php 4.27 like isFeatureEnabled() above; this one records the exposure
-            return @PostHog::getFeatureFlag($key, self::distinctId($userId), [], self::personProps($isAdmin));
+            return @PostHog::getFeatureFlag($key, self::distinctId($userId), [], self::personProps($isAdmin, $userId));
         } catch (\Throwable $e) {
             log_message('warning', "PostHog variant {$key} failed: " . $e->getMessage());
             return null;
@@ -258,9 +258,27 @@ class Analytics
         }
     }
 
-    private static function personProps(bool $isAdmin): array
+    /**
+     * Person properties for local flag evaluation. They match what the browser sets on identify,
+     * so a flag can target "is_admin exact true" or "is_beta_tester exact true" (players who
+     * joined the beta program on /beta).
+     */
+    private static function personProps(bool $isAdmin, ?int $userId = null): array
     {
-        // Matches the flag conditions "is_admin exact true" and what the browser sets
-        return ['is_admin' => $isAdmin ? 'true' : 'false'];
+        return [
+            'is_admin' => $isAdmin ? 'true' : 'false',
+            'is_beta_tester' => $userId && Beta::isMember($userId) ? 'true' : 'false',
+        ];
+    }
+
+    /** Keeps the PostHog person in step after a server-side change, e.g. joining the beta */
+    public static function setPersonProps(int $userId, array $props): void
+    {
+        if ($userId <= 0 || !self::ready()) return;
+        try {
+            PostHog::capture(['distinctId' => self::distinctId($userId), 'event' => '$set', 'properties' => ['$set' => $props]]);
+        } catch (\Throwable $e) {
+            log_message('warning', 'PostHog person update failed: ' . $e->getMessage());
+        }
     }
 }
