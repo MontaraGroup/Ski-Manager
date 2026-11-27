@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { UNSAFE_PortalProvider } from 'react-aria';
 import { Spinner, Toast } from '@heroui/react';
 import { IslandErrorBoundary } from './components/IslandErrorBoundary';
+import { startFeatureTracking } from './lib/featureTracking';
 import '../css/islands.css';
 
 /**
@@ -205,6 +206,7 @@ function boot() {
   mountToasts();
   document.querySelectorAll<HTMLElement>('[data-island]').forEach(mount);
   watchFontAwesome();
+  startFeatureTracking();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
