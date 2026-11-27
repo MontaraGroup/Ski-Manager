@@ -40,7 +40,7 @@ class Tournaments extends BaseController
             'giant_slalom' => ['name' => 'Giant Slalom', 'icon' => 'fa-solid fa-mountain', 'visitors' => 800, 'reputation' => 200, 'cost' => 50000, 'duration' => 2, 'desc' => 'Major alpine racing event'],
             'downhill' => ['name' => 'Downhill Championship', 'icon' => 'fa-solid fa-person-skiing', 'visitors' => 1200, 'reputation' => 350, 'cost' => 80000, 'duration' => 2, 'desc' => 'High-speed downhill racing'],
             'freestyle' => ['name' => 'Freestyle Competition', 'icon' => 'fa-solid fa-person-snowboarding', 'visitors' => 1000, 'reputation' => 300, 'cost' => 60000, 'duration' => 2, 'desc' => 'Tricks, jumps, and style'],
-            'cross_country' => ['name' => 'Cross-Country Marathon', 'icon' => 'fa-solid fa-person-skiing-nordic', 'visitors' => 600, 'reputation' => 150, 'cost' => 30000, 'duration' => 1, 'desc' => 'Endurance skiing event'],
+            'cross_country' => ['name' => 'Cross-Country Marathon', 'icon' => 'fa-solid fa-person-skiing-nordic', 'visitors' => 600, 'reputation' => 150, 'cost' => 30000, 'duration' => 1, 'desc' => \App\Libraries\WinterSports::enabledFor((int) $userId) ? 'Endurance skiing event. Needs Cross-Country Skiing or a cross-country trail.' : 'Endurance skiing event'],
             'winter_festival' => ['name' => 'Winter Festival', 'icon' => 'fa-solid fa-snowflake', 'visitors' => 2000, 'reputation' => 500, 'cost' => 150000, 'duration' => 3, 'desc' => 'Massive multi-day winter celebration'],
             'night_race' => ['name' => 'Night Race', 'icon' => 'fa-solid fa-moon', 'visitors' => 1100, 'reputation' => 200, 'cost' => 40000, 'duration' => 1, 'desc' => 'Racing under the lights. Needs night skiing.'],
             'kids_cup' => ['name' => "Kids' Cup", 'icon' => 'fa-solid fa-child', 'visitors' => 400, 'reputation' => 100, 'cost' => 15000, 'duration' => 1, 'desc' => 'Youth skiing competition'],
@@ -209,6 +209,22 @@ class Tournaments extends BaseController
                 ->countAllResults() > 0;
             if (!$hasVenue) {
                 return redirect()->back()->with('error', $t['name'] . ' requires an open ' . $req['label'] . ' on Winter Sports.');
+            }
+        }
+
+        if ($type === 'cross_country' && \App\Libraries\WinterSports::enabledFor((int) $userId)) {
+            $hasFacility = $db->tableExists('winter_sport_facilities') && $db->table('winter_sport_facilities')
+                ->where('user_id', $userId)
+                ->where('facility_type', 'cross_country')
+                ->where('status', 'open')
+                ->countAllResults() > 0;
+            $hasTrail = $db->table('player_items')
+                ->where('user_id', $userId)
+                ->where('subtype', 'crosscountry')
+                ->where('status', 'open')
+                ->countAllResults() > 0;
+            if (!$hasFacility && !$hasTrail) {
+                return redirect()->back()->with('error', 'Cross-Country Marathon requires an open Cross-Country Skiing facility or a cross-country trail.');
             }
         }
 
