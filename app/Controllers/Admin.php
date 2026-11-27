@@ -52,6 +52,7 @@ class Admin extends BaseController
         $gameDay = max(1, (int)((strtotime(date('Y-m-d')) - strtotime($startDate)) / 86400) + 1);
 
         $weather = getCurrentWeather();
+        $settleWeather = \App\Libraries\Weather::forSettle();
         // The simulated day only advances when the tick runs; match the navbar rather than the calendar
         if (!empty($weather['game_day'])) $gameDay = (int) $weather['game_day'];
         $recentLogs = $db->query("SELECT al.*, u.username FROM activity_log al JOIN users u ON u.id = al.user_id ORDER BY al.created_at DESC LIMIT 30")->getResultArray();
@@ -245,14 +246,14 @@ class Admin extends BaseController
             'players' => $playersFormatted,
             'recentLogs' => $recentLogsFormatted,
             // The form edits the day tonight's tick settles (Admin::setWeather)
-            'weather' => ($settle = \App\Libraries\Weather::forSettle()) ? [
+            'weather' => [
                 'day' => \App\Libraries\Weather::seasonDayOf(\App\Libraries\Weather::settleDay()),
-                'condition_name' => $settle['condition_name'] ?? 'Light Snow',
-                'temp' => (int) ($settle['temp'] ?? -5),
-                'tempFormatted' => temp((int) ($settle['temp'] ?? -5)),
-                'wind' => (int) ($settle['wind'] ?? 15),
-                'snowfall' => (int) ($settle['snowfall'] ?? 0),
-                'snow_base' => (int) ($settle['snow_base'] ?? 50),
+                'condition_name' => $settleWeather['condition_name'] ?? 'Light Snow',
+                'temp' => (int) ($settleWeather['temp'] ?? -5),
+                'tempFormatted' => temp((int) ($settleWeather['temp'] ?? -5)),
+                'wind' => (int) ($settleWeather['wind'] ?? 15),
+                'snowfall' => (int) ($settleWeather['snowfall'] ?? 0),
+                'snow_base' => (int) ($settleWeather['snow_base'] ?? 50),
                 'conditions' => array_keys(\App\Libraries\Weather::VISIBILITY),
             ],
             'server' => [
