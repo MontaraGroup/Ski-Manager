@@ -46,11 +46,15 @@ class Snowmaking extends BaseController
         $running = $today['running'];
         $energySupply = (int) $db->table('energy_management')->selectSum('output_kwh')->where('user_id', $userId)->where('status', 'active')->get()->getRow()->output_kwh;
         $waterSupply = (int) $db->table('water_management')->selectSum('output_liters')->where('user_id', $userId)->where('status', 'active')->get()->getRow()->output_liters;
+        $wsKwh = (\App\Libraries\WinterSports::enabledFor((int) $userId) && $db->tableExists('winter_sport_facilities'))
+            ? \App\Libraries\WinterSports::totalEnergyDraw($db->table('winter_sport_facilities')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray())
+            : 0;
         $energyDemand = Utilities::energyDemand(
             $running,
             $db->table('night_skiing')->where('user_id', $userId)->where('status', 'active')->countAllResults(),
             $db->table('player_items')->select('subtype, length_meters')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray(),
             $db->table('buildings')->select('level')->where('user_id', $userId)->where('status', 'open')->get()->getResultArray(),
+            $wsKwh,
         );
         $waterDemand = Utilities::waterDemand($running);
         $hidden = array_map('trim', explode(',', (string) getDifficultyConfig('hidden_pages', '')));

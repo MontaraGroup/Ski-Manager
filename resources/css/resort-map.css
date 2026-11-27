@@ -245,6 +245,10 @@
 .map-facility-pin.kind-building {
   color: var(--warning, #f59e0b);
 }
+.map-facility-pin.kind-winter_sport {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.55);
+}
 .map-facility-pin.is-selected {
   border-color: var(--link, #38bdf8);
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--link, #38bdf8) 38%, transparent), 0 4px 12px rgba(0, 0, 0, 0.4);

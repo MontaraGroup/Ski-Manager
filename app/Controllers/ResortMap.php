@@ -192,6 +192,7 @@ class ResortMap extends BaseController
         $buildings       = [];
         $parking         = [];
         $terrainParks    = [];
+        $winterSports    = [];
         $groomerFleet    = ['active' => 0, 'total' => 0];
         $nightLighting   = ['activeCount' => 0, 'totalCoverage' => 0];
         $weatherSummary  = null;
@@ -336,6 +337,37 @@ class ResortMap extends BaseController
                 }
             }
 
+            // Winter Activities (only when winter-sports flag is enabled for this player)
+            if (\App\Libraries\WinterSports::enabledFor((int) $userId) && $db->tableExists('winter_sport_facilities')) {
+                foreach ($db->table('winter_sport_facilities')->where('user_id', $userId)->get()->getResultArray() as $ws) {
+                    $wType = (string) ($ws['facility_type'] ?? 'ice_rink');
+                    $wCfg = \App\Libraries\WinterSports::CATALOG[$wType] ?? null;
+                    if (!$wCfg) continue;
+                    $wLevel = max(1, (int) ($ws['level'] ?? 1));
+                    $wCap = \App\Libraries\WinterSports::CATALOG[$wType]['seat_tiers'][$wLevel] ?? (int) ($wCfg['capacity'] ?? 150);
+                    $wGuests = (int) ($ws['last_guests'] ?? 0);
+                    $winterSports[] = [
+                        'id'            => (int) $ws['id'],
+                        'facility_type' => $wType,
+                        'typeLabel'     => (string) $wCfg['name'],
+                        'icon'          => (string) $wCfg['icon'],
+                        'route'         => '/winter-sports?tab=' . $wType,
+                        'name'          => (string) $ws['name'],
+                        'level'         => $wLevel,
+                        'capacity'      => $wCap,
+                        'guests'        => $wGuests,
+                        'occupancyPct'  => $wCap > 0 ? min(100, (int) round(($wGuests / $wCap) * 100)) : 0,
+                        'daily_revenue' => (int) ($ws['daily_revenue'] ?? 0),
+                        'daily_upkeep'  => (int) ($ws['daily_upkeep'] ?? 0),
+                        'condition_pct' => (int) ($ws['condition_pct'] ?? 100),
+                        'status'        => (string) ($ws['status'] ?? 'open'),
+                        'map_x'         => isset($ws['map_x']) && $ws['map_x'] !== null ? (float) $ws['map_x'] : null,
+                        'map_y'         => isset($ws['map_y']) && $ws['map_y'] !== null ? (float) $ws['map_y'] : null,
+                        'resort_map'    => $ws['resort_map'] ?? null,
+                    ];
+                }
+            }
+
             $weatherRow = function_exists('getCurrentWeather') ? getCurrentWeather() : null;
             if ($weatherRow) {
                 $weatherSummary = [
@@ -432,6 +464,7 @@ class ResortMap extends BaseController
             'buildings'         => $buildings,
             'parking'           => $parking,
             'terrainParks'      => $terrainParks,
+            'winterSports'      => $winterSports,
             'groomerFleet'      => $groomerFleet,
             'nightLighting'     => $nightLighting,
             'weather'           => $weatherSummary,

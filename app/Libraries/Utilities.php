@@ -45,7 +45,7 @@ class Utilities
      * Energy draw (kWh/day) by consumer: running snowmakers' rated energy_kwh, lit night-skiing
      * areas, open lifts (rows with subtype and length_meters) and open buildings (rows with level).
      */
-    public static function energyDemand(array $activeSnowmakers, int $lights, array $openLifts, array $openBuildings): array
+    public static function energyDemand(array $activeSnowmakers, int $lights, array $openLifts, array $openBuildings, int $winterSportsKwh = 0): array
     {
         $d = [
             'snowmaking' => (int) array_sum(array_column($activeSnowmakers, 'energy_kwh')),
@@ -53,6 +53,9 @@ class Utilities
             'lifts' => array_sum(array_map(fn($l) => self::liftKwh($l['subtype'] ?? '', (int) ($l['length_meters'] ?? 0)), $openLifts)),
             'buildings' => array_sum(array_map(fn($b) => self::BUILDING_KWH[(int) ($b['level'] ?? 1)] ?? 20, $openBuildings)),
         ];
+        if ($winterSportsKwh > 0) {
+            $d['winter_sports'] = $winterSportsKwh;
+        }
         return $d + ['total' => array_sum($d)];
     }
 

@@ -592,17 +592,33 @@ class GameTick extends BaseCommand
             // ==============================
             // WINTER SPORT FACILITIES
             // ==============================
+            $wsKwh = 0;
             if ($resortOpen && \App\Libraries\WinterSports::enabledFor($userId) && $db->tableExists('winter_sport_facilities')) {
                 $wsRows = $db->table('winter_sport_facilities')->where('user_id', $userId)->get()->getResultArray();
                 $wsIncome = 0;
+                $mapNordicM = (int) ($db->table('player_items')
+                    ->selectSum('length_meters')
+                    ->where('user_id', $userId)
+                    ->where('subtype', 'crosscountry')
+                    ->where('status', 'open')
+                    ->get()->getRow('length_meters') ?? 0);
+                $mapNordicKm = (int) round($mapNordicM / 1000);
+                $snowBaseCm = isset($weather['snow_base']) ? (int) $weather['snow_base'] : null;
+
                 foreach ($wsRows as $ws) {
                     if ($ws['status'] !== 'open') continue;
+                    $wsType = (string) $ws['facility_type'];
+                    $installed = \App\Libraries\WinterSports::parseUpgrades($wsType, $ws['upgrades'] ?? null);
+                    $config = \App\Libraries\WinterSports::parseConfig($wsType, $ws['config_json'] ?? null);
+
                     $settle = \App\Libraries\WinterSports::settleDay(
                         $ws,
                         $visitors,
                         $isWinter,
                         isset($weather['temp']) ? (int) $weather['temp'] : null,
-                        isset($weather['wind_speed']) ? (int) $weather['wind_speed'] : null
+                        isset($weather['wind_speed']) ? (int) $weather['wind_speed'] : null,
+                        $snowBaseCm,
+                        $mapNordicKm
                     );
                     $rev = (int) round($settle['revenue'] * $revMult);
                     $ticketRev = (int) round($settle['ticketRevenue'] * $revMult);
@@ -611,20 +627,44 @@ class GameTick extends BaseCommand
                     $dayIncome += $rev;
                     $dayExpenses += $upkeep;
                     $wsIncome += $rev;
+                    $wsKwh += (int) $settle['kwh'];
 
-                    $installed = \App\Libraries\WinterSports::parseUpgrades($ws['upgrades'] ?? null);
-                    $mode = (string) ($ws['session_mode'] ?? 'standard');
-                    $modeWear = (float) (\App\Libraries\WinterSports::SESSION_MODES[$mode]['wear_mult'] ?? 1.0);
-                    $proMult = in_array('pro_surface', $installed, true) ? 0.55 : 1.0;
+                    if (!empty($settle['repBonus'])) {
+                        $db->table('player_finances')->where('user_id', $userId)->set('reputation', 'reputation + ' . (int) $settle['repBonus'], false)->update();
+                    }
 
-                    $wear = (float) (\App\Libraries\WinterSports::CATALOG[$ws['facility_type']]['wear_per_day'] ?? 2.0) * $modeWear * $proMult;
-                    $newCond = max(0, (int) round((int) $ws['condition_pct'] - $wear));
-                    $iceWear = max(2, (int) round(6 * $modeWear * $proMult));
-                    $newIce = max(20, (int) ($ws['ice_quality'] ?? 90) - $iceWear);
+                    $newCond = max(0, min(100, (int) round((int) $ws['condition_pct'] - (float) $settle['wear'])));
+                    $newIce = max(20, min(100, (int) ($ws['ice_quality'] ?? 90) + (int) $settle['iceDelta']));
                     $newStatus = $newCond < 25 ? 'maintenance' : 'open';
+
+                    // Per-activity nightly state updates in config_json
+                    if ($wsType === 'hockey_arena' && ($config['booked_match'] ?? 'club_rental') !== 'club_rental') {
+                        $config['matches_hosted'] = (int) ($config['matches_hosted'] ?? 0) + 1;
+                        $config['booked_match'] = 'club_rental';
+                    } elseif ($wsType === 'ski_jump') {
+                        $prevRec = (int) ($config['hill_record_m'] ?? 58);
+                        $nextRec = \App\Libraries\WinterSports::nextHillRecord(
+                            $config['hills'] ?? ['k60'],
+                            $prevRec,
+                            in_array('ceramic_inrun', $installed, true),
+                            $newIce
+                        );
+                        if ($nextRec > $prevRec) {
+                            $config['hill_record_m'] = $nextRec;
+                            log_activity($userId, 'Winter Sports', 'New Ski Jump Hill Record: ' . $nextRec . ' m!', 'fa-solid fa-trophy');
+                        }
+                    } elseif ($wsType === 'bobsleigh_track') {
+                        $config['top_speed_kmh'] = \App\Libraries\WinterSports::trackSpeedKmh(
+                            (int) $ws['level'],
+                            (string) ($config['cooling'] ?? 'standard'),
+                            $newIce
+                        );
+                    }
+
                     $db->table('winter_sport_facilities')->where('id', $ws['id'])->update([
                         'condition_pct' => $newCond,
                         'ice_quality' => $newIce,
+                        'config_json' => json_encode($config),
                         'status' => $newStatus,
                         'daily_revenue' => $rev,
                         'daily_upkeep' => $upkeep,
@@ -635,7 +675,7 @@ class GameTick extends BaseCommand
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                     if ($newStatus === 'maintenance') {
-                        notify($userId, 'winter_sports', $ws['name'] . ' needs repairs', 'Condition dropped below 25%. Repair it on Winter Activities to reopen.', 'fa-solid fa-wrench', '/winter-sports');
+                        notify($userId, 'winter_sports', $ws['name'] . ' needs repairs', 'Condition dropped below 25%. Repair it on Winter Activities to reopen.', 'fa-solid fa-wrench', '/winter-sports?tab=' . $wsType);
                     }
                 }
                 if ($wsIncome > 0) {
@@ -783,7 +823,7 @@ class GameTick extends BaseCommand
             // pages (easy) can't build sources, so they aren't billed for imports either.
             $hiddenPages = array_map('trim', explode(',', (string) ($diffConfig['hidden_pages'] ?? '')));
             $openLiftRows = $db->table('player_items')->select('subtype, length_meters')->where('user_id', $userId)->where('item_type', 'lift')->where('status', 'open')->get()->getResultArray();
-            $totalEnergyDemand = \App\Libraries\Utilities::energyDemand($activeSnowmakers, count($lights), $openLiftRows, $buildings)['total'];
+            $totalEnergyDemand = \App\Libraries\Utilities::energyDemand($activeSnowmakers, count($lights), $openLiftRows, $buildings, $wsKwh)['total'];
             if ($totalEnergyDemand > $totalEnergyOutput && !in_array('energy', $hiddenPages, true)) {
                 $energyDeficit = $totalEnergyDemand - $totalEnergyOutput;
                 $gridTariff = \App\Libraries\Utilities::importCost('energy', $energyDeficit);
