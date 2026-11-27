@@ -163,6 +163,21 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
     el?.scrollIntoView({ block: 'center' });
   }, []);
 
+  // Showing one idea from the suggest form: clear the filters that may hide it, then go to it
+  const [jumpTo, setJumpTo] = useState<number | null>(null);
+  const showItem = (id: number) => {
+    setQuery('');
+    setCategory('all');
+    setStage('all');
+    setJumpTo(id);
+  };
+  useEffect(() => {
+    if (jumpTo === null) return;
+    window.location.hash = `item-${jumpTo}`;
+    document.getElementById(`item-${jumpTo}`)?.scrollIntoView({ block: 'center' });
+    setJumpTo(null);
+  }, [jumpTo]);
+
   const allItems = useMemo(() => cols.flatMap((c) => c.items), [cols]);
   const mergeTargets = useMemo(
     () => cols.flatMap((c) => c.items.map((it) => ({ id: it.id, title: it.title, column: c.title }))),
@@ -347,6 +362,7 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                   title={suggestTitle}
                   onTitle={setSuggestTitle}
                   items={allItems}
+                  onShow={showItem}
                 />
               </div>
             )}
@@ -359,7 +375,7 @@ export default function RoadmapPage({ isAdmin, stats, columns, me, rewards, rele
                     <strong>{rewards.voteWeekly} Génépis</strong>.
                     {me.earnsRewards && (
                       <span className={`mt-1 flex items-center gap-1.5 text-xs font-semibold ${weeklyDone ? 'text-success' : 'text-muted'}`}>
-                        <Icon name={weeklyDone ? 'fa-circle-check' : 'fa-circle'} className={weeklyDone ? '' : 'fa-regular'} />
+                        <Icon name={weeklyDone ? 'fa-circle-check' : 'fa-circle'} style={weeklyDone ? 'fa-solid' : 'fa-regular'} />
                         {weeklyDone ? 'Earned this week' : 'Not earned yet this week'}
                       </span>
                     )}
@@ -523,7 +539,7 @@ function ItemCard({ item, me, busy, onVote, isAdmin, releases, mergeTargets, bet
             onClick={() => { setThread(!thread); setOpened(true); }}
             className={`${TAP} cursor-pointer gap-1.5 font-medium hover:text-foreground ${thread ? 'text-foreground' : ''}`}
           >
-            <Icon name="fa-comment" className={count > 0 ? '' : 'fa-regular'} />
+            <Icon name="fa-comment" style={count > 0 ? 'fa-solid' : 'fa-regular'} />
             {count === 0 ? 'Comment' : count === 1 ? '1 comment' : `${count} comments`}
           </button>
           {item.status === 'in_beta' && betaUrl && <a href={betaUrl} className={LINK}>Try it in the beta</a>}
@@ -776,12 +792,13 @@ async function postForm(url: string, fields: Record<string, string>) {
   return fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
 }
 
-function SuggestForm({ left, perWeek, title, onTitle, items }: {
+function SuggestForm({ left, perWeek, title, onTitle, items, onShow }: {
   left: number;
   perWeek: number;
   title: string;
   onTitle: (t: string) => void;
   items: RoadmapItem[];
+  onShow: (id: number) => void;
 }) {
   // Ideas that share words with the title being typed: voting for one beats a duplicate
   const similar = useMemo(() => {
@@ -823,7 +840,13 @@ function SuggestForm({ left, perWeek, title, onTitle, items }: {
               <ul className="mt-1">
                 {similar.map((it) => (
                   <li key={it.id}>
-                    <a href={`#item-${it.id}`} className={`${TAP} text-link hover:underline`}>{it.title}</a>
+                    <a
+                      href={`#item-${it.id}`}
+                      onClick={(e) => { e.preventDefault(); onShow(it.id); }}
+                      className={`${TAP} text-left text-link hover:underline`}
+                    >
+                      {it.title}
+                    </a>
                   </li>
                 ))}
               </ul>
