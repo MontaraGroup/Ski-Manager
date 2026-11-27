@@ -48,7 +48,7 @@ class Beta extends ApiController
     {
         $userId = (int) auth()->id();
         if ($blocked = $this->blocked($userId)) return $blocked;
-        if (!Program::betaFlag($key)) return $this->fail("That feature isn't in beta.", 404);
+        if (!Program::listedFlag($key)) return $this->fail("That feature isn't in beta.", 404);
 
         $input = $this->input();
         $rating = (int) ($input['rating'] ?? 0);

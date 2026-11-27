@@ -63,13 +63,59 @@ class Beta
         foreach (self::features() as $f) Analytics::setEnrollment($userId, $f['flag_key'], false);
     }
 
-    /** An early access feature listed on /beta, or null */
+    /** An early access feature listed on /beta (one players switch on themselves), or null */
     public static function betaFlag(string $key): ?array
     {
         foreach (self::features() as $f) {
             if ($f['flag_key'] === $key) return $f;
         }
         return null;
+    }
+
+    /** A feature on /beta that takes feedback: an early access feature or a beta tester flag */
+    public static function listedFlag(string $key): ?array
+    {
+        foreach (array_merge(self::features(), self::testerFlags()) as $f) {
+            if ($f['flag_key'] === $key) return $f;
+        }
+        return null;
+    }
+
+    /**
+     * Active PostHog flags with a release condition "is_beta_tester exact true": on for every
+     * beta tester (or the condition's rollout share of them), with no switch of their own.
+     * Each also has `rollout`, the percentage, and `name`/`description` split from the flag's
+     * description at its first sentence.
+     */
+    public static function testerFlags(): array
+    {
+        $early = array_column(self::features(), 'flag_key');
+        $out = [];
+        foreach (PostHogFlagCache::flags() as $key => $flag) {
+            if (empty($flag['active']) || !empty($flag['deleted']) || in_array($key, $early, true)) continue;
+            $rollout = null;
+            foreach ($flag['filters']['groups'] ?? [] as $group) {
+                foreach ($group['properties'] ?? [] as $p) {
+                    $values = array_map('strval', (array) ($p['value'] ?? []));
+                    if (($p['key'] ?? '') === 'is_beta_tester' && ($p['operator'] ?? 'exact') === 'exact' && in_array('true', $values, true)) {
+                        $rollout = max($rollout ?? 0, (int) ($group['rollout_percentage'] ?? 100));
+                    }
+                }
+            }
+            if ($rollout === null || $rollout <= 0) continue;
+            $text = trim((string) ($flag['name'] ?? ''));
+            $parts = preg_split('/(?<=\.)\s+/', $text, 2);
+            $name = rtrim((string) ($parts[0] ?? ''), '.');
+            $out[] = [
+                'flag_key' => (string) $key,
+                'name' => $name !== '' ? $name : (string) $key,
+                'description' => trim((string) ($parts[1] ?? '')),
+                'docs' => '',
+                'rollout' => min(100, $rollout),
+            ];
+        }
+        usort($out, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+        return $out;
     }
 
     public static function setFeature(int $userId, string $key, bool $on): void
@@ -111,7 +157,7 @@ class Beta
     /** What /beta and Settings show this player */
     public static function state(int $userId): array
     {
-        $flags = self::features();
+        $flags = array_merge(self::features(), self::testerFlags());
         $mine = [];
         if ($userId > 0 && $flags) {
             $rows = db_connect()->table('beta_feedback')->where('user_id', $userId)->whereIn('flag_key', array_column($flags, 'flag_key'))->get()->getResultArray();
@@ -125,6 +171,9 @@ class Beta
             'since' => null,
             'on' => $member && featureEnabledFor($f['flag_key'], $userId),
             'feedback' => $mine[$f['flag_key']] ?? null,
+            // Set for beta tester flags: on for every tester (or this share of them), no switch
+            'testers' => isset($f['rollout']),
+            'rollout' => $f['rollout'] ?? null,
         ], $flags);
 
         return [

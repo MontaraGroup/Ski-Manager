@@ -8,6 +8,9 @@ export type BetaFeature = {
   since: string | null;
   on: boolean;
   feedback: { rating: number; comment: string } | null;
+  /** On for every beta tester, or `rollout` percent of them; there is no switch */
+  testers?: boolean;
+  rollout?: number | null;
 };
 
 export type BetaState = {
